@@ -5,6 +5,9 @@
 		},
 		{
 			"path": "src/backend/business-application"
+		},
+		{
+			"path": "src/frontend"
 		}
 	],
 	"settings": {}
