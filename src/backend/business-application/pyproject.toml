@@ -1,0 +1,13 @@
+[project]
+name = "business-application"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.18.5",
+    "asyncpg>=0.31.0",
+    "fastapi[standard]>=0.139.0",
+    "python-dotenv>=1.2.2",
+    "sqlalchemy[asyncio]>=2.0.51",
+]
