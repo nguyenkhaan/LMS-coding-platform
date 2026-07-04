@@ -19,3 +19,4 @@ def get_env_var(key:str , default : str | _NoArg = NO_ARG):
 DATABASE_URL = get_env_var(
     "DATABASE_URL"
 )
+print(DATABASE_URL)

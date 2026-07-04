@@ -1,9 +1,9 @@
 # LMS Platform
 
-[![Python](https://img.shields.io/badge/Python-3.14%2B-blue)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.139%2B-009688)](https://fastapi.tiangolo.com/)
-[![Svelte](https://img.shields.io/badge/Svelte-5-FF3E00)](https://svelte.dev/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED)](https://www.docker.com/)
+![Python](https://img.shields.io/badge/Python-3.14%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Svelte](https://img.shields.io/badge/Svelte-5-FF3E00?style=for-the-badge&logo=svelte&logoColor=white)
+![Bun](https://img.shields.io/badge/Bun-runtime-000000?style=for-the-badge&logo=bun&logoColor=white)
 
 ## Overview
 

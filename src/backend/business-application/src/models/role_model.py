@@ -3,12 +3,13 @@ from sqlalchemy import Enum
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
-from db import Base
-from models.base_model import SystemPosition, SystemRole
-from models.user_model import UserModel
-
-
+from typing import TYPE_CHECKING
+from src.db import Base
+from src.models.base_model import SystemPosition, SystemRole
+if TYPE_CHECKING: 
+    from src.models.user_model import UserModel
+# TYPE_CHECKING duoc su dung de xu ly mot loi rat pho bien: circular_import chi phuc vu type hint => Giup 
+# cho no khong import luc runetime 
 class RoleModel(Base): 
     __tablename__ = "role" 
     id : Mapped[int] = mapped_column(primary_key=True) 
