@@ -1,10 +1,12 @@
 
 from http.client import BAD_REQUEST
+from src.modules.auth.jwt.jwt_auth import create_jwt_token, encode_jwt_token
+from src.modules.auth.jwt.jwt_secret import TokenType
 from src.models.role_model import RoleModel
 from src.models.base_model import SystemPosition, SystemRole
 from src.helper.pwd_hash import password_hash
 from fastapi import HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.user_model import UserModel
@@ -19,7 +21,7 @@ class AuthService:
             user = await self.session.scalar(
                 select(UserModel).where(UserModel.email == data.email) 
             ) 
-            RoleModel
+            
             if user is not None: 
                 if user.active: 
                     raise HTTPException(
@@ -27,7 +29,10 @@ class AuthService:
                         detail = "User has been registered" 
                     ) 
                 else: 
-                    example_code = "abc123" # example code using for verify account 
+                    payload = {
+                        "sub": str(user.id), # Truong sub bat buoc phai la string 
+                    }
+                    example_code = create_jwt_token(payload ,  TokenType.VERIFY_REGISTER) # example code using for verify account 
                     return RegisterResponse(
                         verify_code = example_code, 
                         message = "Verify your account with the code above"
@@ -47,10 +52,12 @@ class AuthService:
             )
             self.session.add(role) 
             
-            example_code = "abc"
+            example_code = create_jwt_token({
+                "sub": user.id
+            } , TokenType.VERIFY_REGISTER)
             
             await self.session.commit() 
-        
+            # Phai rao ra them 1 bang nua de tien hanh luu tru xem thang nay no dang dang nhap theo phuong thuc gi 
             return RegisterResponse(
                 verify_code=example_code, 
                 message = "Register successfully. Verify account with the code above"
@@ -58,6 +65,27 @@ class AuthService:
         except Exception: 
             await self.session.rollback() 
             raise 
+    async def verify_register(self , token : str): 
+        try: 
+            payload = encode_jwt_token(token , TokenType.VERIFY_REGISTER) 
+            purpose = payload.get("type") 
+            sub = payload.get("sub") 
+            if purpose != TokenType.VERIFY_REGISTER: 
+                raise HTTPException(
+                    status_code = 400, 
+                    detail = "Invalid token error" 
+                ) 
+            await self.session.execute(
+                update(UserModel) 
+                .where(UserModel.id == int(sub)) 
+                .values(active = True)
+            )
+            await self.session.commit() 
+            return "Verify account successfully" 
+            
+        except Exception: 
+            await self.session.rollback() 
+            raise 
 # Mot so ham: self.session.add() , await self.session.flush() (Dong bo cac thay doi xuong database nhung chua thuc hien viec commit) 
 # await self.session.commit(): luu cac thay doi xuong database, ket thuc transaction. Neu nhu khong co thi database no se khong doi va session se duoc tu dong rollback sau khi transaction ket thuc
-# await self.session.refresh(user): Lam moi lai du lieu cho bien user.  
+# await self.session.refresh(user): Lam moi lai du lieu cho bien user. Chủ yếu để lấy các giá trị mà database có thể tự động thay đổi. Giúp đồng bộ database với biến lấy ra 
