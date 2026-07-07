@@ -1,6 +1,9 @@
-def main():
-    print("Hello from auth-provider!")
+import uvicorn 
 
-
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": 
+    uvicorn.run(
+        'src.app:app', 
+        host='0.0.0.0', 
+        port=4001, 
+        reload=True 
+    )
