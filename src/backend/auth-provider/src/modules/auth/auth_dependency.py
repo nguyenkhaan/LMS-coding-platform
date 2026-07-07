@@ -1,8 +1,8 @@
 
 from fastapi import Depends
 from redis import Redis
-from src.routers.auth.auth_service import AuthService
-from src.routers.auth.session_service import SessionService
+from src.modules.auth.auth_service import AuthService
+from src.modules.auth.session_service import SessionService
 from src.cores.redis import redis_client
 
 def get_redis_client(): 

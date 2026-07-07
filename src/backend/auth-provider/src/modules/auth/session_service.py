@@ -1,7 +1,7 @@
 from redis.asyncio import Redis
 
-from bases.jwt_constant import ACCESS_LIVE_TIME
-from helpers.random import random_string 
+from src.bases.jwt_constant import ACCESS_LIVE_TIME
+from src.helpers.random import random_string 
 
 
 class SessionService: 

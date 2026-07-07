@@ -3,12 +3,12 @@
 # /login (POST): Nhan vao email + password. Tra cuu database.
 
 from fastapi import APIRouter, Cookie, Depends, Request 
-from src.routers.auth.auth_dependency import get_auth_service
-from src.routers.auth.auth_service import AuthService
+from src.modules.auth.auth_dependency import get_auth_service
+from src.modules.auth.auth_service import AuthService
 from src.cores.template import templates
 router = APIRouter(prefix="/auth" , tags=["OAuth"]) 
 
-@router.post("/authorize") 
+@router.get("/authorize") 
 async def authorize(
     redirect_uri: str, 
     session_id : str | None = Cookie(None),
@@ -23,6 +23,7 @@ async def login_template(
     redirect_uri : str 
 ): 
     return templates.TemplateResponse(
+        name="login.html",  
         request = request, 
         context={
             "redirect_uri" : redirect_uri
@@ -30,5 +31,14 @@ async def login_template(
     )
 
 @router.post("/login") 
-async def login():
-    pass 
+async def login(
+    request: Request, 
+    auth_service : AuthService = Depends(get_auth_service)
+):
+    form = await request.form() 
+    email = form.get("email") 
+    password = form.get("password") 
+    redirect_uri = form.get("redirect_uri") 
+    response = await auth_service.login(email , password , redirect_uri) 
+    return response 
+    
