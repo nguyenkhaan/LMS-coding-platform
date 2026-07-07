@@ -8,6 +8,9 @@
 		},
 		{
 			"path": "src/frontend"
+		},
+		{
+			"path": "src/backend/auth-provider"
 		}
 	],
 	"settings": {}
