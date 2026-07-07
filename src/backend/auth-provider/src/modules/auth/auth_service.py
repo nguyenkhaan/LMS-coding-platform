@@ -4,19 +4,19 @@ from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 
 from src.modules.auth.session_service import SessionService
-
+from src.cores.settings import BACKEND_URL
 
 class AuthService: 
     def __init__(self , session_service : SessionService): 
         self.session_service = session_service
     async def authorize(self , session_id : str , redirect_uri: str):
         if session_id is None: 
-            return RedirectResponse(f"http://localhost:4001/api/v1/auth/login?redirect_uri={redirect_uri}") 
+            return RedirectResponse(f"{BACKEND_URL}/api/auth/login?redirect_uri={redirect_uri}") 
         session = await self.session_service.get_session(session_id=session_id) 
         if session is None: 
             return RedirectResponse(
                 url=(
-                    f"http://locahost:4001/api/v1/auth/login?redirect_uri=&redirect_uri={redirect_uri}"                ), 
+                    f"{BACKEND_URL}/api/auth/login?redirect_uri={redirect_uri}"                ), 
                 status_code=302 
                 # redirect uri la url ma auth provider se tra nguoi dung ve sau khi ho dang nhap thanh thanh cong 
             ) 

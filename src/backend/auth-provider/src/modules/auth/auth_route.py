@@ -39,6 +39,7 @@ async def login(
     email = form.get("email") 
     password = form.get("password") 
     redirect_uri = form.get("redirect_uri") 
+    print(email, password) 
     response = await auth_service.login(email , password , redirect_uri) 
     return response 
     

@@ -2,10 +2,10 @@ from contextlib import asynccontextmanager
 from src.cores.redis import redis_client
 from fastapi import FastAPI, APIRouter 
 from src.modules.auth.auth_route import router as auth_router 
-v1_router = APIRouter(
-    prefix="/api/v1"
+api_router = APIRouter(
+    prefix="/api"
 )
-v1_router.include_router(auth_router) 
+api_router.include_router(auth_router) 
 
 @asynccontextmanager
 async def lifespan(app : FastAPI): 
@@ -22,4 +22,4 @@ app = FastAPI(
 # template engine 
 
 
-app.include_router(v1_router) 
+app.include_router(api_router) 
