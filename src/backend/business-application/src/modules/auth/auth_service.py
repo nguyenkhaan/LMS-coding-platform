@@ -1,7 +1,7 @@
 
 from http.client import BAD_REQUEST
 from src.modules.auth.jwt.jwt_auth import create_jwt_token, encode_jwt_token
-from src.modules.auth.jwt.jwt_secret import TokenType
+from src.bases.enums.jwt_enum import TokenType
 from src.models.role_model import RoleModel
 from src.models.base_model import SystemPosition, SystemRole
 from src.helper.pwd_hash import password_hash

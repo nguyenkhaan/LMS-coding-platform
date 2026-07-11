@@ -22,3 +22,6 @@ DATABASE_URL = get_env_var(
 VERIFY_REGISTER_SECRET = get_env_var(
     "VERIFY_REGISTER_SECRET"
 )
+AUTH_PROVIDER_URL = get_env_var(
+    "AUTH_PROVIDER_URL"
+)

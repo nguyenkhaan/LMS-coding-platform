@@ -6,6 +6,9 @@ from fastapi import APIRouter, Cookie, Depends, Request
 from src.modules.auth.auth_dependency import get_auth_service
 from src.modules.auth.auth_service import AuthService
 from src.cores.template import templates
+from src.cores.settings import JWT_ACCESS_PUBLIC
+from fastapi.responses import PlainTextResponse
+
 router = APIRouter(prefix="/auth" , tags=["OAuth"]) 
 
 @router.get("/authorize") 
@@ -42,4 +45,15 @@ async def login(
     print(email, password) 
     response = await auth_service.login(email , password , redirect_uri) 
     return response 
-    
+
+@router.get("/code") 
+async def auth_code(
+    code : str, 
+    auth_service : AuthService = Depends(get_auth_service) 
+): 
+    response = await auth_service.auth_code(code) 
+    return response 
+
+@router.get("/public-key")
+async def public_key(): 
+    return PlainTextResponse(JWT_ACCESS_PUBLIC)
