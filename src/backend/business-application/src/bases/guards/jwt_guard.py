@@ -1,29 +1,32 @@
-from fastapi import Header, HTTPException, status
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import ExpiredSignatureError, InvalidTokenError
 
-from src.modules.auth.jwt.jwt_service import JwtService
 from src.bases.enums.jwt_enum import TokenType
 from src.jwk_service import PublicKeyService
+from src.modules.auth.jwt.jwt_service import JwtService
+
+security = HTTPBearer(auto_error=False)
 
 
 async def require_login(
-    authorization: str | None = Header(default=None),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
 ):
-    # Authorization header
-    if authorization is None:
+
+    if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authorization header is required",
         )
 
-    # Bearer token
-    if not authorization.startswith("Bearer "):
+
+    if credentials.scheme.lower() != "bearer":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authorization scheme",
         )
 
-    token = authorization.removeprefix("Bearer ").strip()
+    token = credentials.credentials.strip()
 
     if token == "":
         raise HTTPException(
@@ -31,25 +34,30 @@ async def require_login(
             detail="Access token is missing",
         )
 
-    # Public key đã cache khi ứng dụng startup
     public_key = PublicKeyService.get()
 
     try:
         payload = JwtService.verify_token(
             token=token,
-            secret_key=public_key,      # hoặc đổi tên thành public_key nếu bạn đã sửa JwtService
-            token_type=TokenType.ACCESS_TOKEN,
-            algorithm = "RS256"
+            secret_key=public_key,
+            # token_type=TokenType.ACCESS_TOKEN,
+            algorithm="RS256",
         )
-        return payload
+        print(payload) 
+        return {
+            **payload, 
+            "sub" : int(payload.get('sub'))
+        }
 
-    except ExpiredSignatureError:
+    except ExpiredSignatureError as e: 
+        print("Verify Token error: " , e) 
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Access token has expired",
         )
 
-    except InvalidTokenError:
+    except InvalidTokenError as e: 
+        print("Verify Token error: " , e) 
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid access token",

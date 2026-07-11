@@ -57,11 +57,11 @@ class AuthService:
                 status_code=400, 
                 detail="User has not been logined" 
             ) 
-        print('Hello world') 
+        
         email = "nguyenkhaan2006@gmail.com" 
         client_id = payload.get('client_id') 
         payload = {
-            "sub": client_id, 
+            "sub": str(client_id), 
             "email": email 
         } 
         access_token = await self.jwt_service.create_token(payload , TokenType.ACCESS_TOKEN , timedelta(seconds=ACCESS_LIVE_TIME)) 
