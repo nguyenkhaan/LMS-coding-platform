@@ -27,12 +27,13 @@ class JwtService:
     def verify_token(
         token: str,
         secret_key: str,
+        algorithm = "HS256"
     ) -> dict:
 
         payload = jwt.decode(
             token,
             secret_key,
-            algorithms=["HS256"],
+            algorithms=[algorithm],
         )
 
         return payload

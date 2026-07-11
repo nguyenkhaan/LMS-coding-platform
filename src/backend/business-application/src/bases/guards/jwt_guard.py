@@ -39,8 +39,8 @@ async def require_login(
             token=token,
             secret_key=public_key,      # hoặc đổi tên thành public_key nếu bạn đã sửa JwtService
             token_type=TokenType.ACCESS_TOKEN,
+            algorithm = "RS256"
         )
-
         return payload
 
     except ExpiredSignatureError:

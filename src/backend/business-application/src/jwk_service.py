@@ -9,7 +9,6 @@ class PublicKeyService:
             response = await client.get(f"{AUTH_PROVIDER_URL}/api/auth/public-key")
 
             response.raise_for_status()
-            print("Public key lay duoc la: " , response) 
             cls._public_key = response.text
 
     @classmethod
