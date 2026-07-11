@@ -12,7 +12,7 @@ def create_jwt_token(data : dict , type : TokenType , expires_delta : timedelta 
     if expires_delta: 
         expire = datetime.now(timezone.utc) + expires_delta 
     else: 
-        expire = datetime.now(timezone.utc) + timedelta(minutes=get_token_expires_time(type)) 
+        expire = datetime.now(timezone.utc) + timedelta(minutes=JwtService.get_token_expires_time(type)) 
     to_encode.update({
         "exp": expire, 
         "type": type 
