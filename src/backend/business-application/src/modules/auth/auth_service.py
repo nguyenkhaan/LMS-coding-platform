@@ -2,8 +2,8 @@
 from http.client import BAD_REQUEST
 from src.modules.auth.jwt.jwt_auth import create_jwt_token, encode_jwt_token
 from src.bases.enums.jwt_enum import TokenType
-from src.models.role_model import RoleModel
-from src.models.base_model import SystemPosition, SystemRole
+from src.models.role_model import UserRoleModel
+from src.models.base_model import Role
 from src.helper.pwd_hash import password_hash
 from fastapi import HTTPException
 from sqlalchemy import select, update
@@ -45,10 +45,9 @@ class AuthService:
             self.session.add(user) 
             await self.session.flush() 
             
-            role = RoleModel(
+            role = UserRoleModel(
                 user_id = user.id, 
-                system_role = SystemRole.USER, 
-                system_position = SystemPosition.STUDENT
+                role = Role.STUDENT
             )
             self.session.add(role) 
             
@@ -70,7 +69,7 @@ class AuthService:
             payload = encode_jwt_token(token , TokenType.VERIFY_REGISTER) 
             purpose = payload.get("type") 
             sub = payload.get("sub") 
-            if purpose != TokenType.VERIFY_REGISTER: 
+            if purpose != TokenType.VERIFY_REGISTER or sub is None: 
                 raise HTTPException(
                     status_code = 400, 
                     detail = "Invalid token error" 
