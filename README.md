@@ -1,100 +1,117 @@
-# LMS Platform
+# LMS Online Coding Platform
 
-![Python](https://img.shields.io/badge/Python-3.14%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![Svelte](https://img.shields.io/badge/Svelte-5-FF3E00?style=for-the-badge&logo=svelte&logoColor=white)
-![Bun](https://img.shields.io/badge/Bun-runtime-000000?style=for-the-badge&logo=bun&logoColor=white)
+A modern Learning Management System (LMS) and online coding platform designed with a microservices architecture. This repository is structured as a monorepo containing backend services (FastAPI), a frontend application (Svelte 5 & SvelteKit), and supporting local infrastructure (Docker Compose).
 
-## Overview
+## Technology Stack
 
-This repository is a monorepo for an LMS online coding platform. It includes backend services for authentication, business application logic, and future extensions such as the judge and AI interview modules, plus a Svelte-based frontend.
+[![Python 3.14+](https://img.shields.io/badge/Python-3.14+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Svelte 5](https://img.shields.io/badge/Svelte-5-FF3E00?style=for-the-badge&logo=svelte&logoColor=white)](https://svelte.dev/)
+[![Tailwind CSS v4](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![Bun Runtime](https://img.shields.io/badge/Bun-Runtime-000000?style=for-the-badge&logo=bun&logoColor=white)](https://bun.sh/)
+[![UV Package Manager](https://img.shields.io/badge/UV-Manager-DE5C2E?style=for-the-badge&logo=python&logoColor=white)](https://github.com/astral-sh/uv)
+[![Docker Compose](https://img.shields.io/badge/Docker_Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
 
-## Folder structure
+---
+
+## Folder Structure
+
+The repository organizes its backend services, frontend application, and environment configuration in a structured monorepo:
 
 ```text
-src/
-  backend/
-    auth-provider/
-    business-application/
-    judge/
-    ai-interview/   # planned service
-  frontend/
+LMS-coding-platform/
+├── src/
+│   ├── backend/
+│   │   ├── auth-provider/         # Authentication & User Service (FastAPI + uv)
+│   │   ├── business-application/  # Core LMS API (FastAPI + uv)
+│   │   └── judge/                 # Code compilation sandbox (planned)
+│   └── frontend/                  # Svelte 5 Web Application (SvelteKit + Bun)
+├── docker-compose.yaml            # Local infrastructure stack definition
+├── .env.example                   # Shared root environment template for Docker
+└── README.md                      # General project instructions (this file)
 ```
 
-## Resource setup
+---
 
-Create a `.env` file in the repository root with the required values for local infrastructure:
+## Architecture Overview
 
-```env
-POSTGRES_DB=lms
-POSTGRES_USER=lms
-POSTGRES_PASSWORD=change-me
-POSTGRES_PORT=5432
+```mermaid
+graph TD
+    Client[Web Frontend: Svelte 5 / Bun]
+    AuthSvc[Auth Provider Service: FastAPI / Port 4001]
+    BizSvc[Business Application Service: FastAPI / Port 4000]
+    
+    DB[(PostgreSQL Database)]
+    Cache[(Redis Cache & Session Store)]
+    MQ[(RabbitMQ Message Broker)]
+    S3[(MinIO Object Storage)]
 
-ADMINER_PORT=8080
-
-RABBITMQ_DEFAULT_USER=lms
-RABBITMQ_DEFAULT_PASS=change-me
-RABBITMQ_PORT=5672
-RABBITMQ_MANAGEMENT_PORT=15672
-
-MINIO_ROOT_USER=lms
-MINIO_ROOT_PASSWORD=change-me
-MINIO_API_PORT=9000
-MINIO_CONSOLE_PORT=9001
+    Client -->|Authenticates| AuthSvc
+    Client -->|Course & Coding Tasks| BizSvc
+    
+    BizSvc -->|Loads Public Key| AuthSvc
+    AuthSvc -->|Cache / Sessions| Cache
+    AuthSvc -->|User Tables| DB
+    BizSvc -->|LMS Tables| DB
+    
+    %% Future services connections
+    %% BizSvc -->|Queues Code Run| MQ
+    %% S3 -->|Stores Static Assets / Submissions| BizSvc
 ```
 
-Start the supporting services with Docker Compose:
+---
 
+## Infrastructure Setup (Docker)
+
+Before running the backend or frontend services locally, spin up the supporting storage and middleware engines using Docker.
+
+### 1. Setup root environment variables
+Copy the template `.env.example` in the root folder to `.env`:
+```bash
+cp .env.example .env
+```
+*(Optionally modify usernames or passwords inside `.env` to configure your local container stack).*
+
+### 2. Start the infrastructure
+Start the PostgreSQL, Adminer, Redis, RabbitMQ, and MinIO instances in the background:
 ```bash
 docker compose up -d
 ```
 
-Local endpoints:
+### 3. Verify running containers
+Ensure all containers are up and running:
+```bash
+docker compose ps
+```
 
-- PostgreSQL: http://localhost:5432
-- Adminer: http://localhost:8080
-- RabbitMQ: http://localhost:5672
-- RabbitMQ UI: http://localhost:15672
-- MinIO API: http://localhost:9000
-- MinIO Console: http://localhost:9001
+### 4. Local Service Ports & Endpoints
+Once up, the following local services are available:
 
-Stop the stack with:
+| Service | Port | Endpoint | Credentials / Details |
+|---------|------|----------|----------------------|
+| **PostgreSQL** | `5432` | `localhost:5432` | User: `lms`, Password: `change-me-postgres`, DB: `lms` |
+| **Adminer** (DB UI) | `8080` | [http://localhost:8080](http://localhost:8080) | Server: `postgres`, Username: `lms` |
+| **Redis** | `6379` | `localhost:6379` | Used for caching and user sessions |
+| **RabbitMQ API** | `5672` | `localhost:5672` | Event broker connection string |
+| **RabbitMQ Console** | `15672` | [http://localhost:15672](http://localhost:15672) | Username: `lms`, Password: `change-me-rabbitmq` |
+| **MinIO API** | `9000` | `localhost:9000` | S3-compatible storage gateway |
+| **MinIO Console** | `9001` | [http://localhost:9001](http://localhost:9001) | Username: `minioadmin`, Password: `minioadmin` |
 
+### 5. Stop the infrastructure
+To shut down and stop the infrastructure services:
 ```bash
 docker compose down
 ```
 
-## How to run the backend
+---
 
-### Auth provider
+## Services Setup & Development
 
-```bash
-cd src/backend/auth-provider
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
-python main.py
-```
+Detailed, step-by-step setup guides for building, running, and testing each component are available in their respective service folders:
 
-### Business application
+1. **Authentication Provider** (Backend): Read [auth-provider README](file:///home/cloud/workspace/python/LMS-coding-platform/src/backend/auth-provider/README.md)
+2. **Business Application** (Backend): Read [business-application README](file:///home/cloud/workspace/python/LMS-coding-platform/src/backend/business-application/README.md)
+3. **Web Frontend** (Svelte 5): Read [frontend README](file:///home/cloud/workspace/python/LMS-coding-platform/src/frontend/README.md)
 
-```bash
-cd src/backend/business-application
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -e .
-python main.py
-```
-
-The business application will start with Uvicorn and serve the API on http://localhost:8000.
-
-## How to run the frontend
-
-```bash
-cd src/frontend
-npm install
-npm run dev
-```
-
-Then open http://localhost:5173 in your browser.
+> [!TIP]
+> Always make sure that your root Docker stack is running before starting the development servers for the backend services.
