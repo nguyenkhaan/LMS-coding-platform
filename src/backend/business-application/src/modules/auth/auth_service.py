@@ -1,9 +1,9 @@
-
+import email
 from http.client import BAD_REQUEST
 from src.modules.auth.jwt.jwt_auth import create_jwt_token, encode_jwt_token
 from src.bases.enums.jwt_enum import TokenType
 from src.models.role_model import UserRoleModel
-from src.models.base_model import Role
+from src.models.base_model import AccountStatus, Role
 from src.helper.pwd_hash import password_hash
 from fastapi import HTTPException
 from sqlalchemy import select, update
@@ -32,7 +32,7 @@ class AuthService:
                     payload = {
                         "sub": str(user.id), # Truong sub bat buoc phai la string 
                     }
-                    example_code = create_jwt_token(payload ,  TokenType.VERIFY_REGISTER) # example code using for verify account 
+                    example_code = create_jwt_token(payload ,  TokenType.VERIFY_REGISTER) 
                     return RegisterResponse(
                         verify_code = example_code, 
                         message = "Verify your account with the code above"
@@ -40,8 +40,12 @@ class AuthService:
             password_hashed = password_hash.hash(data.password)
             user = UserModel(
                 email = data.email, 
-                password = password_hashed
-            ) 
+                full_name = data.full_name, 
+                password = password_hashed, 
+                address = data.address, 
+                status = AccountStatus.UNVERIFIED, 
+                active = False 
+            )
             self.session.add(user) 
             await self.session.flush() 
             
@@ -50,10 +54,10 @@ class AuthService:
                 role = Role.STUDENT
             )
             self.session.add(role) 
-            
-            example_code = create_jwt_token({
-                "sub": user.id
-            } , TokenType.VERIFY_REGISTER)
+            payload = {
+                "sub": str(user.id) 
+            }
+            example_code = create_jwt_token(payload , TokenType.VERIFY_REGISTER)
             
             await self.session.commit() 
             # Phai rao ra them 1 bang nua de tien hanh luu tru xem thang nay no dang dang nhap theo phuong thuc gi 
@@ -67,6 +71,7 @@ class AuthService:
     async def verify_register(self , token : str): 
         try: 
             payload = encode_jwt_token(token , TokenType.VERIFY_REGISTER) 
+            print(payload)
             purpose = payload.get("type") 
             sub = payload.get("sub") 
             if purpose != TokenType.VERIFY_REGISTER or sub is None: 
@@ -78,6 +83,7 @@ class AuthService:
                 update(UserModel) 
                 .where(UserModel.id == int(sub)) 
                 .values(active = True)
+                .values(status = AccountStatus.ACTIVE)
             )
             await self.session.commit() 
             return "Verify account successfully" 

@@ -67,7 +67,7 @@ class AuthService:
         if payload is None:
             raise HTTPException(
                 status_code=400,
-                detail="User has not been logined",
+                detail="User has not logined",
             )
 
         client_id = payload.get("client_id")

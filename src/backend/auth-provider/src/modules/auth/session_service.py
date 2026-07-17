@@ -14,7 +14,7 @@ class SessionService:
         await self.redis.set(
             f"session:{session_id}", 
             user_id, 
-            ex = ACCESS_LIVE_TIME # create session for store access token 
+            ex = ACCESS_LIVE_TIME
         ) 
     async def get_session(
         self , session_id : str
@@ -30,7 +30,7 @@ class SessionService:
         await self.redis.set(
             f"auth_code:{code}",
             json.dumps(data), 
-            ex=300 # 5 minute 
+            ex=300
         )
     async def get_authorization_code(self , code : str): 
         payload = await self.redis.get(

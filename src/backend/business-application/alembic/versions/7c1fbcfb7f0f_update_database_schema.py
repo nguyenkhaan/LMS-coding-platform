@@ -59,7 +59,7 @@ def upgrade() -> None:
     sa.Column('address', sa.String(), nullable=False),
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('password', sa.String(), nullable=False),
-    sa.Column('avatar_url', sa.String(), nullable=False),
+    sa.Column('avatar_url', sa.String(), nullable=True),
     sa.Column('refresh_token', sa.String(), nullable=True),
     sa.Column('status', sa.String(), nullable=False),
     sa.Column('active', sa.Boolean(), nullable=False),

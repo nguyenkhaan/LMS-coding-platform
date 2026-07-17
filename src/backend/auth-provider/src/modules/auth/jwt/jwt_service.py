@@ -21,7 +21,7 @@ class JwtService:
         if expires_delta: 
             expire = datetime.now(timezone.utc) + expires_delta # khi hoi ham thi phai truyen vao mot doi tuong timedelta 
         else: 
-            expire = datetime.now(timezone.utc) + timedelta(minutes=60) # 60 minutes default 
+            expire = datetime.now(timezone.utc) + timedelta(minutes=60) 
         to_encode.update({
             'exp': expire 
         })

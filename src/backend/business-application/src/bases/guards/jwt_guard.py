@@ -40,7 +40,6 @@ async def require_login(
         payload = JwtService.verify_token(
             token=token,
             secret_key=public_key,
-            # token_type=TokenType.ACCESS_TOKEN,
             algorithm="RS256",
         )
         print(payload) 

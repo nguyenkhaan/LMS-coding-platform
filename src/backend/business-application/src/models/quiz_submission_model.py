@@ -1,5 +1,5 @@
 from datetime import datetime, UTC
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 from sqlalchemy import ForeignKey, DateTime, Float, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.db import Base
@@ -20,7 +20,7 @@ class QuizSubmissionModel(Base):
         default=lambda: datetime.now(UTC), 
         nullable=False
     )
-    answers: Mapped[Any] = mapped_column(JSON, nullable=True)
+    answers: Mapped[Optional[Any]] = mapped_column(JSON, nullable=True)
 
     # Relationships
     quiz: Mapped["QuizModel"] = relationship(back_populates="submissions")

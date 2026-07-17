@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, TYPE_CHECKING
 from sqlalchemy import ForeignKey, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -16,7 +16,11 @@ class EnrollmentModel(Base):
     student_id: Mapped[int] = mapped_column(ForeignKey("user.id"), nullable=False)
     course_id: Mapped[int] = mapped_column(ForeignKey("courses.id"), nullable=False)
     status: Mapped[str] = mapped_column(nullable=False, default="active")
-    enrolled_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    enrolled_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), 
+        default=lambda: datetime.now(UTC), 
+        nullable=False
+    )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     # Relationships

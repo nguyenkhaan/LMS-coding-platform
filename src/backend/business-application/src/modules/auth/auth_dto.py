@@ -1,10 +1,11 @@
 from pydantic import BaseModel, EmailStr 
 
 class RegisterResponse(BaseModel): 
-    verify_code: str # code using for verify account register 
+    verify_code: str 
     message: str 
 
 class RegisterRequest(BaseModel): 
-    email: EmailStr # using email str to verify this is valid 
+    full_name: str 
+    email: EmailStr 
     password : str 
-# status_code , content = { "message" : "Cloudian Notification Request" , "errors" : errors } 
+    address : str 

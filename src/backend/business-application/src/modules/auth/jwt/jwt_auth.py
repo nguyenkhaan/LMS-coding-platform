@@ -36,4 +36,3 @@ def encode_jwt_token(token : str , type : TokenType):
             status_code = status.HTTP_400_BAD_REQUEST, 
             detail = "Authentication Information is invalid" 
         ) 
-# jwt: sub, 

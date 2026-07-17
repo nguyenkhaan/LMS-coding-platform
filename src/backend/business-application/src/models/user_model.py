@@ -16,7 +16,7 @@ class UserModel(Base):
     address : Mapped[str] = mapped_column(nullable=False) 
     email : Mapped[str] = mapped_column(nullable=False, unique=True) 
     password : Mapped[str] = mapped_column() 
-    avatar_url : Mapped[str] = mapped_column() 
+    avatar_url : Mapped[Optional[str]] = mapped_column(nullable=True) 
     refresh_token: Mapped[Optional[str]] = mapped_column(nullable=True)
     status: Mapped[str] = mapped_column(nullable=False, default="verified")
     active: Mapped[bool] = mapped_column(nullable=False, default=False)
@@ -87,7 +87,6 @@ class UserModel(Base):
         back_populates = "user", cascade = "all, delete-orphan"
     )
 
-# Import at runtime to register types for relationship string resolving
 from src.models.role_model import UserRoleModel
 from src.models.user_history_model import UserHistoryModel
 from src.models.student_profile_model import StudentProfileModel

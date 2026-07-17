@@ -19,8 +19,6 @@ async def lifespan(app: FastAPI):
 
     await PublicKeyService.load()
 
-    print("JWT public key loaded successfully.")
-
     yield
 
     # Cleanup if needed when the application shuts down.
