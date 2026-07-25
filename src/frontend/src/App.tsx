@@ -1,3 +1,3 @@
 export default function App() {
-	return <h1 className="text-2xl font-semibold text-red-500">Hello world</h1>;
+	return <h1 className="text-xl text-center font-semibold my-4">Hello, Build with Cloudian 💙 Cloud</h1>;
 }
