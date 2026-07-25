@@ -1,0 +1,8 @@
+@import 'tailwindcss';
+
+/* Optional global customization overrides can be defined using theme directives */
+@theme {
+	--color-brand-indigo: hsl(235, 75%, 55%);
+	--color-brand-purple: hsl(275, 90%, 60%);
+	--color-brand-cyan: hsl(190, 95%, 50%);
+}

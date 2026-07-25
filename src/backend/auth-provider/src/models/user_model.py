@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, List
 from sqlalchemy import func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from models.user_identity_provider_model import UserIdentityModel
 from src.db import Base
 
 if TYPE_CHECKING:
@@ -21,3 +22,4 @@ class UserModel(Base):
     deleted_at: Mapped[str | None] = mapped_column(default=None)
 
     roles: Mapped[List["RoleModel"]] = relationship(back_populates="user")
+    identities: Mapped[List["UserIdentityModel"]] = relationship(back_populates="user")

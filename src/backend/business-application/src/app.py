@@ -1,4 +1,6 @@
 from contextlib import asynccontextmanager
+from datetime import datetime, timezone
+from sqlite3 import Date
 
 from fastapi import FastAPI, APIRouter
 from fastapi.exceptions import RequestValidationError
@@ -61,6 +63,10 @@ async def http_exception_handler(request, exc: StarletteHTTPException):
             "message": "Cloudian Notification",
             "code": exc.status_code,
             "detail": str(exc.detail),
+            # Them thoi gian dien ra loi: 
+            # "timestamp": 
+            "timestamp": datetime.now(timezone.utc).isoformat(), 
+            "path": request.url.path 
         },
     )
 

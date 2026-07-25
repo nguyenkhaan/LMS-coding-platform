@@ -1,97 +1,83 @@
-# Svelte 5 LMS Web Frontend
+# React LMS Web Frontend
 
-The frontend user interface for the LMS Online Coding Platform. It provides pages and features for browsing courses, participating in quizzes, interacting with AI coding interviews, and tracking user profile progress.
+The React frontend user interface for the LMS Online Coding Platform. It provides pages and features for browsing courses, participating in quizzes, interacting with AI coding interviews, and tracking user profile progress.
 
 ---
 
 ## Technologies Used
 
-- **Svelte 5**: Utilizing the modern rune-based reactive model.
-- **SvelteKit**: Application framework for routing, hydration, and pages.
-- **Bun Runtime**: Ultra-fast JS parser, package manager, and test runner.
-- **Tailwind CSS v4**: Utility-first CSS framework for layout styling.
-- **TypeScript**: Typed JavaScript flavor for robust codebase compilation.
+- **React 19**: Modern component library for interactive views.
 - **Vite**: Frontend build tool and development server.
-- **Vitest**: Unit testing framework with browser/playwright capabilities.
+- **Tailwind CSS v4**: Modern, high-performance styling engine.
+- **TypeScript**: Statically typed JavaScript for safety.
+- **Bun**: Fast JavaScript runtime and package manager.
+
+---
+
+## Folder Structure
+
+Following clean architectural patterns for React:
+
+```text
+src/
+├── assets/         # Project images, icons, and static assets
+├── components/     # Reusable presentation and UI components
+│   ├── common/     # Global layout components (Header, Footer, etc.)
+│   └── ui/         # Base design system primitives (Buttons, Inputs, etc.)
+├── hooks/          # Custom reusable React hooks
+├── pages/          # Page components mapping to application views
+├── services/       # Client API fetch calls and service helpers
+├── utils/          # Formatting tools and helper constants
+├── App.tsx         # Main entry component
+├── index.css       # Global styles (Tailwind CSS imports)
+├── main.tsx        # React client bootstrap entry point
+└── vite-env.d.ts   # Vite environment variables declarations
+```
 
 ---
 
 ## Getting Started & Setup
 
-Follow these steps to configure and run the Web Frontend service locally.
+Ensure you have **Bun** installed as the primary runtime.
 
-### Prerequisites
+### Step 1: Install Dependencies
 
-Ensure you have **Bun** installed as the primary Javascript runtime.
-- **Install Bun**:
-  ```bash
-  curl -fsSL https://bun.sh/install | bash
-  ```
-  *(Restart your terminal or source your shell config after installing).*
+Navigate to the frontend folder and install:
 
----
+```bash
+cd src/frontend
+bun install
+```
 
-### Step 1: Initialize the Environment
+### Step 2: Run Development Server
 
-1. Navigate to the frontend directory:
-   ```bash
-   cd src/frontend
-   ```
-
-2. Install the locked dependencies using Bun:
-   ```bash
-   bun install
-   ```
-
----
-
-### Step 2: Running Development Server
-
-Start Vite's development server locally:
+Run Vite's local hot-reloaded dev environment:
 
 ```bash
 bun run dev
 ```
 
-The application will launch on [http://localhost:5173](http://localhost:5173). To open it automatically in your default browser on startup, run:
-```bash
-bun run dev -- --open
-```
-
----
+The application will launch on [http://localhost:5173](http://localhost:5173).
 
 ### Step 3: Production Build
 
-Compile and optimize the frontend for production deployment:
+Verify typescript checks and bundle the app:
 
 ```bash
-# 1. Build the production assets
+# Compile and build production assets
 bun run build
 
-# 2. Preview the production build locally
+# Preview the built production output locally
 bun run preview
 ```
 
 ---
 
-## Development & Utility Commands
+## Utility Commands
 
-| Command | Description |
-|---------|-------------|
-| `bun run dev` | Starts Vite's dev server on port `5173` |
-| `bun run build` | Compiles optimized static/SSR production output |
-| `bun run preview` | Spins up a local preview server for built assets |
-| `bun run check` | Runs Svelte compiler check and TypeScript validation |
-| `bun run lint` | Lints code using ESLint and runs Prettier validation |
-| `bun run format` | Auto-formats code files using Prettier |
-| `bun run test` | Runs unit and component tests via Vitest |
-
----
-
-## Environment Configuration
-
-If you need to configure frontend endpoints, create a `.env` file in the `src/frontend` folder. Vite automatically injects environment variables prefixed with `VITE_` into your application client bundle:
-
-```env
-VITE_API_URL=http://localhost:4000/api/v1
-```
+| Command           | Description                                            |
+| ----------------- | ------------------------------------------------------ |
+| `bun run dev`     | Starts Vite's dev server on port `5173`                |
+| `bun run build`   | Compiles code with `tsc` and bundles production assets |
+| `bun run preview` | Spins up local HTTP server to preview `/dist` output   |
+| `bun run lint`    | Lints typescript and React hooks syntax with ESLint    |

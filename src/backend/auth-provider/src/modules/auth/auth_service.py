@@ -7,6 +7,8 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from models.base_model import LoginMethod
+from models.user_identity_provider_model import UserIdentityModel
 from src.modules.auth.session_service import SessionService
 from src.cores.settings import BACKEND_URL
 from src.modules.auth.jwt.jwt_service import JwtService
@@ -47,7 +49,16 @@ class AuthService:
                 status_code=401,
                 detail="Wrong email or password",
             )
+        # Tai khoan va mat khau dung => Dang nhap thanh cong 
 
+        user_identity = UserIdentityModel(
+            user_id = user.id, 
+            provider_id = None, 
+            method = LoginMethod.LOCAL
+        ) 
+        # Adding the login authentication provider 
+        self.db_session.add(user_identity)
+        await self.db_session.refresh(user_identity)
         payload = {
             "client_id": user.id,
             "email": user.email,
@@ -59,6 +70,7 @@ class AuthService:
         return {
             "code": authorization_code,
             "redirect_uri": redirect_uri,
+            "identity": user_identity.method 
         }
 
     async def auth_code(self, code: str):

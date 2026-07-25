@@ -1,3 +1,8 @@
+"""
+1. Khi lỗi thì temaplte của response sẽ như thế nào? 
+2. camelCase hay snake_case khi trả dữ liệu về cho FE 
+
+"""
 from datetime import datetime, UTC
 from typing import List, Optional, TYPE_CHECKING
 from sqlalchemy import ForeignKey, DateTime, Text

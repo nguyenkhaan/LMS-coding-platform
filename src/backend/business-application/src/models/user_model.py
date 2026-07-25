@@ -86,6 +86,9 @@ class UserModel(Base):
     audit_logs : Mapped[List["AuditLogModel"]] = relationship(
         back_populates = "user", cascade = "all, delete-orphan"
     )
+    identities : Mapped[List["UserIdentityModel"]] = relationship(
+        back_populates="user" , cascade="all, delete-orphan"
+    )
 
 from src.models.role_model import UserRoleModel
 from src.models.user_history_model import UserHistoryModel
@@ -101,3 +104,4 @@ from src.models.comment_model import CommentModel
 from src.models.notification_model import NotificationModel
 from src.models.transaction_model import TransactionModel
 from src.models.audit_log_model import AuditLogModel
+from src.models.user_identity_provider_model import UserIdentityModel

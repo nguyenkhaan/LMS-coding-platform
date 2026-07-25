@@ -61,3 +61,7 @@ class ActionType(str, Enum):
     INTERVIEW = 'interview'
     SOMETHING = 'something'
 
+class LoginMethod(str, Enum): 
+    GOOGLE = 'google' 
+    LOCAL = 'local' 
+    
