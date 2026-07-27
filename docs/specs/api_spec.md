@@ -87,79 +87,122 @@ class ErrorResponse(BaseModel):
     *   *Request Body*: `full_name`, `email`, `password`, `address`.
     *   *Response*: `verify_code` (OTP token), `message`.
 *   **`GET /api/v1/auth/verify?code={otp_code}`**
-    *   *Description*: Verify the email OTP to activate the user account.
+    *   *Description*: Verify the email OTP to activate the user account. On success, update `user.account_status` from `UNVERIFIED` to `ACTIVE`.
     *   *Response*: `message` (Success verification message).
 *   **`POST /api/v1/auth/token`**
     *   *Description*: Exchanges authorization `code` from `auth-provider` to obtain the token pair (`access_token`, `refresh_token`). Sets HttpOnly secure cookies.
     *   *Request Body*: `code`, `redirect_uri`.
     *   *Response*: `message` (Success), `user_info` (`id`, `email`, `roles`).
+    *   *Note*: `roles` is an aggregate field derived from the `user_role` table, not a direct column.
 *   **`POST /api/v1/auth/google`**
     *   *Description*: Handles login/registration via Google OAuth.
     *   *Request Body*: `credential_token`.
     *   *Response*: `message`, `user_info` (`id`, `email`, `roles`).
+    *   *Note*: `roles` is derived from the `user_role` table, similar to the token exchange route.
 *   **`POST /api/v1/auth/logout`**
     *   *Description*: Clear access/refresh tokens cookies from user's browser.
+    *   *Response*: `message`.
+*   **`POST /api/v1/auth/refresh`**
+    *   *Description*: Exchange a valid refresh token cookie for a new access token without requiring the user to log in again.
+    *   *Request Body*: none; the refresh token is read from an HttpOnly cookie.
+    *   *Response*: `message`.
+*   **`POST /api/v1/auth/forgot-password`**
+    *   *Description*: Request a password reset link or code sent to the user's email.
+    *   *Request Body*: `email`.
+    *   *Response*: `message`.
+*   **`POST /api/v1/auth/reset-password`**
+    *   *Description*: Reset password using the token sent by the forgot-password flow.
+    *   *Request Body*: `token`, `new_password`.
+    *   *Response*: `message`.
+*   **`POST /api/v1/auth/resend-otp`**
+    *   *Description*: Resend the email OTP when the previous one expired before verification.
+    *   *Request Body*: `email`.
     *   *Response*: `message`.
 *   **`GET /api/v1/users/me`**
     *   *Description*: Retrieves current user account information and profile details.
     *   *Response*: `id`, `full_name`, `email`, `avatar_url`, `account_status`, `roles`, `student_profile` (optional), `teacher_profile` (optional).
 *   **`PUT /api/v1/users/me/profile`**
     *   *Description*: Update student's specific profile info.
-    *   *Request Body*: `bio`, `school`, `major`, `github_url`, `facebook_url`, `linkedin_url`.
+    *   *Request Body*: `bio`, `school`, `major`, `github_url`, `facebook_url`, `linkedin_url`, `avatar_url`.
     *   *Response*: `message`, `profile` updated details.
+    *   *Note*: `linkedin_url` should be mapped to the database field `student_profile.linkedln_url`.
 *   **`PUT /api/v1/users/me/teacher-profile`**
     *   *Description*: Update teacher's specific profile info.
     *   *Request Body*: `bio`, `school_address`, `cv_url`.
     *   *Response*: `message`, `profile` updated details.
+*   **`POST /api/v1/teacher-register`**
+    *   *Description*: Submit a new teacher registration application.
+    *   *Request Body*: `motivation`, `cccd`, `cccd_front_url`, `cccd_back_url`.
+    *   *Response*: `id`, `status` (`PENDING`), `message`.
+*   **`PUT /api/v1/admin/teacher-register/{id}`**
+    *   *Description*: Admin reviews and approves or rejects a teacher registration application.
+    *   *Request Body*: `status` (`AGREE`, `REJECT`), `reviewed_note`.
+    *   *Response*: `id`, `status`, `reviewed_by`, `reviewed_at`, `message`.
 
 ### 2. Student Course Directory & Study Mode (`/api/v1/courses`, `/api/v1/student`)
 *   **`GET /api/v1/courses`**
     *   *Description*: Public catalog retrieval with filters and pagination.
-    *   *Query Parameters*: `page` (default 1), `size` (default 10), `q` (search text), `difficulty` (`EASY`, `MEDIUM`, `HARD`), `price_type` (`FREE`, `PAID`).
-    *   *Response*: `total_items`, `total_pages`, `current_page`, `items` (Array of courses).
+    *   *Query Parameters*: `page` (default 1), `size` (default 10), `q` (search text), `price_type` (`FREE`, `PAID`).
+    *   *Response*: `total_items`, `total_pages`, `current_page`, `items` (Array of courses, each including `thumbnail_url`).
+    *   *Note*: `price_type` should be derived from `courses.price` (`0` = `FREE`, `> 0` = `PAID`). The `difficulty` filter is not stored on `courses` in the current database model.
 *   **`GET /api/v1/courses/{slug}`**
     *   *Description*: Public course landing overview information (ratings, description, sections overview).
     *   *Response*: `id`, `title`, `slug`, `description`, `price`, `rating`, `teacher_name`, `sections` (overview details).
+    *   *Note*: `teacher_name` is derived by joining `courses.teacher_id` to the `user` table.
 *   **`POST /api/v1/courses/{slug}/enroll`**
     *   *Description*: Enroll in a course (works instantly for FREE courses, redirects to payment creation for PAID courses).
     *   *Response*: `status` (`ENROLLED` or `PENDING_PAYMENT`), `checkout_url` (if PAID).
+    *   *Note*: For PAID courses, the endpoint should create a `transaction` record before responding; `checkout_url` should be taken from `transaction.payos_link`.
 *   **`GET /api/v1/student/courses`**
     *   *Description*: Retrieve courses currently enrolled by the current user.
     *   *Response*: List of courses including progress percentages.
+    *   *Note*: Progress percentage should be computed from `lesson_content_progress` records versus the total lesson content in the course.
 *   **`GET /api/v1/student/courses/{slug}/study`**
-    *   *Description*: Get detailed curriculum syllabus with lock/completion ticks for React classroom workspace.
-    *   *Response*: Sections, Lessons, and Content list with completed flags.
+    *   *Description*: Get detailed curriculum syllabus with lock/completion ticks for the classroom workspace.
+    *   *Response*: Sections, lessons, and content list with completed and locked states.
+    *   *Note*: The `locked` state is computed dynamically based on prior lesson completion and ordering, not a dedicated database column.
 *   **`POST /api/v1/student/progress/lesson-content/{id}/complete`**
     *   *Description*: Mark a reading or video lesson content as complete.
     *   *Response*: `message`, `completed_at`.
 *   **`GET /api/v1/student/quizzes/{quizId}`**
-    *   *Description*: Get quiz questions for React test interface (omits `is_correct` field).
-    *   *Response*: `id`, `title`, `questions` (Array of questions, each with ID, statement, points, options).
+    *   *Description*: Get quiz questions for the student test interface (omits `is_correct` field).
+    *   *Response*: `id`, `title`, `attempts_left`, `questions` (Array of questions, each with `id`, `content`, `points`, `options`).
+    *   *Note*: The response field `content` maps to `quiz_questions.content` in the database schema.
 *   **`POST /api/v1/student/quizzes/{quizId}/submit`**
-    *   *Description*: Submit quiz answers. Score is checked automatically against DB.
+    *   *Description*: Submit quiz answers. Score is checked automatically against the database.
     *   *Request Body*: `answers` (Map of question_id -> option_id).
-    *   *Response*: `score`, `passed` (requires >= 80%), `passing_score`, `attempts_left`, `correct_answers` (detail options mapping).
+    *   *Response*: `submission_id`, `submitted_at`, `score`, `passed` (score >= `passing_score`), `passing_score`, `attempts_left`, `correct_answers` (detail options mapping).
+*   **`POST /api/v1/webhooks/payos`**
+    *   *Description*: Callback endpoint for PayOS payment notifications. Updates `transaction.status` and activates enrollment when payment succeeds.
+    *   *Request Body*: PayOS notification payload containing transaction details and signature.
+    *   *Response*: `message`.
+*   **`POST /api/v1/courses/{slug}/unenroll`**
+    *   *Description*: Cancel a student's enrollment in a course.
+    *   *Response*: `message`.
 
 ### 3. Teacher Course & Curriculum Creator (`/api/v1/teacher/courses`)
 *   **`GET /api/v1/teacher/courses`**
     *   *Description*: List courses owned/created by the teacher.
-    *   *Response*: List of courses with status (`DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `ARCHIVED`).
+    *   *Response*: List of courses with FE-required metadata (`id`, `title`, `slug`, `thumbnail_url`, `price`, `status`, `created_at`, `updated_at`) and course status (`DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `ARCHIVED`).
 *   **`POST /api/v1/teacher/courses`**
     *   *Description*: Create a new course workspace.
-    *   *Request Body*: `title`, `description`, `price`, `thumbnail_url`.
+    *   *Request Body*: `title`, `description`, `price`, `thumbnail_url`, `field`, `tags`.
     *   *Response*: Course details with newly generated `id` and `slug`.
 *   **`PUT /api/v1/teacher/courses/{id}`**
     *   *Description*: Edit metadata of a course.
-    *   *Request Body*: `title`, `description`, `price`, `thumbnail_url`, `status`.
+    *   *Request Body*: `title`, `description`, `price`, `thumbnail_url`, `status`, `field`, `tags`.
     *   *Response*: Updated course details.
 *   **`POST /api/v1/teacher/courses/{courseId}/sections`**
     *   *Description*: Add a new chapter section under a course.
     *   *Request Body*: `title`, `position`.
     *   *Response*: Section object details.
 *   **`PUT /api/v1/teacher/sections/{sectionId}`**
-    *   *Description*: Edit or delete (cascade) section title or position.
+    *   *Description*: Update section title or position.
     *   *Request Body*: `title`, `position`.
     *   *Response*: Updated section details.
+*   **`DELETE /api/v1/teacher/sections/{sectionId}`**
+    *   *Description*: Delete a section and cascade-delete its dependent lessons and lesson contents.
+    *   *Response*: `message`.
 *   **`POST /api/v1/teacher/sections/{sectionId}/lessons`**
     *   *Description*: Create a new lesson unit under a section.
     *   *Request Body*: `title`, `summary`, `position`.
@@ -177,7 +220,7 @@ class ErrorResponse(BaseModel):
     *   *Request Body*: `content_type` (`READING`, `QUIZ`, `PROBLEM`), `content_id`, `media_url` (optional), `position`.
     *   *Response*: Content metadata details.
 *   **`PUT /api/v1/teacher/lesson-contents/{contentId}`**
-    *   *Description*: Modify or delete a content item binding.
+    *   *Description*: Modify a content item binding.
     *   *Request Body*: `media_url`, `position`.
     *   *Response*: Updated content details.
 
@@ -201,7 +244,7 @@ class ErrorResponse(BaseModel):
     *   *Response*: `status` (`PENDING`, `RUNNING`, `ACCEPTED`, `WRONG_ANSWER`, `TIME_LIMIT_EXCEEDED`, `MEMORY_LIMIT_EXCEEDED`, `RUNTIME_ERROR`, `COMPILE_ERROR`), `score`, `runtime_ms`, `memory_kb`, `details` (Array of testcase executions).
 *   **`POST /api/v1/teacher/problems`**
     *   *Description*: Teacher creates a new problem template in the bank.
-    *   *Request Body*: `title`, `statement`, `input_description`, `output_description`, `constraints`, `difficulty`, `public`.
+    *   *Request Body*: `title`, `statement`, `input_description`, `output_description`, `constraints`, `sample_input`, `sample_output`, `explanation`, `difficulty`, `public`.
     *   *Response*: Created problem details.
 *   **`POST /api/v1/teacher/problems/{problemId}/testcases/upload`**
     *   *Description*: Upload testcase files in ZIP form (containing input/output pairs matching `input_xx.in` / `output_xx.out`).
@@ -237,29 +280,33 @@ class ErrorResponse(BaseModel):
     *   *Description*: Check if the transaction payment is successfully completed.
     *   *Response*: `status` (`PENDING`, `COMPLETE`, `FAILED`), `amount`, `completed_at`.
 
-### 7. Lesson Interactions & Comments (`/api/v1/lessons/{lessonId}/comments`)
+### 7. Lesson Interactions & Comments (`/api/v1/lessons`, `/api/v1/comments`)
 *   **`GET /api/v1/lessons/{lessonId}/comments`**
-    *   *Description*: Get comments for a lesson structured in a 2-level hierarchy.
-    *   *Response*: List of comments, each containing parent_id, profile avatar, full name, post time, and child replies list.
+    *   *Description*: Get comments for the lesson-content units under a lesson. Each comment is stored against a `lesson_content_id` in the database.
+    *   *Response*: List of comments, each containing `id`, `lesson_content_id`, `parent_id`, `content`, `created_at`, `updated_at`, and nested replies.
 *   **`POST /api/v1/lessons/{lessonId}/comments`**
-    *   *Description*: Post a new comment or reply to an existing one.
-    *   *Request Body*: `content`, `parent_id` (optional, for 2nd level replies).
+    *   *Description*: Post a new comment or reply to an existing one for a lesson-content unit.
+    *   *Request Body*: `lesson_content_id` (optional if the client already resolved the target content), `content`, `parent_id` (optional, for 2nd-level replies).
     *   *Response*: Created comment details.
 *   **`DELETE /api/v1/comments/{commentId}`**
     *   *Description*: Delete own comment.
     *   *Response*: `message`.
 
-### 8. Admin Moderation & CCCD Verification (`/api/v1/admin`)
+### 8. Admin Moderation & CCCD Verification (`/api/v1/admin`, `/api/v1/teacher-register`)
+*   **`POST /api/v1/teacher-register`**
+    *   *Description*: Submit a new teacher registration application.
+    *   *Request Body*: `motivation`, `cccd`, `cccd_front_url`, `cccd_back_url`.
+    *   *Response*: `id`, `status` (`PENDING`), `message`.
 *   **`GET /api/v1/admin/teacher-registers`**
-    *   *Description*: List pending teacher registration requests for CCCD verification.
-    *   *Response*: List of requests (motivation, cccd_number, cccd_front_url, cccd_back_url, cv_pdf_url, user details).
-*   **`POST /api/v1/admin/teacher-registers/{id}/verify`**
-    *   *Description*: Approve or reject registration. Updates user role to `TEACHER` if approved.
+    *   *Description*: List teacher registration requests for review.
+    *   *Response*: List of requests (`id`, `teacher_id`, `motivation`, `cccd`, `cccd_front_url`, `cccd_back_url`, `status`, `reviewed_note`, `reviewed_by`, `reviewed_at`, `created_at`, `updated_at`, plus user details).
+*   **`PUT /api/v1/admin/teacher-registers/{id}`**
+    *   *Description*: Approve or reject a registration request. If approved, update related teacher-profile and role state accordingly.
     *   *Request Body*: `status` (`AGREE`, `REJECT`), `reviewed_note`.
     *   *Response*: `message`, `register_id`, `new_status`.
 *   **`GET /api/v1/admin/reports`**
     *   *Description*: List reported courses.
-    *   *Response*: List of flags (course_id, reporter_name, content_reason, status).
+    *   *Response*: List of flags (`course_id`, `reporter_name`, `content_reason`, `status`).
 *   **`POST /api/v1/admin/courses/{id}/status`**
     *   *Description*: Update course state or hide/ban course contents.
     *   *Request Body*: `status` (`PUBLISHED`, `ARCHIVED`, `DRAFT`).
