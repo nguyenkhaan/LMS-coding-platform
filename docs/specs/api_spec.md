@@ -30,12 +30,23 @@ Base path: `/auth`
 | 2 | `/login` | GET | `redirect_uri` | - | - | HTML template (`login.html`) | Renders the login page with `redirect_uri`. |
 | 3 | `/login` | POST | - | - | `application/x-www-form-urlencoded`: `email`, `password`, `redirect_uri` | JSON (`code`, `redirect_uri`, `identity`) | Validates credentials; returns authorization code. |
 | 4 | `/code` | POST | - | - | JSON: `code` (str) | JSON (`access_token`, `refresh_token`) | Exchanges authorization code for JWT tokens. |
-| 5 | `/public-key` | GET | - | - | - | PEM text | Returns the RSA public JWK for token verification. |
+| 5 | `/refresh` | POST | - | - | - | JSON (`access_token`) | Issues new access token from refresh cookie. |
+| 6 | `/google` | POST | - | - | JSON: `credential_code` (str) | JSON (`access_token` , `refresh_token`) | Google OAuth login / registration. |
+| 7 | `/logout` | POST | - | - | - | JSON (`message`) | Clears auth cookies. |
+| 8 | `/public-key` | GET | - | - | - | PEM text | Returns the RSA public JWK for token verification. |
+| 9 | `/register` | POST | - | - | JSON: `full_name` (str), `email` (email), `password` (str), `address` (str) | JSON: `verify_code` (str), `message` (str) | Registers a student and returns OTP. |
+| 10 | `/verify` | GET | `otp` (str) | - | - | JSON: `message` (str) | Verifies email OTP and activates the user. |
+| 11 | `/forgot-password` | POST | - | - | JSON: `email` (email) | JSON: `message` (str) | Sends password reset link / code. |
+| 12 | `/reset-password` | POST | - | - | JSON: `token` (str), `new_password` (str) | JSON: `message` (str) | Resets password using the token. |
+| 13 | `/resend-otp` | POST | - | - | JSON: `email` (email) | JSON: `message` (str) | Resends the account verification OTP. |
+| 14 | `/change-email` | POST | - | - | JSON: `new_email` (email), `password` (str) | JSON: `message` (str) | Requests an email change; backend validates password and queues verification. |
+| 15 | `/verify-reset-email` | POST | - | - | JSON: `token` (str) | JSON: `message` (str) | Confirms the new email address using the verification token. |
 
 ### Key Auth Provider Notes
 - Endpoint 3 reads `session_id` from Cookie (`HttpOnly`) and `email`, `password`, `redirect_uri` from form data.
 - Endpoint 4 reads `code` directly as a FastAPI dependency parameter (not JSON body), because it is sent as a plain query/form field from the BE caller.
-- Endpoints 3 and 4 are consumed behind the scenes by the Business Application; the frontend never calls them directly.
+- Endpoints 3, 4, 5, 6, 7 are consumed behind the scenes by the Business Application; the frontend never calls them directly.
+- Endpoints 9–15 are called directly by the frontend (register, OTP verify, forgot-password, reset-password, resend-otp, change-email, verify-reset-email).
 
 ---
 
@@ -43,32 +54,20 @@ Base path: `/auth`
 Port: `4000`
 Base path: `/api/v1`
 
-### 1. Authentication & Profile Module
-Path prefix: `/auth`, `/users`, `/teacher-register`, `/admin`
+### 1. User Profile & Teacher/Admin Module
+Path prefix: `/users`, `/teacher-register`, `/admin`
 
 | # | Endpoint | Method | Query | Path | Request Body | Response | Description |
 |---|----------|--------|-------|------|--------------|----------|-------------|
-| 1 | `/auth/register` | POST | - | - | JSON: `full_name` (str), `email` (email), `password` (str), `address` (str) | JSON: `verify_code` (str), `message` (str) | Registers a student and returns OTP. |
-| 2 | `/auth/verify` | GET | `code` (str) | - | - | JSON: `message` (str) | Verifies email OTP and activates the user. |
-| 3 | `/auth/code` | POST | - | - | JSON: `code` (str), `redirect_uri` (str) | JSON: `message` (str), `user_info` (object) | Exchanges auth-provider code for session cookie + user info. |
-| 4 | `/auth/login` | POST | - | - | JSON: `email` (email), `password` (str), `redirect_uri` (str) | JSON: `authorization_code` (str) | Returns an authorization code from auth-provider. |
-| 5 | `/auth/google` | POST | - | - | JSON: `credential_token` (str) | JSON: `message` (str), `user_info` (object) | Google OAuth login / registration. |
-| 6 | `/auth/logout` | POST | - | - | - | JSON: `message` (str) | Clears auth cookies. |
-| 7 | `/auth/refresh` | POST | - | - | - | JSON: `message` (str) | Issues new access token from refresh cookie. |
-| 8 | `/auth/forgot-password` | POST | - | - | JSON: `email` (email) | JSON: `message` (str) | Sends password reset link / code. |
-| 9 | `/auth/reset-password` | POST | - | - | JSON: `token` (str), `new_password` (str) | JSON: `message` (str) | Resets password using the token. |
-| 10 | `/auth/resend-otp` | POST | - | - | JSON: `email` (email) | JSON: `message` (str) | Resends the account verification OTP. |
-| 11 | `/auth/change-email` | POST | - | - | JSON: `new_email` (email), `password` (str) | JSON: `message` (str) | Requests an email change; backend validates password and queues verification. |
-| 12 | `/auth/verify-reset-email` | POST | - | - | JSON: `token` (str) | JSON: `message` (str) | Confirms the new email address using the verification token. |
-| 13 | `/users/me` | GET | - | - | - | JSON: profile object | Retrieves current logged-in user profile. |
-| 14 | `/users/me/profile` | PUT | - | - | JSON: `bio` (str), `school` (str), `major` (str), `github_url` (str), `facebook_url` (str), `linkedin_url` (str), `avatar_url` (str) | JSON: `message`, `profile` | Updates student profile fields. |
-| 15 | `/users/me/teacher-profile` | PUT | - | - | JSON: `bio` (str), `school_address` (str), `cv_url` (str) | JSON: `message`, `profile` | Updates teacher profile fields. |
-| 16 | `/teacher-register` | POST | - | - | JSON: `motivation` (str), `cccd` (str), `cccd_front_url` (str), `cccd_back_url` (str) | JSON: `id` (int), `status` (PENDING), `message` | Submits a new teacher registration application. |
-| 17 | `/admin/teacher-registers` | GET | - | - | - | JSON: array of registration requests | Lists teacher registration requests. |
-| 18 | `/admin/teacher-registers/{id}` | PUT | - | `id` (int) | JSON: `status` (AGREE \| REJECT), `reviewed_note` (str) | JSON: `id`, `status`, `reviewed_by`, `reviewed_at`, `message` | Reviews and approves / rejects teacher registration. |
-| 19 | `/admin/reports` | GET | - | - | - | JSON: array of reports | Lists reported courses. |
-| 20 | `/admin/courses/{id}/status` | POST | - | `id` (str) | JSON: `status` (PUBLISHED / ARCHIVED / DRAFT) | JSON: `message`, `course_id`, `new_status` | Updates course moderation status. |
-| 21 | `/admin/users/{userId}/status` | PUT | - | `userId` (int) | JSON: `account_status` (ACTIVE / BANNED) | JSON: `message`, `user_id`, `new_status` | Bans or reactivates a user. |
+| 1 | `/users/me` | GET | - | - | - | JSON: profile object | Retrieves current logged-in user profile. |
+| 2 | `/users/me/profile` | PUT | - | - | JSON: `bio` (str), `school` (str), `major` (str), `github_url` (str), `facebook_url` (str), `linkedin_url` (str), `avatar_url` (str) | JSON: `message`, `profile` | Updates student profile fields. |
+| 3 | `/users/me/teacher-profile` | PUT | - | - | JSON: `bio` (str), `school_address` (str), `cv_url` (str) | JSON: `message`, `profile` | Updates teacher profile fields. |
+| 4 | `/teacher-register` | POST | - | - | JSON: `motivation` (str), `cccd` (str), `cccd_front_url` (str), `cccd_back_url` (str) | JSON: `id` (int), `status` (PENDING), `message` | Submits a new teacher registration application. |
+| 5 | `/admin/teacher-registers` | GET | - | - | - | JSON: array of registration requests | Lists teacher registration requests. |
+| 6 | `/admin/teacher-registers/{id}` | PUT | - | `id` (int) | JSON: `status` (AGREE \| REJECT), `reviewed_note` (str) | JSON: `id`, `status`, `reviewed_by`, `reviewed_at`, `message` | Reviews and approves / rejects teacher registration. |
+| 7 | `/admin/reports` | GET | - | - | - | JSON: array of reports | Lists reported courses. |
+| 8 | `/admin/courses/{id}/status` | POST | - | `id` (str) | JSON: `status` (PUBLISHED / ARCHIVED / DRAFT) | JSON: `message`, `course_id`, `new_status` | Updates course moderation status. |
+| 9 | `/admin/users/{userId}/status` | PUT | - | `userId` (int) | JSON: `account_status` (ACTIVE / BANNED) | JSON: `message`, `user_id`, `new_status` | Bans or reactivates a user. |
 
 ### 2. Student Course Directory & Study Mode
 Path prefix: `/courses`, `/student`
@@ -189,6 +188,9 @@ Path prefix: `/teacher/dashboard`
 cd src/backend/auth-provider
 uv run main.py
 
+# Export Auth Provider OpenAPI JSON spec
+python -c "import json; from src.app import app; print(json.dumps(app.openapi()))" > docs/specs/auth_provider.json
+
 # Business Application (port 4000)
 cd src/backend/business-application
 python main.py
@@ -203,9 +205,9 @@ python -c "import json; from src.app import app; print(json.dumps(app.openapi())
 - `docs/specs/api_spec.md` -> This API specification document.
 - `docs/specs/api.json` -> Generated OpenAPI 3.0 specification.
 - `src/backend/auth-provider/` -> Authentication & User Service (FastAPI + uv), port 4001.
-  - `src/modules/auth/` -> OAuth authorize, login, token exchange.
+  - `src/modules/auth/` -> OAuth authorize, login, token exchange, register, OTP verify, forgot-password, reset-password, resend-otp, change-email, verify-reset-email.
 - `src/backend/business-application/` -> Core LMS API (FastAPI + uv), port 4000.
-  - `src/modules/auth/` -> Local register, OTP verify, login wrapping auth-provider.
+  - `src/modules/user/` -> User profile, teacher profile, teacher registration, admin moderation.
   - `src/modules/course/` -> Course catalog, enrollment, curriculum.
   - `src/modules/problem/` -> OJ problems, run, submit, submissions.
   - `src/modules/interview/` -> AI interview sessions, SSE chat, report.

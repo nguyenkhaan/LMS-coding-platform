@@ -17,8 +17,6 @@ class UserModel(Base):
     email : Mapped[str] = mapped_column(nullable=False, unique=True) 
     password : Mapped[str] = mapped_column() 
     avatar_url : Mapped[Optional[str]] = mapped_column(nullable=True) 
-    refresh_token: Mapped[Optional[str]] = mapped_column(nullable=True)
-    status: Mapped[str] = mapped_column(nullable=False, default="verified")
     active: Mapped[bool] = mapped_column(nullable=False, default=False)
     account_status : Mapped[AccountStatus] = mapped_column(
         SQLEnum(AccountStatus), 

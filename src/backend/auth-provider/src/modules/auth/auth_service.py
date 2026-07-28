@@ -8,7 +8,14 @@ from sqlalchemy import join, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from models.role_model import RoleModel
+from src.models.role_model import RoleModel
+from src.modules.auth.auth_dto import (
+    LoginGoogleResponse, 
+    RefreshResponse, 
+    RegisterRequest, 
+    RegisterResponse, 
+    VerifyRegisterResponse
+) 
 from src.models.base_model import LoginMethod
 from src.models.user_identity_provider_model import UserIdentityModel
 from src.modules.auth.session_service import SessionService
@@ -24,7 +31,16 @@ class AuthService:
         self.db_session = db_session
         self.session_service = session_service
         self.jwt_service = jwt_service
-
+    async def register(self , data : RegisterRequest): 
+        return RegisterResponse(
+            verify_code =  "demo-123", 
+            message = "Register account successfully"
+        ) 
+    async def verify_register(self , otp: str): 
+        # Viet cac logic (Toi dia nho viet, khong la cut do nhe KA)
+        return VerifyRegisterResponse(
+            message =  "Verified account successfully"
+        )
     async def authorize(self, session_id: str | None , redirect_uri: str):
         if session_id is None:
             return RedirectResponse(f"{BACKEND_URL}/api/auth/login?redirect_uri={redirect_uri}")
@@ -112,4 +128,16 @@ class AuthService:
             "access_token": access_token,
             "refresh_token": refresh_token,
         }
+    async def refresh(self , token : str): 
+        response = RefreshResponse(
+            access_token = "demo123", 
+            refresh_token  = token 
+        ) 
+        return response 
+    async def login_google(self , credential_token : str): 
+        response = LoginGoogleResponse(
+            access_token="demo123", 
+            refresh_token = "demo123"
+        ) 
+        return response 
     

@@ -1,8 +1,8 @@
 """update database schema
 
-Revision ID: 7c1fbcfb7f0f
+Revision ID: cb4bb00b7555
 Revises: 
-Create Date: 2026-07-18 00:18:06.774960
+Create Date: 2026-07-28 17:21:29.163510
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '7c1fbcfb7f0f'
+revision: str = 'cb4bb00b7555'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -60,10 +60,8 @@ def upgrade() -> None:
     sa.Column('email', sa.String(), nullable=False),
     sa.Column('password', sa.String(), nullable=False),
     sa.Column('avatar_url', sa.String(), nullable=True),
-    sa.Column('refresh_token', sa.String(), nullable=True),
-    sa.Column('status', sa.String(), nullable=False),
     sa.Column('active', sa.Boolean(), nullable=False),
-    sa.Column('account_status', sa.Enum('BANNED', 'UNVERIFIED', 'ACTIVE', name='accountstatus'), nullable=False),
+    sa.Column('account_status', sa.Enum('BANNED', 'ACTIVE', name='accountstatus'), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_user')),
@@ -179,6 +177,14 @@ def upgrade() -> None:
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], name=op.f('fk_user_history_user_id_user')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_user_history'))
+    )
+    op.create_table('user_identity',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('method', sa.Enum('GOOGLE', 'LOCAL', name='loginmethod'), nullable=False),
+    sa.Column('provider_id', sa.String(), nullable=True),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], name=op.f('fk_user_identity_user_id_user'), ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_user_identity'))
     )
     op.create_table('user_role',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -419,6 +425,7 @@ def downgrade() -> None:
     op.drop_table('interview_message')
     op.drop_table('courses')
     op.drop_table('user_role')
+    op.drop_table('user_identity')
     op.drop_table('user_history')
     op.drop_table('teacher_register')
     op.drop_table('teacher_profile')

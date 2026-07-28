@@ -8,3 +8,7 @@ class Role(str , Enum):
     ADMIN = 'admin' 
     TEACHER = 'teacher' 
     STUDENT = 'student' 
+
+class AccountStatus(str , Enum): 
+    BANNED = 'banned' 
+    ACTIVE = 'active' 
