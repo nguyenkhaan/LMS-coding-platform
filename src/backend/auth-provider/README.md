@@ -25,9 +25,9 @@ Follow these steps to configure and run the Auth Provider service locally.
 ### Prerequisites
 
 Ensure the following are installed:
-- [UV Package Manager](https://docs.astral.sh/uv/getting-started/installation/): Packing Manager using for this project. 
-- Docker (to run the backing database and Redis)
+- [UV Package Manager](https://docs.astral.sh/uv/getting-started/installation/): Package manager used by this project.
 
+> NOTE: Database and Redis are now hosted on Supabase and Upstash, so local Docker containers are not required for these services.
 
 ---
 
@@ -57,39 +57,34 @@ Ensure the following are installed:
    cp .env.example .env
    ```
 
-2. Fill in the values inside `.env`. The database connection string is already configured for the default Docker PostgreSQL container.
+2. Fill in the values inside `.env`. The database connection string should point to your Supabase Postgres instance and Redis should use Upstash.
    - **Important**: The service expects base64-encoded JWT keys (`JWT_ACCESS_PRIVATE` and `JWT_ACCESS_PUBLIC`) to successfully parse them from environment variables.
 
 #### Generating the Base64 RSA Key Pair:
 
-The system is using JWK and RSA authentication. We need to generate a key pair, including **Public Key** and **Private Key**. 
+The system uses JWK and RSA authentication. Generate a key pair, including **Public Key** and **Private Key**.
 
-You can visit this website for generating a key pairs: https://cryptotools.net/rsagen. Please **choose 2048 length** 
+You can use any trusted RSA key generator. After generating the key pair, encode each key as Base64.
 
-After generate a **Public Key** and **Private Key** pair. Visit this website to encode these keys into base64: https://www.base64encode.org/. Just copy your **Public Key** and **Private Key** and encode them to Base64 string sequently. 
-
-
-Copy your 2 base 64 strings to the variables in the .env file. 
+Copy the two Base64 strings into the `.env` file.
 
 ```env
-JWT_ACCESS_PRIVATE=<Content of private_base64_string>
-JWT_ACCESS_PUBLIC=<Content of public_base64_string>
-JWT_REFRESH_SECRET=generate-any-long-random-string-here
+JWT_ACCESS_PRIVATE=<base64-encoded-private-key>
+JWT_ACCESS_PUBLIC=<base64-encoded-public-key>
+JWT_REFRESH_SECRET=<any-long-random-string>
 BACKEND_URL=http://localhost:4001
-DATABASE_URL=postgresql+asyncpg://lms:lms@localhost:5432/lms
+DATABASE_URL=postgresql+asyncpg://<your_supabase_user>:<your_supabase_password>@<your_supabase_host>:5432/<your_supabase_db>
+UPSTASH_REDIS_REST_URL=https://<your-upstash-id>.upstash.io
+UPSTASH_REDIS_REST_TOKEN=<your-upstash-token>
 ```
 
 ---
 
 ### Step 3: Run the Service
 
-Make sure your Docker infrastructure (root directory) is running:
-```bash
-# In the repository root
-docker compose up -d
-```
+Because the database and Redis are cloud-managed via Supabase and Upstash, you do not need to start local Docker containers for those services.
 
-Now, run the FastAPI application:
+Run the FastAPI application:
 ```bash
 # In src/backend/auth-provider
 uv run main.py

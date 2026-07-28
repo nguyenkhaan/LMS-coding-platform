@@ -61,44 +61,37 @@ graph TD
 
 ---
 
-## Infrastructure Setup (Docker)
+## Infrastructure Setup
 
-Before running the backend or frontend services locally, spin up the supporting storage and middleware engines using Docker.
+This project now uses cloud-managed services for database and cache. The backend services should be configured to use Supabase for PostgreSQL and Upstash for Redis.
+
+If you want to keep a local container stack for legacy or development testing, the `docker compose` files remain available, but they are not required for the current cloud-based setup.
 
 ### 1. Setup root environment variables
 Copy the template `.env.example` in the root folder to `.env`:
 ```bash
 cp .env.example .env
 ```
-*(Optionally modify usernames or passwords inside `.env` to configure your local container stack).*
 
-### 2. Start the infrastructure
-Start the PostgreSQL, Adminer, Redis, RabbitMQ, and MinIO instances in the background:
+### 2. Cloud service configuration
+Update `.env` values in each service folder to use:
+- Supabase PostgreSQL connection string for `DATABASE_URL`
+- Upstash Redis connection values for `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`
+
+### 3. Local Docker usage (optional)
+If you still choose to use local Docker infrastructure for legacy or testing purposes, you may run:
 ```bash
 docker compose up -d
 ```
 
-### 3. Verify running containers
-Ensure all containers are up and running:
+### 4. Optional verification
+If using local Docker, verify containers are running:
 ```bash
 docker compose ps
 ```
 
-### 4. Local Service Ports & Endpoints
-Once up, the following local services are available:
-
-| Service | Port | Endpoint | Credentials / Details |
-|---------|------|----------|----------------------|
-| **PostgreSQL** | `5432` | `localhost:5432` | User: `lms`, Password: `change-me-postgres`, DB: `lms` |
-| **Adminer** (DB UI) | `8080` | [http://localhost:8080](http://localhost:8080) | Server: `postgres`, Username: `lms` |
-| **Redis** | `6379` | `localhost:6379` | Used for caching and user sessions |
-| **RabbitMQ API** | `5672` | `localhost:5672` | Event broker connection string |
-| **RabbitMQ Console** | `15672` | [http://localhost:15672](http://localhost:15672) | Username: `lms`, Password: `change-me-rabbitmq` |
-| **MinIO API** | `9000` | `localhost:9000` | S3-compatible storage gateway |
-| **MinIO Console** | `9001` | [http://localhost:9001](http://localhost:9001) | Username: `minioadmin`, Password: `minioadmin` |
-
-### 5. Stop the infrastructure
-To shut down and stop the infrastructure services:
+### 5. Optional shutdown
+To stop the local Docker infrastructure:
 ```bash
 docker compose down
 ```
