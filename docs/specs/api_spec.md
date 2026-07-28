@@ -85,19 +85,18 @@ class ErrorResponse(BaseModel):
 *   **`POST /api/v1/auth/register`**
     *   *Description*: Register a student account with details. Returns an OTP verification requirement.
     *   *Request Body*: `full_name`, `email`, `password`, `address`.
-    *   *Response*: `verify_code` (OTP token), `message`.
+     *   *Response*: `message` (confirmation that a verification email/sms was sent). For security the OTP is not returned in the response; the user must verify via the `GET /api/v1/auth/verify` route.
 *   **`GET /api/v1/auth/verify?code={otp_code}`**
     *   *Description*: Verify the email OTP to activate the user account. On success, update `user.account_status` from `UNVERIFIED` to `ACTIVE`.
     *   *Response*: `message` (Success verification message).
-*   **`POST /api/v1/auth/token`**
+*   **`GET /api/v1/auth/code?code=`**
     *   *Description*: Exchanges authorization `code` from `auth-provider` to obtain the token pair (`access_token`, `refresh_token`). Sets HttpOnly secure cookies.
-    *   *Request Body*: `code`, `redirect_uri`.
-    *   *Response*: `message` (Success), `user_info` (`id`, `email`, `roles`).
-    *   *Note*: `roles` is an aggregate field derived from the `user_role` table, not a direct column.
+    *   *Request Query*: `code` 
+    *   *Response*: `access_token`, `refresh_token`
 *   **`POST /api/v1/auth/google`**
     *   *Description*: Handles login/registration via Google OAuth.
     *   *Request Body*: `credential_token`.
-    *   *Response*: `message`, `user_info` (`id`, `email`, `roles`).
+    *   *Response*: `access_token`, `refresh_token`.
     *   *Note*: `roles` is derived from the `user_role` table, similar to the token exchange route.
 *   **`POST /api/v1/auth/logout`**
     *   *Description*: Clear access/refresh tokens cookies from user's browser.
@@ -105,15 +104,15 @@ class ErrorResponse(BaseModel):
 *   **`POST /api/v1/auth/refresh`**
     *   *Description*: Exchange a valid refresh token cookie for a new access token without requiring the user to log in again.
     *   *Request Body*: none; the refresh token is read from an HttpOnly cookie.
-    *   *Response*: `message`.
+    *   *Response*: `access_token`.
 *   **`POST /api/v1/auth/forgot-password`**
     *   *Description*: Request a password reset link or code sent to the user's email.
     *   *Request Body*: `email`.
-    *   *Response*: `message`.
+    *   *Response*: `verify_reset_password_token`.
 *   **`POST /api/v1/auth/reset-password`**
     *   *Description*: Reset password using the token sent by the forgot-password flow.
-    *   *Request Body*: `token`, `new_password`.
-    *   *Response*: `message`.
+    *   *Request Body*: `new_password`, `verify_reset_password_token`.
+    *   *Response*: `token`.
 *   **`POST /api/v1/auth/resend-otp`**
     *   *Description*: Resend the email OTP when the previous one expired before verification.
     *   *Request Body*: `email`.
@@ -138,7 +137,26 @@ class ErrorResponse(BaseModel):
     *   *Description*: Admin reviews and approves or rejects a teacher registration application.
     *   *Request Body*: `status` (`AGREE`, `REJECT`), `reviewed_note`.
     *   *Response*: `id`, `status`, `reviewed_by`, `reviewed_at`, `message`.
+*   **`POST /api/v1/auth/forgot-password`**
+     *   *Description*: Initiate password reset flow. Sends a short-lived verification code to the user's email (or configured recovery channel). For security the verification code is not returned in the API response.
+     *   *Request Body*: `email`.
+     *   *Response*: `message`, `verify_reset_password_token` (e.g. "If the email exists a verification code has been sent").
 
+*   **`POST /api/v1/auth/verify-reset-password`**
+     *   *Description*: Verify the password-reset verification code sent to the user's email. On success the server issues a one-time `reset_token` that can be used to perform the password update.
+     *   *Request Body*: `email`, `verify_reset_password_token`.
+     *   *Response*: `message` (short-lived, single-use token) and `message`.
+
+*   **`POST /api/v1/auth/forgot-email`**
+     *   *Description*: Initiate email-change/verification flow for updating a user's email. Sends a verification code to the *new* email address to confirm ownership.
+     *   *Request Body*: `new_email`.
+     *   *Response*: `message`, `verify_reset_email_token` (confirmation that verification code was sent to `new_email`).
+
+*   **`POST /api/v1/auth/verify-reset-email`**
+     *   *Description*: Verify the code that was sent to the new email address. On success the server updates the user's email (or issues a one-time token to authorize the change) and returns confirmation.
+     *   *Request Body*: `new_email`, `verify_reset_email_token` (or `verify_reset_email_token` depending on implementation).
+     *   *Response*: `message` and `updated_email`
+     
 ### 2. Student Course Directory & Study Mode (`/api/v1/courses`, `/api/v1/student`)
 *   **`GET /api/v1/courses`**
     *   *Description*: Public catalog retrieval with filters and pagination.

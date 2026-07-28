@@ -46,7 +46,7 @@ async def login(
     response = await auth_service.login(email , password , redirect_uri) 
     return response 
 
-@router.get("/code") 
+@router.post("/code") 
 async def auth_code(
     code : str, 
     auth_service : AuthService = Depends(get_auth_service) 

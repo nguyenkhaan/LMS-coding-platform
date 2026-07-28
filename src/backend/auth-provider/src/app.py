@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from src.cores.redis import redis_client
 from fastapi import FastAPI, APIRouter 
-from src.modules.auth.auth_route import router as auth_router 
+from modules.auth.auth_router import router as auth_router 
 api_router = APIRouter(
     prefix="/api"
 )
