@@ -1,10 +1,11 @@
-import email
+import json
 from http.client import BAD_REQUEST
-from src.modules.auth.jwt.jwt_auth import create_jwt_token, encode_jwt_token
+from src.helpers.generate_random import generate_random
+from src.modules.redis.redis_service import RedisService
 from src.bases.enums.jwt_enum import TokenType
 from src.models.role_model import UserRoleModel
 from src.models.base_model import AccountStatus, Role
-from src.helper.pwd_hash import password_hash
+from src.helpers.pwd_hash import password_hash
 from fastapi import HTTPException
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,9 +13,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.user_model import UserModel
 from src.modules.auth.auth_dto import RegisterRequest, RegisterResponse
 
+OTP_LIVE_TIME = 300  # seconds 
+
 class AuthService: 
-    def __init__(self , session : AsyncSession): 
-        self.session = session 
+    def __init__(self , session : AsyncSession , redis_service : RedisService): 
+        self.session = session  
+        self.redis_service = redis_service
     # Dang ky tai khoan hoc sinh 
     async def register(self , data : RegisterRequest) -> RegisterResponse: 
         try: 
@@ -29,12 +33,10 @@ class AuthService:
                         detail = "User has been registered" 
                     ) 
                 else: 
-                    payload = {
-                        "sub": str(user.id), # Truong sub bat buoc phai la string 
-                    }
-                    example_code = create_jwt_token(payload ,  TokenType.VERIFY_REGISTER) 
+                    otp_code = generate_random(6) 
+                    await self.redis_service.set_value(f"lms:business:verify-register" , otp_code , OTP_LIVE_TIME)
                     return RegisterResponse(
-                        verify_code = example_code, 
+                        verify_code = otp_code, 
                         message = "Verify your account with the code above"
                     )
             password_hashed = password_hash.hash(data.password)
@@ -55,33 +57,44 @@ class AuthService:
             )
             self.session.add(role) 
             payload = {
-                "sub": str(user.id) 
+                "user_id": str(user.id), 
+                "purpose": TokenType.VERIFY_REGISTER
             }
-            example_code = create_jwt_token(payload , TokenType.VERIFY_REGISTER)
-            
+            otp_code = generate_random(6)
+            payload = {
+                id : user.id   # Luu tru id cua nguoi dung vao ben trong redis 
+            }
+            await self.redis_service.set_value(f"lms:verify-register:{otp_code}" , json.dumps(payload) , OTP_LIVE_TIME)
             await self.session.commit() 
             # Phai rao ra them 1 bang nua de tien hanh luu tru xem thang nay no dang dang nhap theo phuong thuc gi 
             return RegisterResponse(
-                verify_code=example_code, 
+                verify_code=otp_code, 
                 message = "Register successfully. Verify account with the code above"
             )
         except Exception: 
             await self.session.rollback() 
             raise 
-    async def verify_register(self , token : str): 
+    async def verify_register(self , otp : str): 
         try: 
-            payload = encode_jwt_token(token , TokenType.VERIFY_REGISTER) 
+            payload = await self.redis_service.get_value(f"lms:verify-register:{otp}") 
+            if not(payload): 
+                raise HTTPException(
+                    status_code = 400, 
+                    detail = "Invalid otp error" 
+                )
+            payload = json.loads(payload) 
             print(payload)
-            purpose = payload.get("type") 
-            sub = payload.get("sub") 
-            if purpose != TokenType.VERIFY_REGISTER or sub is None: 
+            user_id = payload.get("user_id")
+            purpose = payload.get("purpose") 
+
+            if purpose != TokenType.VERIFY_REGISTER or user_id is None: 
                 raise HTTPException(
                     status_code = 400, 
                     detail = "Invalid token error" 
                 ) 
             await self.session.execute(
                 update(UserModel) 
-                .where(UserModel.id == int(sub)) 
+                .where(UserModel.id == int(user_id)) 
                 .values(active = True)
                 .values(status = AccountStatus.ACTIVE)
             )

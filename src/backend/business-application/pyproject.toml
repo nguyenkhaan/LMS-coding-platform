@@ -13,4 +13,5 @@ dependencies = [
     "pyjwt>=2.13.0",
     "python-dotenv>=1.2.2",
     "sqlalchemy[asyncio]>=2.0.51",
+    "upstash-redis>=1.7.0",
 ]

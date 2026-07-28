@@ -65,6 +65,7 @@ class AuthService:
         }
 
         authorization_code = secrets.token_urlsafe(32)
+        
         await self.session_service.create_authorization_code(authorization_code, payload)
 
         return {
