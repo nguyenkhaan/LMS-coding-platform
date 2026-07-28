@@ -4,9 +4,11 @@ import secrets
 from datetime import timedelta
 from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
-from sqlalchemy import select
+from sqlalchemy import join, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
+from models.role_model import RoleModel
 from src.models.base_model import LoginMethod
 from src.models.user_identity_provider_model import UserIdentityModel
 from src.modules.auth.session_service import SessionService
@@ -85,14 +87,23 @@ class AuthService:
 
         client_id = payload.get("client_id")
         email = payload.get("email")
-
+        stmt = select(
+            UserModel.id, UserModel.email
+        ).options(selectinload(UserModel.roles)).where(UserModel.email == email)
+        user = await self.db_session.scalar(stmt) 
+        if user is None: 
+            raise HTTPException(
+                status_code = 404, 
+                detail = "User not found" 
+            )
+        roles = [role for role in user.roles]
         access_token = await self.jwt_service.create_token(
-            {"sub": str(client_id), "email": email},
+            {"sub": str(client_id), "email": email , "roles": roles},
             TokenType.ACCESS_TOKEN,
             timedelta(seconds=ACCESS_LIVE_TIME),
         )
         refresh_token = await self.jwt_service.create_token(
-            {"sub": str(client_id), "email": email},
+            {"sub": str(client_id), "email": email , "roles": roles},
             TokenType.REFRESH_TOKEN,
             timedelta(seconds=REFRESH_LIVE_TIME),
         )
@@ -101,3 +112,4 @@ class AuthService:
             "access_token": access_token,
             "refresh_token": refresh_token,
         }
+    
