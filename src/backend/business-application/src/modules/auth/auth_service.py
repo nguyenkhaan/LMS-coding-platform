@@ -45,7 +45,7 @@ class AuthService:
                 full_name = data.full_name, 
                 password = password_hashed, 
                 address = data.address, 
-                status = AccountStatus.UNVERIFIED, 
+                status = AccountStatus.ACTIVE, 
                 active = False 
             )
             self.session.add(user) 
@@ -61,9 +61,6 @@ class AuthService:
                 "purpose": TokenType.VERIFY_REGISTER
             }
             otp_code = generate_random(6)
-            payload = {
-                id : user.id   # Luu tru id cua nguoi dung vao ben trong redis 
-            }
             await self.redis_service.set_value(f"lms:verify-register:{otp_code}" , json.dumps(payload) , OTP_LIVE_TIME)
             await self.session.commit() 
             # Phai rao ra them 1 bang nua de tien hanh luu tru xem thang nay no dang dang nhap theo phuong thuc gi 

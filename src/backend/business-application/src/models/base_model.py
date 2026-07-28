@@ -2,7 +2,6 @@ from enum import Enum
 
 class AccountStatus(str , Enum): 
     BANNED = 'banned' 
-    UNVERIFIED = 'unverified' 
     ACTIVE = 'active' 
 
 class TeacherRegisterStatus(str , Enum): 

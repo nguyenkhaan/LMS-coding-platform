@@ -17,4 +17,5 @@ dependencies = [
     "redis>=8.0.1",
     "uvicorn>=0.50.2",
     "sqlalchemy[asyncio]>=2.0.51",
+    "upstash-redis>=1.7.0",
 ]

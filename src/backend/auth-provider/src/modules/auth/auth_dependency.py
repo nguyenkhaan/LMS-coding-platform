@@ -1,6 +1,6 @@
 
 from fastapi import Depends
-from redis.asyncio import Redis
+from upstash_redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.db import get_async_db_session
 from src.modules.auth.auth_service import AuthService
@@ -9,10 +9,12 @@ from src.cores.redis import redis_client
 from src.modules.auth.jwt.jwt_service import JwtService
 
 def get_redis_client():
+    redis_client = Redis.from_env()
     return redis_client
 
 
 def get_session_service(redis: Redis = Depends(get_redis_client)) -> SessionService:
+
     return SessionService(redis)
 
 
@@ -20,7 +22,7 @@ def get_db_session(session: AsyncSession = Depends(get_async_db_session)) -> Asy
     return session
 
 
-def get_jwt_service():
+def get_jwt_service() -> JwtService:
     return JwtService()
 
 

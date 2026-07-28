@@ -1,5 +1,4 @@
-from redis.asyncio import Redis
-
+from upstash_redis.asyncio import Redis
 from src.bases.constant.jwt_constant import ACCESS_LIVE_TIME
 from src.helpers.random import random_string 
 import json 

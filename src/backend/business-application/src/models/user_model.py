@@ -23,7 +23,7 @@ class UserModel(Base):
     account_status : Mapped[AccountStatus] = mapped_column(
         SQLEnum(AccountStatus), 
         nullable=False, 
-        default=AccountStatus.UNVERIFIED
+        default=AccountStatus.ACTIVE
     ) 
     created_at : Mapped[datetime] = mapped_column(
         DateTime(timezone=True), 

@@ -7,8 +7,8 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.base_model import LoginMethod
-from models.user_identity_provider_model import UserIdentityModel
+from src.models.base_model import LoginMethod
+from src.models.user_identity_provider_model import UserIdentityModel
 from src.modules.auth.session_service import SessionService
 from src.cores.settings import BACKEND_URL
 from src.modules.auth.jwt.jwt_service import JwtService
@@ -23,7 +23,7 @@ class AuthService:
         self.session_service = session_service
         self.jwt_service = jwt_service
 
-    async def authorize(self, session_id: str, redirect_uri: str):
+    async def authorize(self, session_id: str | None , redirect_uri: str):
         if session_id is None:
             return RedirectResponse(f"{BACKEND_URL}/api/auth/login?redirect_uri={redirect_uri}")
 
@@ -40,7 +40,7 @@ class AuthService:
             "message": "User has been login"
         }
 
-    async def login(self, email: str, password: str, redirect_uri: str):
+    async def login(self, email, password, redirect_uri):
         query = select(UserModel).where(UserModel.email == email)
         user = await self.db_session.scalar(query)
 
@@ -58,14 +58,14 @@ class AuthService:
         ) 
         # Adding the login authentication provider 
         self.db_session.add(user_identity)
-        await self.db_session.refresh(user_identity)
+        await self.db_session.flush()
         payload = {
             "client_id": user.id,
             "email": user.email,
         }
 
         authorization_code = secrets.token_urlsafe(32)
-        
+        print("Authorization Code: " , authorization_code)
         await self.session_service.create_authorization_code(authorization_code, payload)
 
         return {
