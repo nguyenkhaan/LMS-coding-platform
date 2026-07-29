@@ -30,20 +30,20 @@ Base path: `/auth`
 | 2 | `/login` | GET | `redirect_uri` | - | - | HTML template (`login.html`) | Renders the login page with `redirect_uri`. |
 | 3 | `/public-key` | GET | - | - | - | PEM text | Returns the RSA public JWK for token verification. |
 | 4 | `/verify` | GET | `otp` (str) | - | - | JSON: `message` (str) | Verifies email OTP and activates the user. |
-| 5 | `/reset-password` | GET | - | - | JSON: `code` (str), `new_password` (str) | JSON: `message` (str) | Resets password using the token. |
+| 5 | `/reset-password` | POST | - | - | JSON: `code` (str), `new_password` (str) | JSON: `message` (str) | Resets password using the token. |
 | 6 | `/verify-reset-email` | GET | `token` (str) | - | - | JSON: `message` (str) | Confirms the new email address using the verification token. |
 | 7 | `/login` | POST | - | - | `application/x-www-form-urlencoded`: `email`, `password`, `redirect_uri` | JSON (`code`, `redirect_uri`, `identity`) | Validates credentials; returns authorization code. |
-| 8 | `/code` | POST | - | - | JSON: `code` (str) | JSON (`access_token`, `refresh_token`) | Exchanges authorization code for JWT tokens. |
+| 8 | `/code` | POST | `code` (str) | - | - | JSON (`access_token`, `refresh_token`) | Exchanges authorization code for JWT tokens. |
 | 9 | `/refresh` | POST | - | - | JSON (`refresh_token`) | JSON (`access_token`) | Issues new access token from refresh cookie. |
 | 10 | `/google` | POST | - | - | JSON: `credential_code` (str) | JSON (`access_token` , `refresh_token`) | Google OAuth login / registration. |
 | 11 | `/logout` | POST | - | - | - | JSON (`message`) | Clears auth cookies. |
 | 12 | `/register` | POST | - | - | JSON: `full_name` (str), `email` (email), `password` (str), `address` (str) | JSON: `verify_code` (str), `message` (str) | Registers a student and returns OTP. |
-| 13 | `/resend-otp` | POST | `email` (str) | - | - | JSON: `message` (str) | Resends the account verification OTP. |
+| 13 | `/resend-otp` | POST | - | - | JSON: `email` (email) | JSON: `message` (str) | Resends the account verification OTP. |
 | 14 | `/forgot-password` | POST | - | - | JSON: `email` (email) | JSON: `message` (str), `code` | Sends password reset link / code. |
 | 15 | `/change-email` | POST | - | - | JSON: `new_email` (email), `password` (str) | JSON: `message` (str), `token` (str) | Requests an email change; backend validates password and queues verification. |
 
 ### Key Auth Provider Notes
-- `/login` (POST) reads `session_id` from Cookie (`HttpOnly`) and `email`, `password`, `redirect_uri` from form data.
+- `/login` (POST) reads `email`, `password`, `redirect_uri` from form data.
 - `/code` reads `code` directly as a FastAPI dependency parameter (not JSON body), because it is sent as a plain query/form field from the BE caller.
 - `/login` (POST), `/code`, `/refresh`, `/google`, `/logout` are consumed behind the scenes by the Business Application; the frontend never calls them directly.
 - `/register`, `/verify`, `/forgot-password`, `/reset-password`, `/resend-otp`, `/change-email`, `/verify-reset-email` are called directly by the frontend.
@@ -66,7 +66,7 @@ Path prefix: `/users`, `/teacher-register`, `/admin`
 | 5 | `/admin/teacher-registers` | GET | - | - | - | JSON: array of registration requests | Lists teacher registration requests. |
 | 6 | `/admin/teacher-registers/{id}` | PUT | - | `id` (int) | JSON: `status` (AGREE \| REJECT), `reviewed_note` (str) | JSON: `id`, `status`, `reviewed_by`, `reviewed_at`, `message` | Reviews and approves / rejects teacher registration. |
 | 7 | `/admin/reports` | GET | - | - | - | JSON: array of reports | Lists reported courses. |
-| 8 | `/admin/courses/{id}/status` | POST | - | `id` (str) | JSON: `status` (PUBLISHED / ARCHIVED / DRAFT) | JSON: `message`, `course_id`, `new_status` | Updates course moderation status. |
+| 8 | `/admin/courses/{id}/status` | POST | - | `id` (int) | JSON: `status` (PUBLISHED / ARCHIVED / DRAFT) | JSON: `message`, `course_id`, `new_status` | Updates course moderation status. |
 | 9 | `/admin/users/{userId}/status` | PUT | - | `userId` (int) | JSON: `account_status` (ACTIVE / BANNED) | JSON: `message`, `user_id`, `new_status` | Bans or reactivates a user. |
 
 ### 2. Student Course Directory & Study Mode
@@ -82,8 +82,7 @@ Path prefix: `/courses`, `/student`
 | 6 | `/student/progress/lesson-content/{id}/complete` | POST | - | `id` (int) | - | JSON: `message`, `completed_at` | Marks a reading/video content as complete. |
 | 7 | `/student/quizzes/{quizId}` | GET | - | `quizId` (int) | - | JSON: quiz object + questions (without `is_correct`) | Gets quiz questions for the test interface. |
 | 8 | `/student/quizzes/{quizId}/submit` | POST | - | `quizId` (int) | JSON: `answers` (Map<int, int>) | JSON: `submission_id`, `score`, `passed`, `correct_answers`, ... | Submits quiz answers and returns score. |
-| 9 | `/webhooks/payos` | POST | - | - | JSON: PayOS notification payload | JSON: `message` | PayOS payment notification callback. |
-| 10 | `/courses/{slug}/unenroll` | POST | - | `slug` (str) | - | JSON: `message` | Cancels a student's enrollment. |
+| 9 | `/courses/{slug}/unenroll` | POST | - | `slug` (str) | - | JSON: `message` | Cancels a student's enrollment. |
 
 ### 3. Teacher Course & Curriculum Creator
 Path prefix: `/teacher/courses`, `/teacher/sections`, `/teacher/lessons`, `/teacher/lesson-contents`
@@ -160,7 +159,7 @@ Path prefix: `/admin`, `/teacher-register`
 | 2 | `/admin/teacher-registers` | GET | - | - | - | JSON: list of registration requests with user data | Lists requests pending admin review. |
 | 3 | `/admin/teacher-registers/{id}` | PUT | - | `id` (int) | JSON: `status` (AGREE / REJECT), `reviewed_note` | JSON: `id`, `status`, `new_status`, `message` | Approves or rejects a teacher registration. |
 | 4 | `/admin/reports` | GET | - | - | - | JSON: array of course report objects | Lists reported courses. |
-| 5 | `/admin/courses/{id}/status` | POST | - | `id` (str) | JSON: `status` (PUBLISHED / ARCHIVED / DRAFT) | JSON: `message`, `course_id`, `new_status` | Updates course moderation status. |
+| 5 | `/admin/courses/{id}/status` | POST | - | `id` (int) | JSON: `status` (PUBLISHED / ARCHIVED / DRAFT) | JSON: `message`, `course_id`, `new_status` | Updates course moderation status. |
 | 6 | `/admin/users/{userId}/status` | PUT | - | `userId` (int) | JSON: `account_status` (ACTIVE / BANNED) | JSON: `message`, `user_id`, `new_status` | Bans or reactivates a user account. |
 
 ### 9. Notifications Module

@@ -16,6 +16,7 @@ from src.modules.auth.auth_dto import (
     RefreshResponse,
     RegisterRequest,
     RegisterResponse,
+    ResendOtpRequest,
     ResendOtpResponse,
     ResetPasswordRequest,
     ResetPasswordResponse,
@@ -65,7 +66,7 @@ async def verify(
     return response
 
 
-@router.get("/reset-password")
+@router.post("/reset-password")
 async def reset_password(
     data: ResetPasswordRequest = Body(...),
     auth_service: AuthService = Depends(get_auth_service),
@@ -140,10 +141,10 @@ async def register(
 
 @router.post("/resend-otp")
 async def resend_otp(
-    email: str,
+    data: ResendOtpRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ):
-    return await auth_service.resend_otp(email)
+    return await auth_service.resend_otp(data.email)
 
 
 @router.post("/forgot-password")

@@ -68,6 +68,10 @@ class ForgotPasswordResponse(BaseModel):
     code: str
 
 
+class ResendOtpRequest(BaseModel):
+    email: EmailStr
+
+
 class ResendOtpResponse(AuthBase):
     """
         dto for resend otp 
