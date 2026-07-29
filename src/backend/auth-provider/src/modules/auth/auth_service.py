@@ -1,6 +1,7 @@
 # https://stackoverflow.com/questions/76970173/how-to-get-files-and-form-data-using-the-request-object-in-fastapi - multipart form data
 
 import secrets
+import json 
 from datetime import timedelta
 from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
@@ -8,15 +9,25 @@ from sqlalchemy import join, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from src.bases.constant.redis_key import RedisKey
+from src.helpers.random import random_string
 from src.models.role_model import RoleModel
 from src.modules.auth.auth_dto import (
-    LoginGoogleResponse, 
-    RefreshResponse, 
-    RegisterRequest, 
-    RegisterResponse, 
-    VerifyRegisterResponse
-) 
-from src.models.base_model import LoginMethod
+    AuthCodeResponse,
+    ChangeEmailResponse,
+    ForgotPasswordResponse,
+    LoginGoogleResponse,
+    LoginResponse,
+    LogoutResponse,
+    RefreshResponse,
+    RegisterRequest,
+    RegisterResponse,
+    ResendOtpResponse,
+    ResetPasswordResponse,
+    VerifyRegisterResponse,
+    VerifyResetEmailResponse,
+)
+from src.models.base_model import AccountStatus, LoginMethod, Role
 from src.models.user_identity_provider_model import UserIdentityModel
 from src.modules.auth.session_service import SessionService
 from src.cores.settings import BACKEND_URL
@@ -26,18 +37,64 @@ from src.bases.constant.jwt_constant import ACCESS_LIVE_TIME, REFRESH_LIVE_TIME
 from src.models.user_model import UserModel
 from src.helpers.pwd_hash import password_hash
 
+OTP_LIVE_TIME = 300 
 class AuthService:
     def __init__(self, db_session: AsyncSession, session_service: SessionService, jwt_service: JwtService):
         self.db_session = db_session
         self.session_service = session_service
         self.jwt_service = jwt_service
     async def register(self , data : RegisterRequest): 
-        return RegisterResponse(
-            verify_code =  "demo-123", 
-            message = "Register account successfully"
-        ) 
+        try: 
+            user = await self.db_session.scalar(
+                select(UserModel).where(UserModel.email == data.email)
+            ) 
+            if user is not None: 
+                if user.active: 
+                    raise HTTPException(400 , detail="User has been registered") 
+                else: 
+                    otp_code = random_string(8) 
+                    payload = {
+                        "user_id": str(user.id),
+                        "type": "register" 
+                    }
+                    await self.session_service.set_value(RedisKey.verify_register(otp_code) , json.dumps(payload) , OTP_LIVE_TIME)
+
+                    return RegisterResponse(
+                        verify_code = otp_code, 
+                        message="Verify your account with the code above"
+                    )
+            hashed_password = password_hash.hash(data.password)
+            user = UserModel(
+                email = data.email, 
+                address = data.address, 
+                password = hashed_password, 
+                full_name = data.full_name, 
+                active = False, 
+                account_status = AccountStatus.ACTIVE
+            )
+            self.db_session.add(user) 
+            await self.db_session.flush() 
+            role = RoleModel(
+                user_id = user.id, 
+                role = Role.STUDENT
+            )
+            self.db_session.add(role) 
+            payload = {
+                "user_id": str(user.id),
+                "type": "register" 
+            }
+            otp_code = random_string(8) 
+            await self.session_service.set_value(RedisKey.verify_register(otp_code) , json.dumps(payload) , OTP_LIVE_TIME)
+            return RegisterResponse(
+                verify_code = otp_code, 
+                message = "Verify your account with the code above"
+            )
+        except Exception: 
+            await self.db_session.rollback() 
+            raise 
+
     async def verify_register(self , otp: str): 
-        # Viet cac logic (Toi dia nho viet, khong la cut do nhe KA)
+        payload = self.session_service.get_value(RedisKey.verify_register(otp))
         return VerifyRegisterResponse(
             message =  "Verified account successfully"
         )
@@ -67,14 +124,12 @@ class AuthService:
                 status_code=401,
                 detail="Wrong email or password",
             )
-        # Tai khoan va mat khau dung => Dang nhap thanh cong 
 
         user_identity = UserIdentityModel(
             user_id = user.id, 
             provider_id = None, 
             method = LoginMethod.LOCAL
         ) 
-        # Adding the login authentication provider 
         self.db_session.add(user_identity)
         await self.db_session.flush()
         payload = {
@@ -83,15 +138,13 @@ class AuthService:
         }
 
         authorization_code = secrets.token_urlsafe(32)
-        print("Authorization Code: " , authorization_code)
         await self.session_service.create_authorization_code(authorization_code, payload)
 
-        return {
-            "code": authorization_code,
-            "redirect_uri": redirect_uri,
-            "identity": user_identity.method 
-        }
-
+        return LoginResponse(
+            code = authorization_code, 
+            redirect_uri = redirect_uri, 
+            identity = user_identity.method 
+        )
     async def auth_code(self, code: str):
         payload = await self.session_service.get_authorization_code(code)
 
@@ -123,15 +176,14 @@ class AuthService:
             TokenType.REFRESH_TOKEN,
             timedelta(seconds=REFRESH_LIVE_TIME),
         )
-
-        return {
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-        }
+        return AuthCodeResponse(
+            access_token = access_token, 
+            refresh_token = refresh_token
+        )
+    
     async def refresh(self , token : str): 
         response = RefreshResponse(
-            access_token = "demo123", 
-            refresh_token  = token 
+            access_token = "demo123"
         ) 
         return response 
     async def login_google(self , credential_token : str): 
@@ -140,4 +192,33 @@ class AuthService:
             refresh_token = "demo123"
         ) 
         return response 
-    
+    async def logout(self): 
+        return LogoutResponse(
+            message = "Logout successfully" 
+        )
+    async def forgot_password(self, email: str):
+        return ForgotPasswordResponse(
+            message="Password reset link sent",
+            code="demo-code"
+        )
+
+    async def reset_password(self, code: str, new_password: str):
+        return ResetPasswordResponse(
+            message="Password reset successfully"
+        )
+
+    async def resend_otp(self, email: str):
+        return ResendOtpResponse(
+            message="OTP resent successfully"
+        )
+
+    async def change_email(self, new_email: str, password: str):
+        return ChangeEmailResponse(
+            message="Email change request submitted",
+            token="demo-token"
+        )
+
+    async def verify_reset_email(self, token: str):
+        return VerifyResetEmailResponse(
+            message="Email verified successfully"
+        )

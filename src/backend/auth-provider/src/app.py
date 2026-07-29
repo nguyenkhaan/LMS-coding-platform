@@ -4,7 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from src.cores.redis import redis_client
 from fastapi import FastAPI, APIRouter 
-from modules.auth.auth_router import router as auth_router 
+from src.modules.auth.auth_router import router as auth_router 
 from starlette.exceptions import HTTPException as StarletteHTTPException
 api_router = APIRouter(
     prefix="/api"

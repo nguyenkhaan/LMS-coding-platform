@@ -28,25 +28,25 @@ Base path: `/auth`
 |---|----------|--------|-------|------|--------------|----------|-------------|
 | 1 | `/authorize` | GET | `redirect_uri` | - | - | JSON (`message`) or RedirectResponse | Checks session; redirects to login page if missing. |
 | 2 | `/login` | GET | `redirect_uri` | - | - | HTML template (`login.html`) | Renders the login page with `redirect_uri`. |
-| 3 | `/login` | POST | - | - | `application/x-www-form-urlencoded`: `email`, `password`, `redirect_uri` | JSON (`code`, `redirect_uri`, `identity`) | Validates credentials; returns authorization code. |
-| 4 | `/code` | POST | - | - | JSON: `code` (str) | JSON (`access_token`, `refresh_token`) | Exchanges authorization code for JWT tokens. |
-| 5 | `/refresh` | POST | - | - | - | JSON (`access_token`) | Issues new access token from refresh cookie. |
-| 6 | `/google` | POST | - | - | JSON: `credential_code` (str) | JSON (`access_token` , `refresh_token`) | Google OAuth login / registration. |
-| 7 | `/logout` | POST | - | - | - | JSON (`message`) | Clears auth cookies. |
-| 8 | `/public-key` | GET | - | - | - | PEM text | Returns the RSA public JWK for token verification. |
-| 9 | `/register` | POST | - | - | JSON: `full_name` (str), `email` (email), `password` (str), `address` (str) | JSON: `verify_code` (str), `message` (str) | Registers a student and returns OTP. |
-| 10 | `/verify` | GET | `otp` (str) | - | - | JSON: `message` (str) | Verifies email OTP and activates the user. |
-| 11 | `/forgot-password` | POST | - | - | JSON: `email` (email) | JSON: `message` (str) | Sends password reset link / code. |
-| 12 | `/reset-password` | POST | - | - | JSON: `token` (str), `new_password` (str) | JSON: `message` (str) | Resets password using the token. |
-| 13 | `/resend-otp` | POST | - | - | JSON: `email` (email) | JSON: `message` (str) | Resends the account verification OTP. |
-| 14 | `/change-email` | POST | - | - | JSON: `new_email` (email), `password` (str) | JSON: `message` (str) | Requests an email change; backend validates password and queues verification. |
-| 15 | `/verify-reset-email` | POST | - | - | JSON: `token` (str) | JSON: `message` (str) | Confirms the new email address using the verification token. |
+| 3 | `/public-key` | GET | - | - | - | PEM text | Returns the RSA public JWK for token verification. |
+| 4 | `/verify` | GET | `otp` (str) | - | - | JSON: `message` (str) | Verifies email OTP and activates the user. |
+| 5 | `/reset-password` | GET | - | - | JSON: `code` (str), `new_password` (str) | JSON: `message` (str) | Resets password using the token. |
+| 6 | `/verify-reset-email` | GET | `token` (str) | - | - | JSON: `message` (str) | Confirms the new email address using the verification token. |
+| 7 | `/login` | POST | - | - | `application/x-www-form-urlencoded`: `email`, `password`, `redirect_uri` | JSON (`code`, `redirect_uri`, `identity`) | Validates credentials; returns authorization code. |
+| 8 | `/code` | POST | - | - | JSON: `code` (str) | JSON (`access_token`, `refresh_token`) | Exchanges authorization code for JWT tokens. |
+| 9 | `/refresh` | POST | - | - | JSON (`refresh_token`) | JSON (`access_token`) | Issues new access token from refresh cookie. |
+| 10 | `/google` | POST | - | - | JSON: `credential_code` (str) | JSON (`access_token` , `refresh_token`) | Google OAuth login / registration. |
+| 11 | `/logout` | POST | - | - | - | JSON (`message`) | Clears auth cookies. |
+| 12 | `/register` | POST | - | - | JSON: `full_name` (str), `email` (email), `password` (str), `address` (str) | JSON: `verify_code` (str), `message` (str) | Registers a student and returns OTP. |
+| 13 | `/resend-otp` | POST | `email` (str) | - | - | JSON: `message` (str) | Resends the account verification OTP. |
+| 14 | `/forgot-password` | POST | - | - | JSON: `email` (email) | JSON: `message` (str), `code` | Sends password reset link / code. |
+| 15 | `/change-email` | POST | - | - | JSON: `new_email` (email), `password` (str) | JSON: `message` (str), `token` (str) | Requests an email change; backend validates password and queues verification. |
 
 ### Key Auth Provider Notes
-- Endpoint 3 reads `session_id` from Cookie (`HttpOnly`) and `email`, `password`, `redirect_uri` from form data.
-- Endpoint 4 reads `code` directly as a FastAPI dependency parameter (not JSON body), because it is sent as a plain query/form field from the BE caller.
-- Endpoints 3, 4, 5, 6, 7 are consumed behind the scenes by the Business Application; the frontend never calls them directly.
-- Endpoints 9–15 are called directly by the frontend (register, OTP verify, forgot-password, reset-password, resend-otp, change-email, verify-reset-email).
+- `/login` (POST) reads `session_id` from Cookie (`HttpOnly`) and `email`, `password`, `redirect_uri` from form data.
+- `/code` reads `code` directly as a FastAPI dependency parameter (not JSON body), because it is sent as a plain query/form field from the BE caller.
+- `/login` (POST), `/code`, `/refresh`, `/google`, `/logout` are consumed behind the scenes by the Business Application; the frontend never calls them directly.
+- `/register`, `/verify`, `/forgot-password`, `/reset-password`, `/resend-otp`, `/change-email`, `/verify-reset-email` are called directly by the frontend.
 
 ---
 

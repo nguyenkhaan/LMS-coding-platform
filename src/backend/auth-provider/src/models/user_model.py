@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, UTC 
 from typing import TYPE_CHECKING, List, Optional
-from sqlalchemy import func, Enum as SQLEnum 
+from sqlalchemy import func, Enum as SQLEnum, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.models.base_model import AccountStatus
 from src.db import Base
@@ -20,8 +20,17 @@ class UserModel(Base):
     password: Mapped[str] = mapped_column(nullable=False)
     avatar_url : Mapped[Optional[str]] = mapped_column(nullable=True) 
     active: Mapped[bool] = mapped_column(nullable=False, default=False)
-    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    created_at : Mapped[datetime] = mapped_column(
+            DateTime(timezone=True), 
+            default = lambda : datetime.now(UTC), 
+            nullable = False 
+        ) 
+    updated_at : Mapped[datetime] = mapped_column(
+            DateTime(timezone=True), 
+            default = lambda : datetime.now(UTC), 
+            onupdate = lambda : datetime.now(UTC), 
+            nullable = False 
+        )
     account_status : Mapped[AccountStatus] = mapped_column(
         SQLEnum(AccountStatus), 
         nullable=False, 
