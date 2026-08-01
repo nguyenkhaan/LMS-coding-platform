@@ -48,6 +48,7 @@ class AuthService:
             user = await self.db_session.scalar(
                 select(UserModel).where(UserModel.email == data.email)
             ) 
+            print(user) 
             if user is not None: 
                 if user.active: 
                     raise HTTPException(400 , detail="User has been registered") 
@@ -83,18 +84,43 @@ class AuthService:
                 "user_id": str(user.id),
                 "type": "register" 
             }
+            
             otp_code = random_string(8) 
             await self.session_service.set_value(RedisKey.verify_register(otp_code) , json.dumps(payload) , OTP_LIVE_TIME)
+            await self.db_session.commit() 
+            await self.db_session.refresh(user) 
             return RegisterResponse(
                 verify_code = otp_code, 
                 message = "Verify your account with the code above"
-            )
+            ) 
+        
         except Exception: 
             await self.db_session.rollback() 
             raise 
 
     async def verify_register(self , otp: str): 
-        payload = self.session_service.get_value(RedisKey.verify_register(otp))
+
+        payload = await self.session_service.get_value(RedisKey.verify_register(otp))
+        
+        if payload is None: 
+            raise HTTPException(
+                status_code=404, 
+                detail = "Verify code is invalid. Please resend again" 
+            ) 
+        result = json.loads(payload) 
+
+        user_id = result.get('user_id') 
+        user = await self.db_session.scalar(
+            select(UserModel).where(UserModel.id == int(user_id)) 
+        ) 
+        if user is None: 
+            raise HTTPException(
+                status_code = 400, 
+                detail = "User has not been registered" 
+            ) 
+        # update 
+        user.active = True 
+        await self.db_session.commit() 
         return VerifyRegisterResponse(
             message =  "Verified account successfully"
         )

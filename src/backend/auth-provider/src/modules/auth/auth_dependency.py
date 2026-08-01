@@ -19,6 +19,7 @@ def get_session_service(redis: Redis = Depends(get_redis_client)) -> SessionServ
 
 
 def get_db_session(session: AsyncSession = Depends(get_async_db_session)) -> AsyncSession:
+    print(session) 
     return session
 
 

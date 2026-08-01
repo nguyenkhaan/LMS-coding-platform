@@ -18,7 +18,7 @@ class PublicKeyService:
     async def load(cls):
         try:
             async with httpx.AsyncClient(timeout=5) as client:
-                response = await client.get(
+                response = await client.get(  # Day la phuong thuc co phu hop hay khong ??? -> gRPC 
                     f"{AUTH_PROVIDER_URL}/api/auth/public-key"
                 )
                 response.raise_for_status()

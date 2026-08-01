@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from src.models.user_model import UserModel
 
 class RoleModel(Base):
-    __tablename__ = "role"
+    __tablename__ = "user_role"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("user.id"))
