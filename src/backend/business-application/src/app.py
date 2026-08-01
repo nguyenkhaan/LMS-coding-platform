@@ -7,7 +7,6 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from src.modules.auth.auth_router import router as auth_router
 from src.modules.health.health_router import router as health_router
 from src.jwk_service import PublicKeyService
 
@@ -33,8 +32,6 @@ app = FastAPI(
 v1_router = APIRouter(prefix="/api/v1")
 
 v1_router.include_router(health_router)
-v1_router.include_router(auth_router)
-
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc: RequestValidationError):
