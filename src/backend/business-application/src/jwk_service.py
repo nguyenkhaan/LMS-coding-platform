@@ -1,11 +1,9 @@
 import logging
-
-import httpx
-
-from src.cores.settings import AUTH_PROVIDER_URL
-
+from src.grpc.client import AuthGrpcClient
 logger = logging.getLogger(__name__)
-
+logging.basicConfig(
+    level=logging.INFO,
+)
 
 class PublicKeyService:
     _public_key: str | None = None
@@ -15,21 +13,15 @@ class PublicKeyService:
 -----END PUBLIC KEY-----"""
 
     @classmethod
-    async def load(cls):
-        try:
-            async with httpx.AsyncClient(timeout=5) as client:
-                response = await client.get(  # Day la phuong thuc co phu hop hay khong ??? -> gRPC 
-                    f"{AUTH_PROVIDER_URL}/api/auth/public-key"
-                )
-                response.raise_for_status()
-
-                cls._public_key = response.text
-                logger.info("Public key loaded successfully.")
+    async def load(cls , client : AuthGrpcClient):
+        try: 
+            response = await client.public_key() 
+            cls._public_key = response 
+            logger.info("Public key has been loaded successfully %s" , response)
 
         except Exception:
             logger.warning("Failed to load public key. Using fallback.")
             cls._public_key = cls._FALLBACK_KEY
-
     @classmethod
     def get(cls) -> str:
         if cls._public_key is None:

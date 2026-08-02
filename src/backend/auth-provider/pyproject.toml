@@ -21,3 +21,8 @@ dependencies = [
     "grpcio>=1.83.0",
     "grpcio-tools>=1.83.0",
 ]
+
+[dependency-groups]
+dev = [
+    "mypy-protobuf>=5.1.0",
+]

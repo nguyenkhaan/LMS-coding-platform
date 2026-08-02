@@ -2,8 +2,6 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 import warnings
-
-# import auth_pb2 as auth__pb2
 from src.grpc.generated import auth_pb2 as auth__pb2
 GRPC_GENERATED_VERSION = '1.83.0'
 GRPC_VERSION = grpc.__version__

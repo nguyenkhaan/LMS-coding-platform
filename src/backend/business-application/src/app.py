@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from src.grpc.client import AuthGrpcClient
 from src.modules.health.health_router import router as health_router
 from src.jwk_service import PublicKeyService
 
@@ -17,13 +18,16 @@ async def lifespan(app: FastAPI):
     Executed once when the application starts.
     Download and cache the JWT public key from the auth provider.
     """
-
-    await PublicKeyService.load()
-
+    client = AuthGrpcClient(
+        "localhost:50051"
+    )
+    await PublicKeyService.load(client)
+    print("Are you ready") 
     yield
-
+    await client.close() 
+    print('Grpc client stopped')
     # Cleanup if needed when the application shuts down.
-
+    # Nguyen tac quan trong: Ai tao ra resource thi nguoi do phai dong resource
 
 app = FastAPI(
     lifespan=lifespan

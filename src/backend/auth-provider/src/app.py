@@ -2,6 +2,8 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+import grpc
+from src.grpc.server import create_grpc_server
 from src.cores.redis import redis_client
 from fastapi import FastAPI, APIRouter 
 from src.modules.auth.auth_router import router as auth_router 
@@ -13,11 +15,18 @@ api_router.include_router(auth_router)
 
 @asynccontextmanager
 async def lifespan(app : FastAPI): 
+    # start redis 
     await redis_client.ping() 
     print("Redis client has been connected") 
-    
+    # start grpc server 
+    grpc_server = await create_grpc_server() 
+    await grpc_server.start() 
+    print("Grpc server started on: 50051")
     yield 
     await redis_client.close() 
+    print("redis stopped") 
+    await grpc_server.stop(grace = 5) 
+    print("grpc stopped") 
     
 app = FastAPI(
     lifespan=lifespan
