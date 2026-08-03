@@ -8,6 +8,7 @@ from src.cores.redis import redis_client
 from fastapi import FastAPI, APIRouter 
 from src.modules.auth.auth_router import router as auth_router 
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from fastapi.middleware.cors import CORSMiddleware
 api_router = APIRouter(
     prefix="/api"
 )
@@ -27,11 +28,23 @@ async def lifespan(app : FastAPI):
     print("redis stopped") 
     await grpc_server.stop(grace = 5) 
     print("grpc stopped") 
-    
+
+# cors origins 
+origins = [
+    'http://localhost:5173', 
+    'http://localhost:50051', 
+    'http://localhost:4000'
+]   
 app = FastAPI(
     lifespan=lifespan
 ) 
-
+app.add_middleware(
+    CORSMiddleware, 
+    allow_credentials=True, 
+    allow_origins=origins, 
+    allow_methods=['*'], 
+    allow_headers=['Content-Type', 'Authorization']
+)
 # handle exception 
 
 @app.exception_handler(RequestValidationError)

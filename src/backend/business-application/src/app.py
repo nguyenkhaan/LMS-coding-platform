@@ -6,7 +6,7 @@ from fastapi import FastAPI, APIRouter
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
-
+from fastapi.middleware.cors import CORSMiddleware
 from src.grpc.client import AuthGrpcClient
 from src.modules.health.health_router import router as health_router
 from src.jwk_service import PublicKeyService
@@ -21,7 +21,7 @@ async def lifespan(app: FastAPI):
     client = AuthGrpcClient(
         "localhost:50051"
     )
-    await PublicKeyService.load(client)
+    public_key = await PublicKeyService.load(client)
     print("Are you ready") 
     yield
     await client.close() 
@@ -29,10 +29,22 @@ async def lifespan(app: FastAPI):
     # Cleanup if needed when the application shuts down.
     # Nguyen tac quan trong: Ai tao ra resource thi nguoi do phai dong resource
 
+# CORS origins 
+origins = [
+    'http://localhost:5173', 
+    'http://localhost:50051', 
+    'http://localhost:4001'
+]
 app = FastAPI(
     lifespan=lifespan
 )
-
+app.add_middleware(
+    CORSMiddleware, 
+    allow_origins = origins,
+    allow_credentials=True, 
+    allow_methods=["*"],
+    allow_headers=["Authorization" , "Content-Type"],
+)
 v1_router = APIRouter(prefix="/api/v1")
 
 v1_router.include_router(health_router)

@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy import join, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import load_only, selectinload
 
 from src.bases.constant.redis_key import RedisKey
 from src.helpers.random import random_string
@@ -164,6 +164,7 @@ class AuthService:
         }
 
         authorization_code = secrets.token_urlsafe(32)
+        print(authorization_code)
         await self.session_service.create_authorization_code(authorization_code, payload)
 
         return LoginResponse(
@@ -182,16 +183,26 @@ class AuthService:
 
         client_id = payload.get("client_id")
         email = payload.get("email")
-        stmt = select(
-            UserModel.id, UserModel.email
-        ).options(selectinload(UserModel.roles)).where(UserModel.email == email)
+        stmt = (
+            select(UserModel)
+            .options(selectinload(UserModel.roles))
+            .where(UserModel.email == email)
+        )
+        stmt = (
+            select(UserModel)
+            .options(
+                load_only(UserModel.id, UserModel.email),
+                selectinload(UserModel.roles),
+            )
+            .where(UserModel.email == email)
+        )
         user = await self.db_session.scalar(stmt) 
         if user is None: 
             raise HTTPException(
                 status_code = 404, 
                 detail = "User not found" 
             )
-        roles = [role for role in user.roles]
+        roles = [role.role for role in user.roles]
         access_token = await self.jwt_service.create_token(
             {"sub": str(client_id), "email": email , "roles": roles},
             TokenType.ACCESS_TOKEN,
@@ -208,6 +219,7 @@ class AuthService:
         )
     
     async def refresh(self , token : str): 
+        # Tien hanh cai dat voi HS256 algorithm 
         response = RefreshResponse(
             access_token = "demo123"
         ) 

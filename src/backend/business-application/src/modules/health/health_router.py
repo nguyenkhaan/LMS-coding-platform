@@ -1,4 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
+
+from src.models.base_model import Role
+from src.middlewares.role_middleware import require_role
+from src.middlewares import auth_middleware
 router = APIRouter(
     prefix="/health", 
     tags=["Health"]
@@ -20,3 +24,11 @@ async def error():
 @router.get("/scalar") 
 async def scalar(): 
     return "This is a single line"
+
+@router.get("/test-auth") 
+async def test_auth(
+    user = Depends(
+        require_role(Role.STUDENT)
+    )
+): 
+    return "Authentication OK!!!"
