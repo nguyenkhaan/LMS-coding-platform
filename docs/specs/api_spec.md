@@ -141,14 +141,14 @@ Path prefix: `/payments`
 | 2 | `/payments/payos-webhook` | POST | - | - | JSON: PayOS notification payload | JSON: `{ "status": "ok" }` | Handles PayOS payment verification hooks. |
 | 3 | `/payments/transactions/{transactionCode}/status` | GET | - | `transactionCode` (str) | - | JSON: `status`, `amount`, `completed_at` | Checks payment completion state. |
 
-### 7. Lesson Interactions & Comments
-Path prefix: `/lessons`, `/comments`
+### 7. Lesson Content Comments
+Path prefix: `/lesson-contents`, `/comments`
 
 | # | Endpoint | Method | Query | Path | Request Body | Response | Description |
 |---|----------|--------|-------|------|--------------|----------|-------------|
-| 1 | `/lessons/{lessonId}/comments` | GET | - | `lessonId` (int) | - | JSON: comments with nested replies, `lesson_content_id`, `created_at`, ... | Fetches comments for a lesson. |
-| 2 | `/lessons/{lessonId}/comments` | POST | - | `lessonId` (int) | JSON: `lesson_content_id`?, `content` (str), `parent_id`? | JSON: created comment object | Posts a new comment or reply. |
-| 3 | `/comments/{commentId}` | DELETE | - | `commentId` (int) | - | JSON: `message` | Deletes the user's own comment. |
+| 1 | `/lesson-contents/{lessonContentId}/comments` | GET | - | `lessonContentId` (int) | - | JSON: `[{ "id": 1, "lesson_content_id": 10, "user_id": 2, "parent_id": null, "content": "Câu hỏi này em chưa hiểu", "created_at": "2026-08-03T10:00:00Z", "updated_at": "2026-08-03T10:00:00Z", "replies": [] }]` | Fetches comments for a specific lesson content item. |
+| 2 | `/lesson-contents/{lessonContentId}/comments` | POST | - | `lessonContentId` (int) | JSON: `{"content": "Câu hỏi này em chưa hiểu", "parent_id": null}` | JSON: `{"id": 1, "lesson_content_id": 10, "user_id": 2, "parent_id": null, "content": "Câu hỏi này em chưa hiểu", "created_at": "2026-08-03T10:00:00Z", "updated_at": "2026-08-03T10:00:00Z"}` | Posts a new comment or reply for a specific lesson content item. |
+| 3 | `/comments/{commentId}` | DELETE | - | `commentId` (int) | - | JSON: `{"message": "Comment deleted successfully"}` | Deletes the user's own comment. |
 
 ### 8. Admin Moderation & CCCD Verification
 Path prefix: `/admin`, `/teacher-register`

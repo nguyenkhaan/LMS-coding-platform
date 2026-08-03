@@ -7,6 +7,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from src.modules.lesson_comment.lesson_comment_router import router as lesson_comment_router 
 from src.grpc.client import AuthGrpcClient
 from src.modules.health.health_router import router as health_router
 from src.jwk_service import PublicKeyService
@@ -48,6 +49,7 @@ app.add_middleware(
 v1_router = APIRouter(prefix="/api/v1")
 
 v1_router.include_router(health_router)
+v1_router.include_router(lesson_comment_router)
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc: RequestValidationError):
