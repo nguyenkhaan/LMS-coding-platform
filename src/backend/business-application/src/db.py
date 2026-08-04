@@ -1,6 +1,7 @@
 import datetime
 from typing import AsyncGenerator
 
+from fastapi import Depends
 from sqlalchemy import DateTime
 from sqlalchemy.ext.asyncio import (
     AsyncAttrs,
@@ -40,3 +41,10 @@ async_session_maker = async_sessionmaker(engine, expire_on_commit=False)
 async def get_async_db_session() -> AsyncGenerator[AsyncSession, None]: 
     async with async_session_maker() as session:
         yield session
+
+
+# session dependency: 
+def get_db_session(
+    db_session : AsyncSession = Depends(get_async_db_session)
+): 
+    return db_session

@@ -22,6 +22,7 @@ async def get_current_user(crendential: HTTPAuthorizationCredentials | None = De
     if not(crendential): 
         raise credential_exception("Authorization Header is missing") 
     token : str = crendential.credentials 
+    
     if not (token): 
         raise credential_exception("Invalid authorization header format") 
     public_key = PublicKeyService.get() 
@@ -29,9 +30,14 @@ async def get_current_user(crendential: HTTPAuthorizationCredentials | None = De
     try: 
         payload = jwt.decode(token , public_key , algorithms=RS_ALGORITHM) 
         # payload format: {"sub": str(client_id), "email": email , "roles": roles} 
-        sub = payload.get('sub') 
-        if not sub: 
+        sub = payload.get('sub' , None) 
+        if not sub or not(isinstance(sub , str)): 
             raise credential_exception("Invalid authorization token body") 
-        return payload 
-    except InvalidTokenError: 
+        user_id = int(sub) 
+        return {
+            **payload, 
+            "sub": user_id 
+            # Tu dong ep kieu thanh int luon, do phien phuc, xu ly het o middleware roi
+        } 
+    except (InvalidTokenError, TypeError , ValueError): 
         raise credential_exception("Could not validate credentials") 

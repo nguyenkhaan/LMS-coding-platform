@@ -2,6 +2,7 @@
 
 from fastapi import Depends, HTTPException
 
+from src.models.base_model import Role
 from src.middlewares.auth_middleware import get_current_user
 
 def require_role(*roles : str): 
@@ -9,8 +10,6 @@ def require_role(*roles : str):
     async def get_current_user_role(
         user = Depends(get_current_user)
     ): 
-        print(type(user)) 
-        pass 
         user_roles = user.get('roles') 
         if not user_roles: 
             raise HTTPException(
@@ -18,6 +17,10 @@ def require_role(*roles : str):
                 detail="Invalid user information", 
                 headers={"WWW-Authenticate": "Bearer"},
             )
+        
+        # Admin override 
+        if Role.ADMIN in user_roles: 
+            return user 
         allowed = False 
         for role in roles: 
             if role in user_roles: 

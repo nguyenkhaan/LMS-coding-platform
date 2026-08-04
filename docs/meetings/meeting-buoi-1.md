@@ -14,7 +14,7 @@
 
 #### 1. Thống nhất về Tầm nhìn & Tóm tắt Dự án (PRD)
 *Tóm tắt kiến trúc 4 dịch vụ chính:*
-1. **Frontend:** SvelteKit + TailwindCSS v4 + Monaco/CodeMirror Editor.
+1. **Frontend:** ReactJS + TailwindCSS v4 + Monaco/CodeMirror Editor.
 2. **Auth Provider:** Đăng ký, đăng nhập qua Google OAuth2 / JWT.
 3. **Business App:** FastAPI + PostgreSQL xử lý core LMS, PayOS, Gemini.
 4. **Judge Service:** FastAPI + Docker SDK chấm điểm code an toàn.
@@ -56,7 +56,7 @@
   - `(Ví dụ: Giới hạn 3 phiên phỏng vấn/ngày/học viên, khống chế số lượng ký tự tối đa nhập vào)]`
 
 #### Chủ đề 4: UI/UX cho Code Editor trên Web
-*Chọn thư viện Code Editor phù hợp trên SvelteKit để có trải nghiệm mượt mà.*
+*Chọn thư viện Code Editor phù hợp trên ReactJS để có trải nghiệm mượt mà.*
 - **Ý kiến thảo luận:**
   - `(Ví dụ: Monaco Editor hoặc CodeMirror và lý do chọn)]`
 
@@ -80,7 +80,7 @@
 
 | Stt | Đầu việc cụ thể | Người phụ trách | Hạn hoàn thành | Trạng thái | Ghi chú |
 | :-- | :--- | :--- | :--- | :--- | :--- |
-| **A** | **NHÓM FRONTEND (SVELTEKIT)** | | | | |
+| **A** | **NHÓM FRONTEND (REACT)** | | | | |
 | 1 | Giao diện xem bài học (Video Player + Markdown + Danh sách bài thực hành) | `[Điền tên]` | `[Điền hạn]` | Chưa chạy | |
 | 2 | Giao diện Dashboard Giảng viên (Biểu đồ doanh thu, Payout history, quản lý học viên) | `[Điền tên]` | `[Điền hạn]` | Chưa chạy | |
 | 3 | Giao diện nộp đơn Become Teacher và upload ảnh CCCD (Mặt trước/sau) | `[Điền tên]` | `[Điền hạn]` | Chưa chạy | |
