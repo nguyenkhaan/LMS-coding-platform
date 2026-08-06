@@ -22,11 +22,11 @@ Tài liệu này cung cấp một mô tả chi tiết, rõ ràng và đầy đ�
 
 ## 3. Kiến trúc Hệ thống & Luồng dữ liệu (High-Level Architecture)
 
-Hệ thống sử dụng cơ sở dữ liệu chính là **PostgreSQL**, Frontend được xây dựng bằng **Svelte** (SvelteKit) và Backend chính sử dụng **FastAPI** kết hợp kiến trúc Microservices gồm 4 khối thành phần chính:
+Hệ thống sử dụng cơ sở dữ liệu chính là **PostgreSQL**, Frontend được xây dựng bằng **ReactJS** (ReactJSKit) và Backend chính sử dụng **FastAPI** kết hợp kiến trúc Microservices gồm 4 khối thành phần chính:
 
 ```mermaid
 graph TD
-    A[SvelteKit Frontend] -->|Xác thực| B[Auth Provider Service]
+    A[ReactJSKit Frontend] -->|Xác thực| B[Auth Provider Service]
     A -->|Nghiệp vụ LMS / AI| C[Business Application Service]
     C -->|Gửi mã nguồn chấm điểm| D[Judge Service]
     D -->|Khởi chạy container| E[Docker Sandbox Runner]
@@ -36,7 +36,7 @@ graph TD
 ```
 
 ### Chi tiết các Service:
-1. **Frontend (SvelteKit & TailwindCSS v4):** Giao diện Single Page Application (SPA) tương tác cao, tích hợp Code Editor (Monaco Editor hoặc CodeMirror) hỗ trợ viết code và giao diện chat phỏng vấn AI.
+1. **Frontend (ReactJSKit & TailwindCSS v4):** Giao diện Single Page Application (SPA) tương tác cao, tích hợp Code Editor (Monaco Editor hoặc CodeMirror) hỗ trợ viết code và giao diện chat phỏng vấn AI.
 2. **Auth Provider Service (FastAPI / Auth Server):** Chịu trách nhiệm đăng ký, đăng nhập, phát hành JWT token kèm phân quyền người dùng. Cung cấp JWK (JSON Web Key) công khai để các dịch vụ khác xác thực token độc lập.
 3. **Business Application Service (FastAPI):** Lõi xử lý nghiệp vụ của toàn bộ hệ thống (khóa học, chương, bài đọc, video bài giảng, quiz, thống kê doanh thu, giao dịch, tích hợp Gemini API cho AI Interview, tương tác bình luận).
 4. **Judge Service (FastAPI & Docker SDK / RapidAPI Judge0):** Dịch vụ chấm code tự động. Nhận mã nguồn từ Business App, khởi chạy container Docker cô lập hoặc điều phối thông qua các giải pháp sandbox (như Judge0 API tùy thuộc vào cấu hình), truyền dữ liệu testcase, theo dõi tài nguyên tiêu thụ, thu hồi kết quả và trả về cho Business App.
@@ -258,7 +258,7 @@ Hệ thống cơ sở dữ liệu (PostgreSQL) sẽ bao gồm các bảng dữ l
 - `reviewed_at` (Datetime)
 - `created_at` / `updated_at` / `deleted_at` (Datetime)
 
-### 6.3. Các bảng liên quan đến Khóa học & Bài học (Courses & Lessons)
+### 6.3. Các bảng liên quan đến Khóa học & Bài học (Courses & Lessons) (Chỉ đóng vai trò tham khảo)
 #### Table `courses`
 - `id` (Integer, Khóa chính, Tự tăng)
 - `title` (String)
