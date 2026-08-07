@@ -23,3 +23,12 @@ JWT_REFRESH_SECRET = get_env_var('JWT_REFRESH_SECRET')
 DATABASE_URL = get_env_var('DATABASE_URL')
 UPSTASH_REDIS_REST_URL = get_env_var('UPSTASH_REDIS_REST_URL')
 UPSTASH_REDIS_REST_TOKEN = get_env_var('UPSTASH_REDIS_REST_TOKEN')
+
+SMTP_HOST = get_env_var('SMTP_HOST', 'localhost')
+SMTP_PORT = int(get_env_var('SMTP_PORT', '1025'))
+SMTP_USER = get_env_var('SMTP_USER', '')
+SMTP_PASSWORD = get_env_var('SMTP_PASSWORD', '')
+SMTP_USE_TLS = get_env_var('SMTP_USE_TLS', 'false').lower() == 'true'
+SMTP_FROM = get_env_var('SMTP_FROM', 'noreply@lms.local')
+
+RABBITMQ_URL = get_env_var('RABBITMQ_URL')
