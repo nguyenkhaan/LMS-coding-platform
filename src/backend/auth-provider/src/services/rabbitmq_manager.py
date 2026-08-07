@@ -5,7 +5,11 @@ from typing import Any
 
 import aio_pika
 from aio_pika import Message
-from aio_pika.abc import AbstractRobustChannel, AbstractRobustConnection, AbstractRobustQueue
+from aio_pika.abc import (AbstractChannel, 
+                          AbstractQueue, 
+                          AbstractRobustChannel, 
+                          AbstractRobustConnection, 
+                          AbstractRobustQueue)
 
 from src.cores import settings
 
@@ -22,12 +26,12 @@ def async_retry(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[
             except Exception as exc:
                 last_error = exc
                 if attempt == 4:
-                    break
+                    raise 
                 await asyncio.sleep(delay)
                 delay *= 2
 
-        raise last_error
-
+        if last_error is not None: 
+            raise last_error
     return wrapper
 
 
@@ -35,8 +39,8 @@ class RabbitMQManager:
     def __init__(self):
         self.url = settings.RABBITMQ_URL
         self.connection: AbstractRobustConnection | None = None
-        self.channel: AbstractRobustChannel | None = None
-        self.queues: dict[str, AbstractRobustQueue] = {}
+        self.channel: AbstractChannel | None = None
+        self.queues: dict[str, AbstractQueue] = {}
 
     @async_retry
     async def connect(self) -> None:
