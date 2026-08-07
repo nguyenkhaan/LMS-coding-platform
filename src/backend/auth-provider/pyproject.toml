@@ -20,6 +20,7 @@ dependencies = [
     "upstash-redis>=1.7.0",
     "grpcio>=1.83.0",
     "grpcio-tools>=1.83.0",
+    "aio-pika>=9.0.0",
 ]
 
 [dependency-groups]
