@@ -10,7 +10,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from src.modules.lesson_comment.lesson_comment_router import router as lesson_comment_router 
 from src.grpc.client import AuthGrpcClient
 from src.modules.health.health_router import router as health_router
-from src.modules.course.course_router import router as course_router, section_router, lesson_router, lesson_content_router
+from src.modules.teacher_course.teacher_course_router import (
+    teacher_course_router,
+    teacher_sections_router,
+    teacher_lessons_router,
+    teacher_lesson_contents_router,
+)
 from src.jwk_service import PublicKeyService
 
 
@@ -51,10 +56,10 @@ v1_router = APIRouter(prefix="/api/v1")
 
 v1_router.include_router(health_router)
 v1_router.include_router(lesson_comment_router)
-v1_router.include_router(course_router)
-v1_router.include_router(section_router)
-v1_router.include_router(lesson_router)
-v1_router.include_router(lesson_content_router)
+v1_router.include_router(teacher_course_router)
+v1_router.include_router(teacher_sections_router)
+v1_router.include_router(teacher_lessons_router)
+v1_router.include_router(teacher_lesson_contents_router)
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc: RequestValidationError):
