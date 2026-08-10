@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, status, Request
 from src.modules.problem.problem_dto import ProblemRunRequest, ProblemRunResponse, ProblemSubmitRequest, ProblemSubmitResponse
 from src.modules.problem.problem_dependency import get_problem_service
 from src.modules.problem.problem_service import ProblemService
+from src.middlewares.auth_middleware import get_current_user
+from fastapi import HTTPException
 
 router = APIRouter(
     prefix="/problems",
@@ -37,12 +39,14 @@ async def get_problem_by_slug(
 async def run_code(
     slug: str,
     data: ProblemRunRequest,
-    request: Request,
+    user: dict = Depends(get_current_user),
     problem_service: ProblemService = Depends(get_problem_service)
 ):
-    user_id = 1 # Mock data, it should be request.state.user.id
+    user_id = user.get('sub')
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
-    return await problem_service.run_code(user_id=user_id, problem_slug=slug, data=data)
+    return await problem_service.run_code(user_id=int(user_id), problem_slug=slug, data=data)
 
 @router.post(
     "/{slug}/submit",
@@ -52,11 +56,14 @@ async def run_code(
 async def submit_code(
     slug: str,
     data: ProblemSubmitRequest,
-    request: Request,
+    user: dict = Depends(get_current_user),
     problem_service: ProblemService = Depends(get_problem_service)
 ):
-    user_id = 1 # Mock data, it should be request.state.user.id
-    return await problem_service.submit_code(user_id=user_id, problem_slug=slug, data=data)
+    user_id = user.get('sub')
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+        
+    return await problem_service.submit_code(user_id=int(user_id), problem_slug=slug, data=data)
 
 @router.get(
     "/submissions/{submissionId}/status",
@@ -65,9 +72,11 @@ async def submit_code(
 )
 async def get_submission_status(
     submissionId: str,
-    request: Request,
+    user: dict = Depends(get_current_user),
     problem_service: ProblemService = Depends(get_problem_service)
 ):
-    # Get user_id from request.state.user.id
-    user_id = 1
-    return await problem_service.get_submission_status(submissionId, user_id)
+    user_id = user.get('sub')
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+        
+    return await problem_service.get_submission_status(submissionId, int(user_id))
