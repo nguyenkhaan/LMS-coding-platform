@@ -12,6 +12,8 @@ from src.grpc.client import AuthGrpcClient
 from src.modules.health.health_router import router as health_router
 from src.jwk_service import PublicKeyService
 
+from src.modules.problem.problem_router import router as problem_router
+from src.modules.problem.teacher_problem_router import router as teacher_problem_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -50,6 +52,8 @@ v1_router = APIRouter(prefix="/api/v1")
 
 v1_router.include_router(health_router)
 v1_router.include_router(lesson_comment_router)
+v1_router.include_router(problem_router)
+v1_router.include_router(teacher_problem_router)
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc: RequestValidationError):
