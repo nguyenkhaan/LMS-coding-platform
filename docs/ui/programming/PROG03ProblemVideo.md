@@ -1,23 +1,63 @@
 # PROG03 Problem Video
 
-- **Tên màn hình:** PROG03 Problem Video
-- **Đường dẫn:** `/practice/problems/:problemId/video`
-- **Asset:** [programming/PROG03ProblemVideo.svg](../../screen/programming/PROG03ProblemVideo.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Problem Video Lesson
+- **Đường dẫn:** `VERIFY: /programming/:problemId/video`
+- **Asset:** [PROG03ProblemVideo.svg](../../screen/programming/PROG03ProblemVideo.svg)
+- **Viewport nguồn:** `1912x3089`
 
 ## Wireframe
 
 ~~~text
-[Global header]
-[Problem title + difficulty/status + action]
-[Left: statement, constraints, examples, hints]
-[Right: preview/video/editor panel]
-[Bottom: related problems or navigation]
+DESKTOP 1912x3089
++================================================================================================+
+| [Dreams LMS] Courses Classroom Programming                         [progress 40%] [profile]   |
++================================================================================================+
+| +----------------------+  +---------------------------------------------------------------+ |
+| | COURSE CONTENT       |  | For Loops Explained                                            | |
+| | [>] Introduction     |  | +---------------------------------------------------------+ | |
+| | [>] Variables        |  | |                  [PLAY]                                  | | |
+| | [>] Data types       |  | |             VIDEO PLAYER #151E37                         | | |
+| | [>] For loops        |  | +---------------------------------------------------------+ | |
+| | [ ] Exercises        |  | [0:00 ---------------------------- 12:35] [volume] [fullscreen]| |
+| +----------------------+  | Lesson notes: A for loop iterates over a sequence.          | |
+|                           | Key points: range, iterator, loop body.                     | |
+|                           | [Notes] [Resources]                                         | |
+|                           | [< Previous lesson]                    [Next lesson >]     | |
+|                           +---------------------------------------------------------------+ |
++================================================================================================+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++--------------------------------------------+
+| [menu] For Loops Explained      [40%]    |
++--------------------------------------------+
+| [>] Introduction [>] Variables           |
+| [>] For loops     [ ] Exercises          |
+| +--------------------------------------+   |
+| |              [PLAY]                 |   |
+| |       VIDEO PLAYER #151E37          |   |
+| +--------------------------------------+   |
+| [0:00 ------------------ 12:35] [full]   |
+| Lesson notes: A for loop iterates over  |
+| a sequence.                              |
+| Key points: range, iterator, loop body. |
+| [Notes] [Resources]                     |
+| [< Previous lesson] [Next lesson >]     |
++--------------------------------------------+
+~~~
 
-- Header/navigation và action chính dùng token trong [theme.md](../theme.md).
-- Các panel, card, input và table giữ đúng thứ tự từ trái sang phải, trên xuống dưới như sơ đồ; trên mobile chuyển thành một cột khi có nhiều cột.
-- Trạng thái tải rỗng, lỗi hoặc pending hiển thị trong đúng vùng nội dung, không thay đổi shell của màn hình.
+## Component map
 
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Left rail | Course content | Current video lesson in tree | Select lesson |
+| Video | Player | Play, progress, timestamp, volume, fullscreen | Keyboard/media controls |
+| Content | Notes/resources | Text notes and resource tab | Switch content |
+| Actions | Lesson navigation | Previous/next lesson | Boundary disabled |
+
+## States
+
+- Video paused/playing: play icon and timeline update.
+- Video complete: completion marker and next lesson action.
+- Loading/error: player area retains ratio and shows retry.

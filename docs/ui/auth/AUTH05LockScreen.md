@@ -1,48 +1,61 @@
 # AUTH05 Lock Screen
 
-- **Tên màn hình:** AUTH05 Lock Screen
-- **Đường dẫn:** `/auth/lock`
-- **Asset:** [auth/AUTH05LockScreen.svg](../../screen/auth/AUTH05LockScreen.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Welcome Back / locked session
+- **Đường dẫn:** `/auth/lock` (suy luận)
+- **Asset:** [AUTH05LockScreen.svg](../../screen/auth/AUTH05LockScreen.svg)
+- **Viewport nguồn:** `1600x1000`
+- **Mức độ chắc chắn:** Layout đã đối chiếu từ render; asset dùng centered shell, không dùng split-screen.
 
 ## Wireframe
 
 ~~~text
 DESKTOP 1600x1000
-+--------------------------------------+--------------------------------------+
-| BRAND PANEL 800px                    | LOCKED SESSION 800px                |
-| [SkillBoost logo]                    | Session locked                       |
-| [illustration / gradient]             | Unlock your session                  |
-|                                      | [avatar 56x56] Rosalind Franklin      |
-|                                      | ros...@example.com                   |
-|                                      | Password                             |
-|                                      | [_______________________________]    |
-|                                      | [Locked]              [Forgot?]       |
-|                                      | [       Unlock session       ]        |
-|                                      | Use another account? [Sign in]       |
-+--------------------------------------+--------------------------------------+
++---------------------------------------------------------------------------------+
+| pale pink -> pale lavender full viewport                                        |
+|                                                                                 |
+|                         [Dreams LMS logo]                                       |
+|                                                                                 |
+|                              Welcome Back                                       |
+|                         +----------------+                                      |
+|                         | circular avatar|                                      |
+|                         | Ronald Richard  |                                     |
+|                         +----------------+                                      |
+|                         Password *                              [eye]           |
+|                         [________________________________________]              |
+|                         [              Sign in ->                ]              |
+|                                                                                 |
++---------------------------------------------------------------------------------+
 
-MOBILE 390x844
-+--------------------------------------+
-| [SkillBoost logo]                    |
-| Session locked                       |
-| [avatar] Rosalind Franklin            |
-| ros...@example.com                   |
-| Password                             |
-| [_______________________________]    |
-| [Locked] [Forgot password?]           |
-| [       Unlock session       ]        |
-| Use another account? [Sign in]       |
-+--------------------------------------+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++------------------------------------------+
+|                                          |
+|             [Dreams LMS logo]            |
+|                                          |
+|             Welcome Back                 |
+|             [avatar]                     |
+|             Ronald Richard               |
+| Password *                    [eye]      |
+| [____________________________]           |
+| [          Sign in ->          ]         |
+|                                          |
++------------------------------------------+
+~~~
 
-- Account summary is read-only; only password is editable.
-- Unlock success returns to the previously locked page; failure keeps the locked shell and shows inline error.
+## Component map
+
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Shell | Centered auth canvas | Full 1600x1000 gradient background | No sidebar/brand split |
+| Identity | Logo + avatar | Dreams LMS logo, avatar, `Ronald Richard` | Read-only account identity |
+| Form | Password field | 409px source width, eye icon | Unlock validation |
+| Action | Sign in | 410px coral pill | Restore session |
 
 ## States
 
-- Default: account identity, locked badge and password field.
-- Error: wrong password.
-- Success: session unlocked.
+- Default: known account identity and empty password.
+- Error: wrong password displayed below field.
+- Loading: button disabled while unlock request runs.
+- Success: return to previously locked route.

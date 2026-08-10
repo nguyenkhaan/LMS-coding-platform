@@ -1,23 +1,77 @@
-# TC05 Teacher Course Enrollment
+# TC05 Course Enrollment Requests
 
-- **Tên màn hình:** TC05 Teacher Course Enrollment
-- **Đường dẫn:** `/teacher/courses/:courseId/enrollment`
-- **Asset:** [teacher/TC05TeacherCourseEnrollment.svg](../../screen/teacher/TC05TeacherCourseEnrollment.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Enrollment Requests
+- **Đường dẫn:** `VERIFY: /teacher/course-enrollment`
+- **Asset:** [TC05TeacherCourseEnrollment.svg](../../screen/teacher/TC05TeacherCourseEnrollment.svg)
+- **Viewport nguồn:** `1914x2090`
 
 ## Wireframe
 
 ~~~text
-[Teacher sidebar] | [Top bar: breadcrumb, search, avatar]
-                   | [Page title + primary action]
-                   | [summary cards / filters]
-                   | [main table, builder or progress content]
-                   | [pagination / save actions]
+DESKTOP 1914x2090
++=====================================================================================================+
+| [Dreams LMS] Home Courses Instructors Classroom Blog Contact us          [search] [bell] [user] |
++=====================================================================================================+
+|                                  ENROLLMENT REQUESTS                                              |
+|                                Home - Enrollment Requests                                        |
++=====================================================================================================+
+| +----------------------------------------------------------------------------------------------+ |
+| | (avatar) Edythe Andrew  Teacher                           [Become a Student] [Teacher Dashboard]| |
+| +----------------------------------------------------------------------------------------------+ |
+| +-----------------------------+  +----------------------------------------------------------+ |
+| | MAIN MENU                   |  | Enrollment Requests                            [search] | |
+| | [ ] Dashboard               |  | [All Courses v] [Pending] [Approved] [Rejected]       | |
+| | [ ] My Profile             |  | Student | Course | Date | Status | Action              | |
+| | [ ] My Courses             |  | Ronald | Python Foundations | 16 Jan | Pending | [Approve][x]|
+| | [>] Course Enrollment      |  | Jenny  | React TypeScript   | 18 Jan | Approved| [View]      |
+| | [ ] Students               |  | Patricia | Algorithms        | 22 Jan | Pending | [Approve][x]|
+| | [ ] Earnings               |  |                                                             | |
+| | [ ] Messages               |  |                            [1] [2] [>]                  | |
+| | ACCOUNT SETTINGS            |  +----------------------------------------------------------+ |
+| | [ ] Settings               |                                                               |
+| | [ ] Logout                 |                                                               |
+| +-----------------------------+                                                               |
++=====================================================================================================+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++--------------------------------------------+
+| [hamburger] [Dreams LMS]     [bell] [user]|
++--------------------------------------------+
+|            ENROLLMENT REQUESTS            |
+|          Home - Enrollment Requests       |
++--------------------------------------------+
+| Teacher: Edythe Andrew                   |
+| [ ] Dashboard [ ] Profile [ ] Courses    |
+| [>] Enrollment [ ] Students [ ] Earnings  |
+| +--------------------------------------+   |
+| | Enrollment Requests                  |   |
+| | [All Courses v]                     |   |
+| | [Pending] [Approved] [Rejected]     |   |
+| | Ronald | Python | 16 Jan | Pending  |   |
+| | [Approve] [Reject]                  |   |
+| | Jenny | React | 18 Jan | Approved  |   |
+| | [View]                              |   |
+| | Patricia | Algorithms | Pending     |   |
+| | [Approve] [Reject]                  |   |
+| | [1] [2] [>]                        |   |
+| +--------------------------------------+   |
++--------------------------------------------+
+~~~
 
-- Header/navigation và action chính dùng token trong [theme.md](../theme.md).
-- Các panel, card, input và table giữ đúng thứ tự từ trái sang phải, trên xuống dưới như sơ đồ; trên mobile chuyển thành một cột khi có nhiều cột.
-- Trạng thái tải rỗng, lỗi hoặc pending hiển thị trong đúng vùng nội dung, không thay đổi shell của màn hình.
+## Component map
 
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Toolbar | Course/status filters | Course dropdown, Pending/Approved/Rejected tabs | Filters table |
+| Table | Request rows | Student, course, date, status, approve/reject/view actions | Confirmation before mutation |
+| Pagination | Page controls | 1, 2, next | Preserves filters |
+| Sidebar | Teacher navigation | Course Enrollment active | Navigate |
+
+## States
+
+- Pending row: Approve and Reject actions visible.
+- Approved/rejected row: action replaced by View/status.
+- Empty filter: table headers remain and empty message appears.
+- Approval failure: row remains pending and inline error appears.

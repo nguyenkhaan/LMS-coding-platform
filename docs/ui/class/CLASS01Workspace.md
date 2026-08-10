@@ -1,22 +1,89 @@
-# CLASS01 Workspace
+# CLASS01 Classroom Workspace
 
-- **Tên màn hình:** CLASS01 Workspace
-- **Đường dẫn:** `/class/workspace`
-- **Asset:** [class/CLASS01Workspace.svg](../../screen/class/CLASS01Workspace.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Workspace
+- **Đường dẫn:** `VERIFY: /classroom/workspace`
+- **Asset:** [CLASS01Workspace.svg](../../screen/class/CLASS01Workspace.svg)
+- **Viewport nguồn:** `1939x2181`
 
 ## Wireframe
 
 ~~~text
-[Class header: title, members, status]
-[Left: workspace/editor or lesson content] | [Right: members/chat/activity]
-[toolbar actions, save/run/share]
-[bottom activity or submission panel]
+DESKTOP 1939x2181
++================================================================================================+
+| phone: +1 123 456 7890 | support@example.com             English | USD | [social] [Sign in]    |
++------------------------------------------------------------------------------------------------+
+| [Dreams LMS] Home Courses Instructors Classroom Blog Contact us      [search] [cart] [profile] |
++================================================================================================+
+|                                      WORKSPACE                                                 |
+|                              Classroom - Workspace                                             |
++================================================================================================+
+| [Search in lesson________________________________________]                                    |
+| Data Structures & Algorithms              Module 2: Lesson 3 - Two-pointer patterns            |
+|                                                        [Mark lesson complete]                 |
+| +------------------------------------------------------+  +-------------------------------+ |
+| |                                                      |  | COURSE CONTENT  Progress 40%  | |
+| |                         [PLAY]                        |  | [ ] Hash tables from scratch | |
+| |                    VIDEO PLAYER                       |  | [ ] Collision strategies     | |
+| |                                                      |  | [>] Two-pointer patterns     | |
+| +------------------------------------------------------+  | [ ] Sliding window lab        | |
+| | Two-pointer patterns       12:35                    |  | [ ] Judge problem set B      | |
+| | [< Previous lesson]                       [Next >]  |  +-------------------------------+ |
+| +------------------------------------------------------+  | COHORT CHAT                    | |
+| | [Notes] [Resources] [Assignment]                    |  | Ronald: Welcome to module 2 | |
+| | Two-pointer patterns                               |  | [Type a message________] [send]| |
+| | Use two indexes to scan the ordered collection.   |  +-------------------------------+ |
+| +------------------------------------------------------+                                |
++================================================================================================+
+| Footer: Dreams LMS | For Instructor | For Student | Newsletter | Copyright                |
++================================================================================================+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++--------------------------------------------+
+| [hamburger] [Dreams LMS]      [search]   |
++--------------------------------------------+
+|               WORKSPACE                 |
+|          Classroom - Workspace           |
++--------------------------------------------+
+| [Search in lesson____________]           |
+| Data Structures & Algorithms             |
+| Module 2: Lesson 3                       |
+| [Mark lesson complete]                   |
+| +--------------------------------------+   |
+| |              [PLAY]                 |   |
+| |         VIDEO PLAYER                |   |
+| +--------------------------------------+   |
+| Two-pointer patterns  12:35             |
+| [< Previous lesson] [Next lesson >]     |
+| [Notes] [Resources] [Assignment]       |
+| Use two indexes to scan the collection. |
+| +--------------------------------------+   |
+| | COURSE CONTENT  Progress 40%         |   |
+| | [ ] Hash tables from scratch         |   |
+| | [ ] Collision strategies             |   |
+| | [>] Two-pointer patterns             |   |
+| | [ ] Sliding window lab               |   |
+| +--------------------------------------+   |
+| | COHORT CHAT                          |   |
+| | Ronald: Welcome to module 2          |   |
+| | [Type a message________] [send]      |   |
+| +--------------------------------------+   |
++--------------------------------------------+
+~~~
 
-- Header/navigation và action chính dùng token trong [theme.md](../theme.md).
-- Các panel, card, input và table giữ đúng thứ tự từ trái sang phải, trên xuống dưới như sơ đồ; trên mobile chuyển thành một cột khi có nhiều cột.
-- Trạng thái tải rỗng, lỗi hoặc pending hiển thị trong đúng vùng nội dung, không thay đổi shell của màn hình.
+## Component map
 
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Header/hero | Classroom shell | Utility bar, nav, Workspace hero, lesson search | Mobile collapse |
+| Lesson | Video/content | Player, title, duration, previous/next, notes/resources/assignment | Tab and completion flow |
+| Right rail | Course content | Progress and ordered lessons | Current lesson active |
+| Right rail | Cohort chat | Messages, input, send | Sends lesson-group message |
+
+## States
+
+- Lesson incomplete: Mark lesson complete visible.
+- Lesson complete: action becomes Completed.
+- Chat send failure: preserve typed message and show retry.
+- Mobile: right rail follows lesson content.

@@ -1,22 +1,65 @@
 # QUIZ01 Quiz Attempt
 
-- **Tên màn hình:** QUIZ01 Quiz Attempt
-- **Đường dẫn:** `/quizzes/:quizId/attempt`
-- **Asset:** [quiz/QUIZ01QuizAttempt.svg](../../screen/quiz/QUIZ01QuizAttempt.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Quiz Attempt
+- **Đường dẫn:** `VERIFY: /quiz/:quizId/attempt`
+- **Asset:** [QUIZ01QuizAttempt.svg](../../screen/quiz/QUIZ01QuizAttempt.svg)
+- **Viewport nguồn:** `1912x2922`
 
 ## Wireframe
 
 ~~~text
-[Header: course/quiz title, timer, progress]
-[Question number + question text]
-[answer option cards / explanation area]
-[Back] [question navigator] [Next / Submit]
+DESKTOP 1912x2922
++================================================================================================+
+| [Dreams LMS] Quiz: Control Flow                 Question 1 of 10       [timer 14:32] [Exit]    |
++================================================================================================+
+| +------------------------------------------------------+  +-------------------------------+ |
+| | What does the following program print?               |  | QUESTION NAVIGATION           | |
+| |                                                      |  | [1] [2] [3] [4] [5]          | |
+| | ```python                                             |  | [6] [7] [8] [9] [10]         | |
+| | for i in range(3):                                   |  | [1 active] [2 answered]      | |
+| |     print(i)                                         |  | Legend: answered/current     | |
+| | ```                                                  |  +-------------------------------+ |
+| | ( ) 0 1 2                                           |                                |
+| | ( ) 1 2 3                                           |                                |
+| | ( ) 0 1 2 3                                         |                                |
+| | ( ) Error                                            |                                |
+| | [Previous]                                  [Next]   |                                |
+| +------------------------------------------------------+                                |
+| [Save and exit]                                                       [Submit quiz]       |
++================================================================================================+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++--------------------------------------------+
+| Quiz: Control Flow  Q1/10  [14:32] [Exit]|
++--------------------------------------------+
+| [1] [2] [3] [4] [5] [6] [7] [8] [9] [10] |
+| What does the program print?              |
+| ```python                                 |
+| for i in range(3): print(i)               |
+| ```                                       |
+| ( ) 0 1 2                                 |
+| ( ) 1 2 3                                 |
+| ( ) 0 1 2 3                               |
+| ( ) Error                                 |
+| [Previous]             [Next]              |
+| [Save and exit]       [Submit quiz]       |
++--------------------------------------------+
+~~~
 
-- Header/navigation và action chính dùng token trong [theme.md](../theme.md).
-- Các panel, card, input và table giữ đúng thứ tự từ trái sang phải, trên xuống dưới như sơ đồ; trên mobile chuyển thành một cột khi có nhiều cột.
-- Trạng thái tải rỗng, lỗi hoặc pending hiển thị trong đúng vùng nội dung, không thay đổi shell của màn hình.
+## Component map
 
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Header | Quiz status | Quiz title, question index, timer, exit | Timer persists attempt |
+| Question | Prompt/code | Question statement and code block | Read-only |
+| Answers | Radio options | One choice per option | Selects answer |
+| Navigation | Question map/actions | Number grid, Previous, Next, Save/Submit | Jumps/saves/submits |
+
+## States
+
+- Unanswered: current question highlighted, no selected radio.
+- Answered: question number marked answered.
+- Timer warning: accent timer when near limit.
+- Submit confirmation: show answered/unanswered count before final submit.

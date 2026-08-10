@@ -1,22 +1,78 @@
 # PAY02 Checkout
 
-- **Tên màn hình:** PAY02 Checkout
-- **Đường dẫn:** `/checkout`
-- **Asset:** [payment/PAY02Checkout.svg](../../screen/payment/PAY02Checkout.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Checkout
+- **Đường dẫn:** `VERIFY: /checkout`
+- **Asset:** [PAY02Checkout.svg](../../screen/payment/PAY02Checkout.svg)
+- **Viewport nguồn:** `1600x1915`
 
 ## Wireframe
 
 ~~~text
-[Header]
-[Checkout step indicator: Cart > Details > Payment]
-[Line-item/cart list] | [Order summary, discount, total]
-[quantity/remove controls] | [primary checkout action]
+DESKTOP 1600x1915
++==================================================================================================+
+| [Dreams LMS] Home Courses Instructors Classroom Blog Contact us                 [secure]      |
++==================================================================================================+
+|                                      CHECKOUT                                                    |
+|                                   Home - Checkout                                                |
++==================================================================================================+
+| +------------------------------------------------------+  +-------------------------------+ |
+| | Billing information                                   |  | Order summary                | |
+| | Full name [________________________]                  |  | [thumb] Python Foundations   | |
+| | Email [____________________________]                  |  | $49.00                      | |
+| | Phone [____________________________]                  |  | [thumb] React & TypeScript  | |
+| | Address [__________________________]                  |  | $59.00                      | |
+| +------------------------------------------------------+  | Subtotal              $108.00| |
+| | Payment method                                       |  | Discount                -$0  | |
+| | ( ) Credit/Debit card                                |  | Total                 $108.00| |
+| | ( ) PayPal                                            |  | [Pay securely]               | |
+| | ( ) Bank transfer                                     |  +-------------------------------+ |
+| | Card number [________________________]               |                                |
+| | [QR/payment panel]                                   |                                |
+| +------------------------------------------------------+                                |
++==================================================================================================+
+| Footer: Dreams LMS | For Instructor | For Student | Newsletter | Copyright                |
++==================================================================================================+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++--------------------------------------------+
+| [Dreams LMS]                    [secure] |
++--------------------------------------------+
+|                CHECKOUT                  |
+|              Home - Checkout              |
++--------------------------------------------+
+| Billing information                      |
+| Full name [____________________]         |
+| Email [________________________]         |
+| Phone [________________________]         |
+| Address [______________________]         |
+| Payment method                           |
+| ( ) Credit/Debit card                    |
+| ( ) PayPal                               |
+| Card number [__________________]         |
+| +--------------------------------------+   |
+| | ORDER SUMMARY                        |   |
+| | Python Foundations          $49.00   |   |
+| | React & TypeScript           $59.00  |   |
+| | Total                       $108.00  |   |
+| | [Pay securely]                      |   |
+| +--------------------------------------+   |
++--------------------------------------------+
+~~~
 
-- Header/navigation và action chính dùng token trong [theme.md](../theme.md).
-- Các panel, card, input và table giữ đúng thứ tự từ trái sang phải, trên xuống dưới như sơ đồ; trên mobile chuyển thành một cột khi có nhiều cột.
-- Trạng thái tải rỗng, lỗi hoặc pending hiển thị trong đúng vùng nội dung, không thay đổi shell của màn hình.
+## Component map
 
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Billing | Customer form | Name, email, phone, address | Required validation |
+| Payment | Payment selector | Card, PayPal, bank transfer, card/QR fields | Switches payment fields |
+| Summary | Order summary | Items, subtotal, discount, total | Updates with payment/cart |
+| Action | Pay securely | Primary payment action | Opens gateway/confirmation |
+
+## States
+
+- Invalid billing field: inline error without losing entered values.
+- Payment processing: disable payment controls and show progress.
+- Payment success: confirmation and enrolled-course link.
+- Payment failure: preserve form and show retry/change method.

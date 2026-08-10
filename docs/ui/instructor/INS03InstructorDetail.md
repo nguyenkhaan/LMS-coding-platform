@@ -1,23 +1,70 @@
 # INS03 Instructor Detail
 
-- **Tên màn hình:** INS03 Instructor Detail
-- **Đường dẫn:** `/instructors/:instructorId`
-- **Asset:** [instructor/INS03InstructorDetail.png](../../screen/instructor/INS03InstructorDetail.png)
-- **Trạng thái verify:** PNG dùng để đối chiếu raster export với SVG cùng tên; layout dưới đây là wireframe review chung cho cùng màn hình.
+- **Tên màn hình:** Instructor Detail
+- **Đường dẫn:** `VERIFY: /instructors/:instructorId`
+- **Asset:** [INS03InstructorDetail.svg](../../screen/instructor/INS03InstructorDetail.svg)
+- **Viewport nguồn:** `VERIFY` (SVG không có metadata kích thước hợp lệ)
+- **Bản raster đối chiếu:** [INS03InstructorDetail.png](../../screen/instructor/INS03InstructorDetail.png)
 
 ## Wireframe
 
 ~~~text
-[Global header + search/filter]
-[Page title + view toggle]
-[instructor card grid or data list]
-[avatar, name, expertise, rating, course count, CTA]
-[pagination / load more]
+DESKTOP 1600x2550
++================================================================================================+
+| [Dreams LMS] Home Courses Instructors Classroom Blog Contact us     [search] [cart] [Sign in] |
++================================================================================================+
+| [hero image]  Edythe Andrew                         [star] 4.9  [Follow] [Message]             |
+|                Senior Coding Instructor                                                        |
++================================================================================================+
+| +------------------------------------------------------------------------------------------+ |
+| | About Edythe                                                                            | |
+| | Practical coding instructor focused on algorithms and interview preparation.             | |
+| +------------------------------------------------------------------------------------------+ |
+| | Professional experience                      | Achievements                               | |
+| | Senior Engineer 2018-2024                    | [24 Courses] [12k Students]               | |
+| | Coding Instructor 2015-2018                  | [98% Rating] [4.9 Reviews]                | |
+| +------------------------------------------------------------------------------------------+ |
+| | Courses by Edythe                         [search course____________]                    | |
+| | [course card] [course card] [course card]                                             | |
+| +------------------------------------------------------------------------------------------+ |
+| | Certificates [AWS] [Google Educator]                                                  | |
++================================================================================================+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++------------------------------------------+
+| [hamburger] [Dreams LMS]      [search]   |
++------------------------------------------+
+| [hero image]                             |
+| Edythe Andrew                            |
+| Senior Coding Instructor                 |
+| [star] 4.9 [Follow] [Message]            |
+| About Edythe                             |
+| Practical coding instructor focused on   |
+| algorithms and interview preparation.    |
+| Professional experience                  |
+| Senior Engineer 2018-2024                |
+| Coding Instructor 2015-2018              |
+| [24 Courses] [12k Students]              |
+| Courses by Edythe                        |
+| [course card]                            |
+| [course card]                            |
+| Certificates [AWS] [Google Educator]     |
++------------------------------------------+
+~~~
 
-- Header/navigation và action chính dùng token trong [theme.md](../theme.md).
-- Các panel, card, input và table giữ đúng thứ tự từ trái sang phải, trên xuống dưới như sơ đồ; trên mobile chuyển thành một cột khi có nhiều cột.
-- Trạng thái tải rỗng, lỗi hoặc pending hiển thị trong đúng vùng nội dung, không thay đổi shell của màn hình.
+## Component map
 
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Hero | Instructor identity | Image, name, role, rating, Follow, Message | Follow/message action |
+| Profile | About/experience | Bio, professional experience, metrics | Read-only details |
+| Courses | Course cards | Instructor-owned course grid and search | Opens course detail |
+| Credentials | Certificates | Credential chips/cards | Optional links |
+
+## States
+
+- Follow toggle changes label to Following.
+- No courses: retain section heading and empty message.
+- Missing raster/SVG geometry: verify exact hero dimensions before UI implementation.

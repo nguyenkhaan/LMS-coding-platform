@@ -1,43 +1,61 @@
 # AUTH03 Forgot Password
 
-- **Tên màn hình:** AUTH03 Forgot Password
-- **Đường dẫn:** `/auth/forgot-password`
-- **Asset:** [auth/AUTH03ForgotPassword.svg](../../screen/auth/AUTH03ForgotPassword.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Forgot Password?
+- **Đường dẫn:** `/auth/forgot-password` (suy luận)
+- **Asset:** [AUTH03ForgotPassword.svg](../../screen/auth/AUTH03ForgotPassword.svg)
+- **Viewport nguồn:** `1600x1000`
+- **Mức độ chắc chắn:** Layout đã đối chiếu; asset trùng với `AUTH02Register.svg`.
 
 ## Wireframe
 
 ~~~text
 DESKTOP 1600x1000
-+--------------------------------------+--------------------------------------+
-| BRAND PANEL 800px                    | RECOVERY FORM 800px                 |
-| [SkillBoost logo]                    | Forgot your password?               |
-| [illustration / gradient]             | Enter email to receive reset code.   |
-|                                      | Email address                        |
-|                                      | [you@example.com_________________]   |
-|                                      | [       Send reset link       ]      |
-|                                      | Remembered your password?            |
-|                                      | [Back to sign in]                    |
-+--------------------------------------+--------------------------------------+
++======================================================================+
+| BRAND 800px                     | FORM 800px                         |
+| pale pink gradient              | white                              |
+|                                 | [Dreams LMS]       Back to Home    |
+|        (circle)                 |                                    |
+|        [phone/person/lock]      | Forgot Password?                   |
+|                                 | Enter your email to reset          |
+|        Welcome to Dreams LMS    | your password.                     |
+|        Courses.                 | Email *                            |
+|        Platform...              | [________________________] [mail]  |
+|        -- o o                    | [          Submit ->          ]   |
+|                                 | Remember Password? [Sign in]       |
++======================================================================+
 
-MOBILE 390x844
-+--------------------------------------+
-| [SkillBoost logo]                    |
-| Forgot your password?                |
-| Email address                        |
-| [you@example.com_________________]   |
-| [       Send reset link       ]      |
-| Remembered? [Back to sign in]        |
-+--------------------------------------+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++------------------------------------------+
+| [Dreams LMS]              Back Home      |
+| Forgot Password?                         |
+| Enter your email to reset password.      |
+| Email *                                  |
+| [____________________________] [mail]    |
+| [           Submit ->             ]      |
+| Remember Password? [Sign in]             |
++------------------------------------------+
+~~~
 
-- Email required; success gửi người dùng tới `/auth/otp` hoặc flow reset tương ứng.
-- Không hiển thị mật khẩu mới trên màn hình này.
+## Component map
+
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Brand | Illustration hero | 800px left panel, centered illustration and slogan | Hide on mobile |
+| Header | Logo/back link | Right panel top row | Home/login navigation |
+| Form | Email field | 409px source width, required, mail icon | Validate email |
+| Action | Submit button | 410px coral pill | Start reset flow |
+| Footer | Sign in link | Under form | Navigate `/auth/login` |
 
 ## States
 
-- Default: email input and reset CTA.
-- Error: email không tồn tại hoặc format không hợp lệ.
-- Success: thông báo đã gửi email, CTA resend có cooldown.
+- Default: one empty email input.
+- Invalid email: error under input.
+- Unknown email: generic recovery error; do not reveal account existence.
+- Success: confirmation and next step to OTP/reset flow.
+
+## Verification notes
+
+- This asset is byte-identical to `AUTH02Register.svg`; `AUTH02` remains a naming/data-quality blocker.

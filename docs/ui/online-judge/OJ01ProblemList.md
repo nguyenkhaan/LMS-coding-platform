@@ -1,22 +1,71 @@
 # OJ01 Problem List
 
-- **Tên màn hình:** OJ01 Problem List
-- **Đường dẫn:** `/online-judge/problems`
-- **Asset:** [online-judge/OJ01ProblemList.svg](../../screen/online-judge/OJ01ProblemList.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Problem List
+- **Đường dẫn:** `VERIFY: /online-judge/problems`
+- **Asset:** [OJ01ProblemList.svg](../../screen/online-judge/OJ01ProblemList.svg)
+- **Viewport nguồn:** `1920x1715`
 
 ## Wireframe
 
 ~~~text
-[Dark coding toolbar: problem title, language, run, submit]
-[Problem statement / constraints] | [code editor with line numbers]
-[examples and hints]             | [console/output + test result]
-                                  | [submission status/actions]
+DESKTOP 1920x1715
++==================================================================================================+
+| [Dreams LMS] Home Courses Classroom Online Judge              [search] [bell] [profile]        |
++==================================================================================================+
+|                                      PROBLEM LIST                                               |
+|                              Practice coding problems and challenges                            |
++==================================================================================================+
+| [Search problem________________] [Difficulty v] [Topic v] [Status v] [Sort v]                  |
+| +------------------------------------------------------------------------------------------+ |
+| | ID       | Problem title                    | Difficulty | Acceptance | Status | Action   | |
+| | OJ-001   | Two Sum                          | Easy       | 82%        | Solved | [Solve]   | |
+| | OJ-002   | Longest Substring Without Repeat  | Medium     | 64%        | Open   | [Solve]   | |
+| | OJ-003   | Sliding Window Maximum             | Hard       | 41%        | Open   | [Solve]   | |
+| | OJ-004   | Merge Intervals                   | Medium     | 58%        | Solved | [Review]  | |
+| +------------------------------------------------------------------------------------------+ |
+| [1] [2] [3] [>]                                                                              |
++==================================================================================================+
+| Footer: Dreams LMS | For Student | Practice | Newsletter | Copyright                       |
++==================================================================================================+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++--------------------------------------------+
+| [hamburger] [Dreams LMS]      [profile]  |
++--------------------------------------------+
+|              PROBLEM LIST                |
+|         Practice coding problems          |
++--------------------------------------------+
+| [Search problem____________]              |
+| [Difficulty v] [Topic v] [Filter]         |
+| +--------------------------------------+   |
+| | OJ-001  Two Sum                     |   |
+| | Easy | Acceptance 82% | Solved      |   |
+| | [Review]                            |   |
+| +--------------------------------------+   |
+| | OJ-002  Longest Substring           |   |
+| | Medium | Acceptance 64% | Open      |   |
+| | [Solve]                             |   |
+| +--------------------------------------+   |
+| | OJ-003  Sliding Window Maximum      |   |
+| | Hard | Acceptance 41% | Open        |   |
+| | [Solve]                             |   |
+| +--------------------------------------+   |
+| [1] [2] [3] [>]                         |
++--------------------------------------------+
+~~~
 
-- Header/navigation và action chính dùng token trong [theme.md](../theme.md).
-- Các panel, card, input và table giữ đúng thứ tự từ trái sang phải, trên xuống dưới như sơ đồ; trên mobile chuyển thành một cột khi có nhiều cột.
-- Trạng thái tải rỗng, lỗi hoặc pending hiển thị trong đúng vùng nội dung, không thay đổi shell của màn hình.
+## Component map
 
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Toolbar | Problem filters | Search, difficulty, topic, status, sort | Filters list |
+| Table | Problem rows | ID, title, difficulty, acceptance, solved/open state, action | Solve or review |
+| Pagination | Page controls | Active page and next | Preserve filters |
+
+## States
+
+- Solved row: status `Solved`, action `Review`.
+- Open row: status `Open`, action `Solve`.
+- Empty filters: retain toolbar and show no problems message.

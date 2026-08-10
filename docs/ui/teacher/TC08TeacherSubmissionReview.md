@@ -1,23 +1,60 @@
-# TC08 Teacher Submission Review
+# TC08 Submission Review
 
-- **Tên màn hình:** TC08 Teacher Submission Review
-- **Đường dẫn:** `/teacher/submissions/:submissionId`
-- **Asset:** [teacher/TC08TeacherSubmissionReview.svg](../../screen/teacher/TC08TeacherSubmissionReview.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Submission History / Review
+- **Đường dẫn:** `VERIFY: /teacher/submissions`
+- **Asset:** [TC08TeacherSubmissionReview.svg](../../screen/teacher/TC08TeacherSubmissionReview.svg)
+- **Viewport nguồn:** `1600x1473`
 
 ## Wireframe
 
 ~~~text
-[Teacher sidebar] | [Top bar: breadcrumb, search, avatar]
-                   | [Page title + primary action]
-                   | [summary cards / filters]
-                   | [main table, builder or progress content]
-                   | [pagination / save actions]
+DESKTOP 1600x1473
++===================================================================================================+
+| [Dreams LMS] Home Courses Instructors Classroom Blog Contact us          [search] [bell] [user] |
++===================================================================================================+
+|                                  SUBMISSION HISTORY                                               |
+|                                Home - Submission History                                         |
++===================================================================================================+
+| +-----------------------------+  +----------------------------------------------------------+ |
+| | TEACHER MENU                |  | Submission History                         [Filter v]   | |
+| | [ ] Dashboard               |  | Course [v]  Student [search________]  Status [v]       | |
+| | [ ] My Courses             |  | Student | Problem | Submitted | Score | Status | Action  | |
+| | [>] Submissions            |  | Ronald  | Two-pointer | 16 Jan | 92% | Passed | [Review]|
+| | [ ] Students               |  | Jenny   | Hash table   | 18 Jan | 68% | Review | [Review]|
+| | [ ] Earnings               |  | Patricia| Sliding wnd. | 22 Jan | --  | Pending| [Review]|
+| +-----------------------------+  +----------------------------------------------------------+ |
++===================================================================================================+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++--------------------------------------------+
+| [hamburger] [Dreams LMS]     [bell] [user]|
++--------------------------------------------+
+|            SUBMISSION HISTORY             |
+|          Home - Submission History         |
++--------------------------------------------+
+| [Course v] [Status v]                     |
+| [Student search____________]              |
+| Ronald | Two-pointer | 92% | Passed      |
+| [Review]                                  |
+| Jenny | Hash table | 68% | Review         |
+| [Review]                                  |
+| Patricia | Sliding window | Pending       |
+| [Review]                                  |
++--------------------------------------------+
+~~~
 
-- Header/navigation và action chính dùng token trong [theme.md](../theme.md).
-- Các panel, card, input và table giữ đúng thứ tự từ trái sang phải, trên xuống dưới như sơ đồ; trên mobile chuyển thành một cột khi có nhiều cột.
-- Trạng thái tải rỗng, lỗi hoặc pending hiển thị trong đúng vùng nội dung, không thay đổi shell của màn hình.
+## Component map
 
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Toolbar | Filters | Course, student search, status | Filter submission table |
+| Table | Submission rows | Student, problem, date, score, status, Review | Opens review detail |
+| Sidebar | Teacher menu | Submissions active | Navigate |
+
+## States
+
+- Passed/Review/Pending badges are distinct.
+- Empty filters retain filter controls and show no submissions.
+- Mobile table reflows each row into a review card.

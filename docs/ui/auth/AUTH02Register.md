@@ -1,68 +1,66 @@
 # AUTH02 Register
 
-- **Tên màn hình:** AUTH02 Register
-- **Đường dẫn:** `/auth/register`
-- **Asset:** [auth/AUTH02Register.svg](../../screen/auth/AUTH02Register.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình theo filename:** Register
+- **Tên màn hình theo asset render:** Forgot Password?
+- **Đường dẫn:** `VERIFY route`
+- **Asset:** [AUTH02Register.svg](../../screen/auth/AUTH02Register.svg)
+- **Viewport nguồn:** `1600x1000`
+- **Mức độ chắc chắn:** BLOCKED. SVG có SHA-256 giống hệt `AUTH03ForgotPassword.svg`; không được tự dựng Register từ tên file.
 
-## Wireframe
+## Wireframe thực tế của asset
 
 ~~~text
 DESKTOP 1600x1000
-+--------------------------------------+--------------------------------------+
-| BRAND PANEL 800px                    | CREATE ACCOUNT 800px                |
-| [SkillBoost logo]                    | Create your SkillBoost account      |
-| Start learning and coding.           | Set up access to courses and tools.  |
-| [illustration / gradient]             | [First name_______] [Last name____] |
-|                                      | Email address                        |
-|                                      | [you@example.com_________________]   |
-|                                      | [Password________] [Confirm________] |
-|                                      | [x] Agree to Terms and Privacy       |
-|                                      | [        Create account        ]     |
-|                                      | -------- or continue with --------   |
-|                                      | [ Google ]       [ GitHub ]          |
-|                                      | Already have account? [Sign in]      |
-+--------------------------------------+--------------------------------------+
++======================================================================+
+| LEFT BRAND 800px                | RIGHT RECOVERY FORM 800px          |
+| pale pink gradient              | white                              |
+|                                 | [Dreams LMS]       Back to Home    |
+|        [phone/person/lock]      |                                    |
+|                                 | Forgot Password?                   |
+|       Welcome to Dreams LMS     | Enter your email to reset          |
+|       Courses.                  | your password.                     |
+|                                 | Email *                            |
+|                                 | [________________________] [mail]  |
+|                                 | [          Submit ->          ]    |
+|                                 |                                    |
+|                                 | Remember Password? [Sign in]       |
+|                                 |                                    |
++======================================================================+
 
-MOBILE 390x844
-+--------------------------------------+
-| [SkillBoost logo]                    |
-| Create your SkillBoost account       |
-| First name                           |
-| [Jane____________________________]    |
-| Last name                            |
-| [Doe_____________________________]   |
-| Email address                        |
-| [you@example.com_________________]   |
-| Password                             |
-| [_______________________________]    |
-| Confirm password                     |
-| [_______________________________]    |
-| [x] Agree to Terms and Privacy       |
-| [      Create account       ]        |
-| [Google] [GitHub]                    |
-| Already registered? [Sign in]        |
-+--------------------------------------+
 ~~~
 
-## Components and behavior
-
-- Desktop dùng grid 2 cột cho name và password pair; mobile chuyển tất cả field thành một cột.
-- Checkbox Terms bắt buộc trước khi submit; password pair phải khớp.
-- `Sign in` đi tới `/auth/login`.
+~~~text
+MOBILE 390x844
++------------------------------------------+
+| [Dreams LMS]              Back Home      |
+|                                          |
+| Forgot Password?                         |
+| Enter your email to reset password.      |
+| Email *                                  |
+| [____________________________] [mail]    |
+| [           Submit ->             ]      |
+| Remember Password? [Sign in]             |
++------------------------------------------+
+~~~
 
 ## Component map
 
-| Vùng | Component | Nội dung | Hành vi |
+| Vùng | Component | Chi tiết | Hành vi |
 | --- | --- | --- | --- |
-| Form | Name/email/password fields | 5 field có label và placeholder | Inline validation |
-| Consent | Checkbox | Terms and Privacy | Required |
-| Action | Create account | Submit registration | Loading/error/success |
-| Secondary | OAuth and sign-in link | Google, GitHub, Sign in | Alternate auth |
+| Left | Shared auth brand | Same illustration/slogan as other split auth screens | Hidden on mobile |
+| Right top | Logo + Back to Home | Fixed top row | Navigate home |
+| Form | Email input | One required email field | Validate and submit reset request |
+| Action | Submit | Coral full-width pill | Send reset email |
+| Footer | Sign in link | `Remember Password? Sign in` | Navigate login |
 
 ## States
 
-- Default: field trống, CTA enabled theo validation cơ bản.
-- Error: email đã tồn tại, password mismatch hoặc Terms chưa chọn.
-- Loading: CTA disabled và hiển thị progress.
-- Success: chuyển sang OTP verification.
+- Default: email field trống, Submit enabled theo validation cơ bản.
+- Error: email sai format hoặc request reset thất bại.
+- Loading: Submit disabled trong lúc gửi request.
+- Success: hiển thị xác nhận đã gửi email và chuyển sang OTP/reset flow.
+
+## Verification notes
+
+- `AUTH02Register.svg` và `AUTH03ForgotPassword.svg` identical byte-for-byte theo SHA-256.
+- Cần cung cấp asset Register đúng hoặc xác nhận đổi tên `AUTH02` thành Forgot Password trước khi sinh UI.

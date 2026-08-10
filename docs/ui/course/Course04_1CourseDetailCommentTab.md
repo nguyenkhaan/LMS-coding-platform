@@ -1,23 +1,64 @@
-# COURSE04.1 Course Detail Comments
+# COURSE04.1 Course Detail - Comments
 
-- **Tên màn hình:** COURSE04.1 Course Detail Comments
-- **Đường dẫn:** `/courses/:courseId?tab=comments`
-- **Asset:** [course/Course04_1CourseDetailCommentTab.svg](../../screen/course/Course04_1CourseDetailCommentTab.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Course Detail - Comments
+- **Đường dẫn:** `VERIFY: /courses/:courseId?tab=comments`
+- **Asset:** [Course04_1CourseDetailCommentTab.svg](../../screen/course/Course04_1CourseDetailCommentTab.svg)
+- **Viewport nguồn:** `1892x4481`
 
 ## Wireframe
 
 ~~~text
-[Global header]
-[Course hero: title, instructor, rating, progress/enroll CTA]
-[Tabs: Overview | Comments | Progress | Instructor]
-[Main lesson/content column] | [Course curriculum/sidebar]
-[reviews, comments or empty state according to tab]
+DESKTOP 1892x4481
++================================================================================================+
+| [Dreams LMS] Home Courses Instructors Classroom Blog Contact us     [search] [cart] [Sign in] |
++================================================================================================+
+| [hero image] Data Structures & Algorithms                [star] 4.8  [favorite]               |
++================================================================================================+
+| [Overview] [Curriculum] [Instructor] [Comments active]                                      |
+| Comments and reviews                                      [Write a review]                  |
+| +------------------------------------------------------------------------------------------+ |
+| | [avatar] Ronald Richard  [star][star][star][star][star]  2 days ago                     | |
+| | Great explanations of the two-pointer pattern.                                           | |
+| +------------------------------------------------------------------------------------------+ |
+| | [avatar] Jenny Wilson   [star][star][star][star]         1 week ago                     | |
+| | The practice problems helped me prepare for interviews.                                  | |
+| +------------------------------------------------------------------------------------------+ |
+| [Load more comments]                                                                        |
++================================================================================================+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++--------------------------------------------+
+| [hamburger] [Dreams LMS]      [cart]     |
++--------------------------------------------+
+| Data Structures & Algorithms             |
+| [Overview] [Curriculum]                  |
+| [Instructor] [Comments active]           |
+| Comments and reviews                     |
+| [Write a review]                         |
+| +--------------------------------------+   |
+| | [avatar] Ronald Richard             |   |
+| | [star][star][star][star][star]      |   |
+| | Great explanations...               |   |
+| +--------------------------------------+   |
+| | [avatar] Jenny Wilson              |   |
+| | [star][star][star][star]            |   |
+| | Practice helped my interviews.      |   |
+| +--------------------------------------+   |
+| [Load more comments]                     |
++--------------------------------------------+
+~~~
 
-- Header/navigation và action chính dùng token trong [theme.md](../theme.md).
-- Các panel, card, input và table giữ đúng thứ tự từ trái sang phải, trên xuống dưới như sơ đồ; trên mobile chuyển thành một cột khi có nhiều cột.
-- Trạng thái tải rỗng, lỗi hoặc pending hiển thị trong đúng vùng nội dung, không thay đổi shell của màn hình.
+## Component map
 
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Tabs | Detail navigation | Comments active | Switch detail tabs |
+| Review list | Review item | Avatar, author, stars, date, text | Paginated/load more |
+| Action | Write review | Opens review form for eligible user | Auth/enrollment check |
+
+## States
+
+- No comments: empty message and Write a review if eligible.
+- Review submission: pending status until moderation.

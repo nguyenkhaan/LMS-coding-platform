@@ -1,23 +1,68 @@
 # PROG01 Problem Reading
 
-- **Tên màn hình:** PROG01 Problem Reading
-- **Đường dẫn:** `/practice/problems/:problemId`
-- **Asset:** [programming/PROG01ProblemReading.svg](../../screen/programming/PROG01ProblemReading.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Problem Reading
+- **Đường dẫn:** `VERIFY: /programming/:problemId/reading`
+- **Asset:** [PROG01ProblemReading.svg](../../screen/programming/PROG01ProblemReading.svg)
+- **Viewport nguồn:** `1912x4304`
 
 ## Wireframe
 
 ~~~text
-[Global header]
-[Problem title + difficulty/status + action]
-[Left: statement, constraints, examples, hints]
-[Right: preview/video/editor panel]
-[Bottom: related problems or navigation]
+DESKTOP 1912x4304
++================================================================================================+
+| [Dreams LMS] Courses Classroom Programming                         [progress 40%] [profile]   |
++================================================================================================+
+| +----------------------+  +---------------------------------------------------------------+ |
+| | COURSE CONTENT       |  | Variables and Data Types                                      | |
+| | [>] Introduction     |  | [lesson progress]                                          | |
+| | [>] Variables        |  | [diagram / lesson image]                                    | |
+| | [ ] Data types       |  | Variables store values. A type defines how a value is used.| |
+| | [ ] Operators        |  | ```python                                                  | |
+| | [ ] Practice         |  | name = "Ada"                                               | |
+| |                      |  | age = 24                                                   | |
+| | Progress [====----]  |  | ```                                                        | |
+| +----------------------+  | [Tip] Use descriptive variable names.                      | |
+|                           | [Example] [Try it] [Exercise result: Passed]               | |
+|                           | [< Previous lesson]                   [Mark complete >]   | |
+|                           +---------------------------------------------------------------+ |
++================================================================================================+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++---------------------------------------------+
+| [menu] Variables and Data Types [40%]    |
++---------------------------------------------+
+| [Course content]                         |
+| [>] Introduction  [>] Variables          |
+| [ ] Data types     [ ] Operators         |
+| +--------------------------------------+   |
+| | Variables and Data Types             |   |
+| | [lesson image/diagram]               |   |
+| | Variables store values. A type        |   |
+| | defines how a value is used.          |   |
+| | ```python                            |   |
+| | name = "Ada"                         |   |
+| | age = 24                             |   |
+| | ```                                  |   |
+| | [Tip] Use descriptive names.          |   |
+| | [Try it] [Exercise result: Passed]   |   |
+| | [< Previous] [Mark complete >]        |   |
+| +--------------------------------------+   |
++---------------------------------------------+
+~~~
 
-- Header/navigation và action chính dùng token trong [theme.md](../theme.md).
-- Các panel, card, input và table giữ đúng thứ tự từ trái sang phải, trên xuống dưới như sơ đồ; trên mobile chuyển thành một cột khi có nhiều cột.
-- Trạng thái tải rỗng, lỗi hoặc pending hiển thị trong đúng vùng nội dung, không thay đổi shell của màn hình.
+## Component map
 
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Left rail | Course content | Lesson tree and progress | Select lesson |
+| Lesson | Reading content | Diagram, explanation, code block, tip/example | Scroll reading |
+| Lesson actions | Exercise/completion | Try it, result, previous, mark complete | Updates progress |
+
+## States
+
+- Current lesson highlighted in tree.
+- Exercise passed: result badge and completion action.
+- Locked lesson: disabled tree row until prerequisite complete.
+- Mobile: course tree collapses above lesson content.

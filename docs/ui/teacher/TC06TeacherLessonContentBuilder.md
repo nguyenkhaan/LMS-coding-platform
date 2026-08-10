@@ -1,23 +1,75 @@
-# TC06 Teacher Lesson Content Builder
+# TC06 Lesson Content Builder
 
-- **Tên màn hình:** TC06 Teacher Lesson Content Builder
-- **Đường dẫn:** `/teacher/courses/:courseId/lessons/:lessonId/edit`
-- **Asset:** [teacher/TC06TeacherLessonContentBuilder.svg](../../screen/teacher/TC06TeacherLessonContentBuilder.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Lesson Builder
+- **Đường dẫn:** `VERIFY: /teacher/lesson-builder`
+- **Asset:** [TC06TeacherLessonContentBuilder.svg](../../screen/teacher/TC06TeacherLessonContentBuilder.svg)
+- **Viewport nguồn:** `1920x2204`
 
 ## Wireframe
 
 ~~~text
-[Teacher sidebar] | [Top bar: breadcrumb, search, avatar]
-                   | [Page title + primary action]
-                   | [summary cards / filters]
-                   | [main table, builder or progress content]
-                   | [pagination / save actions]
+DESKTOP 1920x2204
++=====================================================================================================+
+| [Dreams LMS] Home Courses Instructors Classroom Blog Contact us          [search] [bell] [user] |
++=====================================================================================================+
+|                                    LESSON BUILDER                                                |
+|                                  Home - Lesson Builder                                           |
++=====================================================================================================+
+| +----------------------------------------------------------------------------------------------+ |
+| | (avatar) Edythe Andrew  Teacher                           [Become a Student] [Teacher Dashboard]| |
+| +----------------------------------------------------------------------------------------------+ |
+| +-----------------------------+  +-------------------------------+  +-------------------------+ |
+| | MAIN MENU                   |  | Lesson Content Component       |  | Lesson Module            | |
+| | [ ] Dashboard               |  | Lesson title                    |  | [1] Introduction         | |
+| | [ ] My Profile             |  | [Two-pointer patterns_______]  |  | [2] Hash tables           | |
+| | [ ] My Courses             |  | Content type [Text v]          |  | [3] Two-pointer patterns | |
+| | [ ] Course Enrollment      |  | [ rich text editor............] |  | [4] Sliding window        | |
+| | [ ] Students               |  | [ toolbar: B I link list ]     |  | [5] Judge problem set     | |
+| | [ ] Earnings               |  | [content body................]  |  |                           | |
+| | [ ] Messages               |  | Add component [+ Add content] |  | [Save draft] [Publish]    | |
+| +-----------------------------+  +-------------------------------+  +-------------------------+ |
++=====================================================================================================+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++--------------------------------------------+
+| [hamburger] [Dreams LMS]     [bell] [user]|
++--------------------------------------------+
+|              LESSON BUILDER               |
+|            Home - Lesson Builder           |
++--------------------------------------------+
+| Lesson Content Component                  |
+| Lesson title                              |
+| [Two-pointer patterns____________]        |
+| Content type [Text v]                     |
+| [ B I link list ]                         |
+| +--------------------------------------+   |
+| | content body                         |   |
+| |                                      |   |
+| +--------------------------------------+   |
+| [+ Add content]                         |
+| Lesson Module                            |
+| [1] Introduction                         |
+| [2] Hash tables                          |
+| [3] Two-pointer patterns                 |
+| [4] Sliding window                       |
+| [Save draft] [Publish]                   |
++--------------------------------------------+
+~~~
 
-- Header/navigation và action chính dùng token trong [theme.md](../theme.md).
-- Các panel, card, input và table giữ đúng thứ tự từ trái sang phải, trên xuống dưới như sơ đồ; trên mobile chuyển thành một cột khi có nhiều cột.
-- Trạng thái tải rỗng, lỗi hoặc pending hiển thị trong đúng vùng nội dung, không thay đổi shell của màn hình.
+## Component map
 
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Editor | Lesson metadata | Title, content type, rich text toolbar/body | Dirty state while editing |
+| Editor | Add component | Adds text/content component below current block | Focus new block |
+| Right rail | Lesson module | Ordered lesson list; current lesson highlighted | Select lesson |
+| Actions | Save/Publish | Draft and publish actions | Publish confirmation |
+
+## States
+
+- Draft: Save draft enabled when dirty.
+- Publish validation: missing title/content shown beside field.
+- Published: publish action changes to update/unpublish affordance.
+- Mobile: module rail follows editor, actions remain at bottom.

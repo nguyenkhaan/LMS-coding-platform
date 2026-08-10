@@ -1,23 +1,61 @@
-# TC09 Teacher Student Progress
+# TC09 Student Progress
 
-- **Tên màn hình:** TC09 Teacher Student Progress
-- **Đường dẫn:** `/teacher/courses/:courseId/progress`
-- **Asset:** [teacher/TC09TeacherStudentProgress.svg](../../screen/teacher/TC09TeacherStudentProgress.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Student Progress
+- **Đường dẫn:** `VERIFY: /teacher/student-progress`
+- **Asset:** [TC09TeacherStudentProgress.svg](../../screen/teacher/TC09TeacherStudentProgress.svg)
+- **Viewport nguồn:** `1600x1473`
 
 ## Wireframe
 
 ~~~text
-[Teacher sidebar] | [Top bar: breadcrumb, search, avatar]
-                   | [Page title + primary action]
-                   | [summary cards / filters]
-                   | [main table, builder or progress content]
-                   | [pagination / save actions]
+DESKTOP 1600x1473
++==================================================================================================+
+| [Dreams LMS] Home Courses Instructors Classroom Blog Contact us          [search] [bell] [user] |
++==================================================================================================+
+|                                  STUDENT PROGRESS                                                |
+|                                Home - Student Progress                                           |
++==================================================================================================+
+| +-----------------------------+  +----------------------------------------------------------+ |
+| | TEACHER MENU                |  | Student Progress                              [Export] | |
+| | [ ] Dashboard               |  | Course [Data Structures v]  Student [All v]            | |
+| | [ ] My Courses             |  | Student | Course | Completed | Score | Last active | View| |
+| | [ ] Submissions            |  | Ronald  | Algorithms | 64% | 92% | Today | [View]    | |
+| | [>] Student Progress       |  | Jenny   | Algorithms | 42% | 68% | 2 days | [View]   | |
+| | [ ] Earnings               |  | Patricia| Algorithms | 28% | --  | 5 days | [View]   | |
+| +-----------------------------+  +----------------------------------------------------------+ |
++==================================================================================================+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++-------------------------------------------+
+| [hamburger] [Dreams LMS]     [bell] [user]|
++-------------------------------------------+
+|             STUDENT PROGRESS             |
+|           Home - Student Progress         |
++-------------------------------------------+
+| [Course: Algorithms v] [Student: All v]  |
+| [Export]                                  |
+| Ronald | Completed 64% | Score 92%        |
+| Last active Today             [View]      |
+| Jenny | Completed 42% | Score 68%         |
+| Last active 2 days            [View]      |
+| Patricia | Completed 28% | --             |
+| Last active 5 days            [View]      |
++-------------------------------------------+
+~~~
 
-- Header/navigation và action chính dùng token trong [theme.md](../theme.md).
-- Các panel, card, input và table giữ đúng thứ tự từ trái sang phải, trên xuống dưới như sơ đồ; trên mobile chuyển thành một cột khi có nhiều cột.
-- Trạng thái tải rỗng, lỗi hoặc pending hiển thị trong đúng vùng nội dung, không thay đổi shell của màn hình.
+## Component map
 
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Toolbar | Course/student selectors | Scope progress report | Re-query data |
+| Toolbar | Export | Export current filtered progress | Loading/download state |
+| Table | Progress rows | Student, course, completion, score, last active, View | Opens student progress |
+| Sidebar | Teacher menu | Student Progress active | Navigate |
+
+## States
+
+- No score: show `--`, not zero.
+- Export loading: disable export without clearing table.
+- Empty course: retain selectors and show empty state.

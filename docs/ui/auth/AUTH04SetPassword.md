@@ -1,46 +1,59 @@
 # AUTH04 Set Password
 
-- **Tên màn hình:** AUTH04 Set Password
-- **Đường dẫn:** `/auth/set-password`
-- **Asset:** [auth/AUTH04SetPassword.svg](../../screen/auth/AUTH04SetPassword.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Set Password
+- **Đường dẫn:** `/auth/set-password` (suy luận)
+- **Asset:** [AUTH04SetPassword.svg](../../screen/auth/AUTH04SetPassword.svg)
+- **Viewport nguồn:** `1600x1000`
+- **Mức độ chắc chắn:** Layout đã đối chiếu từ render và SVG coordinates.
 
 ## Wireframe
 
 ~~~text
 DESKTOP 1600x1000
-+--------------------------------------+--------------------------------------+
-| BRAND PANEL 800px                    | RESET PASSWORD 800px                |
-| [SkillBoost logo]                    | Set a new password                   |
-| [illustration / gradient]             | Choose a strong password.            |
-|                                      | New password             [show]      |
-|                                      | [_______________________________]    |
-|                                      | Confirm password          [show]      |
-|                                      | [_______________________________]    |
-|                                      | Password rules / strength meter       |
-|                                      | [          Save password       ]     |
-+--------------------------------------+--------------------------------------+
++======================================================================+
+| BRAND 800px                     | PASSWORD FORM 800px                |
+| pale pink gradient              | white                              |
+| [phone/person/lock]             | [Dreams LMS]       Back to Home    |
+| Welcome to Dreams LMS Courses.  | Set Password                       |
+| tagline + 3-dot pager           | Your new password must be          |
+|                                 | different from previous.           |
+|                                 | Password *              [eye]      |
+|                                 | [________________________]         |
+|                                 | [====][====][====][====]           |
+|                                 | Confirm Password *      [eye]      |
+|                                 | [________________________]         |
+|                                 | [       Reset Password ->     ]    |
++======================================================================+
 
-MOBILE 390x844
-+--------------------------------------+
-| [SkillBoost logo]                    |
-| Set a new password                   |
-| New password             [show]      |
-| [_______________________________]    |
-| Confirm password          [show]      |
-| [_______________________________]    |
-| [weak ---- medium ---- strong]       |
-| [          Save password       ]     |
-+--------------------------------------+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++------------------------------------------+
+| [Dreams LMS]              Back Home      |
+| Set Password                             |
+| Your new password must be different.     |
+| Password *                    [eye]      |
+| [____________________________]           |
+| [====][====][====][====]                 |
+| Confirm Password *            [eye]      |
+| [____________________________]           |
+| [       Reset Password ->       ]        |
++------------------------------------------+
+~~~
 
-- Save chỉ enabled khi hai password khớp và đạt rule tối thiểu.
-- Sau success quay về login; token reset hết hạn hiển thị form-level error.
+## Component map
+
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Form | Password field | Required, eye toggle | Mask/unmask |
+| Form | Strength meter | Four 96.5px segments in source | Update from password rules |
+| Form | Confirm field | Required, eye toggle | Match validation |
+| Action | Reset Password | Coral pill | Submit only when valid |
 
 ## States
 
-- Default: hai password field và helper rule.
-- Error: mismatch, quá yếu hoặc token không hợp lệ.
-- Success: password saved, chuyển về `/auth/login`.
+- Default: both fields empty, strength segments neutral.
+- Weak/medium/strong: meter segments update left to right.
+- Error: mismatch, invalid reset token or password rule failure.
+- Success: navigate to login.

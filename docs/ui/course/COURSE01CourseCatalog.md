@@ -1,23 +1,81 @@
 # COURSE01 Course Catalog
 
-- **Tên màn hình:** COURSE01 Course Catalog
-- **Đường dẫn:** `/courses`
-- **Asset:** [course/COURSE01CourseCatalog.png](../../screen/course/COURSE01CourseCatalog.png)
-- **Trạng thái verify:** PNG dùng để đối chiếu raster export với SVG cùng tên; layout dưới đây là wireframe review chung cho cùng màn hình.
+- **Tên màn hình:** Course Catalog
+- **Đường dẫn:** `VERIFY: /courses`
+- **Asset:** [COURSE01CourseCatalog.svg](../../screen/course/COURSE01CourseCatalog.svg)
+- **Viewport nguồn:** `1620x2492`
+- **Bản raster đối chiếu:** [COURSE01CourseCatalog.png](../../screen/course/COURSE01CourseCatalog.png)
 
 ## Wireframe
 
 ~~~text
-[Global header]
-[Course hero: title, instructor, rating, progress/enroll CTA]
-[Tabs: Overview | Comments | Progress | Instructor]
-[Main lesson/content column] | [Course curriculum/sidebar]
-[reviews, comments or empty state according to tab]
+DESKTOP 1620x2492
++====================================================================================================+
+| [Dreams LMS] Home Courses Instructors Classroom Blog Contact us     [search] [cart] [Sign in] |
++====================================================================================================+
+|                                  COURSES                                                       |
+|                                Home - Courses                                                  |
++====================================================================================================+
+| [Search courses________________] [Category v] [Level v] [Sort by v]                            |
+| +------------------+  +----------------------------------+  +--------------------------------+ |
+| | FILTERS          |  | [course thumbnail]                |  | [course thumbnail]              | |
+| | Categories       |  | [heart] Python Foundations        |  | [heart] Production React        | |
+| | [ ] Programming  |  | Instructor: Ronald Richard        |  | Instructor: Jenny Wilson        | |
+| | [ ] Web           |  | [star] 4.8   $49.00              |  | [star] 4.7   $59.00              | |
+| | Level            |  | [View course]                      |  | [View course]                    | |
+| | [ ] Beginner     |  +----------------------------------+  +--------------------------------+ |
+| | [ ] Intermediate |  | [course thumbnail]                |  | [course thumbnail]              | |
+| | [ ] Advanced     |  | Data Structures & Algorithms     |  | Coding Interview Preparation    | |
+| | Price            |  | Instructor: Edythe Andrew         |  | Instructor: Edythe Andrew        | |
+| | [ ] Free         |  | [star] 4.9   $79.00              |  | [star] 4.6   $69.00              | |
+| | [ ] Paid         |  | [View course]                     |  | [View course]                   | |
+| +------------------+  +----------------------------------+  +--------------------------------+ |
+|                                     [1] [2] [3] [>]                                         |
++====================================================================================================+
+| Footer: Dreams LMS | For Instructor | For Student | Newsletter | Copyright                |
++====================================================================================================+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++--------------------------------------------+
+| [hamburger] [Dreams LMS]      [search]   |
++--------------------------------------------+
+|                 COURSES                  |
+|               Home - Courses              |
++--------------------------------------------+
+| [Search courses____________]              |
+| [Category v] [Level v] [Sort v]           |
+| [Filters]                                 |
+| +--------------------------------------+   |
+| | [course thumbnail]          [heart] |   |
+| | Python Foundations                  |   |
+| | Instructor: Ronald Richard          |   |
+| | [star] 4.8                 $49.00   |   |
+| | [View course]                       |   |
+| +--------------------------------------+   |
+| +--------------------------------------+   |
+| | [course thumbnail]          [heart] |   |
+| | Production React                   |   |
+| | Instructor: Jenny Wilson            |   |
+| | [star] 4.7                 $59.00   |   |
+| | [View course]                       |   |
+| +--------------------------------------+   |
+| [1] [2] [3] [>]                         |
++--------------------------------------------+
+~~~
 
-- Header/navigation và action chính dùng token trong [theme.md](../theme.md).
-- Các panel, card, input và table giữ đúng thứ tự từ trái sang phải, trên xuống dưới như sơ đồ; trên mobile chuyển thành một cột khi có nhiều cột.
-- Trạng thái tải rỗng, lỗi hoặc pending hiển thị trong đúng vùng nội dung, không thay đổi shell của màn hình.
+## Component map
 
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Toolbar | Search/filter/sort | Search, category, level, sort | Re-query catalog |
+| Sidebar | Filters | Category, level, price checkboxes | Filter cards |
+| Grid | Course card | Thumbnail, favorite, title, instructor, rating, price, View | Opens detail |
+| Pagination | Page controls | Active page and next | Preserves filters |
+
+## States
+
+- Loading: preserve grid geometry with card skeletons.
+- Favorite: heart toggles without navigating.
+- Empty results: use `Course03EmptyState` layout.

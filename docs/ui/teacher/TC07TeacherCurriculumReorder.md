@@ -1,23 +1,75 @@
-# TC07 Teacher Curriculum Reorder
+# TC07 Curriculum Reorder
 
-- **Tên màn hình:** TC07 Teacher Curriculum Reorder
-- **Đường dẫn:** `/teacher/courses/:courseId/curriculum`
-- **Asset:** [teacher/TC07TeacherCurriculumReorder.svg](../../screen/teacher/TC07TeacherCurriculumReorder.svg)
-- **Trạng thái verify:** Wireframe suy luận từ tên file và nhóm chức năng; cần đối chiếu screenshot Figma khi MCP có quota.
+- **Tên màn hình:** Curriculum Reorder
+- **Đường dẫn:** `VERIFY: /teacher/curriculum/reorder`
+- **Asset:** [TC07TeacherCurriculumReorder.svg](../../screen/teacher/TC07TeacherCurriculumReorder.svg)
+- **Viewport nguồn:** `1920x2097`
 
 ## Wireframe
 
 ~~~text
-[Teacher sidebar] | [Top bar: breadcrumb, search, avatar]
-                   | [Page title + primary action]
-                   | [summary cards / filters]
-                   | [main table, builder or progress content]
-                   | [pagination / save actions]
+DESKTOP 1920x2097
++=====================================================================================================+
+| [Dreams LMS] Home Courses Instructors Classroom Blog Contact us          [search] [bell] [user] |
++=====================================================================================================+
+|                                  CURRICULUM REORDER                                               |
+|                                Home - Curriculum Reorder                                         |
++=====================================================================================================+
+| +----------------------------------------------------------------------------------------------+ |
+| | (avatar) Edythe Andrew  Teacher                           [Become a Student] [Teacher Dashboard]| |
+| +----------------------------------------------------------------------------------------------+ |
+| +-----------------------------+  +----------------------------------------------------------+ |
+| | MAIN MENU                   |  | Curriculum Drag & Drop Reorder               [Save order] | |
+| | [ ] Dashboard               |  | Course: Data Structures & Algorithms [v]              | |
+| | [ ] My Profile             |  | +--------------------------------------+               | |
+| | [ ] My Courses             |  | | Module 1: Foundations              | [collapse]    | |
+| | [ ] Course Enrollment      |  | | [drag] 1. Introduction       [edit] |               | |
+| | [ ] Students               |  | | [drag] 2. Complexity            [edit] |               | |
+| | [ ] Earnings               |  | +--------------------------------------+               | |
+| | [ ] Messages               |  | | Module 2: Patterns                 | [collapse]    | |
+| | [>] Course Curriculum      |  | | [drag] 3. Two-pointer patterns [edit]|               | |
+| | [ ] Settings               |  | | [drag] 4. Sliding window       [edit]|               | |
+| +-----------------------------+  | +--------------------------------------+               | |
+|                                  | [+ Add module] [+ Add lesson]                         | |
+|                                  +----------------------------------------------------------+ |
++=====================================================================================================+
 ~~~
 
-## Components and behavior
+~~~text
+MOBILE 390x844
++--------------------------------------------+
+| [hamburger] [Dreams LMS]     [bell] [user]|
++--------------------------------------------+
+|            CURRICULUM REORDER            |
+|          Home - Curriculum Reorder        |
++--------------------------------------------+
+| Course: Data Structures & Algorithms [v]  |
+| [Save order]                              |
+| +--------------------------------------+   |
+| | Module 1: Foundations       [open]  |   |
+| | [drag] 1. Introduction       [edit] |   |
+| | [drag] 2. Complexity         [edit] |   |
+| +--------------------------------------+   |
+| | Module 2: Patterns           [open]  |   |
+| | [drag] 3. Two-pointer        [edit] |   |
+| | [drag] 4. Sliding window     [edit] |   |
+| +--------------------------------------+   |
+| [+ Add module] [+ Add lesson]            |
++--------------------------------------------+
+~~~
 
-- Header/navigation và action chính dùng token trong [theme.md](../theme.md).
-- Các panel, card, input và table giữ đúng thứ tự từ trái sang phải, trên xuống dưới như sơ đồ; trên mobile chuyển thành một cột khi có nhiều cột.
-- Trạng thái tải rỗng, lỗi hoặc pending hiển thị trong đúng vùng nội dung, không thay đổi shell của màn hình.
+## Component map
 
+| Vùng | Component | Chi tiết | Hành vi |
+| --- | --- | --- | --- |
+| Toolbar | Course selector/actions | Course dropdown and Save order | Save only after reorder |
+| Curriculum | Module groups | Collapsible module heading with ordered lessons | Expand/collapse |
+| Lesson row | Drag handle/edit | Explicit drag marker, number, title, edit action | Keyboard reorder should be supported |
+| Actions | Add module/lesson | Adds item at current curriculum level | Opens form |
+
+## States
+
+- Dragging: row placeholder preserves module height.
+- Unsaved order: Save order highlighted; leaving prompts confirmation.
+- Empty module: module remains visible with add lesson action.
+- Save error: restore last persisted order and show error.
