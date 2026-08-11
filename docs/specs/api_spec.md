@@ -1,258 +1,221 @@
-# Spec: API Contracts (OpenAPI / Swagger Spec) - Task BE/FE-0.2
+# API Specification - LMS Coding Platform
 
-## Objective
-Define the API Contract (endpoints, request/response models, and error responses) between the Frontend (React) and the Backend (FastAPI).
-- Implement Pydantic schemas in FastAPI to automatically generate the OpenAPI JSON spec and interactive Swagger UI at `/docs`.
-- Standardize all API error responses to a consistent JSON schema across the entire application.
-- Export the final OpenAPI specification as `docs/specs/api.json`.
+## 1. Phạm vi và quy ước
 
----
+Tài liệu này là contract API cho MVP. Nó ưu tiên các luồng đang có wireframe và yêu cầu trong [PRD](../prd-documents/prd.md), [gap analysis](../prd-documents/gap-analysis.md) và [DATABASE.txt](../DATABASE.txt). Đây không phải danh mục endpoint đầy đủ; route gắn nhãn `PROPOSED` cần được bổ sung khi triển khai.
 
-## Error Response Structure
-All error responses (400, 401, 403, 404, 422, 500) must return:
+| Thành phần | Base URL | Ghi chú |
+|---|---|---|
+| Auth Provider | `http://localhost:4001/auth` | Đăng nhập, token, OTP và mật khẩu. |
+| Business Application | `http://localhost:4000/api/v1` | API nghiệp vụ LMS. |
+
+- Route không có nhãn là endpoint đang có hoặc giữ tương thích với API hiện tại.
+- `PROPOSED` là contract cần có để đáp ứng PRD nhưng có thể chưa được implement.
+- `VERIFY` là điểm cần chốt trước khi frontend phụ thuộc, không phải một giá trị dữ liệu gửi lên API.
+- Ngoại trừ upload và login form, request dùng `application/json`. API nhận access token qua `Authorization: Bearer <token>` hoặc cơ chế cookie do Auth Provider quản lý.
+- Mọi thời gian dùng ISO 8601 UTC; tiền dùng `decimal` và phải đi cùng `currency` sau khi Product Owner chốt currency.
+
+### Response dùng chung
+
+| Mẫu | Cấu trúc |
+|---|---|
+| Một resource | `{ "data": { ... } }` |
+| Danh sách phân trang | `{ "data": [...], "pagination": { "page": 1, "size": 10, "total": 42 } }` |
+| Mutation thành công | `{ "data": { ... }, "message": "..." }` |
+| Lỗi | `{ "message": "...", "error_code": "...", "details": [] }` |
+
+Ví dụ lỗi validation:
+
 ```json
 {
-  "message": "Chi tiết thông báo lỗi thân thiện với người dùng",
-  "error_code": "RESOURCE_NOT_FOUND",
-  "details": []
+  "message": "Course đã được enrollment",
+  "error_code": "ALREADY_ENROLLED",
+  "details": [{ "field": "course_id", "reason": "duplicate enrollment" }]
 }
 ```
 
----
+Các mã lỗi dùng thường xuyên: `UNAUTHENTICATED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `VALIDATION_ERROR` (422), `DUPLICATE_RESOURCE` (409), `INVALID_STATE` (409), `PAYMENT_EXPIRED` (410), `RATE_LIMITED` (429). Không trả raw exception, token, CCCD hay payload thanh toán nhạy cảm.
 
-## Auth Provider Endpoints
-Port: `4001`
-Base path: `/auth`
+## 2. Auth và hồ sơ người dùng
 
-| # | Endpoint | Method | Query | Path | Request Body | Response | Description |
-|---|----------|--------|-------|------|--------------|----------|-------------|
-| 1 | `/authorize` | GET | `redirect_uri` | - | - | JSON (`message`) or RedirectResponse | Checks session; redirects to login page if missing. |
-| 2 | `/login` | GET | `redirect_uri` | - | - | HTML template (`login.html`) | Renders the login page with `redirect_uri`. |
-| 3 | `/public-key` | GET | - | - | - | PEM text | Returns the RSA public JWK for token verification. |
-| 4 | `/verify` | GET | `otp` (str) | - | - | JSON: `message` (str) | Verifies email OTP and activates the user. |
-| 5 | `/reset-password` | POST | - | - | JSON: `code` (str), `new_password` (str) | JSON: `message` (str) | Resets password using the token. |
-| 6 | `/verify-reset-email` | GET | `token` (str) | - | - | JSON: `message` (str) | Confirms the new email address using the verification token. |
-| 7 | `/login` | POST | - | - | `application/x-www-form-urlencoded`: `email`, `password`, `redirect_uri` | JSON (`code`, `redirect_uri`, `identity`) | Validates credentials; returns authorization code. |
-| 8 | `/code` | POST | `code` (str) | - | - | JSON (`access_token`, `refresh_token`) | Exchanges authorization code for JWT tokens. |
-| 9 | `/refresh` | POST | - | - | JSON (`refresh_token`) | JSON (`access_token`) | Issues new access token from refresh cookie. |
-| 10 | `/google` | POST | - | - | JSON: `credential_code` (str) | JSON (`access_token` , `refresh_token`) | Google OAuth login / registration. |
-| 11 | `/logout` | POST | - | - | - | JSON (`message`) | Clears auth cookies. |
-| 12 | `/register` | POST | - | - | JSON: `full_name` (str), `email` (email), `password` (str), `address` (str) | JSON: `verify_code` (str), `message` (str) | Registers a student and returns OTP. |
-| 13 | `/resend-otp` | POST | - | - | JSON: `email` (email) | JSON: `message` (str) | Resends the account verification OTP. |
-| 14 | `/forgot-password` | POST | - | - | JSON: `email` (email) | JSON: `message` (str), `code` | Sends password reset link / code. |
-| 15 | `/change-email` | POST | - | - | JSON: `new_email` (email), `password` (str) | JSON: `message` (str), `token` (str) | Requests an email change; backend validates password and queues verification. |
+### Auth Provider
 
-### Key Auth Provider Notes
-- `/login` (POST) reads `email`, `password`, `redirect_uri` from form data.
-- `/code` reads `code` directly as a FastAPI dependency parameter (not JSON body), because it is sent as a plain query/form field from the BE caller.
-- `/login` (POST), `/code`, `/refresh`, `/google`, `/logout` are consumed behind the scenes by the Business Application; the frontend never calls them directly.
-- `/register`, `/verify`, `/forgot-password`, `/reset-password`, `/resend-otp`, `/change-email`, `/verify-reset-email` are called directly by the frontend.
+| Method | Route | Request | Response | Mô tả |
+|---|---|---|---|---|
+| `POST` | `/register` | `full_name`, `email`, `password`, `address` | `verify_code`, `message` | Tạo Student ở trạng thái chưa xác thực và gửi OTP. |
+| `GET` | `/verify?otp={otp}` | Query `otp` | `message` | Xác thực email. |
+| `POST` | `/login` | Form: `email`, `password`, `redirect_uri` | `code`, `redirect_uri`, `identity` | Đăng nhập và nhận authorization code. |
+| `POST` | `/code?code={code}` | Query `code` | `access_token`, `refresh_token` | Đổi authorization code lấy token. |
+| `POST` | `/refresh` | `refresh_token` | `access_token` | Làm mới access token. |
+| `POST` | `/google` | `credential_code` | `access_token`, `refresh_token` | Đăng nhập/đăng ký Google. |
+| `POST` | `/logout` | - | `message` | Hủy session/token cookie. |
+| `POST` | `/resend-otp` | `email` | `message` | Gửi lại OTP. |
+| `POST` | `/forgot-password` | `email` | `message`, `code` | Khởi tạo reset password. |
+| `POST` | `/reset-password` | `code`, `new_password` | `message` | Đặt lại mật khẩu. |
+| `POST` | `/change-email` | `new_email`, `password` | `message` | Yêu cầu đổi email và gửi xác nhận. |
+| `GET` | `/verify-reset-email?token={token}` | Query `token` | `message` | Hoàn tất đổi email. |
 
----
+### Current user và profile
 
-## Business Application Endpoints
-Port: `4000`
-Base path: `/api/v1`
+| Method | Route | Actor | Request | Response | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/users/me` | User đăng nhập | - | `user`, `student_profile`, `teacher_profile`, `teacher_application_status`, `capabilities` | Chỉ trả dữ liệu current user. `capabilities.can_teach` chỉ true khi application là `APPROVED`. |
+| `PUT` | `/users/me/profile` | User đăng nhập | `bio`, `school`, `major`, `github_url`, `facebook_url`, `linkedin_url`, `avatar_url` | Profile đã cập nhật | Chỉ sửa profile của chính mình. |
+| `PUT` | `/users/me/teacher-profile` | User đăng nhập | `bio`, `school_address`, `cv_url` | Teacher profile đã cập nhật | Tạo/sửa hồ sơ, không tự cấp quyền Teacher. |
 
-### 1. User Profile & Teacher/Admin Module
-Path prefix: `/users`, `/teacher-register`, `/admin`
+## 3. Teacher application và moderation
 
-| # | Endpoint | Method | Query | Path | Request Body | Response | Description |
-|---|----------|--------|-------|------|--------------|----------|-------------|
-| 1 | `/users/me` | GET | - | - | - | JSON: profile object | Retrieves current logged-in user profile. |
-| 2 | `/users/me/profile` | PUT | - | - | JSON: `bio` (str), `school` (str), `major` (str), `github_url` (str), `facebook_url` (str), `linkedin_url` (str), `avatar_url` (str) | JSON: `message`, `profile` | Updates student profile fields. |
-| 3 | `/users/me/teacher-profile` | PUT | - | - | JSON: `bio` (str), `school_address` (str), `cv_url` (str) | JSON: `message`, `profile` | Updates teacher profile fields. |
-| 4 | `/teacher-register` | POST | - | - | JSON: `motivation` (str), `cccd` (str), `cccd_front_url` (str), `cccd_back_url` (str) | JSON: `id` (int), `status` (PENDING), `message` | Submits a new teacher registration application. |
-| 5 | `/admin/teacher-registers` | GET | - | - | - | JSON: array of registration requests | Lists teacher registration requests. |
-| 6 | `/admin/teacher-registers/{id}` | PUT | - | `id` (int) | JSON: `status` (AGREE \| REJECT), `reviewed_note` (str) | JSON: `id`, `status`, `reviewed_by`, `reviewed_at`, `message` | Reviews and approves / rejects teacher registration. |
-| 7 | `/admin/reports` | GET | - | - | - | JSON: array of reports | Lists reported courses. |
-| 8 | `/admin/courses/{id}/status` | POST | - | `id` (int) | JSON: `status` (PUBLISHED / ARCHIVED / DRAFT) | JSON: `message`, `course_id`, `new_status` | Updates course moderation status. |
-| 9 | `/admin/users/{userId}/status` | PUT | - | `userId` (int) | JSON: `account_status` (ACTIVE / BANNED) | JSON: `message`, `user_id`, `new_status` | Bans or reactivates a user. |
+Teacher application dùng trạng thái `DRAFT`, `PENDING`, `APPROVED`, `REJECTED`. Giá trị cũ `AGREE/REJECT` không còn là input API.
 
-### 2. Student Course Directory & Study Mode
-Path prefix: `/courses`, `/student`
+| Method | Route | Actor | Request | Response | Quy tắc |
+|---|---|---|---|---|---|
+| `POST` | `/teacher-applications` `PROPOSED` | Student | `motivation`, `cccd`, `cccd_front_url`, `cccd_back_url`, `education[]`, `experience[]` | `id`, `status: "DRAFT"`, `updated_at` | Chỉ có một application đang làm việc cho mỗi user. CCCD/URL không ghi vào log. |
+| `GET` | `/teacher-applications/me` `PROPOSED` | Student | - | Application, `history[]`, `can_submit`, `can_resubmit` | Chỉ owner xem được. |
+| `PUT` | `/teacher-applications/me` `PROPOSED` | Student | Các field tạo application | Application đã cập nhật | Chỉ sửa khi `DRAFT` hoặc `REJECTED`; update sau reject đưa về `DRAFT`. |
+| `POST` | `/teacher-applications/me/submit` `PROPOSED` | Student | - | `id`, `status: "PENDING"`, `submitted_at` | Bắt buộc đủ field; chỉ submit từ `DRAFT`. |
+| `POST` | `/teacher-applications/me/resubmit` `PROPOSED` | Student | - | `id`, `status: "PENDING"`, `submitted_at` | Chỉ từ `REJECTED` sau khi đã chỉnh sửa. |
+| `GET` | `/admin/teacher-applications` `PROPOSED` | Admin | `status`, `page`, `size` | Danh sách application, pagination | Không trả CCCD đầy đủ trong list; chỉ Admin. |
+| `GET` | `/admin/teacher-applications/{id}` `PROPOSED` | Admin | - | Application và `history[]` | Chỉ Admin. |
+| `POST` | `/admin/teacher-applications/{id}/review` `PROPOSED` | Admin | `decision: "APPROVED" \| "REJECTED"`, `note` | `id`, `status`, `reviewed_by`, `reviewed_at`, `note` | Chỉ review application `PENDING`; lưu `teacher_register_history`, audit và notification. |
+| `PUT` | `/admin/users/{user_id}/status` | Admin | `account_status: "ACTIVE" \| "BANNED"` | `user_id`, `account_status` | Không cho user tự thay đổi account status. |
 
-| # | Endpoint | Method | Query | Path | Request Body | Response | Description |
-|---|----------|--------|-------|------|--------------|----------|-------------|
-| 1 | `/courses` | GET | `page` (int, default=1), `size` (int, default=10), `q` (str), `price_type` (FREE / PAID) | - | - | JSON: `total_items`, `total_pages`, `current_page`, `items` | Public course catalog with pagination and filters. |
-| 2 | `/courses/{slug}` | GET | - | `slug` (str) | - | JSON: course details + `sections` overview | Public course landing information. |
-| 3 | `/courses/{slug}/enroll` | POST | - | `slug` (str) | - | JSON: `status` (ENROLLED / PENDING_PAYMENT), `checkout_url`? | Enrolls user in a course. |
-| 4 | `/student/courses` | GET | - | - | - | JSON: list of enrolled courses with progress | Retrieves the current user's enrollments. |
-| 5 | `/student/courses/{slug}/study` | GET | - | `slug` (str) | - | JSON: sections, lessons, content with `completed` and `locked` | Detailed curriculum for the classroom workspace. |
-| 6 | `/student/progress/lesson-content/{id}/complete` | POST | - | `id` (int) | - | JSON: `message`, `completed_at` | Marks a reading/video content as complete. |
-| 7 | `/student/quizzes/{quizId}` | GET | - | `quizId` (int) | - | JSON: quiz object + questions (without `is_correct`) | Gets quiz questions for the test interface. |
-| 8 | `/student/quizzes/{quizId}/submit` | POST | - | `quizId` (int) | JSON: `answers` (Map<int, int>) | JSON: `submission_id`, `score`, `passed`, `correct_answers`, ... | Submits quiz answers and returns score. |
-| 9 | `/courses/{slug}/unenroll` | POST | - | `slug` (str) | - | JSON: `message` | Cancels a student's enrollment. |
+## 4. Catalog, favorite, review và course moderation
 
-### 3. Teacher Course & Curriculum Creator
-Path prefix: `/teacher/courses`, `/teacher/sections`, `/teacher/lessons`, `/teacher/lesson-contents`
+Course public chỉ là course đã được duyệt; tên canonical hiện là `APPROVED`. Việc map trạng thái legacy `PUBLISHED` cần được xác nhận trong migration.
 
-| # | Endpoint | Method | Query | Path | Request Body | Response | Description |
-|---|----------|--------|-------|------|--------------|----------|-------------|
-| 1 | `/teacher/courses` | GET | - | - | - | JSON: list of course objects | Lists courses owned by the teacher. |
-| 2 | `/teacher/courses` | POST | - | - | JSON: `title`, `description`, `price`, `thumbnail_url`, `field`, `tags` | JSON: created course object | Creates a new course workspace. |
-| 3 | `/teacher/courses/{id}` | PUT | - | `id` (int) | JSON: `title`, `description`, `price`, `thumbnail_url`, `status`, `field`, `tags` | JSON: updated course object | Updates course metadata. |
-| 4 | `/teacher/courses/{courseId}/sections` | POST | - | `courseId` (int) | JSON: `title`, `position` | JSON: section object | Adds a new chapter section. |
-| 5 | `/teacher/sections/{sectionId}` | PUT | - | `sectionId` (int) | JSON: `title`, `position` | JSON: updated section object | Updates a section's title and position. |
-| 6 | `/teacher/sections/{sectionId}` | DELETE | - | `sectionId` (int) | - | JSON: `message` | Deletes a section and cascades to lessons/content. |
-| 7 | `/teacher/sections/{sectionId}/lessons` | POST | - | `sectionId` (int) | JSON: `title`, `summary`, `position` | JSON: lesson object | Creates a new lesson within a section. |
-| 8 | `/teacher/lessons/{lessonId}` | PUT | - | `lessonId` (int) | JSON: `title`, `summary`, `position` | JSON: updated lesson object | Updates lesson metadata. |
-| 9 | `/teacher/courses/{courseId}/curriculum/reorder` | PUT | - | `courseId` (int) | JSON: `reorder_data` (array of section/lesson reorder objects) | JSON: `message` | Batch reorders sections and lessons positions. |
-| 10 | `/teacher/lessons/{lessonId}/contents` | POST | - | `lessonId` (int) | JSON: `content_type` (READING/QUIZ/PROBLEM), `content_id`, `media_url`?, `position` | JSON: content metadata object | Binds a reading/quiz/problem to a lesson. |
-| 11 | `/teacher/lesson-contents/{contentId}` | PUT | - | `contentId` (int) | JSON: `media_url`, `position` | JSON: updated content object | Updates a lesson-content binding. |
+| Method | Route | Actor | Request | Response | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/courses` | Public | `q`, `field`, `tag`, `price_type`, `page`, `size` | Course cards, pagination | Chỉ trả course `APPROVED` và thỏa visibility policy. |
+| `GET` | `/courses/{slug}` | Public | - | Course detail, instructor, sections overview, `is_favorited`, review summary | Không lộ curriculum học hay nội dung private. |
+| `POST` | `/courses/{course_id}/favorite` `PROPOSED` | Student | - | `course_id`, `is_favorited: true` | Unique `(user_id, course_id)`; gọi lặp trả state hiện tại hoặc `DUPLICATE_RESOURCE`. |
+| `DELETE` | `/courses/{course_id}/favorite` `PROPOSED` | Student | - | `course_id`, `is_favorited: false` | Chỉ xóa favorite của owner; idempotent. |
+| `GET` | `/courses/{course_id}/reviews` `PROPOSED` | Public | `page`, `size`, `rating` | Reviews công khai, pagination | Chỉ trả review chưa bị ẩn theo policy. |
+| `POST` | `/courses/{course_id}/reviews` `PROPOSED` | Student | `rating` (1..5), `content` | Review mới | Bắt buộc enrollment của chính user; unique/multiplicity theo policy `VERIFY`; không dùng lesson comment thay course review. |
+| `PUT` | `/courses/{course_id}/reviews/me` `PROPOSED` | Student | `rating`, `content` | Review đã cập nhật | Owner + enrollment. |
+| `GET` | `/teacher/courses` | Teacher đã approved | `status`, `page`, `size` | Course của teacher, pagination | Chỉ course owned by current teacher. |
+| `POST` | `/teacher/courses` | Teacher đã approved | `title`, `description`, `price`, `currency`, `thumbnail_url`, `field`, `tags` | Course mới: `id`, `slug`, `status: "DRAFT"` | Teacher chưa approved nhận `FORBIDDEN`. |
+| `GET` | `/teacher/courses/{course_id}` `PROPOSED` | Teacher owner | - | Course workspace, moderation metadata | Ownership bắt buộc. |
+| `PUT` | `/teacher/courses/{course_id}` | Teacher owner | Field metadata được phép sửa | Course đã cập nhật | Không tự set `APPROVED`; chỉ sửa khi state cho phép. |
+| `POST` | `/teacher/courses/{course_id}/submit-review` `PROPOSED` | Teacher owner | - | `status: "PENDING_REVIEW"`, `submitted_at` | Validate metadata/curriculum tối thiểu; chỉ từ `DRAFT` hoặc `REJECTED`. |
+| `POST` | `/teacher/courses/{course_id}/resubmit` `PROPOSED` | Teacher owner | - | `status: "PENDING_REVIEW"` | Chỉ course `REJECTED` sau khi sửa. |
+| `GET` | `/admin/courses` `PROPOSED` | Admin | `status`, `page`, `size` | Courses chờ review, pagination | Chỉ Admin. |
+| `POST` | `/admin/courses/{course_id}/review` `PROPOSED` | Admin | `decision: "APPROVED" \| "REJECTED"`, `note` | `course_id`, `status`, `reviewed_by`, `reviewed_at`, `note` | Chỉ review course `PENDING_REVIEW`; lưu `course_moderation_review`, audit và notification. |
+| `POST` | `/admin/courses/{course_id}/archive` `PROPOSED` | Admin | `note` | `course_id`, `status: "ARCHIVED"` | Dùng policy riêng cho learner đã mua course. |
 
-#### Batch Reorder Payload Shape
-```json
-[
-  { "item_type": "section", "id": 1, "position": 0, "parent_id": null },
-  { "item_type": "lesson",  "id": 5, "position": 1, "parent_id": null }
-]
-```
+## 5. Course builder và learning
 
-### 4. Online Judge (OJ) Problem & Run/Submit Engine
-Path prefix: `/problems`, `/submissions`, `/teacher/problems`
+`lesson_content.content_type` chỉ nhận `READING`, `QUIZ`, `PROBLEM`. `content_id` là polymorphic reference nên service phải xác minh loại, tồn tại, ownership và course tương ứng trước khi bind.
 
-| # | Endpoint | Method | Query | Path | Request Body | Response | Description |
-|---|----------|--------|-------|------|--------------|----------|-------------|
-| 1 | `/problems` | GET | - | - | - | JSON: list of problems | Public OJ problem catalog. |
-| 2 | `/problems/{slug}` | GET | - | `slug` (str) | - | JSON: problem detail object | Problem description, constraints, samples. |
-| 3 | `/problems/{slug}/run` | POST | - | `slug` (str) | JSON: `source_code`, `language_id`, `stdin`? | JSON: `stdout`, `runtime_ms`, `memory_kb`, `compile_error`, `status` | Executes code against custom input in sandbox. |
-| 4 | `/problems/{slug}/submit` | POST | - | `slug` (str) | JSON: `source_code`, `language_id` | JSON: `submission_id`, `status` (PENDING) | Queues final grading to RabbitMQ. |
-| 5 | `/submissions/{submissionId}/status` | GET | - | `submissionId` (str) | - | JSON: `status`, `score`, `runtime_ms`, `memory_kb`, `details` | Polls execution progress and final result. |
-| 6 | `/teacher/problems` | POST | - | - | JSON: `title`, `statement`, `input_description`, `output_description`, `constraints`, `sample_input`, `sample_output`, `explanation`, `difficulty`, `public` (bool) | JSON: created problem object | Teacher creates a new problem template. |
-| 7 | `/teacher/problems/{problemId}/testcases/upload` | POST | - | `problemId` (int) | `multipart/form-data`: `file` (.zip) | JSON: `uploaded_count`, `message` | Uploads ZIP of testcase pairs. |
+| Method | Route | Actor | Request | Response | Quy tắc |
+|---|---|---|---|---|---|
+| `POST` | `/teacher/courses/{course_id}/sections` | Teacher owner | `title`, `position` | Section | Course phải editable. |
+| `PUT` | `/teacher/sections/{section_id}` | Teacher owner | `title`, `position` | Section | Xác minh section thuộc course owner. |
+| `DELETE` | `/teacher/sections/{section_id}` | Teacher owner | - | `message` | Không xóa course đã approved nếu policy không cho phép; cascade phải được xác nhận. |
+| `POST` | `/teacher/sections/{section_id}/lessons` | Teacher owner | `title`, `summary`, `position` | Lesson | Section ownership bắt buộc. |
+| `PUT` | `/teacher/lessons/{lesson_id}` | Teacher owner | `title`, `summary`, `position` | Lesson | Lesson ownership bắt buộc. |
+| `PUT` | `/teacher/courses/{course_id}/curriculum/reorder` | Teacher owner | `items: [{item_type, id, position, parent_id}]` | `message` | Validate item thuộc đúng course, position không trùng. |
+| `POST` | `/teacher/lessons/{lesson_id}/contents` | Teacher owner | `content_type`, `content_id`, `position` | Lesson content | Reject loại khác ba giá trị trên; không nhận media field ngoài model content tương ứng. |
+| `PUT` | `/teacher/lesson-contents/{id}` | Teacher owner | `content_id?`, `position?` | Lesson content | Re-validate type/id và ownership khi đổi content. |
+| `GET` | `/student/courses` | Student | `page`, `size` | Enrollment cards, progress | Chỉ enrollment của current user. |
+| `GET` | `/student/courses/{slug}/study` | Student đã enrollment | - | Sections, lessons, content access, `completed`, `locked` | Bắt buộc enrollment hợp lệ; policy archive xác định quyền tiếp tục học. |
+| `POST` | `/student/progress/lesson-contents/{id}/complete` `PROPOSED` | Student đã enrollment | - | `lesson_content_id`, `completed_at`, `progress` | Chỉ content `READING`; unlock/access và enrollment bắt buộc. |
+| `GET` | `/student/progress` `PROPOSED` | Student | `course_id?` | Progress theo enrollment/course | Chỉ current user. |
 
-### 5. AI Mock Interview Module
-Path prefix: `/interviews`
+## 6. Quiz và Online Judge
 
-| # | Endpoint | Method | Query | Path | Request Body | Response | Description |
-|---|----------|--------|-------|------|--------------|----------|-------------|
-| 1 | `/interviews/sessions` | GET | - | - | - | JSON: sessions array (`id`, `topic`, `level`, `started_at`, `status`, `score`) | Lists the student's past interview sessions. |
-| 2 | `/interviews/sessions` | POST | - | - | JSON: `topic` (str), `level` (INTERN / FRESHER / JUNIOR / SENIOR) | JSON: `session_id`, `first_question` | Initializes a new AI mock interview session. |
-| 3 | `/interviews/sessions/{sessionId}/chat` | POST | - | `sessionId` (str) | JSON: `message` (str) | SSE stream of AI follow-up questions | Posts candidate answer; streams next AI response. |
-| 4 | `/interviews/sessions/{sessionId}/report` | GET | - | `sessionId` (str) | - | JSON: `overall_score`, `strengths`, `weaknesses`, `suggestions`, `chat_transcript` | Retrieves evaluation report. |
+Quiz attempt dùng `IN_PROGRESS`, `SUBMITTED`, `ABANDONED`. Số retry, thời hạn attempt và rule pass lấy từ Quiz config; nếu chưa có quyết định, trả `VERIFY` trong config thay vì frontend tự đoán.
 
-### 6. PayOS Payments
-Path prefix: `/payments`
+| Method | Route | Actor | Request | Response | Quy tắc |
+|---|---|---|---|---|---|
+| `POST` | `/student/quizzes/{quiz_id}/attempts` `PROPOSED` | Student đã enrollment | - | `attempt_id`, `status`, `questions`, `expires_at?` | Tạo attempt hoặc resume attempt hợp lệ; không trả `is_correct`. |
+| `GET` | `/student/quizzes/{quiz_id}/attempts/{attempt_id}` `PROPOSED` | Attempt owner | - | Attempt, questions, saved answers | Owner + enrollment; không trả đáp án đúng. |
+| `PUT` | `/student/quizzes/{quiz_id}/attempts/{attempt_id}/answers` `PROPOSED` | Attempt owner | `answers: [{question_id, option_id}]` | `attempt_id`, `saved_at` | Chỉ attempt `IN_PROGRESS`; option phải thuộc question/quiz. |
+| `POST` | `/student/quizzes/{quiz_id}/attempts/{attempt_id}/submit` `PROPOSED` | Attempt owner | - | `submission_id`, `score`, `passed`, `status: "SUBMITTED"`, `completed_at?` | Idempotent; kiểm tra retry limit; completion chỉ khi đạt passing score. |
+| `GET` | `/student/quizzes/{quiz_id}/attempts` `PROPOSED` | Student đã enrollment | `page`, `size` | Attempt history, pagination | Chỉ owner; không lộ answer key. |
+| `GET` | `/problems` | Public/Student | `tag`, `difficulty`, `page`, `size` | Problem cards, pagination | Chỉ problem public/được cấp access. |
+| `GET` | `/problems/{slug}` | Public/Student | - | Statement, constraints, samples, languages | Không trả hidden testcase. |
+| `POST` | `/problems/{slug}/run` | Student | `source_code`, `language_id`, `stdin?` | `stdout`, `runtime_ms`, `memory_kb`, `compile_error?`, `status` | Chạy sandbox với input custom; rate limit và không ghi hidden data. |
+| `POST` | `/problems/{slug}/submit` | Student | `source_code`, `language_id` | `submission_id`, `status: "PENDING"` | Tạo `problem_submission`; job queue xử lý async. |
+| `GET` | `/submissions/{submission_id}` `PROPOSED` | Submission owner/Teacher owner/Admin | - | `status`, `score`, `runtime_ms`, `memory_kb`, `testcase_summary` | Chỉ aggregate hidden result, không raw input/output. |
+| `GET` | `/problems/{slug}/submissions` `PROPOSED` | Submission owner | `page`, `size` | Submission history, pagination | Owner only; teacher xem qua course/problem ownership policy. |
+| `POST` | `/teacher/problems` | Teacher đã approved | Problem metadata, `tags`, config | Problem | Teacher chỉ tạo/sửa problem của mình. |
+| `PUT` | `/teacher/problems/{problem_id}` `PROPOSED` | Teacher owner | Problem metadata/config | Problem đã cập nhật | Ownership và validation language/testcase. |
+| `POST` | `/teacher/problems/{problem_id}/testcases/upload` | Teacher owner | `multipart/form-data` file testcase | `uploaded_count`, `message` | File được kiểm tra; testcase hidden không được trả qua API learner. |
 
-| # | Endpoint | Method | Query | Path | Request Body | Response | Description |
-|---|----------|--------|-------|------|--------------|----------|-------------|
-| 1 | `/payments/payos/create` | POST | - | - | JSON: `course_id` (int) | JSON: `transaction_code`, `payos_link`, `qrcode`, `amount`, `expires_at` | Initiates PayOS VietQR checkout. |
-| 2 | `/payments/payos-webhook` | POST | - | - | JSON: PayOS notification payload | JSON: `{ "status": "ok" }` | Handles PayOS payment verification hooks. |
-| 3 | `/payments/transactions/{transactionCode}/status` | GET | - | `transactionCode` (str) | - | JSON: `status`, `amount`, `completed_at` | Checks payment completion state. |
+## 7. Cart, payment và enrollment
 
-### 7. Lesson Content Comments
-Path prefix: `/lesson-contents`, `/comments`
+MVP checkout một course cho mỗi order. Cart có thể hiển thị nhiều item nhưng checkout nhiều course chưa thuộc phạm vi cho đến khi quyết định order cardinality được chốt.
 
-| # | Endpoint | Method | Query | Path | Request Body | Response | Description |
-|---|----------|--------|-------|------|--------------|----------|-------------|
-| 1 | `/lesson-contents/{lessonContentId}/comments` | GET | - | `lessonContentId` (int) | - | JSON: `[{ "id": 1, "lesson_content_id": 10, "user_id": 2, "parent_id": null, "content": "Câu hỏi này em chưa hiểu", "created_at": "2026-08-03T10:00:00Z", "updated_at": "2026-08-03T10:00:00Z", "replies": [] }]` | Fetches comments for a specific lesson content item. |
-| 2 | `/lesson-contents/{lessonContentId}/comments` | POST | - | `lessonContentId` (int) | JSON: `{"content": "Câu hỏi này em chưa hiểu", "parent_id": null}` | JSON: `{"id": 1, "lesson_content_id": 10, "user_id": 2, "parent_id": null, "content": "Câu hỏi này em chưa hiểu", "created_at": "2026-08-03T10:00:00Z", "updated_at": "2026-08-03T10:00:00Z"}` | Posts a new comment or reply for a specific lesson content item. |
-| 3 | `/comments/{commentId}` | DELETE | - | `commentId` (int) | - | JSON: `{"message": "Comment deleted successfully"}` | Deletes the user's own comment. |
+| Method | Route | Actor | Request | Response | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/cart` `PROPOSED` | Student | - | `items`, `subtotal`, `currency` | Chỉ cart current user. |
+| `POST` | `/cart/items` `PROPOSED` | Student | `course_id` | Cart item, totals | Course phải public/eligible và chưa enrollment; unique `(cart_id, course_id)`. |
+| `DELETE` | `/cart/items/{course_id}` `PROPOSED` | Student | - | Cart totals | Chỉ item của current user's cart. |
+| `POST` | `/courses/{slug}/enroll` | Student | - | Free: `enrollment`; paid: `order_id`, `transaction_code`, `checkout_url`, `expires_at` | Route tương thích: free tạo enrollment một lần; paid tạo checkout một course. |
+| `POST` | `/payments/payos/create` | Student | `course_id` | `order_id`, `transaction_code`, `checkout_url`, `qrcode?`, `amount`, `currency`, `expires_at`, `status: "PENDING"` | Reject nếu đã enrollment hoặc payment active chưa hết hạn; snapshot price. |
+| `GET` | `/payments/transactions/{transaction_code}/status` | Transaction owner/Admin | - | `transaction_code`, `status`, `amount`, `currency`, `expires_at`, `completed_at`, `enrollment?` | Owner or Admin only; expired payment trả `EXPIRED`. |
+| `POST` | `/payments/payos-webhook` | PayOS | Provider payload + signature | `{ "data": { "accepted": true } }` | Verify signature, provider event và amount; idempotent bằng provider transaction/event code. Không tin status từ client. |
+| `GET` | `/orders` `PROPOSED` | Student | `page`, `size` | Orders của current user, pagination | Chỉ owner. |
+| `GET` | `/orders/{order_id}` `PROPOSED` | Order owner/Admin | - | Order, item snapshot, transaction status | Không trả payment secret. |
 
-### 8. Admin Moderation & CCCD Verification
-Path prefix: `/admin`, `/teacher-register`
+Webhook hợp lệ chuyển `PENDING -> COMPLETED` (hoặc `FAILED`/`EXPIRED`). Trong cùng transaction nghiệp vụ, service tạo tối đa một `enrollment` cho `(student_id, course_id)`, ghi wallet ledger, notification và audit. Webhook lặp lại phải trả thành công mà không nhân đôi các side effect.
 
-| # | Endpoint | Method | Query | Path | Request Body | Response | Description |
-|---|----------|--------|-------|------|--------------|----------|-------------|
-| 1 | `/teacher-register` | POST | - | - | JSON: `motivation`, `cccd`, `cccd_front_url`, `cccd_back_url` | JSON: `id`, `status` (PENDING), `message` | Submits a teacher registration application. |
-| 2 | `/admin/teacher-registers` | GET | - | - | - | JSON: list of registration requests with user data | Lists requests pending admin review. |
-| 3 | `/admin/teacher-registers/{id}` | PUT | - | `id` (int) | JSON: `status` (AGREE / REJECT), `reviewed_note` | JSON: `id`, `status`, `new_status`, `message` | Approves or rejects a teacher registration. |
-| 4 | `/admin/reports` | GET | - | - | - | JSON: array of course report objects | Lists reported courses. |
-| 5 | `/admin/courses/{id}/status` | POST | - | `id` (int) | JSON: `status` (PUBLISHED / ARCHIVED / DRAFT) | JSON: `message`, `course_id`, `new_status` | Updates course moderation status. |
-| 6 | `/admin/users/{userId}/status` | PUT | - | `userId` (int) | JSON: `account_status` (ACTIVE / BANNED) | JSON: `message`, `user_id`, `new_status` | Bans or reactivates a user account. |
+## 8. Wallet và payout
 
-### 9. Notifications Module
-Path prefix: `/notifications`
+| Method | Route | Actor | Request | Response | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/teacher/wallet` `PROPOSED` | Teacher đã approved | - | `balance`, `currency`, `pending_payout_amount` | Chỉ wallet của current teacher. |
+| `GET` | `/teacher/wallet/ledger` `PROPOSED` | Teacher đã approved | `page`, `size`, `type?` | Ledger entries, pagination | Ledger immutable, owner only. |
+| `POST` | `/teacher/payout-requests` `PROPOSED` | Teacher đã approved | `amount`, `currency`, `payout_destination` | `id`, `status: "PENDING"`, `amount`, `created_at` | Amount > 0, đạt minimum payout, không vượt available balance; reserve được ghi ledger. |
+| `GET` | `/teacher/payout-requests` `PROPOSED` | Teacher đã approved | `page`, `size` | Payout requests, pagination | Owner only. |
+| `GET` | `/admin/payout-requests` `PROPOSED` | Admin | `status`, `page`, `size` | Payout requests, pagination | Admin only. |
+| `POST` | `/admin/payout-requests/{id}/review` `PROPOSED` | Admin | `decision: "APPROVED" \| "REJECTED"`, `note` | `id`, `status`, `reviewed_by`, `reviewed_at` | Chỉ payout `PENDING`; reject tạo reversal ledger khi đã reserve. |
+| `POST` | `/admin/payout-requests/{id}/settle` `PROPOSED` | Admin/system | `result: "COMPLETED" \| "FAILED"`, `settlement_reference?`, `failure_reason?` | `id`, `status`, `settled_at` | Chỉ `APPROVED`/`PROCESSING`; failed tạo reversal ledger idempotently. |
 
-| # | Endpoint | Method | Query | Path | Request Body | Response | Description |
-|---|----------|--------|-------|------|--------------|----------|-------------|
-| 1 | `/notifications` | GET | - | - | - | JSON: list of notification objects | Fetches the current user's alert list. |
-| 2 | `/notifications/{id}/read` | PUT | - | `id` (int) | - | JSON: `message` | Marks the notification as read. |
+## 9. AI Interview, notification, comment và dashboard
 
-### 10. Teacher Analytics Dashboard
-Path prefix: `/teacher/dashboard`
+AI Interview có tối đa 12 câu và một final report cho mỗi session. Chat dùng text; API không lưu recording.
 
-| # | Endpoint | Method | Query | Path | Request Body | Response | Description |
-|---|----------|--------|-------|------|--------------|----------|-------------|
-| 1 | `/teacher/dashboard/summary` | GET | - | - | - | JSON: `total_revenue`, `current_balance`, `enrolled_students_count`, `active_courses_count` | Financial summary metrics. |
-| 2 | `/teacher/dashboard/revenue` | GET | `period` (DAILY / WEEKLY / MONTHLY) | - | - | JSON: list of revenue entries | Revenue analytics for charts. |
-| 3 | `/teacher/dashboard/students` | GET | - | - | - | JSON: list of student records with course title, progress, ... | Lists students under teacher's courses. |
+| Method | Route | Actor | Request | Response | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/interviews/sessions` | Student | `page`, `size` | Sessions, pagination | Chỉ session của current user. |
+| `POST` | `/interviews/sessions` | Student | `topic`, `level` | `session_id`, `status: "ACTIVE"`, `question_count`, `first_question` | Validate level; tạo session mới theo policy active-session. |
+| `POST` | `/interviews/sessions/{session_id}/chat` | Session owner | `message` | AI message/stream event, `question_count`, `status` | Reject khi không `ACTIVE` hoặc đạt max question; rate limit. |
+| `POST` | `/interviews/sessions/{session_id}/end` `PROPOSED` | Session owner | - | `session_id`, `status: "REPORT_GENERATING"` | Idempotent; enqueue report generation. |
+| `GET` | `/interviews/sessions/{session_id}/report` | Session owner | - | `status`, `report?`, `generated_at?` | Khi đang generate trả `REPORT_GENERATING`; chỉ một report per session. |
+| `GET` | `/notifications` | User đăng nhập | `unread_only?`, `page`, `size` | `id`, `type`, `title`, `body`, `target_type`, `target_id`, `read_at`, pagination | Chỉ notification recipient; type khớp `NotificationType` trong DB. |
+| `PUT` | `/notifications/{id}/read` | Notification recipient | - | `id`, `read_at` | Owner only, idempotent. |
+| `GET` | `/lesson-contents/{id}/comments` | User có quyền access | `page`, `size` | Comments/replies, pagination | Kiểm tra access course; comment khác course review. |
+| `POST` | `/lesson-contents/{id}/comments` | User có quyền access | `content`, `parent_id?` | Comment | Parent phải cùng lesson content; sanitize content. |
+| `DELETE` | `/comments/{id}` | Comment owner/Moderator | - | `message` | Owner hoặc role được cấp policy. |
+| `GET` | `/student/dashboard` `PROPOSED` | Student | - | `profile`, `kpis`, `daily_activity`, `continue_learning`, `recent_interviews`, `recommended_problems` | Chỉ current user; metric ngày lấy `student_daily_activity`, recommendation dùng Problem–Tag. |
+| `GET` | `/teacher/dashboard/summary` | Teacher đã approved | - | `total_revenue`, `current_balance`, `enrolled_students_count`, `active_courses_count` | Chỉ data course/wallet của current teacher. |
 
----
+## 10. Ma trận authorization và validation
 
-## Commands
-```bash
-# Auth Provider (port 4001)
-cd src/backend/auth-provider
-uv run main.py
+Mọi mutation phải xác thực user, kiểm tra `account_status` và ghi audit khi là thao tác nhạy cảm. Ma trận sau là rule tối thiểu trước khi implement route.
 
-# Export Auth Provider OpenAPI JSON spec
-python -c "import json; from src.app import app; print(json.dumps(app.openapi()))" > docs/specs/auth_provider.json
+| Nhóm route | Actor/resource | Validation bắt buộc | Lỗi chính |
+|---|---|---|---|
+| Teacher application | Student, application owner | State transition; đủ field trước submit; không review application của mình | `FORBIDDEN`, `INVALID_STATE`, `VALIDATION_ERROR` |
+| Teacher/course builder | Teacher có application `APPROVED`, course/section/lesson owner | Ownership toàn chuỗi; course editable; `content_type/content_id` hợp lệ | `FORBIDDEN`, `NOT_FOUND`, `INVALID_CONTENT_REFERENCE` |
+| Course moderation | Admin, course `PENDING_REVIEW` | Decision hợp lệ, note theo policy; transition hợp lệ | `FORBIDDEN`, `INVALID_STATE` |
+| Catalog/favorite/review | Public hoặc Student, course eligible | Catalog chỉ approved; favorite unique; review cần enrollment và policy duplicate | `ALREADY_ENROLLED`, `DUPLICATE_RESOURCE`, `FORBIDDEN` |
+| Learning/quiz | Enrollment owner, content accessible | Lock/progress order; attempt owner; retry limit; answer thuộc quiz | `FORBIDDEN`, `ATTEMPT_LIMIT_REACHED`, `INVALID_STATE` |
+| OJ | Submission owner hoặc Teacher problem owner | Language/problem access; hidden testcase projection; sandbox limit | `FORBIDDEN`, `RATE_LIMITED` |
+| Payment/enrollment | Student order owner, webhook provider | Không enrollment lại; expiry; signature; payment/event idempotency | `ALREADY_ENROLLED`, `PAYMENT_EXPIRED`, `INVALID_SIGNATURE` |
+| Wallet/payout | Teacher wallet owner hoặc Admin | Amount/minimum/currency; available balance; lifecycle payout | `INSUFFICIENT_BALANCE`, `MINIMUM_PAYOUT_NOT_MET`, `INVALID_STATE` |
+| Interview/notification/comment | Resource owner hoặc moderator policy | Session active/max question/one report; notification recipient; comment parent/access | `FORBIDDEN`, `QUESTION_LIMIT_REACHED`, `REPORT_GENERATING` |
 
-# Business Application (port 4000)
-cd src/backend/business-application
-python main.py
+## 11. Quyết định còn mở
 
-# Export Business Application OpenAPI JSON spec
-python -c "import json; from src.app import app; print(json.dumps(app.openapi()))" > docs/specs/api.json
-```
+| Nội dung | Contract hiện tại | Cần chốt trước khi mở rộng |
+|---|---|---|
+| Course status legacy | API dùng `PENDING_REVIEW` và `APPROVED`. | Map cuối cùng với `PENDING/PUBLISHED` trong dữ liệu cũ. |
+| Currency và payout minimum | Response luôn có `currency`; validation minimum theo policy. | Mã tiền, rounding và giá trị minimum. |
+| Order cardinality | Một course/checkout cho MVP. | Có cho checkout nhiều item từ cart hay không. |
+| Course review multiplicity | Bắt buộc enrollment. | Một review/course hay cho phép nhiều review theo thời gian. |
+| Quiz retry/expiry | API hỗ trợ attempt start/resume/save/history. | Số retry, timeout và quy tắc abandon. |
+| Problem completion | Chỉ completed khi submission đạt rule lesson. | Có cần điểm pass ngoài Accepted hay không. |
 
----
-
-## Project Structure
-- `docs/specs/api_spec.md` -> This API specification document.
-- `docs/specs/api.json` -> Generated OpenAPI 3.0 specification.
-- `src/backend/auth-provider/` -> Authentication & User Service (FastAPI + uv), port 4001.
-  - `src/modules/auth/` -> OAuth authorize, login, token exchange, register, OTP verify, forgot-password, reset-password, resend-otp, change-email, verify-reset-email.
-- `src/backend/business-application/` -> Core LMS API (FastAPI + uv), port 4000.
-  - `src/modules/user/` -> User profile, teacher profile, teacher registration, admin moderation.
-  - `src/modules/course/` -> Course catalog, enrollment, curriculum.
-  - `src/modules/problem/` -> OJ problems, run, submit, submissions.
-  - `src/modules/interview/` -> AI interview sessions, SSE chat, report.
-  - `src/modules/payment/` -> PayOS transactions and webhooks.
-
----
-
-## Code Style
-All response and request models must inherit from `pydantic.BaseModel`.
-Exceptions must be handled by FastAPI custom exception handlers to return the unified error structure.
-
-### Request/Response Model Example:
-```python
-from pydantic import BaseModel, Field
-from typing import List, Optional
-
-class ErrorResponse(BaseModel):
-    message: str = Field(..., description="Chi tiết thông báo lỗi thân thiện với người dùng")
-    error_code: str = Field(..., description="Mã lỗi phân loại, ví dụ: 'RESOURCE_NOT_FOUND'")
-    details: List[dict] = Field(default=[], description="Thông tin chi tiết về lỗi (validation errors, field errors...)")
-```
-
----
-
-## Testing Strategy
-1. **Syntax & Compliance Validation**: Import the generated `api.json` file into [Swagger Editor](https://editor.swagger.io/) or Postman. Ensure there are no warnings or errors.
-2. **FastAPI Automated Test**: Write integration tests using `fastapi.testclient.TestClient` to verify endpoints respond with appropriate structures for both success and error cases.
-
----
-
-## Boundaries
-- **Always do**: Wrap all non-2xx responses in the unified `ErrorResponse` model.
-- **Ask first**: Before renaming path parameters (e.g., changing `/{slug}` to `/{id}`).
-- **Never do**: Return raw strings for HTTP error messages.
-
----
-
-## Success Criteria
-- [ ] Pydantic Schemas implemented for all above Request/Response bodies in the Python backend.
-- [ ] Endpoints registered in FastAPI Router with error handling middleware formatting error JSONs exactly as specified.
-- [ ] `docs/specs/api.json` generated containing all endpoints, valid OpenAPI 3.0 specification.
-- [ ] Swagger Editor has 0 syntax errors or structure warnings when parsing `docs/specs/api.json`.
-- [ ] `/docs` page loading correctly inside the local server container.
-
----
-
-## Open Questions
-1. **Streaming protocol for AI Chat**: Use SSE (Server-Sent Events) since AI recruiter outputs are text streams (one-way server-to-client streaming), matching the Gemini turn-based interview flow perfectly.
-2. **Authentication Cookie Storage**: Both `access_token` and `refresh_token` are kept strictly in HttpOnly, Secure cookies to prevent XSS-based theft.
+Khi backend implement, Pydantic/OpenAPI generated spec tại `/docs` và `docs/specs/api.json` phải phản ánh các request/response trên; các route `PROPOSED` có thể được bổ sung dần mà không thay đổi lifecycle, quyền và error contract đã nêu.

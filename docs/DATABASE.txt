@@ -1,0 +1,680 @@
+// CANONICAL DATABASE PROPOSAL
+// docs/database.txt is retained as a legacy mirror. Update this file first.
+// Constraints marked in comments still require enforcement in migration/service.
+
+enum AccountStatus {
+  BANNED
+  UNVERIFIED
+  ACTIVE
+}
+
+enum TeacherRegisterStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CourseStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED // Proposed mapping of the current PUBLISHED state; confirm before migration.
+  REJECTED
+  ARCHIVED
+}
+
+enum LessonContentType {
+  READING
+  QUIZ
+  PROBLEM
+}
+
+enum ProblemDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum Role {
+  ADMIN
+  TEACHER
+  STUDENT
+}
+
+enum InterviewLevel {
+  INTERN
+  FRESHER
+  JUNIOR
+  SENIOR
+}
+
+enum InterviewStatus {
+  ACTIVE
+  REPORT_GENERATING
+  COMPLETED
+  ABORTED
+  FAILED
+}
+
+enum InterviewMessageSender {
+  AI
+  STUDENT
+  SYSTEM
+}
+
+enum ProblemSubmissionStatus {
+  PENDING
+  RUNNING
+  ACCEPTED
+  WRONG_ANSWER
+  TIME_LIMIT_EXCEEDED
+  MEMORY_LIMIT_EXCEEDED
+  RUNTIME_ERROR
+  COMPILE_ERROR
+}
+
+enum PaymentMethod {
+  PAYOS
+  CASH // Legacy compatibility only; confirm whether it remains supported.
+  TRANSFER // Legacy compatibility only; confirm whether it remains supported.
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  EXPIRED
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum QuizAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  ABANDONED
+}
+
+enum NotificationType {
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  TEACHER_APPLICATION_APPROVED
+  TEACHER_APPLICATION_REJECTED
+  COURSE_APPROVED
+  COURSE_REJECTED
+  JUDGE_RESULT
+  AI_REPORT_READY
+  PAYOUT_APPROVED
+  PAYOUT_REJECTED
+}
+
+enum AuditAction {
+  JOIN // Legacy compatibility.
+  INTERVIEW // Legacy compatibility.
+  TEACHER_APPLICATION_REVIEW
+  COURSE_MODERATION
+  PAYMENT_WEBHOOK
+  PAYOUT_REVIEW
+  ACCOUNT_STATUS_UPDATE
+}
+
+// User
+Table user {
+  id integer PK
+  full_name string // NOT NULL
+  address string
+  email string unique // NOT NULL; UNIQUE
+  password string // NOT NULL for local account
+  avatar_url string
+  refresh_token string
+  status string // default: verified
+  active boolean // default: False
+  account_status AccountStatus // default: UNVERIFIED
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+}
+
+// User Role
+Table user_role {
+  id integer PK
+  user_id integer // NOT NULL; FK user.id
+  role Role // NOT NULL
+  // UNIQUE(user_id, role)
+}
+
+// Student Profile
+Table student_profile {
+  user_id integer PK // FK user.id
+  bio string
+  school string
+  major string
+  github_url string
+  facebook_url string
+  linkedln_url string // API alias: linkedin_url
+}
+
+// Teacher Profile
+Table teacher_profile {
+  user_id integer PK // FK user.id
+  bio string
+  professional_title string
+  phone string
+  address string
+  primary_category string
+  years_of_experience integer
+  portfolio_link string
+  school_address string
+  cv_url string
+  bank string
+  bank_account string
+  account_holder_name string
+  verified boolean // Legacy compatibility; capability comes from approved application.
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+}
+
+// Teacher Register
+Table teacher_register {
+  id integer PK
+  teacher_id integer // NOT NULL; FK user.id
+  motivation string
+  cccd string unique // NOT NULL; UNIQUE; sensitive data
+  cccd_front_url string
+  cccd_back_url string
+  status TeacherRegisterStatus // NOT NULL; default: DRAFT
+  reviewed_note string
+  reviewed_by integer // FK user.id; nullable until review
+  reviewed_at datetime
+  submitted_at datetime
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+  deleted_at datetime
+}
+
+// Teacher application history
+// Keeps each submit/review event instead of overwriting the current application state.
+Table teacher_register_history {
+  id integer PK
+  teacher_register_id integer // NOT NULL; FK teacher_register.id
+  status TeacherRegisterStatus // NOT NULL
+  note string
+  acted_by integer // NOT NULL; FK user.id
+  acted_at datetime // NOT NULL; default: lambda
+}
+
+// Teacher education
+Table teacher_education {
+  id integer PK
+  teacher_id integer // NOT NULL; FK user.id
+  school string // NOT NULL
+  degree string
+  field_of_study string
+  started_at date
+  ended_at date
+}
+
+// Teacher experience
+Table teacher_experience {
+  id integer PK
+  teacher_id integer // NOT NULL; FK user.id
+  company string // NOT NULL
+  job_title string
+  description string
+  started_at date
+  ended_at date
+}
+
+// Course
+Table courses {
+  id integer PK
+  title string // NOT NULL
+  teacher_id integer // NOT NULL; FK user.id
+  slug string unique // NOT NULL; UNIQUE
+  rating decimal // default: 0; derived/cache from course_review
+  field string
+  tags string // Legacy field; normalized tag relation remains an open question.
+  description string
+  thumbnail_url string
+  price decimal // NOT NULL; default: 0; currency is an open question
+  status CourseStatus // NOT NULL; default: DRAFT
+  submitted_at datetime
+  reviewed_by integer // FK user.id
+  reviewed_note string
+  reviewed_at datetime
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+  deleted_at datetime
+}
+
+// Course moderation history
+Table course_moderation_review {
+  id integer PK
+  course_id integer // NOT NULL; FK courses.id
+  status CourseStatus // NOT NULL
+  note string
+  reviewed_by integer // NOT NULL; FK user.id
+  reviewed_at datetime // NOT NULL; default: lambda
+}
+
+// Section
+Table sections {
+  id integer PK
+  course_id integer // NOT NULL; FK courses.id
+  title string // NOT NULL
+  position integer // NOT NULL; default: 0
+  // UNIQUE(course_id, position)
+}
+
+// Lesson
+Table lesson {
+  id integer PK
+  section_id integer // NOT NULL; FK sections.id
+  title string // NOT NULL
+  summary string
+  score decimal // default: 0
+  position integer // NOT NULL; default: 0
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+  // UNIQUE(section_id, position)
+}
+
+// Lesson Content
+// content_id is polymorphic: validate (content_type, content_id) in the service.
+// It is not a database FK because it may reference reading_content, quizzes or problem.
+Table lesson_content {
+  id integer PK
+  lesson_id integer // NOT NULL; FK lesson.id
+  content_type LessonContentType // NOT NULL
+  content_id integer // NOT NULL; service-validated polymorphic reference
+  media_url string // Optional attachment metadata; not a content type.
+  position integer // NOT NULL; default: 0
+  created_at datetime // NOT NULL; default: lambda
+  // UNIQUE(lesson_id, position)
+  // UNIQUE(lesson_id, content_type, content_id)
+}
+
+// Lesson Content Progress
+Table lesson_content_progress {
+  id integer PK
+  enrollment_id integer // NOT NULL; FK enrollment.id
+  lesson_content_id integer // NOT NULL; FK lesson_content.id
+  completed boolean // NOT NULL; default: False
+  completed_at datetime
+  // UNIQUE(enrollment_id, lesson_content_id)
+}
+
+// Reading Content
+Table reading_content {
+  id integer PK
+  title string // NOT NULL
+  content string // NOT NULL
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+}
+
+// Quiz
+Table quizzes {
+  id integer PK
+  title string // NOT NULL
+  passing_score decimal // NOT NULL; default: 0
+  start_date datetime
+  end_date datetime
+  attempts integer // Maximum attempts; validation at service.
+  deleted_at datetime
+}
+
+// Quiz Enrollment
+Table quiz_enrollment {
+  id integer PK
+  quiz_id integer // NOT NULL; FK quizzes.id
+  student_id integer // NOT NULL; FK user.id
+  enrolled_at datetime // NOT NULL; default: lambda
+  // UNIQUE(quiz_id, student_id)
+}
+
+// Quiz Question
+Table quiz_questions {
+  id integer PK
+  quiz_id integer // NOT NULL; FK quizzes.id
+  title string
+  content string // NOT NULL
+  question_type string // NOT NULL
+  points decimal // NOT NULL; default: 0
+}
+
+// Quiz Option
+Table quiz_options {
+  id integer PK
+  question_id integer // NOT NULL; FK quiz_questions.id
+  content string // NOT NULL
+  is_correct boolean // NOT NULL; default: False
+}
+
+// Quiz Submission also represents an attempt until a separate attempt table is approved.
+Table quiz_submission {
+  id integer PK
+  quiz_id integer // NOT NULL; FK quizzes.id
+  student_id integer // NOT NULL; FK user.id
+  attempt_no integer // NOT NULL
+  status QuizAttemptStatus // NOT NULL; default: IN_PROGRESS
+  score decimal // default: 0
+  answers string // Serialized answer snapshot
+  started_at datetime // NOT NULL; default: lambda
+  submitted_at datetime
+  // UNIQUE(quiz_id, student_id, attempt_no)
+}
+
+// Problem
+Table problem {
+  id integer PK
+  teacher_id integer // NOT NULL; FK user.id
+  title string // NOT NULL
+  slug string unique // NOT NULL; UNIQUE
+  statement string // NOT NULL
+  input_description string
+  output_description string
+  constraints string
+  sample_input string
+  sample_output string
+  explanation string
+  difficulty ProblemDifficulty // NOT NULL
+  public boolean // NOT NULL; default: True
+  created_at datetime // NOT NULL; default: lambda
+}
+
+// Problem Tag
+Table problem_tag {
+  id integer PK
+  tag_name string unique // NOT NULL; UNIQUE
+}
+
+// Problem-Tag mapping for recommendation and filtering
+Table problem_tag_mapping {
+  id integer PK
+  problem_id integer // NOT NULL; FK problem.id
+  tag_id integer // NOT NULL; FK problem_tag.id
+  // UNIQUE(problem_id, tag_id)
+}
+
+// Problem Config
+Table problem_config {
+  id integer PK
+  problem_id integer // NOT NULL; FK problem.id
+  language_id integer // NOT NULL; FK language.id
+  time_limit_ms decimal // NOT NULL
+  memory_limit_mb decimal // NOT NULL
+  // UNIQUE(problem_id, language_id)
+}
+
+// Language
+Table language {
+  id integer PK
+  name string unique // NOT NULL; UNIQUE
+  default_time_limit decimal // NOT NULL; default: 1000
+  default_memory_limit decimal // NOT NULL; default: 256
+  is_active boolean // NOT NULL; default: True
+}
+
+// Testcase
+Table testcase {
+  id integer PK
+  problem_id integer // NOT NULL; FK problem.id
+  input_file string // NOT NULL
+  output_file string // NOT NULL
+  score decimal // NOT NULL; default: 0
+  is_hidden boolean // NOT NULL; default: False
+}
+
+// Submission
+Table submission {
+  id integer PK
+  problem_id integer // NOT NULL; FK problem.id
+  student_id integer // NOT NULL; FK user.id
+  language_id integer // NOT NULL; FK language.id
+  source_code string // NOT NULL
+  status ProblemSubmissionStatus // NOT NULL
+  score decimal // default: 0
+  runtime_ms decimal // default: 0
+  memory_kb decimal // default: 0
+  submitted_at datetime // NOT NULL; default: lambda
+}
+
+// Submission Result Detail
+Table submission_result_detail {
+  id integer PK
+  submission_id integer // NOT NULL; FK submission.id
+  testcase_id integer // NOT NULL; FK testcase.id
+  status ProblemSubmissionStatus // NOT NULL
+  runtime_ms decimal // default: 0
+  memory_kb decimal // default: 0
+  // UNIQUE(submission_id, testcase_id)
+}
+
+// Cart
+Table cart {
+  id integer PK
+  student_id integer // NOT NULL; FK user.id
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+  // UNIQUE(student_id)
+}
+
+// Cart Item
+Table cart_item {
+  id integer PK
+  cart_id integer // NOT NULL; FK cart.id
+  course_id integer // NOT NULL; FK courses.id
+  added_at datetime // NOT NULL; default: lambda
+  // UNIQUE(cart_id, course_id)
+}
+
+// Order
+// The one-course vs multi-course cardinality is still an open question.
+Table orders {
+  id integer PK
+  student_id integer // NOT NULL; FK user.id
+  status string // Payment/order lifecycle validated by service.
+  subtotal decimal // NOT NULL; default: 0
+  currency string // Required after currency decision.
+  expires_at datetime
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+  idempotency_key string unique // UNIQUE per student/command
+}
+
+// Order Item
+Table order_item {
+  id integer PK
+  order_id integer // NOT NULL; FK orders.id
+  course_id integer // NOT NULL; FK courses.id
+  price_snapshot decimal // NOT NULL
+  currency string // Required after currency decision.
+  // UNIQUE(order_id, course_id)
+}
+
+// Enrollment
+Table enrollment {
+  id integer PK
+  student_id integer // NOT NULL; FK user.id
+  course_id integer // NOT NULL; FK courses.id
+  status string // Active/completed lifecycle validated by service.
+  enrolled_at datetime // NOT NULL; default: lambda
+  completed_at datetime
+  // UNIQUE(student_id, course_id)
+}
+
+// Transaction
+Table transaction {
+  id integer PK
+  order_id integer // FK orders.id; nullable for legacy records
+  order_item_id integer // FK order_item.id; nullable for legacy records
+  user_id integer // NOT NULL; FK user.id; legacy compatibility
+  course_id integer // NOT NULL; FK courses.id; legacy compatibility
+  payment_method PaymentMethod // NOT NULL
+  amount decimal // NOT NULL; default: 0
+  currency string // Required after currency decision.
+  status PaymentStatus // NOT NULL; default: PENDING
+  transaction_code string unique // NOT NULL; UNIQUE
+  payos_code string unique // UNIQUE when provided
+  payos_link string
+  idempotency_key string unique // UNIQUE per provider command
+  signature_verified boolean // NOT NULL; default: False
+  expires_at datetime
+  completed_at datetime
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+}
+
+// Course Favorite
+Table course_favorite {
+  id integer PK
+  student_id integer // NOT NULL; FK user.id
+  course_id integer // NOT NULL; FK courses.id
+  created_at datetime // NOT NULL; default: lambda
+  // UNIQUE(student_id, course_id)
+}
+
+// Course Review
+Table course_review {
+  id integer PK
+  course_id integer // NOT NULL; FK courses.id
+  student_id integer // NOT NULL; FK user.id
+  rating decimal // NOT NULL
+  content string
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+  // UNIQUE(course_id, student_id) unless Product Owner allows multiple reviews.
+}
+
+// Wallet
+Table wallet {
+  id integer PK
+  teacher_id integer // NOT NULL; FK user.id
+  available_balance decimal // NOT NULL; default: 0
+  pending_balance decimal // NOT NULL; default: 0
+  currency string // Required after currency decision.
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+  // UNIQUE(teacher_id)
+}
+
+// Immutable Wallet Ledger
+Table wallet_ledger {
+  id integer PK
+  wallet_id integer // NOT NULL; FK wallet.id
+  transaction_id integer // FK transaction.id
+  payout_request_id integer // FK payout_request.id
+  entry_type string // Revenue, reserve, release or refund; validate in service.
+  amount decimal // NOT NULL
+  currency string // Required after currency decision.
+  created_at datetime // NOT NULL; default: lambda
+  // Ledger rows are immutable; corrections use a new compensating row.
+}
+
+// Payout Request
+Table payout_request {
+  id integer PK
+  wallet_id integer // NOT NULL; FK wallet.id
+  teacher_id integer // NOT NULL; FK user.id
+  amount decimal // NOT NULL
+  currency string // Required after currency decision.
+  status PayoutStatus // NOT NULL; default: PENDING
+  reviewed_by integer // FK user.id
+  reviewed_at datetime
+  settlement_reference string
+  failure_reason string
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+}
+
+// Interview Session
+Table interview_session {
+  id integer PK
+  student_id integer // NOT NULL; FK user.id
+  topic string // NOT NULL
+  level InterviewLevel // NOT NULL
+  status InterviewStatus // NOT NULL; default: ACTIVE
+  max_questions integer // NOT NULL; default: 12
+  question_count integer // NOT NULL; default: 0
+  started_at datetime // NOT NULL; default: lambda
+  ended_at datetime
+  report_generated_at datetime
+}
+
+// Interview Message
+Table interview_message {
+  id integer PK
+  session_id integer // NOT NULL; FK interview_session.id
+  sender InterviewMessageSender // NOT NULL
+  content string // NOT NULL
+  created_at datetime // NOT NULL; default: lambda
+}
+
+// Interview Report
+Table interview_reports {
+  id integer PK
+  session_id integer // NOT NULL; FK interview_session.id
+  overall_score decimal // default: 0
+  skill_scores string // Serialized/projection format to be confirmed.
+  question_feedback string // Serialized/projection format to be confirmed.
+  strengths string
+  weaknesses string
+  suggestions string
+  generated_at datetime // NOT NULL; default: lambda
+  // UNIQUE(session_id)
+}
+
+// Notification
+Table notification {
+  id integer PK
+  sender_id integer // FK user.id; nullable for system events
+  user_id integer // NOT NULL; FK user.id
+  type NotificationType // NOT NULL
+  target_type string
+  target_id integer
+  content string // NOT NULL
+  is_read boolean // NOT NULL; default: False
+  created_at datetime // NOT NULL; default: lambda
+}
+
+// Audit Log
+Table audit_log {
+  id integer PK
+  user_id integer // NOT NULL; FK user.id
+  action AuditAction // NOT NULL
+  target_type string
+  target_id integer
+  note string
+  correlation_id string
+  do_at datetime // NOT NULL; default: lambda
+}
+
+// User History
+// Legacy aggregate; not the source for dashboard activity or streak.
+Table user_history {
+  id integer PK
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+  problem_count integer // Legacy aggregate only.
+  user_id integer // NOT NULL; FK user.id
+}
+
+// Daily Student Activity
+// Source for contribution, streak and study-time projections after metric rules are approved.
+Table student_daily_activity {
+  id integer PK
+  student_id integer // NOT NULL; FK user.id
+  activity_date date // NOT NULL; timezone rule is defined by application contract.
+  contribution_count integer // NOT NULL; default: 0
+  study_seconds integer // NOT NULL; default: 0
+  solved_problem_count integer // NOT NULL; default: 0
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+  // UNIQUE(student_id, activity_date)
+}
