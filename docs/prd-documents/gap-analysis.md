@@ -9,27 +9,30 @@ Các vấn đề liên quan để tang tính đồng bộ của database và UI
 | Database hiện tại | Nghiệp vụ cần hỗ trợ | Cần chỉnh sửa |
 | --- | --- | --- |
 | `teacher_register.status`: `AGREE`, `REJECT`, `PENDING` | Người dùng lưu nháp, nộp hồ sơ, bị từ chối thì sửa và nộp lại | Chuẩn hóa luồng thành `DRAFT -> PENDING -> APPROVED | REJECTED`; map `AGREE -> APPROVED`, `REJECT -> REJECTED`. |
-| `teacher_profile.verified` là boolean | Chỉ Teacher có hồ sơ được duyệt mới được tạo/gửi course | Không dùng role hoặc boolean đơn lẻ để cấp quyền; service phải kiểm tra application `APPROVED`. |
-| `teacher_register` mới có motivation, CCCD và file CCCD | Form có thông tin cá nhân, chuyên môn, kinh nghiệm, học vấn, portfolio | Xác định field nào thuộc profile lâu dài, field nào thuộc từng lần đăng ký; bổ sung field/bảng còn thiếu sau khi chốt. |
+| `teacher_profile.verified` là boolean | Chỉ Teacher có hồ sơ được duyệt mới được tạo/gửi course | Không dùng role hoặc boolean đơn lẻ để cấp quyền; service phải kiểm tra application `APPROVED` -> chuẩn hóa thành enum trạng thái |
+| `teacher_register` mới có motivation, CCCD và file CCCD | Form có thông tin cá nhân, chuyên môn, kinh nghiệm, học vấn, portfolio | Xac định lại với teammate cần giữ các field nào trong teacher_register form, sau đó hoàn thiện thông tin. |
 | Chỉ lưu review hiện tại | Admin cần xem reviewer, note, thời điểm và lịch sử resubmit | Cần lịch sử submit/review hoặc version cho application. |
 
 **Cần bổ sung**
 
 - Chuẩn hóa enum trạng thái application.
 - Bổ sung dữ liệu hồ sơ còn thiếu và lịch sử review.
-- Tách dữ liệu CCCD/tài liệu nhạy cảm khỏi dữ liệu hiển thị công khai.
 - API cần có save draft, update, submit, resubmit, status/history và Admin approve/reject.
 
 ### course_moderation
 
 | Database hiện tại | Nghiệp vụ cần hỗ trợ | Cần chỉnh sửa |
 | --- | --- | --- |
-| `courses.status`: `DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `ARCHIVED` | Teacher gửi course để Admin review; Admin approve/reject kèm note; Teacher sửa và gửi lại | Thiếu `REJECTED`. Cần chốt tên trạng thái thống nhất giữa review và public course. |
-| Không có submitted time, reviewer hoặc review history | Admin cần queue, preview, note và lịch sử quyết định | Thêm các field review hoặc bảng lịch sử moderation. |
+| `courses.status`: `DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `ARCHIVED` | Teacher gửi course để Admin review; Admin approve/reject kèm note; Teacher sửa và gửi lại | Hiện tại course đã có các trạng thái `DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `ARCHIVED`. Cần chốt thêm trạng thái `REJECTED` để thể hiện admin từ chối duyệt course. |
+| Không có submitted time, reviewer hoặc review history | Admin cần queue, preview, note và lịch sử quyết định | Thêm các field review hoặc bảng lịch sử lưu các quyết định của admin. |
 | Course chỉ có `teacher_id` | Chỉ Teacher đã được duyệt mới quản lý course của mình | API phải kiểm tra application approved và ownership course. |
 
 **Cần bổ sung**
-
+- Chôt danh lại danh sách enum của course để giải quyết được các trạng thái: 
+    + Public 
+    + Archived: Lưu trữ nhưng không bán 
+    + Pending Review 
+    + Rejected: Từ chối. 
 - Lưu thời điểm submit, người review, note và quyết định review.
 - Tách dữ liệu review của Admin khỏi `course_review` của Student.
 - API cần có submit/resubmit course, admin queue, approve/reject và review history.
@@ -46,9 +49,8 @@ Các vấn đề liên quan để tang tính đồng bộ của database và UI
 
 **Cần bổ sung**
 
-- Thêm bảng favorite theo một tên thống nhất.
+- Thêm bảng favorite. 
 - Thêm bảng course review: course, student, rating, nội dung, thời gian.
-- Chốt rule một Student được viết một hay nhiều review cho một course.
 - API cần có favorite list/add/remove và course review create/update/list; chỉ Student đã enrollment được review.
 
 ### cart_payment_enrollment
@@ -65,7 +67,7 @@ Các vấn đề liên quan để tang tính đồng bộ của database và UI
 
 - Thêm cart/cart item và order/order item sau khi chốt số course trong một order.
 - Lưu price snapshot, expiry và idempotency reference cho payment/order.
-- Chuẩn hóa payment status và thêm enrollment unique.
+- Chuẩn hóa payment status và thêm enrollment unique (một student không apply 1 course 2 lần)
 - API cần có cart, checkout, payment status, webhook, Payment Result và tạo enrollment idempotent.
 - Payment failed/expired không tạo enrollment.
 
@@ -73,7 +75,7 @@ Các vấn đề liên quan để tang tính đồng bộ của database và UI
 
 | Database hiện tại | Nghiệp vụ cần hỗ trợ | Cần chỉnh sửa |
 | --- | --- | --- |
-| Không có wallet hoặc ledger | Teacher xem số dư, doanh thu và lịch sử giao dịch | Cần wallet projection và ledger không sửa trực tiếp. |
+| Không có wallet hoặc  (Nơi ghi chép, tổng hợp giao dịch) | Teacher xem số dư, doanh thu và lịch sử giao dịch | Cần wallet projection và ledger (không cho sửa trực tiếp - readonly) |
 | Không lưu revenue split | Teacher nhận 80%, Platform nhận 20% | Cần record từng khoản chia doanh thu theo payment hoàn tất. |
 | Không có payout request | Teacher gửi yêu cầu rút tiền; Admin duyệt hoặc từ chối | Cần bảng payout, status, reviewer và settlement reference. |
 | Minimum payout và currency chưa thống nhất | UI hiển thị điều kiện tối thiểu để rút | Chỉ thêm validation sau khi chốt currency, amount type và ngưỡng. |
@@ -89,14 +91,13 @@ Các vấn đề liên quan để tang tính đồng bộ của database và UI
 
 | Database hiện tại | Nghiệp vụ cần hỗ trợ | Cần chỉnh sửa |
 | --- | --- | --- |
-| `LessonContentType` đã có `READING`, `QUIZ`, `PROBLEM` | Lesson chỉ dùng ba loại content này | Giữ enum hiện tại; không thêm `VIDEO`, `video_content`, `watched_percent` hoặc video progress. |
 | `lesson_content.content_id` là polymorphic, không có foreign key thật | Builder gắn Reading, Quiz hoặc Problem vào lesson | Service phải kiểm tra `content_type` và `content_id` có tồn tại, đúng loại và thuộc course phù hợp. |
-| `lesson_content_progress` chỉ có `completed` | UI cần biết completion theo từng loại content | Xác định dữ liệu nào cần lưu, dữ liệu nào tính từ quiz/submission. |
+| `lesson_content_progress` chỉ có `completed` | UI cần biết completion theo từng loại content | Xác định, chốt lại loại dữ liệu nào cần lưu, cần xử lý như thế nào khi hiển thị tiến độ học tập |
 
-**Rule completion**
+**Rule**
 
 - Reading: Student tự đánh dấu hoàn thành sau khi có quyền truy cập content.
-- Quiz: hoàn thành khi `score >= quizzes.passing_score` và attempt hợp lệ.
+- Quiz: hoàn thành khi `score >= quizzes.passing_score` và số lần attempt hợp lệ.
 - Problem: hoàn thành khi submission đạt điều kiện Accepted/pass score đã chốt.
 
 **Cần bổ sung**
@@ -108,10 +109,9 @@ Các vấn đề liên quan để tang tính đồng bộ của database và UI
 
 | Database hiện tại | Nghiệp vụ cần hỗ trợ | Cần chỉnh sửa |
 | --- | --- | --- |
-| `quiz_submission` có score, answers và submitted time | UI cần attempt number, resume, submit, score và history | Chưa có trạng thái attempt đang làm, số thứ tự attempt hoặc snapshot policy. |
-| `quizzes.passing_score` và `attempts` đã có | Teacher đặt passing score và số lần làm | API dùng `passing_score`, không hard-code 80%; `attempts_left` tính từ số lần đã dùng. |
+| `quiz_submission` có score, answers và submitted time | UI cần attempt number, resume, submit, score và history | Cần thêm các trạng thái attempt (đang cố giải), resume (tiếp tục giải) hoặc giải thành công |
+| `quizzes.passing_score` và `attempts` đã có | Teacher đặt passing score và số lần làm | API dùng `passing_score`, không hard-code số điểm qua môn|
 | Không có unique theo quiz/student/attempt | Không vượt số lần làm và không submit trùng | Chọn một mô hình: mở rộng `quiz_submission` hoặc thêm `quiz_attempt`. |
-| Problem, language, testcase, submission và result detail đã có | List, editor, run, submit, result và history | Core schema cơ bản phù hợp; gap chính là API projection và authorization. |
 | Testcase có `is_hidden` | Student xem sample, không xem raw hidden input/output | API chỉ trả status/runtime/memory/score cần thiết cho hidden testcase. |
 | Có `problem_tag`, chưa có mapping problem-tag | Dashboard đề xuất problem theo weakest topics | Thêm bảng mapping problem-tag và unique `(problem_id, tag_id)`. |
 | Submission có status, score, runtime, memory | Problem trong LessonContent cần cập nhật progress | Cần map submission Accepted về đúng enrollment/lesson content. |
@@ -131,7 +131,7 @@ Các vấn đề liên quan để tang tính đồng bộ của database và UI
 | Chưa có max question hoặc question count | Tối đa 12 câu, AI có thể kết thúc sớm | Lưu max questions, question count và thời điểm kết thúc. |
 | `interview_message.sender` là string tự do | Sender là AI, Student hoặc System | Chuẩn hóa enum hoặc validation sender. |
 | `interview_reports.session_id` chưa unique | Một session chỉ có một final report | Thêm unique session/report và report generation idempotent. |
-| Report UI có skill score và feedback từng câu | Database mới có overall score, strengths, weaknesses, suggestions | Chốt cách lưu hoặc trả projection cho skill score/question feedback. |
+| Report UI có skill score và feedback từng câu | Database mới có overall score, strengths, weaknesses, suggestions | Chốt cách trả lời là feedback toàn bộ hay feedback cho từng câu hỏi. |
 
 **Cần bổ sung**
 
@@ -166,17 +166,61 @@ Các vấn đề liên quan để tang tính đồng bộ của database và UI
 - Thêm dữ liệu activity theo ngày và problem-tag mapping trước khi viết API dashboard.
 - API dashboard chỉ trả dữ liệu của current authenticated user.
 
+
+### Các chỉnh sửa đã thực hiện
+
+- Chuẩn hóa `teacher_register.status` từ `AGREE/REJECT/PENDING` thành `DRAFT/PENDING/APPROVED/REJECTED`, đồng thời bổ sung `submitted_at`.
+- Mở rộng `teacher_profile` với các thông tin nghề nghiệp, số điện thoại, danh mục chuyên môn, số năm kinh nghiệm, portfolio và thông tin ngân hàng.
+- Bổ sung `submitted_at`, `reviewed_by`, `reviewed_note` và `reviewed_at` vào `courses`, đồng thời đổi trạng thái course để hỗ trợ `APPROVED` và `REJECTED`.
+- Chuẩn hóa `courses.thumbnail_url` thay cho tên model hiện tại là `thumbnai_url`, và đổi `price` từ số thực sang kiểu tiền chính xác `decimal`.
+- Bổ sung các ràng buộc unique cho thứ tự section/lesson/content, nội dung lesson và progress theo enrollment.
+- Giữ `LessonContentType` chỉ gồm `READING`, `QUIZ` và `PROBLEM`; `content_id` tiếp tục là liên kết polymorphic được kiểm tra ở service.
+- Mở rộng `lesson_content_progress` với `completed_at` và unique `(enrollment_id, lesson_content_id)`.
+- Bổ sung unique `(quiz_id, student_id)` cho `quiz_enrollment` và mở rộng `quiz_submission` với `attempt_no`, `status`, `started_at`, trạng thái submit và unique theo quiz/student/attempt.
+- Bổ sung bảng mapping cho `problem_tag`, đồng thời thêm unique theo cặp problem/tag và problem/language.
+- Đổi các trường số tiền trong `transaction` từ `double/float` sang `decimal`, bổ sung `order_id`, `order_item_id`, `currency`, `idempotency_key`, `signature_verified`, `expires_at` và `completed_at`.
+- Chuẩn hóa `PaymentMethod` để có `PAYOS`, và `PaymentStatus` để có `COMPLETED` cùng `EXPIRED` thay cho `COMPLETE`.
+- Bổ sung unique `(student_id, course_id)` cho `enrollment` để ngăn enrollment trùng.
+- Mở rộng `interview_session` từ trạng thái boolean thành lifecycle `ACTIVE/REPORT_GENERATING/COMPLETED/ABORTED/FAILED`, đồng thời thêm `max_questions`, `question_count` và `report_generated_at`.
+- Chuẩn hóa `interview_message.sender` thành `AI/STUDENT/SYSTEM`.
+- Bổ sung `skill_scores`, `question_feedback` và unique `session_id` cho `interview_reports` để bảo đảm mỗi session chỉ có một report.
+- Mở rộng `notification` với `type`, `target_type` và `target_id` để hỗ trợ điều hướng theo sự kiện.
+- Mở rộng `audit_log` với action chuẩn hóa, `target_type`, `target_id` và `correlation_id`.
+- Bổ sung `UNVERIFIED` vào trạng thái tài khoản và chuẩn hóa các enum mới cho payout, quiz attempt, notification và audit.
+- Giữ `user_history` như dữ liệu aggregate cũ, không dùng làm nguồn chính cho heatmap, streak và study time.
+
+### Các bảng mới được bổ sung
+
+- `teacher_register_history`: lưu lịch sử submit, review, resubmit và người thực hiện của hồ sơ teacher.
+- `teacher_education`: lưu quá trình học vấn của teacher.
+- `teacher_experience`: lưu kinh nghiệm làm việc của teacher.
+- `course_moderation_review`: lưu lịch sử approve/reject course, ghi chú, reviewer và thời điểm review.
+- `problem_tag_mapping`: liên kết nhiều-nhiều giữa problem và problem tag để phục vụ lọc và recommendation.
+- `cart`: lưu giỏ hàng của từng student.
+- `cart_item`: lưu các course trong giỏ hàng và ngăn course trùng trong cùng cart.
+- `orders`: lưu thông tin order, subtotal, currency, thời hạn và idempotency key.
+- `order_item`: lưu từng course trong order cùng giá và currency tại thời điểm mua.
+- `course_favorite`: lưu course yêu thích của student.
+- `course_review`: lưu rating và nội dung review course của student đã enrollment.
+- `wallet`: lưu số dư khả dụng, số dư chờ xử lý và currency của teacher.
+- `wallet_ledger`: lưu immutable ledger cho doanh thu, reserve, release và refund.
+- `payout_request`: lưu yêu cầu rút tiền, trạng thái xử lý, reviewer và settlement reference.
+- `student_daily_activity`: lưu hoạt động hằng ngày, thời gian học, số problem đã giải và dữ liệu contribution dashboard.
+
 ### Các vấn đề cần quyết định
 
 1. Course dùng một enum hay tách trạng thái review khỏi trạng thái public/archive? Tên canonical là `PENDING_REVIEW/PUBLISHED` hay `PENDING/APPROVED`?
 2. Currency chính thức là gì? Cần chốt đơn vị lưu trữ, format hiển thị, rounding và minimum payout.
-3. Một order chỉ có một course hay checkout nhiều item được phép?
+3. Một order chỉ có một course hay có thể thực hiện thanh toàn nhiều course một lúc. 
 4. Tên bảng favorite dùng `course_favorite` hay `course_favourite`? Student được viết một hay nhiều review cho một course?
-5. Field nào thuộc `teacher_profile`, field nào thuộc application và có cần application/review history riêng không?
-6. Quiz mở rộng `quiz_submission` hay thêm `quiz_attempt`? Có bắt buộc save/resume không?
+
+- Student được viết nhiều review cho một course 
+5. Field nào thuộc `teacher_profile`, field nào thuộc application? Thảo luận lại các thông tin cần thiết cho teacher_profile và teacher_application khi tiến hành đăng ký làm giáo viên? Có cần application/review history riêng không?
+
+6. CÓ cần tách riêng ra thêm một bảng `quiz_attempt` để lưu chi tiết từng lần làm bài cho bảng `quiz_submission` không? Có cho phép học sinh `save/resume` bài quiz không? 
 7. Problem completion trong lesson chỉ cần Accepted hay có pass score riêng theo lesson content?
 8. Skill score và feedback từng câu của AI Interview được lưu thành dữ liệu riêng hay tạo từ report payload?
-9. Các route đang ghi `VERIFY` trong wireframe sẽ được xác nhận theo frontend router/backend contract nào?
+9. AI interview sẽ feedback từng câu hay feedback toàn bộ một lần? 
 
 ## 2. FE cần chỉnh sửa
 
@@ -227,7 +271,7 @@ Các vấn đề liên quan để tang tính đồng bộ của database và UI
 | File | Cần chỉnh sửa |
 | --- | --- |
 | `LEARNING00UnifiedLessonWorkspace.md` | Chỉ giữ Reading, Quiz, Problem; bỏ Video player/progress. |
-| `CLASS01Workspace.md` | Bỏ Video nếu đó là LessonContent; xác định lại scope nếu là media ngoài LessonContent. |
+| `CLASS01Workspace.md` | Bỏ Video nếu đó là LessonContent; (thảo luận lại nếu như phát sinh mong muốn làm LessonContent ngoài 3 dạng trên) |
 | `TC06TeacherLessonContentBuilder.md` | Builder chỉ tạo Reading, Quiz, Problem. |
 | `TC12TeacherLessonContentPreview.md` | Preview chỉ hiển thị ba loại LessonContent. |
 | `PROG03ProblemVideo.md` | Không dùng làm requirement Video; đổi scope, đổi tên hoặc để out-of-scope sau quyết định owner. |
