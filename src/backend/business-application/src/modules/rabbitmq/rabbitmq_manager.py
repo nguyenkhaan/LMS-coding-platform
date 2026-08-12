@@ -58,7 +58,6 @@ class RabbitMQManager:
             queue_name, 
             durable=True 
         ) 
-        print(queue)
         async def process_message(
             message : AbstractIncomingMessage 
         ) -> None: 
@@ -83,15 +82,13 @@ class RabbitMQManager:
         return consumer_id 
     
     async def close(self): 
-        
-        print('RabbitMQ stopped started') 
         try: 
             if self.connection is not None: 
                 await asyncio.wait_for(
                     self.connection.close(), 
                     timeout=5
                 ) 
-            print("RabbitMQ connection has been closed") 
+            print("RabbitMQ has been closed") 
         except asyncio.TimeoutError:
             print(
                 "RabbitMQ close timeout",
