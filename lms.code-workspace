@@ -11,6 +11,9 @@
 		},
 		{
 			"path": "src/backend/auth-provider"
+		},
+		{
+			"path": "src/backend/judge"
 		}
 	],
 	"settings": {}
