@@ -7,28 +7,51 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from src.modules.rabbitmq.rabbitmq_manager import RabbitMQManager
+from src.modules.rabbitmq.rabbitmq_service import handle_result
+from src.bases.constants.rabbit_queue import RESULT_QUEUE
+# router 
 from src.modules.lesson_comment.lesson_comment_router import router as lesson_comment_router
 from src.modules.student_course_directory.course_router import router as course_router
 from src.modules.student_course_directory.student_router import router as student_router
 from src.grpc.client import AuthGrpcClient
 from src.modules.health.health_router import router as health_router
 from src.jwk_service import PublicKeyService
-
+from src.cores.settings import RABBITMQ_URL
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
-    Executed once when the application starts.
-    Download and cache the JWT public key from the auth provider.
+        Executed once when the application starts.
+        Download and cache the JWT public key from the auth provider.
+        Create RabbitMQ connection 
     """
     client = AuthGrpcClient(
         "localhost:50051"
     )
     public_key = await PublicKeyService.load(client)
-    print("Are you ready") 
+
+    # rabbit_mq manager 
+    rabbitmq_manager = RabbitMQManager(
+        url = RABBITMQ_URL
+    ) 
+    
+    # rabbit_mq consumer connect  
+    await rabbitmq_manager.connect() 
+    # consumer register 
+    await rabbitmq_manager.consume(
+        RESULT_QUEUE, 
+        handle_result
+    )
+    # register to the application 
+    app.state.rabbitmq_manager = rabbitmq_manager 
+    
     yield
+    await rabbitmq_manager.close() 
+    print('Rabbit MQ stopped')
     await client.close() 
     print('Grpc client stopped')
+    
     # Cleanup if needed when the application shuts down.
     # Nguyen tac quan trong: Ai tao ra resource thi nguoi do phai dong resource
 
