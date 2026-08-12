@@ -1,221 +1,485 @@
 # API Specification - LMS Coding Platform
 
-## 1. Phạm vi và quy ước
+## 1. Mục đích và nguồn sự thật
 
-Tài liệu này là contract API cho MVP. Nó ưu tiên các luồng đang có wireframe và yêu cầu trong [PRD](../prd-documents/prd.md), [gap analysis](../prd-documents/gap-analysis.md) và [DATABASE.txt](../DATABASE.txt). Đây không phải danh mục endpoint đầy đủ; route gắn nhãn `PROPOSED` cần được bổ sung khi triển khai.
+Tài liệu này là **target API contract cho MVP**, dùng để FE và BE triển khai thống nhất theo:
 
-| Thành phần | Base URL | Ghi chú |
+- Nghiệp vụ: [`prd.md`](../prd-documents/prd.md).
+- Khoảng cách hiện trạng: [`gap-analysis.md`](../prd-documents/gap-analysis.md).
+- Schema đề xuất: [`DATABASE.txt`](../DATABASE.txt).
+- Kế hoạch triển khai: [`overall-plan.md`](../plans/overall-plan.md).
+
+Route xuất hiện trong các bảng bên dưới là contract mục tiêu, không mặc nhiên có nghĩa route đã được implement. Hiện trạng source được ghi riêng tại [Mục 13](#13-hiện-trạng-implementation-trong-source).
+
+Các ký hiệu:
+
+- `GATED`: contract hoặc payload chưa được phép triển khai cho tới khi quyết định tương ứng ở Mục 14 được duyệt.
+- `GATED-SCHEMA`: nghiệp vụ có trong PRD nhưng canonical database proposal chưa có bảng/cột cần thiết; phải sửa và duyệt `DATABASE.txt` trước khi implement contract.
+- `LEGACY`: route hiện có trong source nhưng không phải contract cuối; chỉ giữ tạm thời khi cần migration client.
+- Không có nhãn: target contract đã đủ rõ để triển khai theo thứ tự trong `overall-plan.md`.
+
+| Thành phần | Base URL local | Trách nhiệm |
 |---|---|---|
-| Auth Provider | `http://localhost:4001/auth` | Đăng nhập, token, OTP và mật khẩu. |
-| Business Application | `http://localhost:4000/api/v1` | API nghiệp vụ LMS. |
+| Auth Provider | `http://localhost:4001/api/auth` | Registration, identity, session, token, OTP và password recovery |
+| Business Application | `http://localhost:4000/api/v1` | Toàn bộ nghiệp vụ LMS, commerce, learning, Judge orchestration và Interview |
 
-- Route không có nhãn là endpoint đang có hoặc giữ tương thích với API hiện tại.
-- `PROPOSED` là contract cần có để đáp ứng PRD nhưng có thể chưa được implement.
-- `VERIFY` là điểm cần chốt trước khi frontend phụ thuộc, không phải một giá trị dữ liệu gửi lên API.
-- Ngoại trừ upload và login form, request dùng `application/json`. API nhận access token qua `Authorization: Bearer <token>` hoặc cơ chế cookie do Auth Provider quản lý.
-- Mọi thời gian dùng ISO 8601 UTC; tiền dùng `decimal` và phải đi cùng `currency` sau khi Product Owner chốt currency.
+## 2. Quy ước chung
 
-### Response dùng chung
+### 2.1. Request và định dạng dữ liệu
 
-| Mẫu | Cấu trúc |
+- Request mặc định dùng `application/json`; login form và file upload là ngoại lệ được ghi rõ ở từng route.
+- Access token gửi bằng `Authorization: Bearer <access_token>`.
+- Refresh token dùng cơ chế cookie bảo mật hoặc body theo quyết định Auth; FE không được phụ thuộc đồng thời vào cả hai.
+- Timestamp dùng ISO 8601 UTC.
+- Tiền dùng decimal string, ví dụ `"199000.00"`, luôn đi cùng `currency`; không dùng JSON float làm nguồn persistence.
+- Tên field dùng `snake_case`.
+- Mutation idempotent nhận `Idempotency-Key` ở header khi route yêu cầu.
+- Upload chỉ lưu URL/object key trong database; API phải kiểm tra MIME type, kích thước và ownership.
+
+### 2.2. Response envelope
+
+| Loại | Cấu trúc |
 |---|---|
 | Một resource | `{ "data": { ... } }` |
-| Danh sách phân trang | `{ "data": [...], "pagination": { "page": 1, "size": 10, "total": 42 } }` |
-| Mutation thành công | `{ "data": { ... }, "message": "..." }` |
+| Danh sách | `{ "data": [...], "pagination": { "page": 1, "size": 20, "total": 42 } }` |
+| Mutation | `{ "data": { ... }, "message": "..." }` |
+| Không có body nghiệp vụ | `{ "message": "..." }` |
 | Lỗi | `{ "message": "...", "error_code": "...", "details": [] }` |
 
-Ví dụ lỗi validation:
+Ví dụ lỗi:
 
 ```json
 {
   "message": "Course đã được enrollment",
   "error_code": "ALREADY_ENROLLED",
-  "details": [{ "field": "course_id", "reason": "duplicate enrollment" }]
+  "details": [
+    { "field": "course_id", "reason": "duplicate enrollment" }
+  ]
 }
 ```
 
-Các mã lỗi dùng thường xuyên: `UNAUTHENTICATED` (401), `FORBIDDEN` (403), `NOT_FOUND` (404), `VALIDATION_ERROR` (422), `DUPLICATE_RESOURCE` (409), `INVALID_STATE` (409), `PAYMENT_EXPIRED` (410), `RATE_LIMITED` (429). Không trả raw exception, token, CCCD hay payload thanh toán nhạy cảm.
+Các error code tối thiểu:
 
-## 2. Auth và hồ sơ người dùng
-
-### Auth Provider
-
-| Method | Route | Request | Response | Mô tả |
-|---|---|---|---|---|
-| `POST` | `/register` | `full_name`, `email`, `password`, `address` | `verify_code`, `message` | Tạo Student ở trạng thái chưa xác thực và gửi OTP. |
-| `GET` | `/verify?otp={otp}` | Query `otp` | `message` | Xác thực email. |
-| `POST` | `/login` | Form: `email`, `password`, `redirect_uri` | `code`, `redirect_uri`, `identity` | Đăng nhập và nhận authorization code. |
-| `POST` | `/code?code={code}` | Query `code` | `access_token`, `refresh_token` | Đổi authorization code lấy token. |
-| `POST` | `/refresh` | `refresh_token` | `access_token` | Làm mới access token. |
-| `POST` | `/google` | `credential_code` | `access_token`, `refresh_token` | Đăng nhập/đăng ký Google. |
-| `POST` | `/logout` | - | `message` | Hủy session/token cookie. |
-| `POST` | `/resend-otp` | `email` | `message` | Gửi lại OTP. |
-| `POST` | `/forgot-password` | `email` | `message`, `code` | Khởi tạo reset password. |
-| `POST` | `/reset-password` | `code`, `new_password` | `message` | Đặt lại mật khẩu. |
-| `POST` | `/change-email` | `new_email`, `password` | `message` | Yêu cầu đổi email và gửi xác nhận. |
-| `GET` | `/verify-reset-email?token={token}` | Query `token` | `message` | Hoàn tất đổi email. |
-
-### Current user và profile
-
-| Method | Route | Actor | Request | Response | Quy tắc |
-|---|---|---|---|---|---|
-| `GET` | `/users/me` | User đăng nhập | - | `user`, `student_profile`, `teacher_profile`, `teacher_application_status`, `capabilities` | Chỉ trả dữ liệu current user. `capabilities.can_teach` chỉ true khi application là `APPROVED`. |
-| `PUT` | `/users/me/profile` | User đăng nhập | `bio`, `school`, `major`, `github_url`, `facebook_url`, `linkedin_url`, `avatar_url` | Profile đã cập nhật | Chỉ sửa profile của chính mình. |
-| `PUT` | `/users/me/teacher-profile` | User đăng nhập | `bio`, `school_address`, `cv_url` | Teacher profile đã cập nhật | Tạo/sửa hồ sơ, không tự cấp quyền Teacher. |
-
-## 3. Teacher application và moderation
-
-Teacher application dùng trạng thái `DRAFT`, `PENDING`, `APPROVED`, `REJECTED`. Giá trị cũ `AGREE/REJECT` không còn là input API.
-
-| Method | Route | Actor | Request | Response | Quy tắc |
-|---|---|---|---|---|---|
-| `POST` | `/teacher-applications` `PROPOSED` | Student | `motivation`, `cccd`, `cccd_front_url`, `cccd_back_url`, `education[]`, `experience[]` | `id`, `status: "DRAFT"`, `updated_at` | Chỉ có một application đang làm việc cho mỗi user. CCCD/URL không ghi vào log. |
-| `GET` | `/teacher-applications/me` `PROPOSED` | Student | - | Application, `history[]`, `can_submit`, `can_resubmit` | Chỉ owner xem được. |
-| `PUT` | `/teacher-applications/me` `PROPOSED` | Student | Các field tạo application | Application đã cập nhật | Chỉ sửa khi `DRAFT` hoặc `REJECTED`; update sau reject đưa về `DRAFT`. |
-| `POST` | `/teacher-applications/me/submit` `PROPOSED` | Student | - | `id`, `status: "PENDING"`, `submitted_at` | Bắt buộc đủ field; chỉ submit từ `DRAFT`. |
-| `POST` | `/teacher-applications/me/resubmit` `PROPOSED` | Student | - | `id`, `status: "PENDING"`, `submitted_at` | Chỉ từ `REJECTED` sau khi đã chỉnh sửa. |
-| `GET` | `/admin/teacher-applications` `PROPOSED` | Admin | `status`, `page`, `size` | Danh sách application, pagination | Không trả CCCD đầy đủ trong list; chỉ Admin. |
-| `GET` | `/admin/teacher-applications/{id}` `PROPOSED` | Admin | - | Application và `history[]` | Chỉ Admin. |
-| `POST` | `/admin/teacher-applications/{id}/review` `PROPOSED` | Admin | `decision: "APPROVED" \| "REJECTED"`, `note` | `id`, `status`, `reviewed_by`, `reviewed_at`, `note` | Chỉ review application `PENDING`; lưu `teacher_register_history`, audit và notification. |
-| `PUT` | `/admin/users/{user_id}/status` | Admin | `account_status: "ACTIVE" \| "BANNED"` | `user_id`, `account_status` | Không cho user tự thay đổi account status. |
-
-## 4. Catalog, favorite, review và course moderation
-
-Course public chỉ là course đã được duyệt; tên canonical hiện là `APPROVED`. Việc map trạng thái legacy `PUBLISHED` cần được xác nhận trong migration.
-
-| Method | Route | Actor | Request | Response | Quy tắc |
-|---|---|---|---|---|---|
-| `GET` | `/courses` | Public | `q`, `field`, `tag`, `price_type`, `page`, `size` | Course cards, pagination | Chỉ trả course `APPROVED` và thỏa visibility policy. |
-| `GET` | `/courses/{slug}` | Public | - | Course detail, instructor, sections overview, `is_favorited`, review summary | Không lộ curriculum học hay nội dung private. |
-| `POST` | `/courses/{course_id}/favorite` `PROPOSED` | Student | - | `course_id`, `is_favorited: true` | Unique `(user_id, course_id)`; gọi lặp trả state hiện tại hoặc `DUPLICATE_RESOURCE`. |
-| `DELETE` | `/courses/{course_id}/favorite` `PROPOSED` | Student | - | `course_id`, `is_favorited: false` | Chỉ xóa favorite của owner; idempotent. |
-| `GET` | `/courses/{course_id}/reviews` `PROPOSED` | Public | `page`, `size`, `rating` | Reviews công khai, pagination | Chỉ trả review chưa bị ẩn theo policy. |
-| `POST` | `/courses/{course_id}/reviews` `PROPOSED` | Student | `rating` (1..5), `content` | Review mới | Bắt buộc enrollment của chính user; unique/multiplicity theo policy `VERIFY`; không dùng lesson comment thay course review. |
-| `PUT` | `/courses/{course_id}/reviews/me` `PROPOSED` | Student | `rating`, `content` | Review đã cập nhật | Owner + enrollment. |
-| `GET` | `/teacher/courses` | Teacher đã approved | `status`, `page`, `size` | Course của teacher, pagination | Chỉ course owned by current teacher. |
-| `POST` | `/teacher/courses` | Teacher đã approved | `title`, `description`, `price`, `currency`, `thumbnail_url`, `field`, `tags` | Course mới: `id`, `slug`, `status: "DRAFT"` | Teacher chưa approved nhận `FORBIDDEN`. |
-| `GET` | `/teacher/courses/{course_id}` `PROPOSED` | Teacher owner | - | Course workspace, moderation metadata | Ownership bắt buộc. |
-| `PUT` | `/teacher/courses/{course_id}` | Teacher owner | Field metadata được phép sửa | Course đã cập nhật | Không tự set `APPROVED`; chỉ sửa khi state cho phép. |
-| `POST` | `/teacher/courses/{course_id}/submit-review` `PROPOSED` | Teacher owner | - | `status: "PENDING_REVIEW"`, `submitted_at` | Validate metadata/curriculum tối thiểu; chỉ từ `DRAFT` hoặc `REJECTED`. |
-| `POST` | `/teacher/courses/{course_id}/resubmit` `PROPOSED` | Teacher owner | - | `status: "PENDING_REVIEW"` | Chỉ course `REJECTED` sau khi sửa. |
-| `GET` | `/admin/courses` `PROPOSED` | Admin | `status`, `page`, `size` | Courses chờ review, pagination | Chỉ Admin. |
-| `POST` | `/admin/courses/{course_id}/review` `PROPOSED` | Admin | `decision: "APPROVED" \| "REJECTED"`, `note` | `course_id`, `status`, `reviewed_by`, `reviewed_at`, `note` | Chỉ review course `PENDING_REVIEW`; lưu `course_moderation_review`, audit và notification. |
-| `POST` | `/admin/courses/{course_id}/archive` `PROPOSED` | Admin | `note` | `course_id`, `status: "ARCHIVED"` | Dùng policy riêng cho learner đã mua course. |
-
-## 5. Course builder và learning
-
-`lesson_content.content_type` chỉ nhận `READING`, `QUIZ`, `PROBLEM`. `content_id` là polymorphic reference nên service phải xác minh loại, tồn tại, ownership và course tương ứng trước khi bind.
-
-| Method | Route | Actor | Request | Response | Quy tắc |
-|---|---|---|---|---|---|
-| `POST` | `/teacher/courses/{course_id}/sections` | Teacher owner | `title`, `position` | Section | Course phải editable. |
-| `PUT` | `/teacher/sections/{section_id}` | Teacher owner | `title`, `position` | Section | Xác minh section thuộc course owner. |
-| `DELETE` | `/teacher/sections/{section_id}` | Teacher owner | - | `message` | Không xóa course đã approved nếu policy không cho phép; cascade phải được xác nhận. |
-| `POST` | `/teacher/sections/{section_id}/lessons` | Teacher owner | `title`, `summary`, `position` | Lesson | Section ownership bắt buộc. |
-| `PUT` | `/teacher/lessons/{lesson_id}` | Teacher owner | `title`, `summary`, `position` | Lesson | Lesson ownership bắt buộc. |
-| `PUT` | `/teacher/courses/{course_id}/curriculum/reorder` | Teacher owner | `items: [{item_type, id, position, parent_id}]` | `message` | Validate item thuộc đúng course, position không trùng. |
-| `POST` | `/teacher/lessons/{lesson_id}/contents` | Teacher owner | `content_type`, `content_id`, `position` | Lesson content | Reject loại khác ba giá trị trên; không nhận media field ngoài model content tương ứng. |
-| `PUT` | `/teacher/lesson-contents/{id}` | Teacher owner | `content_id?`, `position?` | Lesson content | Re-validate type/id và ownership khi đổi content. |
-| `GET` | `/student/courses` | Student | `page`, `size` | Enrollment cards, progress | Chỉ enrollment của current user. |
-| `GET` | `/student/courses/{slug}/study` | Student đã enrollment | - | Sections, lessons, content access, `completed`, `locked` | Bắt buộc enrollment hợp lệ; policy archive xác định quyền tiếp tục học. |
-| `POST` | `/student/progress/lesson-contents/{id}/complete` `PROPOSED` | Student đã enrollment | - | `lesson_content_id`, `completed_at`, `progress` | Chỉ content `READING`; unlock/access và enrollment bắt buộc. |
-| `GET` | `/student/progress` `PROPOSED` | Student | `course_id?` | Progress theo enrollment/course | Chỉ current user. |
-
-## 6. Quiz và Online Judge
-
-Quiz attempt dùng `IN_PROGRESS`, `SUBMITTED`, `ABANDONED`. Số retry, thời hạn attempt và rule pass lấy từ Quiz config; nếu chưa có quyết định, trả `VERIFY` trong config thay vì frontend tự đoán.
-
-| Method | Route | Actor | Request | Response | Quy tắc |
-|---|---|---|---|---|---|
-| `POST` | `/student/quizzes/{quiz_id}/attempts` `PROPOSED` | Student đã enrollment | - | `attempt_id`, `status`, `questions`, `expires_at?` | Tạo attempt hoặc resume attempt hợp lệ; không trả `is_correct`. |
-| `GET` | `/student/quizzes/{quiz_id}/attempts/{attempt_id}` `PROPOSED` | Attempt owner | - | Attempt, questions, saved answers | Owner + enrollment; không trả đáp án đúng. |
-| `PUT` | `/student/quizzes/{quiz_id}/attempts/{attempt_id}/answers` `PROPOSED` | Attempt owner | `answers: [{question_id, option_id}]` | `attempt_id`, `saved_at` | Chỉ attempt `IN_PROGRESS`; option phải thuộc question/quiz. |
-| `POST` | `/student/quizzes/{quiz_id}/attempts/{attempt_id}/submit` `PROPOSED` | Attempt owner | - | `submission_id`, `score`, `passed`, `status: "SUBMITTED"`, `completed_at?` | Idempotent; kiểm tra retry limit; completion chỉ khi đạt passing score. |
-| `GET` | `/student/quizzes/{quiz_id}/attempts` `PROPOSED` | Student đã enrollment | `page`, `size` | Attempt history, pagination | Chỉ owner; không lộ answer key. |
-| `GET` | `/problems` | Public/Student | `tag`, `difficulty`, `page`, `size` | Problem cards, pagination | Chỉ problem public/được cấp access. |
-| `GET` | `/problems/{slug}` | Public/Student | - | Statement, constraints, samples, languages | Không trả hidden testcase. |
-| `POST` | `/problems/{slug}/run` | Student | `source_code`, `language_id`, `stdin?` | `stdout`, `runtime_ms`, `memory_kb`, `compile_error?`, `status` | Chạy sandbox với input custom; rate limit và không ghi hidden data. |
-| `POST` | `/problems/{slug}/submit` | Student | `source_code`, `language_id` | `submission_id`, `status: "PENDING"` | Tạo `problem_submission`; job queue xử lý async. |
-| `GET` | `/submissions/{submission_id}` `PROPOSED` | Submission owner/Teacher owner/Admin | - | `status`, `score`, `runtime_ms`, `memory_kb`, `testcase_summary` | Chỉ aggregate hidden result, không raw input/output. |
-| `GET` | `/problems/{slug}/submissions` `PROPOSED` | Submission owner | `page`, `size` | Submission history, pagination | Owner only; teacher xem qua course/problem ownership policy. |
-| `POST` | `/teacher/problems` | Teacher đã approved | Problem metadata, `tags`, config | Problem | Teacher chỉ tạo/sửa problem của mình. |
-| `PUT` | `/teacher/problems/{problem_id}` `PROPOSED` | Teacher owner | Problem metadata/config | Problem đã cập nhật | Ownership và validation language/testcase. |
-| `POST` | `/teacher/problems/{problem_id}/testcases/upload` | Teacher owner | `multipart/form-data` file testcase | `uploaded_count`, `message` | File được kiểm tra; testcase hidden không được trả qua API learner. |
-
-## 7. Cart, payment và enrollment
-
-MVP checkout một course cho mỗi order. Cart có thể hiển thị nhiều item nhưng checkout nhiều course chưa thuộc phạm vi cho đến khi quyết định order cardinality được chốt.
-
-| Method | Route | Actor | Request | Response | Quy tắc |
-|---|---|---|---|---|---|
-| `GET` | `/cart` `PROPOSED` | Student | - | `items`, `subtotal`, `currency` | Chỉ cart current user. |
-| `POST` | `/cart/items` `PROPOSED` | Student | `course_id` | Cart item, totals | Course phải public/eligible và chưa enrollment; unique `(cart_id, course_id)`. |
-| `DELETE` | `/cart/items/{course_id}` `PROPOSED` | Student | - | Cart totals | Chỉ item của current user's cart. |
-| `POST` | `/courses/{slug}/enroll` | Student | - | Free: `enrollment`; paid: `order_id`, `transaction_code`, `checkout_url`, `expires_at` | Route tương thích: free tạo enrollment một lần; paid tạo checkout một course. |
-| `POST` | `/payments/payos/create` | Student | `course_id` | `order_id`, `transaction_code`, `checkout_url`, `qrcode?`, `amount`, `currency`, `expires_at`, `status: "PENDING"` | Reject nếu đã enrollment hoặc payment active chưa hết hạn; snapshot price. |
-| `GET` | `/payments/transactions/{transaction_code}/status` | Transaction owner/Admin | - | `transaction_code`, `status`, `amount`, `currency`, `expires_at`, `completed_at`, `enrollment?` | Owner or Admin only; expired payment trả `EXPIRED`. |
-| `POST` | `/payments/payos-webhook` | PayOS | Provider payload + signature | `{ "data": { "accepted": true } }` | Verify signature, provider event và amount; idempotent bằng provider transaction/event code. Không tin status từ client. |
-| `GET` | `/orders` `PROPOSED` | Student | `page`, `size` | Orders của current user, pagination | Chỉ owner. |
-| `GET` | `/orders/{order_id}` `PROPOSED` | Order owner/Admin | - | Order, item snapshot, transaction status | Không trả payment secret. |
-
-Webhook hợp lệ chuyển `PENDING -> COMPLETED` (hoặc `FAILED`/`EXPIRED`). Trong cùng transaction nghiệp vụ, service tạo tối đa một `enrollment` cho `(student_id, course_id)`, ghi wallet ledger, notification và audit. Webhook lặp lại phải trả thành công mà không nhân đôi các side effect.
-
-## 8. Wallet và payout
-
-| Method | Route | Actor | Request | Response | Quy tắc |
-|---|---|---|---|---|---|
-| `GET` | `/teacher/wallet` `PROPOSED` | Teacher đã approved | - | `balance`, `currency`, `pending_payout_amount` | Chỉ wallet của current teacher. |
-| `GET` | `/teacher/wallet/ledger` `PROPOSED` | Teacher đã approved | `page`, `size`, `type?` | Ledger entries, pagination | Ledger immutable, owner only. |
-| `POST` | `/teacher/payout-requests` `PROPOSED` | Teacher đã approved | `amount`, `currency`, `payout_destination` | `id`, `status: "PENDING"`, `amount`, `created_at` | Amount > 0, đạt minimum payout, không vượt available balance; reserve được ghi ledger. |
-| `GET` | `/teacher/payout-requests` `PROPOSED` | Teacher đã approved | `page`, `size` | Payout requests, pagination | Owner only. |
-| `GET` | `/admin/payout-requests` `PROPOSED` | Admin | `status`, `page`, `size` | Payout requests, pagination | Admin only. |
-| `POST` | `/admin/payout-requests/{id}/review` `PROPOSED` | Admin | `decision: "APPROVED" \| "REJECTED"`, `note` | `id`, `status`, `reviewed_by`, `reviewed_at` | Chỉ payout `PENDING`; reject tạo reversal ledger khi đã reserve. |
-| `POST` | `/admin/payout-requests/{id}/settle` `PROPOSED` | Admin/system | `result: "COMPLETED" \| "FAILED"`, `settlement_reference?`, `failure_reason?` | `id`, `status`, `settled_at` | Chỉ `APPROVED`/`PROCESSING`; failed tạo reversal ledger idempotently. |
-
-## 9. AI Interview, notification, comment và dashboard
-
-AI Interview có tối đa 12 câu và một final report cho mỗi session. Chat dùng text; API không lưu recording.
-
-| Method | Route | Actor | Request | Response | Quy tắc |
-|---|---|---|---|---|---|
-| `GET` | `/interviews/sessions` | Student | `page`, `size` | Sessions, pagination | Chỉ session của current user. |
-| `POST` | `/interviews/sessions` | Student | `topic`, `level` | `session_id`, `status: "ACTIVE"`, `question_count`, `first_question` | Validate level; tạo session mới theo policy active-session. |
-| `POST` | `/interviews/sessions/{session_id}/chat` | Session owner | `message` | AI message/stream event, `question_count`, `status` | Reject khi không `ACTIVE` hoặc đạt max question; rate limit. |
-| `POST` | `/interviews/sessions/{session_id}/end` `PROPOSED` | Session owner | - | `session_id`, `status: "REPORT_GENERATING"` | Idempotent; enqueue report generation. |
-| `GET` | `/interviews/sessions/{session_id}/report` | Session owner | - | `status`, `report?`, `generated_at?` | Khi đang generate trả `REPORT_GENERATING`; chỉ một report per session. |
-| `GET` | `/notifications` | User đăng nhập | `unread_only?`, `page`, `size` | `id`, `type`, `title`, `body`, `target_type`, `target_id`, `read_at`, pagination | Chỉ notification recipient; type khớp `NotificationType` trong DB. |
-| `PUT` | `/notifications/{id}/read` | Notification recipient | - | `id`, `read_at` | Owner only, idempotent. |
-| `GET` | `/lesson-contents/{id}/comments` | User có quyền access | `page`, `size` | Comments/replies, pagination | Kiểm tra access course; comment khác course review. |
-| `POST` | `/lesson-contents/{id}/comments` | User có quyền access | `content`, `parent_id?` | Comment | Parent phải cùng lesson content; sanitize content. |
-| `DELETE` | `/comments/{id}` | Comment owner/Moderator | - | `message` | Owner hoặc role được cấp policy. |
-| `GET` | `/student/dashboard` `PROPOSED` | Student | - | `profile`, `kpis`, `daily_activity`, `continue_learning`, `recent_interviews`, `recommended_problems` | Chỉ current user; metric ngày lấy `student_daily_activity`, recommendation dùng Problem–Tag. |
-| `GET` | `/teacher/dashboard/summary` | Teacher đã approved | - | `total_revenue`, `current_balance`, `enrolled_students_count`, `active_courses_count` | Chỉ data course/wallet của current teacher. |
-
-## 10. Ma trận authorization và validation
-
-Mọi mutation phải xác thực user, kiểm tra `account_status` và ghi audit khi là thao tác nhạy cảm. Ma trận sau là rule tối thiểu trước khi implement route.
-
-| Nhóm route | Actor/resource | Validation bắt buộc | Lỗi chính |
-|---|---|---|---|
-| Teacher application | Student, application owner | State transition; đủ field trước submit; không review application của mình | `FORBIDDEN`, `INVALID_STATE`, `VALIDATION_ERROR` |
-| Teacher/course builder | Teacher có application `APPROVED`, course/section/lesson owner | Ownership toàn chuỗi; course editable; `content_type/content_id` hợp lệ | `FORBIDDEN`, `NOT_FOUND`, `INVALID_CONTENT_REFERENCE` |
-| Course moderation | Admin, course `PENDING_REVIEW` | Decision hợp lệ, note theo policy; transition hợp lệ | `FORBIDDEN`, `INVALID_STATE` |
-| Catalog/favorite/review | Public hoặc Student, course eligible | Catalog chỉ approved; favorite unique; review cần enrollment và policy duplicate | `ALREADY_ENROLLED`, `DUPLICATE_RESOURCE`, `FORBIDDEN` |
-| Learning/quiz | Enrollment owner, content accessible | Lock/progress order; attempt owner; retry limit; answer thuộc quiz | `FORBIDDEN`, `ATTEMPT_LIMIT_REACHED`, `INVALID_STATE` |
-| OJ | Submission owner hoặc Teacher problem owner | Language/problem access; hidden testcase projection; sandbox limit | `FORBIDDEN`, `RATE_LIMITED` |
-| Payment/enrollment | Student order owner, webhook provider | Không enrollment lại; expiry; signature; payment/event idempotency | `ALREADY_ENROLLED`, `PAYMENT_EXPIRED`, `INVALID_SIGNATURE` |
-| Wallet/payout | Teacher wallet owner hoặc Admin | Amount/minimum/currency; available balance; lifecycle payout | `INSUFFICIENT_BALANCE`, `MINIMUM_PAYOUT_NOT_MET`, `INVALID_STATE` |
-| Interview/notification/comment | Resource owner hoặc moderator policy | Session active/max question/one report; notification recipient; comment parent/access | `FORBIDDEN`, `QUESTION_LIMIT_REACHED`, `REPORT_GENERATING` |
-
-## 11. Quyết định còn mở
-
-| Nội dung | Contract hiện tại | Cần chốt trước khi mở rộng |
+| HTTP | Error code | Ý nghĩa |
 |---|---|---|
-| Course status legacy | API dùng `PENDING_REVIEW` và `APPROVED`. | Map cuối cùng với `PENDING/PUBLISHED` trong dữ liệu cũ. |
-| Currency và payout minimum | Response luôn có `currency`; validation minimum theo policy. | Mã tiền, rounding và giá trị minimum. |
-| Order cardinality | Một course/checkout cho MVP. | Có cho checkout nhiều item từ cart hay không. |
-| Course review multiplicity | Bắt buộc enrollment. | Một review/course hay cho phép nhiều review theo thời gian. |
-| Quiz retry/expiry | API hỗ trợ attempt start/resume/save/history. | Số retry, timeout và quy tắc abandon. |
-| Problem completion | Chỉ completed khi submission đạt rule lesson. | Có cần điểm pass ngoài Accepted hay không. |
+| 400 | `INVALID_REQUEST` | Payload hoặc thao tác không hợp lệ ngoài validation field |
+| 401 | `UNAUTHENTICATED` | Thiếu/sai/hết hạn token |
+| 403 | `FORBIDDEN` | Không đủ role, capability hoặc ownership |
+| 404 | `NOT_FOUND` | Resource không tồn tại hoặc được ẩn theo access policy |
+| 409 | `DUPLICATE_RESOURCE` | Vi phạm unique/idempotency ngoài trường hợp trả lại kết quả cũ |
+| 409 | `INVALID_STATE` | State transition không hợp lệ |
+| 410 | `PAYMENT_EXPIRED` | Payment đã hết hạn |
+| 422 | `VALIDATION_ERROR` | Field không hợp lệ |
+| 429 | `RATE_LIMITED` | Vượt giới hạn request |
 
-Khi backend implement, Pydantic/OpenAPI generated spec tại `/docs` và `docs/specs/api.json` phải phản ánh các request/response trên; các route `PROPOSED` có thể được bổ sung dần mà không thay đổi lifecycle, quyền và error contract đã nêu.
+Không trả raw exception, stack trace, JWT, OTP/reset code, CCCD đầy đủ, secret hoặc raw payment payload.
+
+### 2.3. Quy tắc ánh xạ API với database
+
+Mọi field trong request/response của tài liệu này phải thuộc một trong bốn nhóm sau:
+
+- **Stored field:** tên field trùng cột trong `DATABASE.txt`, trừ alias được ghi rõ.
+- **Command field:** không phải cột; dùng để yêu cầu service thực hiện transition hoặc tạo nhiều bản ghi. Ví dụ `decision`, `tag_ids`, `Idempotency-Key`.
+- **Projection field:** chỉ đọc, được tính từ bảng nguồn hoặc provider và không được ghi ngược vào một cột cùng tên. Ví dụ `capabilities`, `passed`, `locked`, `can_resume`, `checkout_url`.
+- **Transient/transport field:** chỉ tồn tại trong giao thức hoặc hạ tầng tạm thời, không phải dữ liệu nghiệp vụ cần lưu trong các bảng canonical. Ví dụ access token, OTP/authorization code, pagination, acknowledgement, provider QR và kết quả `run` không chấm điểm.
+
+Quy tắc bắt buộc:
+
+- Primary key, foreign key theo current user, status do state machine quản lý và timestamp do server tạo không được nhận từ client, trừ route Admin/import được nêu rõ.
+- Field soft-delete, reviewer, audit, idempotency, signature verification và balance không được client tự đặt.
+- Alias API duy nhất đang được chấp nhận cho field database là `linkedin_url` -> `student_profile.linkedln_url` và `checkout_url` -> `transaction.payos_link`.
+- Nếu API cần lưu một field chưa có trong `DATABASE.txt`, route phải mang nhãn `GATED-SCHEMA`; không được mô tả field đó như dữ liệu đã persist.
+- Projection phải liệt kê rõ bảng nguồn. FE không gửi projection field trong mutation request.
+- Transient/transport field không được thêm ngầm vào ORM model. Nếu Product quyết định cần persist field này, phải cập nhật `DATABASE.txt` và migration contract trước.
+
+Các field Auth như `otp`, authorization `code`, reset token, access token, `expires_in`, `token_type`, `retry_after_seconds`, JWK/PEM và `key_id` là command hoặc transient/transport field của Auth Provider. Chúng không phải cột của bảng `user`. Auth Provider phải dùng kho bí mật có TTL hoặc cơ chế ký/xác minh phù hợp; nếu chọn lưu chúng trong relational database thì schema tương ứng phải được bổ sung vào `DATABASE.txt` trước khi triển khai.
+
+### 2.4. Canonical DTO và field mapping
+
+Các mô tả rút gọn trong bảng route như `CourseView`, `OrderView` hoặc “course cards” phải tuân theo field set dưới đây. Implementation không được tự thêm stored field ngoài mapping này.
+
+#### Identity và profile
+
+| DTO | Bảng nguồn | Request fields được phép | Stored fields trong response | Field không trả hoặc projection |
+|---|---|---|---|---|
+| `RegisterRequest` / `UserView` | `user` | `full_name`, `address`, `email`, `password` | `id`, `full_name`, `address`, `email`, `avatar_url`, `active`, `account_status`, `created_at`, `updated_at` | Hash `password` trước khi ghi; không trả `password`, `refresh_token`; `status` là legacy và không dùng làm account contract |
+| `UserRoleView` | `user_role` | Admin command nhận `roles[]`; service tạo/xóa row | `id`, `user_id`, `role` | `capabilities` là projection từ role + application |
+| `StudentProfileWrite/View` | `student_profile` | `bio`, `school`, `major`, `github_url`, `facebook_url`, `linkedin_url` | `user_id` và các field request | `linkedin_url` là alias của cột legacy `linkedln_url` |
+| `TeacherProfileWrite/View` | `teacher_profile` | `bio`, `professional_title`, `phone`, `address`, `primary_category`, `years_of_experience`, `portfolio_link`, `school_address`, `cv_url`, `bank`, `bank_account`, `account_holder_name` | `user_id`, các field request, `created_at`, `updated_at` | `verified` là legacy; không dùng làm `can_teach`; bank fields chỉ trả owner/Admin đúng policy |
+| `TeacherApplicationWrite/View` | `teacher_register` | `motivation`, `cccd`, `cccd_front_url`, `cccd_back_url`; nested education/experience | `id`, `teacher_id`, `motivation`, role-filtered `cccd_front_url`, `cccd_back_url`, `status`, `reviewed_note`, `reviewed_by`, `reviewed_at`, `submitted_at`, `created_at`, `updated_at` | Không nhận status/reviewer/timestamp; không trả raw `cccd`, `deleted_at`; `cccd_masked` là projection từ `cccd` |
+| `TeacherApplicationHistoryView` | `teacher_register_history` | Không nhận trực tiếp | `id`, `teacher_register_id`, `status`, `note`, `acted_by`, `acted_at` | Row được service tạo khi transition |
+| `TeacherEducationWrite/View` | `teacher_education` | `school`, `degree`, `field_of_study`, `started_at`, `ended_at` | `id`, `teacher_id` và các field request | `teacher_id` lấy từ current user |
+| `TeacherExperienceWrite/View` | `teacher_experience` | `company`, `job_title`, `description`, `started_at`, `ended_at` | `id`, `teacher_id` và các field request | `teacher_id` lấy từ current user |
+
+#### Course, curriculum và learning
+
+| DTO | Bảng nguồn | Request fields được phép | Stored fields trong response | Field không trả hoặc projection |
+|---|---|---|---|---|
+| `CourseWrite/View` | `courses` | `title`, `field`, `tags` dạng string, `description`, `thumbnail_url`, `price` | `id`, `title`, `teacher_id`, `slug`, `rating`, `field`, `tags`, `description`, `thumbnail_url`, `price`, `status`, `submitted_at`, `reviewed_by`, `reviewed_note`, `reviewed_at`, `created_at`, `updated_at` | Không nhận `teacher_id`, `slug`, `rating`, status/review fields; public view ẩn moderation metadata; `currency`, `is_favorited`, `is_enrolled`, review summary là projection/config |
+| `CourseModerationView` | `course_moderation_review` | Command nhận `decision`, `note` | `id`, `course_id`, `status`, `note`, `reviewed_by`, `reviewed_at` | `decision` được map sang `status`; reviewer/time lấy từ server |
+| `SectionWrite/View` | `sections` | `title`, `position` | `id`, `course_id`, `title`, `position` | `course_id` lấy từ path |
+| `LessonWrite/View` | `lesson` | `title`, `summary`, `score`, `position` | `id`, `section_id`, `title`, `summary`, `score`, `position`, `created_at`, `updated_at` | `section_id` lấy từ path |
+| `LessonContentBind/View` | `lesson_content` | `content_type`, `content_id`, `media_url`, `position` | `id`, `lesson_id`, `content_type`, `content_id`, `media_url`, `position`, `created_at` | Không có `completion_policy` trong schema hiện tại; `locked` là projection |
+| `LessonContentProgressView` | `lesson_content_progress` | Reading complete không có body | `id`, `enrollment_id`, `lesson_content_id`, `completed`, `completed_at` | Quiz/Problem completion do service cập nhật; progress percent là projection |
+| `ReadingContentWrite/View` | `reading_content` | `title`, `content` | `id`, `title`, `content`, `created_at`, `updated_at` | Ownership suy ra qua LessonContent binding |
+| `CourseFavoriteView` | `course_favorite` | Không có body; course lấy từ path | `id`, `student_id`, `course_id`, `created_at` | `student_id` lấy từ current user; `is_favorited` là projection |
+| `CourseReviewWrite/View` | `course_review` | `rating`, `content` | `id`, `course_id`, `student_id`, `rating`, `content`, `created_at`, `updated_at` | Course/student lấy từ path/current user; multiplicity còn `GATED` |
+
+#### Quiz và Online Judge
+
+| DTO | Bảng nguồn | Request fields được phép | Stored fields trong response | Field không trả hoặc projection |
+|---|---|---|---|---|
+| `QuizWrite/View` | `quizzes` | `title`, `passing_score`, `start_date`, `end_date`, `attempts` | `id` và các field request | Không trả `deleted_at`; ownership suy ra qua binding |
+| `QuizQuestionWrite/View` | `quiz_questions` | `title`, `content`, `question_type`, `points` | `id`, `quiz_id` và các field request | `quiz_id` lấy từ path |
+| `QuizOptionAuthorWrite/View` | `quiz_options` | `content`, `is_correct` | `id`, `question_id`, `content`, `is_correct` | Learner view chỉ có `id`, `question_id`, `content`; không trả `is_correct` |
+| `QuizEnrollmentView` | `quiz_enrollment` | Không nhận trực tiếp | `id`, `quiz_id`, `student_id`, `enrolled_at` | Service tạo theo course/enrollment policy |
+| `QuizAttemptView` | `quiz_submission` | Answer-save nhận structured `answers`; service serialize vào cột `answers`; submit không có body | `id`, `quiz_id`, `student_id`, `attempt_no`, `status`, `score`, parsed `answers`, `started_at`, `submitted_at` | Response parse từ stored string `answers`; `passed`, `attempts_left`, `expires_at` là projection từ quiz/policy; learner view phải lọc answer key |
+| `ProblemWrite/View` | `problem` | `title`, `slug`, `statement`, `input_description`, `output_description`, `constraints`, `sample_input`, `sample_output`, `explanation`, `difficulty`, `public` | `id`, `teacher_id`, các field request, `created_at` | `teacher_id` từ current Teacher; `tags`, supported languages, solved state và acceptance rate là relations/projection |
+| `ProblemTagView` | `problem_tag`, `problem_tag_mapping` | Command nhận `tag_ids[]`; tag management nhận `tag_name` | Tag: `id`, `tag_name`; mapping: `id`, `problem_id`, `tag_id` | `tag_ids` không phải cột của `problem` |
+| `ProblemConfigWrite/View` | `problem_config` | `language_id`, `time_limit_ms`, `memory_limit_mb` | `id`, `problem_id` và các field request | `problem_id` lấy từ path/problem command |
+| `LanguageView` | `language` | Admin config nếu được mở rộng | `id`, `name`, `default_time_limit`, `default_memory_limit`, `is_active` | Learner chỉ nhận active languages |
+| `TestcaseWrite/View` | `testcase` | Multipart nhận hai file input/output cùng `score`, `is_hidden`; service lưu object key vào `input_file`, `output_file` | `id`, `problem_id`, `input_file`, `output_file`, `score`, `is_hidden` cho owner/Admin | Client không được tự gửi storage path; learner không nhận file path/raw hidden data |
+| `SubmissionWrite/View` | `submission` | `source_code`, `language_id`; problem lấy từ path | `id`, `problem_id`, `student_id`, `language_id`, `source_code`, `status`, `score`, `runtime_ms`, `memory_kb`, `submitted_at` | Source chỉ trả owner/authorized Teacher/Admin; testcase summary là projection |
+| `SubmissionResultView` | `submission_result_detail` | Không nhận từ client | `id`, `submission_id`, `testcase_id`, `status`, `runtime_ms`, `memory_kb` | Learner hidden result không trả `testcase_id` nếu có thể suy ra dữ liệu ẩn |
+
+#### Commerce và Teacher Finance
+
+| DTO | Bảng nguồn | Request fields được phép | Stored fields trong response | Field không trả hoặc projection |
+|---|---|---|---|---|
+| `CartView` | `cart`, `cart_item` | Add-item nhận `course_id`; delete lấy course từ path | Cart: `id`, `student_id`, `created_at`, `updated_at`; item: `id`, `cart_id`, `course_id`, `added_at` | `subtotal`, `currency`, course card là projection |
+| `OrderView` | `orders`, `order_item` | Checkout nhận course/item selector theo cardinality; `Idempotency-Key` ở header | Order: `id`, `student_id`, `status`, `subtotal`, `currency`, `expires_at`, `created_at`, `updated_at`; item: `id`, `order_id`, `course_id`, `price_snapshot`, `currency` | Không trả `idempotency_key`; checkout URL/QR là transaction/provider projection |
+| `EnrollmentView` | `enrollment` | Free-enroll không có body | `id`, `student_id`, `course_id`, `status`, `enrolled_at`, `completed_at` | Student/course lấy từ current user/path/payment |
+| `PaymentTransactionView` | `transaction` | Client không gửi amount/status/provider fields; webhook là provider payload | `id`, `order_id`, `order_item_id`, `user_id`, `course_id`, `payment_method`, `amount`, `currency`, `status`, `transaction_code`, `checkout_url`, `expires_at`, `completed_at`, `created_at`, `updated_at` | `checkout_url` là alias của `payos_link`; không trả `idempotency_key`; `payos_code`, `signature_verified` chỉ Admin/internal; QR có thể là transient provider data |
+| `WalletView` | `wallet` | Không có client write | `id`, `teacher_id`, `available_balance`, `pending_balance`, `currency`, `created_at`, `updated_at` | Balance do ledger projection/service quản lý |
+| `WalletLedgerView` | `wallet_ledger` | Không có client write trực tiếp | `id`, `wallet_id`, `transaction_id`, `payout_request_id`, `entry_type`, `amount`, `currency`, `created_at` | Immutable; corrections tạo row mới |
+| `PayoutRequestWrite/View` | `payout_request` | Teacher chỉ gửi `amount`, `currency`; Admin command gửi decision/settlement fields theo route | `id`, `wallet_id`, `teacher_id`, `amount`, `currency`, `status`, `reviewed_by`, `reviewed_at`, `settlement_reference`, `failure_reason`, `created_at`, `updated_at` | Review `note` ghi vào `audit_log.note`, không phải payout field; không có `payout_destination` trong proposal, muốn snapshot phải sửa DB trước |
+
+#### Interview, communication và dashboard
+
+| DTO | Bảng nguồn | Request fields được phép | Stored fields trong response | Field không trả hoặc projection |
+|---|---|---|---|---|
+| `InterviewSessionWrite/View` | `interview_session` | `topic`, `level` | `id`, `student_id`, `topic`, `level`, `status`, `max_questions`, `question_count`, `started_at`, `ended_at`, `report_generated_at` | `can_resume` là `status == ACTIVE`; Student không gửi count/status/timestamps |
+| `InterviewMessageWrite/View` | `interview_message` | Chat nhận `content` qua API field `message` | `id`, `session_id`, `sender`, `content`, `created_at` | `sender` do server xác định; `message` là command alias của `content` |
+| `InterviewReportView` | `interview_reports` | Không nhận từ client | `id`, `session_id`, `overall_score`, `skill_scores`, `question_feedback`, `strengths`, `weaknesses`, `suggestions`, `generated_at` | Serialized fields phải theo format được Phase 0 duyệt |
+| `NotificationView` | `notification` | Mark-read không có body | `id`, `sender_id`, `user_id`, `type`, `target_type`, `target_id`, `content`, `is_read`, `created_at` | Recipient/type/target do service tạo |
+| `AuditLogView` | `audit_log` | Không có client write trực tiếp | `id`, `user_id`, `action`, `target_type`, `target_id`, `note`, `correlation_id`, `do_at` | `user_id` là actor; payload phải được redact |
+| `StudentDailyActivityView` | `student_daily_activity` | Không có client write trực tiếp | `id`, `student_id`, `activity_date`, `contribution_count`, `study_seconds`, `solved_problem_count`, `created_at`, `updated_at` | Streak/KPI/heatmap buckets là projection |
+
+`user_history.problem_count` là aggregate legacy và không được dùng làm DTO nguồn cho contribution, streak hoặc study time.
+
+#### Schema blocker: Lesson Comment
+
+`DATABASE.txt` hiện **không có bảng `comment`**, trong khi PRD và source hiện tại có Lesson Comment. Vì vậy:
+
+- Các route Comment ở Mục 12 mang nhãn `GATED-SCHEMA`.
+- Request tạm thời dự kiến gồm `content`, `parent_id`; response dự kiến cần `id`, `lesson_content_id`, `user_id`, `parent_id`, `content`, `created_at`, `updated_at` theo model hiện tại.
+- Không được coi các field dự kiến trên là canonical cho tới khi `DATABASE.txt` bổ sung bảng/constraint/index và Product Owner duyệt.
+- Không được generated OpenAPI công bố Comment route là contract hoàn chỉnh nếu schema blocker chưa được giải quyết.
+
+#### Schema blocker: external identity và role audit
+
+- `DATABASE.txt` chưa có bảng lưu liên kết external identity/provider. Vì vậy Google login chỉ được mở sau khi bổ sung bảng có tối thiểu `id`, `user_id`, `provider`, `provider_id` và unique constraint phù hợp; tên bảng/field phải được duyệt trước.
+- `AuditAction` chưa có action cho thay đổi role. Route Admin cập nhật roles chỉ được mở sau khi bổ sung action canonical, ví dụ `ROLE_UPDATE`, hoặc có quyết định mapping chính thức.
+- Model `user_identity` đang có trong source không tự động trở thành canonical schema khi chưa xuất hiện trong `DATABASE.txt`.
+
+## 3. Auth Provider
+
+Các route trong mục này dùng base URL `http://localhost:4001/api/auth`.
+
+| Method | Route | Actor | Request | Response chính | Quy tắc |
+|---|---|---|---|---|---|
+| `POST` | `/register` | Public | `RegisterRequest` | `UserView` với `account_status: "UNVERIFIED"`, transient `verification_required`, `message` | Tạo local Student; response dùng `id`, không đổi tên thành `user_id`; gửi OTP qua kênh đã cấu hình; không trả OTP trong production |
+| `GET` | `/verify?otp={otp}` | Public | Query `otp` | `account_status: "ACTIVE"`, `message` | OTP một lần, có expiry; phải redact query khỏi application log |
+| `POST` | `/resend-otp` | Public | `email` | `message`, `retry_after_seconds` | Không tiết lộ email có tồn tại; rate limit |
+| `POST` | `/login` | Public | Form: `email`, `password`, `redirect_uri` | `code`, `redirect_uri` | Chỉ account `ACTIVE`; account `UNVERIFIED/BANNED` bị từ chối bằng error code phù hợp |
+| `POST` | `/code` | Public | `code` | `access_token`, `refresh_token`, `expires_in`, `token_type` | Authorization code một lần, có expiry và redirect/client binding |
+| `POST` | `/refresh` | Session owner | `refresh_token` hoặc secure cookie | `access_token`, `expires_in`, `token_type` | Rotate/revoke theo token policy; kiểm tra account status hiện tại |
+| `POST` | `/google` `GATED-SCHEMA` | Public | Command `credential_code` | Token response, `UserView` | Chưa mở trước khi canonical DB có external identity table; verify provider token và unique provider identity |
+| `POST` | `/logout` | User đăng nhập | Refresh session/cookie | `message` | Revoke refresh session; idempotent |
+| `POST` | `/forgot-password` | Public | `email` | `message` | Gửi reset instruction; không trả reset code và không tiết lộ email tồn tại |
+| `POST` | `/reset-password` | Public | `code`, `new_password` | `message` | Code một lần, có expiry; revoke session cũ theo policy |
+| `POST` | `/change-email` | User đăng nhập | `new_email`, `password` | `message`, `verification_required` | Email mới chưa được dùng; xác minh lại trước khi thay đổi |
+| `GET` | `/verify-reset-email?token={token}` | User xác minh | Query `token` | `email`, `message` | Token một lần; phải redact khỏi log |
+| `GET` | `/public-key` | Service/Public theo policy | - | JWK hoặc PEM public key, `key_id` | Chỉ public material; hỗ trợ rotation/cache |
+
+## 4. Current User, Profile và Admin User Management
+
+| Method | Route | Actor | Request | Response chính | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/users/me` | User đăng nhập | - | `UserView`, `UserRoleView[]`, `StudentProfileView?`, `TeacherProfileView?`, application status và `capabilities` projection | Chỉ current user; `can_teach=true` chỉ khi application `APPROVED` |
+| `PUT` | `/users/me/profile` | User đăng nhập | `StudentProfileWrite` | `StudentProfileView` | Không sửa role/account status/user khác |
+| `PUT` | `/users/me/teacher-profile` `GATED` | User đăng nhập | `TeacherProfileWrite` theo field split Phase 0 | `TeacherProfileView` | Profile không tự cấp Teacher capability |
+| `GET` | `/admin/users` | Admin | `q`, `role`, `account_status`, `page`, `size` | `UserView[]`, `UserRoleView[]` và capability projections | Không trả password/token/CCCD |
+| `PUT` | `/admin/users/{user_id}/status` | Admin | `account_status: "ACTIVE" \| "BANNED"` | `UserView` đã cập nhật | Ghi audit; response dùng `id` theo bảng `user`; ban phải vô hiệu hóa refresh session theo policy |
+| `PUT` | `/admin/users/{user_id}/roles` `GATED-SCHEMA` | Admin | `roles: ["ADMIN", "TEACHER", "STUDENT"]` | `user_id`, `UserRoleView[]`, `capabilities` | Chờ AuditAction cho role update; role `TEACHER` không được bypass application approval |
+
+## 5. Teacher Application
+
+Lifecycle chuẩn:
+
+```text
+DRAFT -> PENDING -> APPROVED | REJECTED
+REJECTED --edit--> DRAFT --submit--> PENDING
+```
+
+Giá trị legacy `AGREE/REJECT` không phải input hợp lệ của API.
+
+| Method | Route | Actor | Request | Response chính | Quy tắc |
+|---|---|---|---|---|---|
+| `POST` | `/teacher-applications` | Student | `TeacherApplicationWrite`, `education: TeacherEducationWrite[]`, `experience: TeacherExperienceWrite[]` | `TeacherApplicationView` với `status: "DRAFT"` | Một working application/current user theo policy; không log CCCD |
+| `GET` | `/teacher-applications/me` | Student | - | `TeacherApplicationView`, education, experience, `TeacherApplicationHistoryView[]`, `can_edit`, `can_submit` | Owner only; sensitive fields mask theo DTO policy |
+| `PUT` | `/teacher-applications/me` | Application owner | Các field mutable của `TeacherApplicationWrite` và nested education/experience | Các view đã cập nhật | Chỉ `DRAFT/REJECTED`; lần sửa đầu sau reject chuyển về `DRAFT` và ghi history |
+| `POST` | `/teacher-applications/me/submit` | Application owner | - | `id`, `status: "PENDING"`, `submitted_at` | Chỉ `DRAFT`; dùng cho cả submit đầu và submit lại sau reject; validate đủ field |
+| `GET` | `/admin/teacher-applications` | Admin | `status`, `q`, `page`, `size` | Redacted `TeacherApplicationView[]` | Không trả CCCD đầy đủ trong list |
+| `GET` | `/admin/teacher-applications/{application_id}` | Admin | - | Authorized `TeacherApplicationView`, education, experience, `TeacherApplicationHistoryView[]` | Access phải được audit nếu chứa PII nhạy cảm |
+| `POST` | `/admin/teacher-applications/{application_id}/review` | Admin | Command `decision: "APPROVED" \| "REJECTED"`, `note` | `TeacherApplicationView`, `TeacherApplicationHistoryView` | `decision` map sang status; `note` map vào application/history; chỉ `PENDING`; atomic capability effect + notification + audit |
+
+`POST /teacher-applications/me/resubmit` không phải route canonical. FE dùng cùng `/submit` sau khi application đã được sửa về `DRAFT`.
+
+## 6. Catalog, Favorite, Course Review và Course Moderation
+
+Course public chỉ là course đạt public/approval state theo quyết định Phase 0. Tên enum canonical vẫn `GATED`; FE không hard-code `APPROVED` hoặc `PUBLISHED` trước khi quyết định được cập nhật vào tài liệu này.
+
+### 6.1. Catalog, Instructor, Favorite và Course Review
+
+| Method | Route | Actor | Request | Response chính | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/courses` | Public | `q`, `field`, `tag`, `price_type`, `page`, `size` | `CourseView[]` dạng card cùng currency/config projection | Chỉ course public/eligible; filter và pagination ổn định |
+| `GET` | `/courses/{slug}` | Public/User | - | `CourseView`, instructor `TeacherProfileView`, `SectionView[]` overview và các projection favorite/review/enrollment | Không trả private lesson content hoặc bank fields |
+| `GET` | `/instructors` | Public | `q`, `field`, `page`, `size` | Approved instructor cards | Dữ liệu từ profile/application projection, không hard-code từ course |
+| `GET` | `/instructors/{user_id}` | Public | - | Instructor profile và public courses | Chỉ profile Teacher có capability hợp lệ |
+| `GET` | `/favorites` | Student | `page`, `size` | `CourseFavoriteView[]` kèm `CourseView` projection | Owner only |
+| `PUT` | `/courses/{course_id}/favorite` | Student | - | `CourseFavoriteView`, `is_favorited: true` | Idempotent; unique Student/course |
+| `DELETE` | `/courses/{course_id}/favorite` | Student | - | `course_id`, `is_favorited: false` | Owner only; idempotent |
+| `GET` | `/courses/{course_id}/reviews` | Public | `rating`, `page`, `size` | `CourseReviewView[]` và rating summary projection | Course review khác lesson comment |
+| `POST` | `/courses/{course_id}/reviews` `GATED` | Enrolled Student | `CourseReviewWrite` | `CourseReviewView` | Multiplicity theo quyết định Phase 0; luôn yêu cầu enrollment |
+| `PATCH` | `/courses/{course_id}/reviews/{review_id}` `GATED` | Review owner | Partial `CourseReviewWrite` | `CourseReviewView` | Review phải thuộc owner và course |
+
+### 6.2. Teacher Course và Admin Moderation
+
+| Method | Route | Actor | Request | Response chính | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/teacher/courses` | Approved Teacher | `status`, `page`, `size` | Current Teacher `CourseView[]` | Owner scoped |
+| `POST` | `/teacher/courses` `GATED` | Approved Teacher | `CourseWrite` | `CourseView` với status `DRAFT` | `courses` chưa có cột currency; client không gửi currency hoặc moderation/public status |
+| `GET` | `/teacher/courses/{course_id}` | Course owner | - | `CourseView` và curriculum/moderation projections | Ownership bắt buộc |
+| `PUT` | `/teacher/courses/{course_id}` | Course owner | Partial `CourseWrite` | `CourseView` | Chỉ state editable; không tự approve |
+| `POST` | `/teacher/courses/{course_id}/submit-review` | Course owner | - | `CourseView` với `status`, `submitted_at` đã cập nhật | Dùng cho submit/resubmit từ state được duyệt; validate curriculum tối thiểu |
+| `GET` | `/teacher/courses/{course_id}/moderation-history` | Course owner | `page`, `size` | `CourseModerationView[]` | Owner only |
+| `GET` | `/admin/courses` | Admin | `status`, `q`, `page`, `size` | `CourseView[]` moderation projection | Admin only |
+| `GET` | `/admin/courses/{course_id}` | Admin | - | `CourseView`, `CourseModerationView[]`, curriculum review projections | Không trả secrets/testcase hidden raw data |
+| `POST` | `/admin/courses/{course_id}/review` | Admin | Command `decision`, `note` | `CourseView`, `CourseModerationView` | Chỉ course chờ review; atomic history + notification + audit |
+| `POST` | `/admin/courses/{course_id}/archive` | Admin | Command `note` | `CourseView` | Ghi `note` vào moderation/audit; learner đã mua áp dụng archive access policy |
+
+Không có route `/resubmit` riêng: Teacher dùng lại `/submit-review` sau khi sửa course ở state cho phép.
+
+## 7. Course Builder và Learning
+
+`LessonContentType` chỉ nhận `READING`, `QUIZ`, `PROBLEM`. `content_id` là polymorphic reference, vì vậy service phải kiểm tra tồn tại, đúng loại, đúng course và ownership trước khi bind.
+
+### 7.1. Teacher Curriculum Builder
+
+| Method | Route | Actor | Request | Response chính | Quy tắc |
+|---|---|---|---|---|---|
+| `POST` | `/teacher/courses/{course_id}/sections` | Course owner | `SectionWrite` | `SectionView` | Course editable; position unique trong course |
+| `PUT` | `/teacher/sections/{section_id}` | Course owner | Partial `SectionWrite` | `SectionView` | Ownership toàn chuỗi |
+| `DELETE` | `/teacher/sections/{section_id}` | Course owner | - | `message` | Cascade/content policy phải được duyệt |
+| `POST` | `/teacher/sections/{section_id}/lessons` | Course owner | `LessonWrite` | `LessonView` | Position unique trong section |
+| `PUT` | `/teacher/lessons/{lesson_id}` | Course owner | Partial `LessonWrite` | `LessonView` | Ownership toàn chuỗi |
+| `DELETE` | `/teacher/lessons/{lesson_id}` | Course owner | - | `message` | Chỉ state editable |
+| `POST` | `/teacher/lessons/{lesson_id}/readings` | Course owner | `ReadingContentWrite` và command `position` | `ReadingContentView`, `LessonContentView` | Tạo content + binding atomically vì `reading_content` không có owner trực tiếp |
+| `PUT` | `/teacher/lesson-contents/{lesson_content_id}/reading` | Course owner | Partial `ReadingContentWrite` | `ReadingContentView` | Binding phải có type `READING`; ownership suy ra qua Lesson -> Section -> Course |
+| `POST` | `/teacher/lessons/{lesson_id}/contents` | Course owner | `LessonContentBind` | `LessonContentView` | Reject type ngoài canonical; schema hiện không có completion-policy field |
+| `PUT` | `/teacher/lesson-contents/{lesson_content_id}` | Course owner | Partial `LessonContentBind` không gồm `content_type` nếu policy cấm đổi loại | `LessonContentView` | Re-validate polymorphic reference |
+| `DELETE` | `/teacher/lesson-contents/{lesson_content_id}` | Course owner | - | `message` | Chỉ state editable |
+| `PUT` | `/teacher/courses/{course_id}/curriculum/reorder` | Course owner | Command `items: [{item_type, id, parent_id, position}]` | `SectionView[]`, `LessonView[]`, `LessonContentView[]` đã cập nhật | `item_type` chọn bảng; `parent_id` map vào FK phù hợp; atomic; item phải thuộc course; position không trùng |
+
+### 7.2. Student Learning và Progress
+
+| Method | Route | Actor | Request | Response chính | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/student/courses` | Student | `page`, `size`, `status?` | `EnrollmentView[]`, `CourseView[]` và progress projection | Chỉ enrollment current user |
+| `GET` | `/student/courses/{slug}/study` | Enrolled Student | - | `CourseView`, `SectionView[]`, `LessonView[]`, `LessonContentView[]`, content views và progress/`locked` projection | Enrollment/access bắt buộc; archived course theo policy |
+| `POST` | `/student/progress/lesson-contents/{lesson_content_id}/complete` | Enrolled Student | - | `LessonContentProgressView` và course progress projection | Chỉ Reading; idempotent; Quiz/Problem không nhận completion từ client |
+| `GET` | `/student/progress` | Student | `course_id?`, `page`, `size` | `LessonContentProgressView[]` theo enrollment/course | Current user only |
+
+## 8. Quiz và Online Judge
+
+### 8.1. Quiz Authoring và Attempt
+
+Quiz attempt dùng `IN_PROGRESS`, `SUBMITTED`, `ABANDONED`. Model `quiz_submission` mở rộng hay bảng `quiz_attempt` vẫn `GATED` theo Phase 0, nhưng behavior API sau không đổi.
+
+| Method | Route | Actor | Request | Response chính | Quy tắc |
+|---|---|---|---|---|---|
+| `POST` | `/teacher/lessons/{lesson_id}/quizzes` | Course owner | `QuizWrite` và command `position` | `QuizView`, `LessonContentView` | Tạo quiz + binding atomically vì Quiz không có owner trực tiếp trong proposal |
+| `PUT` | `/teacher/quizzes/{quiz_id}` | Course owner qua binding | Partial `QuizWrite` | `QuizView` | Ownership suy ra qua LessonContent; không làm hỏng attempt đã bắt đầu ngoài policy |
+| `PUT` | `/teacher/quizzes/{quiz_id}/questions` | Quiz owner | `{ questions: [{ QuizQuestionWrite, options: QuizOptionAuthorWrite[] }] }` | Author views gồm question/option | Validate points/options; answer key không vào learner projection |
+| `POST` | `/student/quizzes/{quiz_id}/attempts` | Enrolled Student | - | `QuizAttemptView`, learner question/option views, computed `expires_at?` | Tạo attempt hoặc trả active attempt để resume; không trả `is_correct` |
+| `GET` | `/student/quizzes/{quiz_id}/attempts/{attempt_id}` | Attempt owner | - | `QuizAttemptView`, learner question/option views | Owner + enrollment; không trả answer key |
+| `PUT` | `/student/quizzes/{quiz_id}/attempts/{attempt_id}/answers` | Attempt owner | Structured `answers` được serialize vào `quiz_submission.answers` | `QuizAttemptView` đã cập nhật | Chỉ `IN_PROGRESS`; schema không có `saved_at`; validate option/question/quiz |
+| `POST` | `/student/quizzes/{quiz_id}/attempts/{attempt_id}/submit` | Attempt owner | - | `QuizAttemptView`, computed `passed`, `LessonContentProgressView?` | Idempotent; enforce retry; update progress/activity khi pass |
+| `GET` | `/student/quizzes/{quiz_id}/attempts` | Enrolled Student | `page`, `size` | Current Student `QuizAttemptView[]` | Owner only; không lộ answer key |
+
+### 8.2. Problem Management và Judge
+
+| Method | Route | Actor | Request | Response chính | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/problems` | Public/User | `tag`, `difficulty`, `page`, `size` | `ProblemView[]`, tags và solved-state projection | Chỉ public/accessible problems |
+| `GET` | `/problems/{slug}` | Public/User | - | `ProblemView`, `ProblemTagView[]`, `LanguageView[]`, configs được phép | Không trả testcase file/raw hidden data |
+| `POST` | `/problems/{slug}/run` | Student | Transient `source_code`, `language_id`, `stdin?` | Transient run status/stdout/stderr/runtime/memory | Không tạo `submission` hay `submission_result_detail`; sandbox, rate limit; custom input không tạo completion |
+| `POST` | `/problems/{slug}/submit` | Student | `SubmissionWrite` không gồm problem/student/status/result fields | `SubmissionView` với `status: "PENDING"` | Access + language validation; enqueue idempotent job |
+| `GET` | `/submissions/{submission_id}` | Submission owner/Problem owner/Admin | - | Role-filtered `SubmissionView`, `SubmissionResultView[]` hoặc hidden summary projection | Hidden testcase chỉ trả aggregate được phép |
+| `GET` | `/problems/{slug}/submissions` | Student | `page`, `size` | Current Student `SubmissionView[]` | Owner only |
+| `POST` | `/teacher/problems` | Approved Teacher | `ProblemWrite`, command `tag_ids[]`, `configs: ProblemConfigWrite[]` | `ProblemView`, tags, configs | Không nhận completion config vì proposal chưa có cột tương ứng |
+| `PUT` | `/teacher/problems/{problem_id}` | Problem owner | Partial `ProblemWrite`, `tag_ids[]?`, `configs?` | `ProblemView`, tags, configs | Ownership + config validation |
+| `POST` | `/teacher/problems/{problem_id}/testcases/upload` | Problem owner | Multipart input/output files, `score`, `is_hidden` | Transient `uploaded_count`, `message`; authorized `TestcaseView[]` | Server tạo object key cho `input_file`/`output_file`; validate file; hidden data không vào learner API |
+| `GET` | `/teacher/courses/{course_id}/submissions` | Course owner | `problem_id?`, `student_id?`, `status?`, `page`, `size` | Authorized `SubmissionView[]` và result summary projections | Chỉ submission thuộc course/problem của Teacher |
+
+Judge result phải dùng các status: `PENDING`, `RUNNING`, `ACCEPTED`, `WRONG_ANSWER`, `TIME_LIMIT_EXCEEDED`, `MEMORY_LIMIT_EXCEEDED`, `RUNTIME_ERROR`, `COMPILE_ERROR`.
+
+## 9. Cart, Order, PayOS và Enrollment
+
+Order cardinality vẫn `GATED`. Trước khi Phase 0 chốt, FE không được giả định checkout một hoặc nhiều item. Response luôn dùng price snapshot từ server.
+
+| Method | Route | Actor | Request | Response chính | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/cart` | Student | - | `CartView` cùng subtotal/currency/course projections | Current user only |
+| `POST` | `/cart/items` | Student | Command `course_id` | `CartView` đã cập nhật | Course public/eligible, chưa enrollment; unique cart/course |
+| `DELETE` | `/cart/items/{course_id}` | Student | - | `CartView` đã cập nhật | Owner only; idempotent |
+| `POST` | `/checkout` `GATED` | Student | Command `course_id` hoặc `cart_item_ids` theo Phase 0 | `OrderView`, `PaymentTransactionView`, provider QR projection | Header `Idempotency-Key`; server snapshot giá; không tin amount từ client |
+| `POST` | `/courses/{slug}/enroll` | Student | - | `EnrollmentView` | Chỉ free course; idempotent; paid course phải qua checkout |
+| `GET` | `/payments/transactions/{transaction_code}` | Transaction owner/Admin | - | Role-filtered `PaymentTransactionView`, `EnrollmentView?` | Owner/Admin only |
+| `POST` | `/payments/payos/webhook` | PayOS | Transient provider payload + signature, map vào `transaction` sau verify | Transient acknowledgement `accepted: true` | Verify signature/reference/amount/currency; event idempotent; không tin client status |
+| `GET` | `/orders` | Student | `page`, `size`, `status?` | Current Student `OrderView[]` | Owner only |
+| `GET` | `/orders/{order_id}` | Order owner/Admin | - | `OrderView`, item views, role-filtered `PaymentTransactionView`, `EnrollmentView?` | Không trả payment secret/idempotency key |
+| `GET` | `/admin/payments` | Admin | `status`, `transaction_code?`, `page`, `size` | Admin-filtered `PaymentTransactionView[]` | Mask provider-sensitive data theo DTO policy |
+| `GET` | `/admin/orders` | Admin | `status`, `student_id?`, `page`, `size` | `OrderView[]` | Admin only |
+| `GET` | `/admin/enrollments` | Admin | `student_id?`, `course_id?`, `page`, `size` | `EnrollmentView[]` | Admin only |
+
+Webhook hợp lệ chuyển payment từ `PENDING` sang `COMPLETED`, `FAILED` hoặc `EXPIRED`. Payment `COMPLETED` phải tạo enrollment, revenue ledger, notification và audit đúng một lần. Payment `FAILED/EXPIRED` không tạo enrollment hoặc revenue.
+
+## 10. Wallet và Payout
+
+| Method | Route | Actor | Request | Response chính | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/teacher/wallet` | Approved Teacher | - | `WalletView` | Current Teacher only; balance phải reconcile được từ ledger |
+| `GET` | `/teacher/wallet/ledger` | Approved Teacher | `entry_type?`, `from?`, `to?`, `page`, `size` | `WalletLedgerView[]` | Owner only |
+| `POST` | `/teacher/payout-requests` | Approved Teacher | `PayoutRequestWrite` (`amount`, `currency`) | `PayoutRequestView` với status `PENDING` | Validate minimum/available; dùng destination từ Teacher Profile; reserve ledger atomic |
+| `GET` | `/teacher/payout-requests` | Approved Teacher | `status?`, `page`, `size` | Current Teacher `PayoutRequestView[]` | Owner only |
+| `GET` | `/admin/payout-requests` | Admin | `status`, `teacher_id?`, `page`, `size` | `PayoutRequestView[]` | Admin only |
+| `POST` | `/admin/payout-requests/{payout_id}/review` | Admin | Command `decision: "APPROVED" \| "REJECTED"`, `note` | `PayoutRequestView` | `decision` map sang status; `note` ghi `audit_log.note`; chỉ `PENDING`; reviewer/time do server ghi; reject tạo compensating/release entry nếu đã reserve |
+| `POST` | `/admin/payout-requests/{payout_id}/processing` | Admin/System | Command `settlement_reference?` | `PayoutRequestView` với status `PROCESSING` | Chỉ `APPROVED`; idempotent |
+| `POST` | `/admin/payout-requests/{payout_id}/settle` | Admin/System | Command `result: "COMPLETED" \| "FAILED"`, `settlement_reference?`, `failure_reason?` | `PayoutRequestView` terminal | Chỉ `PROCESSING`; failure tạo compensating entry đúng một lần |
+
+Ledger là immutable. Mọi sửa sai/reserve release/refund phải dùng entry bù trừ, không update hoặc delete entry cũ.
+
+## 11. AI Interview
+
+Chat là text. Microphone/camera chỉ là permission phía client; API không nhận hoặc lưu recording.
+
+| Method | Route | Actor | Request | Response chính | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/interviews/sessions` | Student | `status?`, `page`, `size` | Current Student `InterviewSessionView[]` | Owner only |
+| `POST` | `/interviews/sessions` | Student | `InterviewSessionWrite` (`topic`, `level`) | `InterviewSessionView`, first `InterviewMessageView` | Validate active-session policy; count/status/timestamps do server ghi |
+| `GET` | `/interviews/sessions/{session_id}` | Session owner | - | `InterviewSessionView`, `InterviewMessageView[]`, computed `can_resume` | Dùng để mở lại/resume session `ACTIVE`; owner only |
+| `POST` | `/interviews/sessions/{session_id}/chat` | Session owner | Command `message` map sang `interview_message.content` | AI `InterviewMessageView`, `InterviewSessionView` | Sender/count/status do server ghi; chỉ `ACTIVE`; tối đa 12 câu; rate limit |
+| `POST` | `/interviews/sessions/{session_id}/end` | Session owner | - | `InterviewSessionView` với status `REPORT_GENERATING` | Kết thúc hợp lệ và tạo report; idempotent; cho phép AI kết thúc sớm theo policy |
+| `POST` | `/interviews/sessions/{session_id}/abort` | Session owner | Command `reason?` chỉ ghi audit note nếu policy yêu cầu | `InterviewSessionView` với status `ABORTED` | `interview_session` không có reason column; bỏ phiên không tạo final report ngoài policy |
+| `GET` | `/interviews/sessions/{session_id}/report` | Session owner | - | `InterviewSessionView`, `InterviewReportView?` | Một report/session; không trigger generation khi GET |
+
+Report worker phải idempotent và dùng unique `session_id`. Thành công chuyển `REPORT_GENERATING -> COMPLETED`; lỗi cuối chuyển `FAILED`; tạo `AI_REPORT_READY` đúng một lần.
+
+## 12. Comment, Notification, Audit và Dashboard
+
+### 12.1. Lesson Comment và Notification
+
+| Method | Route | Actor | Request | Response chính | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/lesson-contents/{lesson_content_id}/comments` `GATED-SCHEMA` | User có course access | `page`, `size` | Dự kiến Comment views theo schema blocker Mục 2.4 | Chưa implement contract canonical trước khi `DATABASE.txt` có bảng Comment |
+| `POST` | `/lesson-contents/{lesson_content_id}/comments` `GATED-SCHEMA` | User có course access | Dự kiến `content`, `parent_id?` | Dự kiến Comment view | Parent cùng LessonContent; sanitize/limit; chờ schema canonical |
+| `DELETE` | `/comments/{comment_id}` `GATED-SCHEMA` | Comment owner/Moderator | - | `message` | Chờ schema canonical; owner hoặc policy moderation |
+| `GET` | `/notifications` | User đăng nhập | `unread_only?`, `type?`, `page`, `size` | `NotificationView[]` | Recipient only |
+| `PUT` | `/notifications/{notification_id}/read` | Notification recipient | - | `NotificationView` với `is_read: true` | Owner only; idempotent |
+
+Notification event tối thiểu: payment success/failure, teacher application approve/reject, course approve/reject, Judge result, AI report ready và payout approve/reject.
+
+### 12.2. Dashboard và operational queries
+
+| Method | Route | Actor | Request | Response chính | Quy tắc |
+|---|---|---|---|---|---|
+| `GET` | `/student/dashboard` | Student | - | `UserView`, profile/capability projection, KPIs, `StudentDailyActivityView[]`, continue-learning, interview và recommendation projections | Current user only; nguồn gồm `enrollment`, `lesson_content_progress`, `submission`, `interview_session`, `student_daily_activity` và problem tags; aggregate không phải cột mới |
+| `GET` | `/teacher/dashboard/summary` | Approved Teacher | - | `WalletView`, course/enrollment/revenue aggregate projections | Nguồn gồm `courses`, `enrollment`, `transaction`, `wallet`, `wallet_ledger`; chỉ data của current Teacher |
+| `GET` | `/teacher/courses/{course_id}/students` | Course owner | `q`, `page`, `size` | `EnrollmentView[]`, `UserView[]`, progress projections | Course owner only |
+| `GET` | `/teacher/courses/{course_id}/students/{student_id}/progress` | Course owner | - | `EnrollmentView`, `LessonContentProgressView[]`, authorized `SubmissionView[]` summary | Student phải enrollment course đó |
+| `GET` | `/teacher/courses/{course_id}/comments` `GATED-SCHEMA` | Course owner | `unanswered_only?`, `page`, `size` | Dự kiến Comment views | Chờ canonical Comment table; course owner only |
+| `GET` | `/admin/audit-logs` | Admin | `user_id?`, `action?`, `target_type?`, `target_id?`, `correlation_id?`, `from?`, `to?`, `page`, `size` | Redacted `AuditLogView[]` | `user_id` là actor theo DB; dùng action `PAYMENT_WEBHOOK` để theo dõi webhook |
+
+## 13. Hiện trạng implementation trong source
+
+Mục này chỉ mô tả source tại thời điểm cập nhật tài liệu; target contract ở các mục trên không thay đổi theo trạng thái này.
+
+### 13.1. Auth Provider hiện tại
+
+Router đang được mount tại `/api/auth`. Các route đã được đăng ký gồm `authorize`, login page, `public-key`, `verify`, `login`, `code`, `refresh`, `google`, `logout`, `register`, `resend-otp`, `forgot-password`, `reset-password`, `change-email`, `verify-reset-email`.
+
+- Registration/verify/login/code có logic một phần nhưng chưa đạt đầy đủ contract bảo mật và response mục tiêu.
+- Refresh, Google login, logout và các flow password/email vẫn có phần stub/demo trong service.
+- Route hiện tại có thể khác request shape target; implementation phải migrate theo contract và có compatibility plan nếu FE cũ đang sử dụng.
+
+### 13.2. Business Application hiện tại
+
+Application hiện chỉ mount health routes và module Lesson Comment. Comment routes hiện tại có path legacy:
+
+- `GET /api/v1/lesson-contents/{lesson_content_id}/comments`.
+- `POST /api/v1/lesson-contents/{lesson_content_id}/comment` `LEGACY` — target dùng `/comments` số nhiều.
+- `DELETE /api/v1/lesson-contents/comment/{comment_id}` `LEGACY` — target dùng `/comments/{comment_id}`.
+
+Source hiện có Comment model không làm thay đổi việc canonical `DATABASE.txt` chưa có bảng Comment. Các route này phải được xem là implementation legacy và chưa đạt target contract cho tới khi schema blocker ở Mục 2.4 được xử lý.
+
+Các target route còn lại trong tài liệu này chưa được coi là implemented chỉ vì đã có model hoặc xuất hiện trong README/wireframe.
+
+## 14. Quyết định còn mở và contract bị chặn
+
+| Quyết định | Phần contract bị ảnh hưởng | Trạng thái tạm thời |
+|---|---|---|
+| Course review/public status dùng một hay hai state machine; tên `APPROVED` hay `PUBLISHED` | Catalog, Teacher submit, Admin review/archive | `GATED`; FE không hard-code enum |
+| Currency, precision, rounding và minimum payout | Course price, cart/order/payment, wallet/payout | `GATED`; mọi response tiền vẫn phải có currency |
+| Một order chứa một hay nhiều course | `POST /checkout`, order items và UI checkout | `GATED`; không triển khai payload cuối trước quyết định |
+| Field thuộc Teacher Profile hay Teacher Application | Profile/application request schema | `GATED`; dùng mapping đã duyệt trước migration/Pydantic model |
+| Một hay nhiều course review cho Student/course | Review create/update constraint | `GATED`; luôn yêu cầu enrollment và owner |
+| Dùng `quiz_submission` mở rộng hay bảng `quiz_attempt`; save/resume/expiry rule | Quiz persistence và retry | Behavior API giữ nguyên, persistence `GATED` |
+| Problem completion chỉ cần Accepted hay thêm pass score/retry | LessonContent/Problem authoring và progress | Completion config `GATED`; FE không tự suy luận |
+| Interview skill score/question feedback lưu riêng hay report payload | Report response/schema | `GATED`; chỉ render field server cung cấp |
+| Activity event, timezone và study-time source | Daily activity và Student Dashboard | `GATED`; không tạo metric giả |
+| Canonical Comment table, self-reference và indexes | Lesson Comment request/response và Teacher comment query | `GATED-SCHEMA`; source model hiện tại không thay thế `DATABASE.txt` |
+| External identity/provider table | Google login và liên kết identity | `GATED-SCHEMA`; source model hiện tại chưa nằm trong canonical proposal |
+| Audit action cho thay đổi role | `PUT /admin/users/{user_id}/roles` | `GATED-SCHEMA`; phải bổ sung enum/mapping trước khi mở route |
+| `docs/DATABASE.txt` và legacy mirror | Migration/document workflow | `DATABASE.txt` là proposal canonical; không triển khai hai schema |
+
+Không được bỏ nhãn `GATED` chỉ vì cần tiếp tục coding. Khi Product Owner duyệt quyết định, cập nhật PRD, gap analysis, `DATABASE.txt`, tài liệu này và `overall-plan.md` trong cùng thay đổi.
+
+## 15. Transaction, idempotency và authorization invariants
+
+| Luồng | Invariant bắt buộc |
+|---|---|
+| Teacher application review | Chỉ `PENDING`; history + capability effect + notification + audit nhất quán |
+| Course moderation | Chỉ state chờ review; history + notification + audit nhất quán |
+| Payment webhook | Verify signature/reference/amount/currency; event lặp không nhân side effect |
+| Enrollment | Tối đa một `(student_id, course_id)`; failed/expired payment không tạo enrollment |
+| Revenue ledger | Payment completed tạo revenue entries đúng một lần; ledger immutable |
+| Quiz submit | Một attempt chỉ có một kết quả submit terminal; answer key không lộ |
+| Judge result | Duplicate worker result không tạo detail/progress/activity trùng |
+| Interview report | Một final report/session; GET report không trigger job |
+| Payout | Reserve/release/settlement idempotent; failure dùng compensating ledger entry |
+| Notification/Audit | Ghi qua foundation dùng chung; recipient/actor/target đúng và dữ liệu nhạy cảm đã redact |
+
+Mọi mutation phải kiểm tra account status, role/capability và resource ownership ở server. Dashboard, notification, progress, order, enrollment, submission và interview mặc định chỉ trả dữ liệu current user, trừ route Teacher/Admin được nêu rõ.
+
+## 16. Điều kiện nghiệm thu API contract
+
+- Pydantic schema và generated OpenAPI tại `/docs` khớp route, payload, enum và error contract trong tài liệu này.
+- Mỗi field được persist trong request/response phải tồn tại trong bảng nguồn của `DATABASE.txt` hoặc dùng một trong hai alias đã công bố; mọi field còn lại phải được ghi rõ là command, projection hoặc transient/transport.
+- Contract test xác nhận route target đã implement không lệch method/path/response envelope.
+- Route `GATED` chỉ được mở sau khi quyết định liên quan đã được cập nhật đồng bộ; route `GATED-SCHEMA` chỉ được mở sau khi `DATABASE.txt` và migration contract có bảng/cột tương ứng.
+- Authorization test có case current owner, user khác, role thiếu, Teacher chưa approved và Admin.
+- Idempotency/concurrency test có cho payment, enrollment, revenue ledger, quiz submit, Judge result, report và payout.
+- Không có target route trả secret, OTP/reset code, CCCD đầy đủ, raw hidden testcase hoặc raw payment payload sai đối tượng.
