@@ -3,6 +3,7 @@ from email import message
 import aio_pika
 from aio_pika.abc import AbstractIncomingMessage
 from aio_pika.abc import AbstractChannel, AbstractIncomingMessage, AbstractRobustConnection
+from src.dto.submission_dto import SubmissionJob
 from src.bases.constants.rabbit_queue import SUBMISSION_QUEUE, RESULT_QUEUE
 import json 
 
@@ -65,10 +66,10 @@ class RabbitMQManger:
         ): 
             try:
                 payload = json.loads(
-                    message.body.decode('utf-')
+                    message.body.decode('utf-8')
                 )
-                await handler(payload) 
-                await message.ack() 
+                await handler(SubmissionJob(**payload)) # Chuan hoa KSL tro thanh dang submission_job 
+                await message.ack() # bao hieu da thanh cong, de cho queue khong bi treo 
             except Exception as e: 
                 print(
                     f"Failed to execute consumer with {e} error"

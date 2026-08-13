@@ -10,13 +10,16 @@ from src.services.sse.sse_dependency import get_sse_manager
 from src.services.sse.sse_manager import SSEManager
 from src.services.rabbitmq.rabbitmq_dependency import get_rabbitmq_manager
 from src.services.rabbitmq.rabbitmq_manager import RabbitMQManager
-from src.modules.submission.submission_dto import CreateSubmissionRequest 
+from src.modules.submission.submission_dto import CreateSubmissionRequest, SubmissionJob 
+from src.bases.constants.rabbit_queue import SUBMISSION_QUEUE
 import json 
+mock_language = "python" 
 mock_submission_result = {
-    "123": {
-        "submission_id": "123", 
+    1: {
+        "submission_id": 1, 
         "status": "pending",
         "code": "print('Hello world')",
+        "score": 0 
     }
 }
 router = APIRouter(
@@ -28,14 +31,10 @@ router = APIRouter(
 async def create_submission(
     data : CreateSubmissionRequest, 
     rabbitmq : RabbitMQManager = Depends(get_rabbitmq_manager)
-): 
-    payload = json.dumps(data).encode('utf-8')
-    await rabbitmq.publish(
-        SUBMISSION_QUEUE, 
-        payload
-    ) 
-    submission_id = '123'
-    return mock_submission_result[submission_id]
+):
+    print("Data nhan duoc la: " , data)   
+    submission_id = '1'
+    return mock_submission_result[int(submission_id)]
 
 # ham dung de mo ket noi sse, chung ta se tien hanh truyen du lieu dua tren ket noi nay 
 @router.get('/{submission_id}/events') 
@@ -70,27 +69,35 @@ async def submission_event(
 @router.post('/{submission_id}/result') 
 async def submission_result(
     submission_id : int, 
-    sse_manager : SSEManager = Depends(get_sse_manager)
+    sse_manager : SSEManager = Depends(get_sse_manager), 
+    rabbitmq : RabbitMQManager = Depends(get_rabbitmq_manager)
 ): 
     # pending 
     await asyncio.sleep(2) 
-    payload = {
+    running_result = {
         "submission_id": submission_id,
         "status": "pending" 
     } 
-    await sse_manager.publish(submission_id , payload)
-    # running 
-    await asyncio.sleep(2) 
-    payload = {
-        "submission_id": submission_id,
-        "status": "running" 
-    }
-    await sse_manager.publish(submission_id , payload)
+    await sse_manager.publish(submission_id , running_result)
+
     # run the code 
-    await asyncio.sleep(5) 
-    payload = {
-        "submission_id": submission_id,
-        "status": "accepted", 
-        "score": 100 
-    } 
-    await sse_manager.publish(submission_id , payload)
+    submission = mock_submission_result[submission_id] 
+    if submission: 
+        # running cold start 
+        await asyncio.sleep(1) 
+        await sse_manager.publish(submission_id , {
+            "submission_id" : submission_id, 
+            "status": "running"
+        }) 
+        payload : SubmissionJob = SubmissionJob(
+            submission_id=submission_id, 
+            memory_limit_mb='128mb', 
+            time_limit_ms=1000, 
+            language='python', 
+            code = submission.get('code') or '' 
+        )
+        # Gui du lieu qua ben judge_service thong qua SUBMISSION_QUEUE 
+        await rabbitmq.publish(
+            SUBMISSION_QUEUE, 
+            json.dumps(payload).encode('utf-8')
+        )

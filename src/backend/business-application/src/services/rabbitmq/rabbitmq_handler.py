@@ -6,8 +6,8 @@ async def handle_submission(data):
 # ket qua tra ve ben trong result_queue 
 async def handle_result(data : dict[str, Any]):
     id = data.get('id' , None) 
-    status = data.get('status' , None) 
-    answer = data.get('answer' , None) 
+    status = data.get('status' , None) # status: running, pending, wrong_answer, tle, olm, ... 
+    score = data.get('score' , None) 
     print('id' , id) 
     print('status' , status) 
-    print('answer' , answer)
+    print('score' , score)
