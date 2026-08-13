@@ -1,0 +1,2 @@
+SUBMISSION_EXECUTION_QUEUE = "submission_queue" 
+SUBMISSION_EXECUTION_RESULT_QUEUE = "result_queue"

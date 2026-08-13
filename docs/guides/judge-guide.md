@@ -147,3 +147,7 @@ async def submission_result(
 ```
 
 ## 3. Sandbox 
+Sandbox được dùng để chạy code. Chúng ta sẽ dựng nên các Docker image. Mỗi khi chạ code sẽ tạo ra 1 container từ image và chạy 
+
+
+## 4. 

@@ -3,11 +3,11 @@ from email import message
 import aio_pika
 from aio_pika.abc import AbstractIncomingMessage
 from aio_pika.abc import AbstractChannel, AbstractIncomingMessage, AbstractRobustConnection
-from src.dto.submission_dto import SubmissionJob
-from src.bases.constants.rabbit_queue import SUBMISSION_QUEUE, RESULT_QUEUE
+from src.contracts.submission_execution import SubmissionExecutionRequest
+from src.bases.constants.submission_queues import SUBMISSION_EXECUTION_QUEUE, SUBMISSION_EXECUTION_RESULT_QUEUE
 import json 
 
-class RabbitMQManger: 
+class RabbitMQManager: 
     def __init__(self , url : str): 
         self.url = url 
         self.connection : AbstractRobustConnection | None = None 
@@ -21,11 +21,11 @@ class RabbitMQManger:
 
         # declare queue 
         await self.channel.declare_queue(
-            name = SUBMISSION_QUEUE, 
+            name = SUBMISSION_EXECUTION_QUEUE, 
             durable=True 
         )
         await self.channel.declare_queue(
-            name = RESULT_QUEUE, 
+            name = SUBMISSION_EXECUTION_RESULT_QUEUE, 
             durable=True 
         )
         print('RabbitMQ has been connected')
@@ -68,7 +68,7 @@ class RabbitMQManger:
                 payload = json.loads(
                     message.body.decode('utf-8')
                 )
-                await handler(SubmissionJob(**payload)) # Chuan hoa KSL tro thanh dang submission_job 
+                await handler(SubmissionExecutionRequest(**payload)) # Chuan hoa KSL tro thanh dang submission_job 
                 await message.ack() # bao hieu da thanh cong, de cho queue khong bi treo 
             except Exception as e: 
                 print(

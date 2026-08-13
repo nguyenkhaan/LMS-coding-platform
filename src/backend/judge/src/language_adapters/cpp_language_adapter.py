@@ -1,8 +1,8 @@
-from src.adapter.adapter import LanguageAdapter
+from src.language_adapters.language_adapter import LanguageAdapter
 
-class CppAdapter(LanguageAdapter): 
+class CppLanguageAdapter(LanguageAdapter): 
     image = "judge-cpp:latest"
-    source_file_name = "main.cpp"
+    source_filename = "main.cpp"
     def build_command(self): 
         return [
             "g++",

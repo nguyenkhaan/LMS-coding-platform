@@ -9,8 +9,8 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from src.services.sse.sse_manager import SSEManager
 from src.services.rabbitmq.rabbitmq_manager import RabbitMQManager
-from src.services.rabbitmq.rabbitmq_handler import handle_result
-from src.bases.constants.rabbit_queue import RESULT_QUEUE
+from src.services.rabbitmq.submission_execution_result_consumer import handle_submission_execution_result
+from src.bases.constants.submission_queues import SUBMISSION_EXECUTION_RESULT_QUEUE
 # router 
 from src.modules.lesson_comment.lesson_comment_router import router as lesson_comment_router
 from src.modules.submission.submission_route import router as submission_router 
@@ -42,8 +42,8 @@ async def lifespan(app: FastAPI):
     await rabbitmq_manager.connect() 
     # consumer register 
     await rabbitmq_manager.consume(
-        RESULT_QUEUE, 
-        handle_result
+        SUBMISSION_EXECUTION_RESULT_QUEUE,
+        handle_submission_execution_result
     )
     # register to the application 
     app.state.rabbitmq_manager = rabbitmq_manager 

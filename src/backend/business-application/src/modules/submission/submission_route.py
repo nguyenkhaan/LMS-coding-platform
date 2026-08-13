@@ -5,13 +5,12 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.util import b
 
-from src.bases.constants.rabbit_queue import SUBMISSION_QUEUE
+from src.bases.constants.submission_queues import SUBMISSION_EXECUTION_QUEUE
 from src.services.sse.sse_dependency import get_sse_manager
 from src.services.sse.sse_manager import SSEManager
 from src.services.rabbitmq.rabbitmq_dependency import get_rabbitmq_manager
 from src.services.rabbitmq.rabbitmq_manager import RabbitMQManager
-from src.modules.submission.submission_dto import CreateSubmissionRequest, SubmissionJob 
-from src.bases.constants.rabbit_queue import SUBMISSION_QUEUE
+from src.modules.submission.submission_contracts import CreateSubmissionRequest, SubmissionExecutionRequest
 import json 
 mock_language = "python" 
 mock_submission_result = {
@@ -89,7 +88,7 @@ async def submission_result(
             "submission_id" : submission_id, 
             "status": "running"
         }) 
-        payload : SubmissionJob = SubmissionJob(
+        submission_execution_request : SubmissionExecutionRequest = SubmissionExecutionRequest(
             submission_id=submission_id, 
             memory_limit_mb='128mb', 
             time_limit_ms=1000, 
@@ -98,6 +97,6 @@ async def submission_result(
         )
         # Gui du lieu qua ben judge_service thong qua SUBMISSION_QUEUE 
         await rabbitmq.publish(
-            SUBMISSION_QUEUE, 
-            payload.model_dump_json().encode('utf-8')
+            SUBMISSION_EXECUTION_QUEUE,
+            submission_execution_request.model_dump_json().encode('utf-8')
         )

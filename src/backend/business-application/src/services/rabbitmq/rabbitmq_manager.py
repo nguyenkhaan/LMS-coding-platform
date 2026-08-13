@@ -2,7 +2,7 @@ import asyncio
 
 import aio_pika
 from aio_pika.abc import AbstractRobustConnection, AbstractChannel, AbstractIncomingMessage
-from src.bases.constants.rabbit_queue import SUBMISSION_QUEUE, RESULT_QUEUE
+from src.bases.constants.submission_queues import SUBMISSION_EXECUTION_QUEUE, SUBMISSION_EXECUTION_RESULT_QUEUE
 import json 
 
 class RabbitMQManager: 
@@ -17,11 +17,11 @@ class RabbitMQManager:
         self.connection = connection # Khong su dung async with vi async with la dong luon
         self.channel = await self.connection.channel() 
         await self.channel.declare_queue(
-            SUBMISSION_QUEUE, 
+            SUBMISSION_EXECUTION_QUEUE,
             durable=True 
         ) 
         await self.channel.declare_queue(
-            RESULT_QUEUE, 
+            SUBMISSION_EXECUTION_RESULT_QUEUE,
             durable=True 
         ) 
         print('RabbitMQ has been connected')
@@ -74,7 +74,7 @@ class RabbitMQManager:
                 await message.nack(
                     requeue=True 
                 )
-            
+
         consumer_id = await queue.consume(
             process_message, 
             no_ack=False # Xu ly thi khong gui gi ve ben kia nen khong can ack nua 
@@ -100,5 +100,3 @@ class RabbitMQManager:
                 f"RabbitMQ close failed: {error}",
                 flush=True,
             )
-
-            

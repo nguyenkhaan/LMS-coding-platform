@@ -8,15 +8,15 @@ class CreateSubmissionRequest(BaseModel):
     language: Language 
     code : str
 
-class SubmissionJob(BaseModel): 
+class SubmissionExecutionRequest(BaseModel): 
     submission_id : int 
     language : str 
     time_limit_ms: int 
     memory_limit_mb: str 
     code : str 
 
-class SubmissionResult(BaseModel): 
-    id : int 
+class SubmissionExecutionResult(BaseModel): 
+    submission_id : int 
     score: int 
     status: str 
     # Du lieu bo sung them 
