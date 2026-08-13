@@ -17,9 +17,6 @@ import pytest
 from tests.module2.conftest import UNKNOWN_SLUG
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 1 — GET /courses
-# ---------------------------------------------------------------------------
 
 class TestGetCourseCatalog:
 
@@ -54,12 +51,11 @@ class TestGetCourseCatalog:
         assert len(body["items"]) <= 5
 
     def test_get_course_catalog_filter_by_price_type_free(self, client):
-        response = client.get("/api/v1/courses", params={"price_type": "free"})
-
+        response = client.get("/api/v1/courses", params={"price_type": "FREE"})
         assert response.status_code == 200
-        items = response.json()["items"]
-        for item in items:
-            assert item["price_type"] == "free"
+        body = response.json()
+        for item in body["items"]:
+            assert item["price_type"] == "FREE"
 
     def test_get_course_catalog_filter_by_query_string(self, client):
         response = client.get("/api/v1/courses", params={"q": "Python"})
@@ -79,9 +75,6 @@ class TestGetCourseCatalog:
         assert body["total_items"] == 0
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 2 — GET /courses/{slug}
-# ---------------------------------------------------------------------------
 
 class TestGetCourseDetail:
 

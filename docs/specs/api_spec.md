@@ -84,6 +84,9 @@ Path prefix: `/courses`, `/student`
 | 8 | `/student/quizzes/{quizId}/submit` | POST | - | `quizId` (int) | JSON: `answers` (Map<int, int>) | JSON: `submission_id`, `score`, `passed`, `correct_answers`, ... | Submits quiz answers and returns score. |
 | 9 | `/courses/{slug}/unenroll` | POST | - | `slug` (str) | - | JSON: `message` | Cancels a student's enrollment. |
 
+**Note for Module 2:**
+- **Error Response:** Module 2 currently uses the global app error response format instead of the general Error Response Structure defined above. The format used is: `{"message": str, "code": str, "detail": str, "timestamp": str, "path": str}`.
+
 ### 3. Teacher Course & Curriculum Creator
 Path prefix: `/teacher/courses`, `/teacher/sections`, `/teacher/lessons`, `/teacher/lesson-contents`
 

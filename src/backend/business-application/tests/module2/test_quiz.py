@@ -49,9 +49,6 @@ def _has_field_recursive(obj: object, field: str) -> bool:
     return False
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 7 — GET /student/quizzes/{quizId}
-# ---------------------------------------------------------------------------
 
 class TestGetQuiz:
 
@@ -109,9 +106,6 @@ class TestGetQuiz:
         assert response.status_code == 401
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 8 — POST /student/quizzes/{quizId}/submit
-# ---------------------------------------------------------------------------
 
 class TestSubmitQuiz:
 
@@ -127,7 +121,7 @@ class TestSubmitQuiz:
         body = response.json()
         assert body["score"] == 10.0
         assert body["passed"] is True
-        assert body["correct_count"] == body["total_count"]
+        assert body["correct_answers"] == body["total_count"]
         assert body["total_count"] == 3
 
     def test_submit_quiz_all_wrong_returns_score_0(self, client):
@@ -142,7 +136,7 @@ class TestSubmitQuiz:
         body = response.json()
         assert body["score"] == 0.0
         assert body["passed"] is False
-        assert body["correct_count"] == 0
+        assert body["correct_answers"] == 0
         assert body["total_count"] == 3
 
     def test_submit_quiz_partial_correct_calculates_score_correctly(self, client):
@@ -158,7 +152,7 @@ class TestSubmitQuiz:
         body = response.json()
         assert body["score"] == 6.67
         assert body["passed"] is True
-        assert body["correct_count"] == 2
+        assert body["correct_answers"] == 2
         assert body["total_count"] == 3
 
     def test_submit_quiz_response_has_required_fields(self, client):
@@ -171,7 +165,7 @@ class TestSubmitQuiz:
         assert response.status_code == 200
         body = response.json()
         for field in ("submission_id", "score", "passed",
-                      "correct_count", "total_count"):
+                      "correct_answers", "total_count"):
             assert field in body, f"Missing field: {field}"
 
     def test_submit_quiz_empty_answers_returns_400(self, client):

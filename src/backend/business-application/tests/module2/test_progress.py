@@ -31,9 +31,6 @@ from tests.module2.conftest import UNKNOWN_ID
 VALID_LESSON_CONTENT_ID = 1   # Present in _VALID_LESSON_CONTENT_IDS
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 6 — POST /student/progress/lesson-content/{id}/complete
-# ---------------------------------------------------------------------------
 
 class TestCompleteLessonContent:
 

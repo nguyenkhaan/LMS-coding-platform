@@ -2,7 +2,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path
 
-from src.middlewares.auth_middleware import get_current_user
+from src.middlewares.role_middleware import require_role
+from src.models.base_model import Role
 from src.modules.student_course_directory.course_dependency import get_course_service
 from src.modules.student_course_directory.course_dto import (
     CompleteContentResponse,
@@ -22,6 +23,7 @@ router = APIRouter(
 
 def _extract_user_id(user: dict) -> int:
     """Extract and validate user_id from get_current_user payload."""
+    # "sub" is already cast to int by auth_middleware.py
     user_id: int | None = user.get("sub", None)
     if not user_id:
         raise HTTPException(
@@ -31,37 +33,28 @@ def _extract_user_id(user: dict) -> int:
     return user_id
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 4 — GET /student/courses  (auth required)
-# ---------------------------------------------------------------------------
 
 @router.get("/courses", response_model=StudentCoursesResponse, status_code=200)
 async def get_enrolled_courses(
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_role(Role.STUDENT)),
     service: CourseService = Depends(get_course_service),
 ) -> StudentCoursesResponse:
     user_id = _extract_user_id(user)
     return await service.get_enrolled_courses(user_id)
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 5 — GET /student/courses/{slug}/study  (auth required)
-# ---------------------------------------------------------------------------
 
 @router.get("/courses/{slug}/study", response_model=StudyResponse, status_code=200)
 async def get_study_content(
     slug: Annotated[str, Path()],
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_role(Role.STUDENT)),
     service: CourseService = Depends(get_course_service),
 ) -> StudyResponse:
     user_id = _extract_user_id(user)
     return await service.get_study_content(slug, user_id)
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 6 — POST /student/progress/lesson-content/{id}/complete
 #              path param is {id} per spec — Python alias: lesson_content_id
-# ---------------------------------------------------------------------------
 
 @router.post(
     "/progress/lesson-content/{id}/complete",
@@ -70,32 +63,26 @@ async def get_study_content(
 )
 async def complete_lesson_content(
     lesson_content_id: Annotated[int, Path(alias="id")],
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_role(Role.STUDENT)),
     service: CourseService = Depends(get_course_service),
 ) -> CompleteContentResponse:
     user_id = _extract_user_id(user)
     return await service.complete_lesson_content(lesson_content_id, user_id)
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 7 — GET /student/quizzes/{quizId}
 #              path param is {quizId} per spec — Python alias: quiz_id
-# ---------------------------------------------------------------------------
 
 @router.get("/quizzes/{quizId}", response_model=QuizResponse, status_code=200)
 async def get_quiz(
     quiz_id: Annotated[int, Path(alias="quizId")],
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_role(Role.STUDENT)),
     service: CourseService = Depends(get_course_service),
 ) -> QuizResponse:
     user_id = _extract_user_id(user)
     return await service.get_quiz(quiz_id)
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 8 — POST /student/quizzes/{quizId}/submit
 #              path param is {quizId} per spec — Python alias: quiz_id
-# ---------------------------------------------------------------------------
 
 @router.post(
     "/quizzes/{quizId}/submit",
@@ -105,7 +92,7 @@ async def get_quiz(
 async def submit_quiz(
     quiz_id: Annotated[int, Path(alias="quizId")],
     payload: QuizSubmitRequest,
-    user: dict = Depends(get_current_user),
+    user: dict = Depends(require_role(Role.STUDENT)),
     service: CourseService = Depends(get_course_service),
 ) -> QuizSubmitResponse:
     user_id = _extract_user_id(user)

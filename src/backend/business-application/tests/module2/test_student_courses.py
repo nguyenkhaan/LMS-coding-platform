@@ -30,9 +30,6 @@ from tests.module2.conftest import UNKNOWN_SLUG
 STUDY_SLUG = "nhap-mon-lap-trinh-python"
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 4 — GET /student/courses
-# ---------------------------------------------------------------------------
 
 class TestGetEnrolledCourses:
 
@@ -69,9 +66,6 @@ class TestGetEnrolledCourses:
         assert response.status_code == 401
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 5 — GET /student/courses/{slug}/study
-# ---------------------------------------------------------------------------
 
 class TestGetStudyContent:
 

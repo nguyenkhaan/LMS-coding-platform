@@ -6,26 +6,19 @@ from pydantic import BaseModel, ConfigDict
 from src.models.base_model import LessonContentType
 
 
-# ---------------------------------------------------------------------------
-# Shared enums
-# ---------------------------------------------------------------------------
 
 class PriceType(str, Enum):
-    FREE = "free"
-    PAID = "paid"
+    FREE = "FREE"
+    PAID = "PAID"
 
 
 class EnrollStatus(str, Enum):
-    ENROLLED = "enrolled"
-    PENDING_PAYMENT = "pending_payment"
+    ENROLLED = "ENROLLED"
+    PENDING_PAYMENT = "PENDING_PAYMENT"
 
 
 # ContentType is not redefined here — use LessonContentType from src.models.base_model
 
-
-# ---------------------------------------------------------------------------
-# Public Course Catalog  (Endpoint 1 & 2)
-# ---------------------------------------------------------------------------
 
 class CourseItemResponse(BaseModel):
     id: int
@@ -72,9 +65,6 @@ class CourseDetailResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ---------------------------------------------------------------------------
-# Enroll / Unenroll  (Endpoint 3 & 9)
-# ---------------------------------------------------------------------------
 
 class EnrollResponse(BaseModel):
     status: EnrollStatus
@@ -87,9 +77,6 @@ class UnenrollResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ---------------------------------------------------------------------------
-# Student Enrolled Courses  (Endpoint 4)
-# ---------------------------------------------------------------------------
 
 class EnrolledCourseResponse(BaseModel):
     id: int
@@ -105,9 +92,6 @@ class StudentCoursesResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ---------------------------------------------------------------------------
-# Study Mode  (Endpoint 5)
-# ---------------------------------------------------------------------------
 
 class LessonContentStudyResponse(BaseModel):
     id: int
@@ -140,9 +124,6 @@ class StudyResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ---------------------------------------------------------------------------
-# Progress  (Endpoint 6)
-# ---------------------------------------------------------------------------
 
 class CompleteContentResponse(BaseModel):
     message: str
@@ -150,11 +131,8 @@ class CompleteContentResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ---------------------------------------------------------------------------
-# Quiz  (Endpoint 7)
 # NOTE: QuizOptionResponse intentionally has NO is_correct field — students
 #       must not receive the answer key when fetching questions.
-# ---------------------------------------------------------------------------
 
 class QuizOptionResponse(BaseModel):
     id: int
@@ -176,9 +154,6 @@ class QuizResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ---------------------------------------------------------------------------
-# Quiz Submit  (Endpoint 8)
-# ---------------------------------------------------------------------------
 
 class QuizSubmitRequest(BaseModel):
     # Map of question_id -> selected option_id
@@ -190,6 +165,6 @@ class QuizSubmitResponse(BaseModel):
     submission_id: int
     score: float
     passed: bool
-    correct_count: int
+    correct_answers: int
     total_count: int
     model_config = ConfigDict(from_attributes=True)

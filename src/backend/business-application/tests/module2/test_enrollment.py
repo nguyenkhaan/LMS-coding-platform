@@ -27,9 +27,6 @@ FREE_SLUG = "nhap-mon-lap-trinh-python"
 PAID_SLUG = "cau-truc-du-lieu-va-giai-thuat"
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 3 — POST /courses/{slug}/enroll
-# ---------------------------------------------------------------------------
 
 class TestEnrollCourse:
 
@@ -41,22 +38,22 @@ class TestEnrollCourse:
         assert "status" in body
 
     def test_enroll_course_checkout_url_is_null_when_enrolled(self, client):
-        # FREE course → status=enrolled, checkout_url must be absent or null
+        # FREE course → status=ENROLLED, checkout_url must be absent or null
         response = client.post(f"/api/v1/courses/{FREE_SLUG}/enroll")
 
         assert response.status_code == 201
         body = response.json()
-        assert body["status"] == "enrolled"
+        assert body["status"] == "ENROLLED"
         # checkout_url is Optional — either missing from payload or explicitly null
         assert body.get("checkout_url") is None
 
     def test_enroll_course_checkout_url_present_when_pending_payment(self, client):
-        # PAID course → status=pending_payment, checkout_url must be a non-empty string
+        # PAID course → status=PENDING_PAYMENT, checkout_url must be a non-empty string
         response = client.post(f"/api/v1/courses/{PAID_SLUG}/enroll")
 
         assert response.status_code == 201
         body = response.json()
-        assert body["status"] == "pending_payment"
+        assert body["status"] == "PENDING_PAYMENT"
         assert isinstance(body.get("checkout_url"), str)
         assert len(body["checkout_url"]) > 0
 
@@ -75,9 +72,6 @@ class TestEnrollCourse:
         assert response.status_code == 401
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 9 — POST /courses/{slug}/unenroll
-# ---------------------------------------------------------------------------
 
 class TestUnenrollCourse:
 
@@ -94,8 +88,8 @@ class TestUnenrollCourse:
         response = client.post(f"/api/v1/courses/{FREE_SLUG}/unenroll")
 
         assert response.status_code == 200
-        # Service returns: "Đã huỷ đăng ký khoá học '<title>' thành công"
-        assert "thành công" in response.json()["message"]
+        # Service returns: "Successfully unenrolled from course '<title>'"
+        assert "Successfully" in response.json()["message"]
 
     def test_unenroll_course_returns_404_for_unknown_slug(self, client):
         response = client.post(f"/api/v1/courses/{UNKNOWN_SLUG}/unenroll")
