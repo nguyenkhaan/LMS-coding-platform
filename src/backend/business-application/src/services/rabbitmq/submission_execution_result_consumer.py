@@ -1,9 +1,10 @@
 # Chua cac ham consume de xu ly du lieu khi ben khac tra su lieu ve 
 from typing import Any
 
+from src.services.sse.sse_manager import SSEManager
 from src.modules.submission.submission_contracts import SubmissionExecutionResult 
 # ket qua tra ve ben trong result_queue 
-async def handle_submission_execution_result(payload : dict[str, Any]):
+async def handle_submission_execution_result(payload : dict[str, Any] , sse_manager : SSEManager):
     submission_execution_result = SubmissionExecutionResult.model_validate(payload)
     submission_id = submission_execution_result.submission_id
     status = submission_execution_result.status # status: running, pending, wrong_answer, tle, olm, ... 
@@ -13,3 +14,11 @@ async def handle_submission_execution_result(payload : dict[str, Any]):
     print('status' , status) 
     print('score' , score)
     print('stdout' , stdout)
+
+    # Calling database for storing logic 
+
+    # Send data to the sse_connection 
+    await sse_manager.publish(
+        submission_id, 
+        submission_execution_result.model_dump() 
+    )

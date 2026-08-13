@@ -34,6 +34,10 @@ async def lifespan(app: FastAPI):
     )
     public_key = await PublicKeyService.load(client)
 
+    # sse manager 
+    sse_manager = SSEManager()
+    app.state.sse_manager = sse_manager
+    
     # rabbit_mq manager 
     rabbitmq_manager = RabbitMQManager(
         url = RABBITMQ_URL
@@ -41,15 +45,14 @@ async def lifespan(app: FastAPI):
     # rabbit_mq consumer connect  
     await rabbitmq_manager.connect() 
     # consumer register 
+    async def handle_submission_result(job): 
+        await handle_submission_execution_result(job , sse_manager)
     await rabbitmq_manager.consume(
         SUBMISSION_EXECUTION_RESULT_QUEUE,
-        handle_submission_execution_result
+        handle_submission_result
     )
     # register to the application 
     app.state.rabbitmq_manager = rabbitmq_manager 
-
-    # sse manager 
-    app.state.sse_manager = SSEManager()
 
     yield
     await rabbitmq_manager.close() 
