@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI , APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.handlers.submission_handler import submission_handler_result
 from src.modules.rabbitmq_manager import RabbitMQManger
 from src.bases.constants.rabbit_queue import SUBMISSION_QUEUE
 from src.cores.settings import RABBITMQ_URL
@@ -12,9 +13,14 @@ async def lifespan(app : FastAPI):
         url = RABBITMQ_URL
     )  
     await rabbitmq_manager.connect()
+    async def handle_submission(job): 
+        await submission_handler_result(
+            job, 
+            rabbitmq_manager
+        )
     await rabbitmq_manager.consume(
         SUBMISSION_QUEUE, 
-        None # Bo sung them ham handler vao day 
+        handle_submission # Bo sung them ham handler vao day 
     )
     app.state.rabbitmq_manager = rabbitmq_manager
     yield 

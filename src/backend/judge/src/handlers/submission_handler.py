@@ -1,7 +1,9 @@
 # Tien hanh chay code, sau do gui ket qua ve ben kia bang cach dung rabbitmq, thong qua RESULT_queue 
 
-from sandbox import sandbox_runner
-from src.dto.submission_dto import SubmissionJob
+from src.bases.constants.rabbit_queue import RESULT_QUEUE
+from src.modules.rabbitmq_manager import RabbitMQManger
+from src.sandbox import sandbox_runner
+from src.dto.submission_dto import SubmissionJob, SubmissionResult
 from src.sandbox.workspace import create_workspace, write_source_code
 from src.adapter.cpp_adapter import CppAdapter
 from src.adapter.python_adapter import PythonAdapter
@@ -14,7 +16,7 @@ def get_adapter(language : str):
         case 'cpp': return CppAdapter() 
     return None 
 
-async def submission_handler_result(data : SubmissionJob): 
+async def submission_handler_result(data : SubmissionJob , rabbitmq_manager : RabbitMQManger): 
     adapter = get_adapter(data.language) 
     if adapter is None: 
         print("Language is not modified")
@@ -40,6 +42,22 @@ async def submission_handler_result(data : SubmissionJob):
             stdin_data="" 
         )
         print(running_result) 
+        payload = SubmissionResult(
+            id = submission_id, 
+            status = "accepted", 
+            score = 100, 
+            exit_code= running_result.exit_code, 
+            stdout= running_result.stdout, 
+            stderr= running_result.stderr, 
+            runtime_ms= running_result.runtime_ms, 
+            timed_out= running_result.timed_out, 
+        )
+        await rabbitmq_manager.publish(
+            RESULT_QUEUE, 
+            payload.model_dump_json().encode('utf-8')
+        )
+        # Gui du lieu ve cho business-application thong qua rabbitmq 
+
 
     except Exception as e: 
         print(f"Running code error with {e}")

@@ -99,5 +99,5 @@ async def submission_result(
         # Gui du lieu qua ben judge_service thong qua SUBMISSION_QUEUE 
         await rabbitmq.publish(
             SUBMISSION_QUEUE, 
-            json.dumps(payload).encode('utf-8')
+            payload.model_dump_json().encode('utf-8')
         )
