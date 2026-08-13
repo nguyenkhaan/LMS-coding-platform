@@ -10,6 +10,7 @@
 - Chưa triển khai: 
     + Chỉ mới thực hiện quá trình mock database, (mock code), chưa giao tiếp với database thật sự 
     + Chưa hỗ trợ chạy testcase liên tục 
+    + Vẽ một sơ đồ mermaid mô tả luồng thực hiện. 
 
 ## Hướng dẫn các bước testing 
 

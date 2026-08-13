@@ -224,6 +224,8 @@ Các vấn đề liên quan để tang tính đồng bộ của database và UI
 
 ## 2. FE cần chỉnh sửa
 
+- Đọc xem chỗ nào hợp lý thì làm, chỗ nào không hợp lý thì có thể note lại, sau đó kiểm tra lại. 
+
 ### teacher_register
 
 | File | Cần chỉnh sửa |
@@ -231,6 +233,8 @@ Các vấn đề liên quan để tang tính đồng bộ của database và UI
 | `STD04TeacherApplication.md` | Hiển thị draft, submit, reject/resubmit và lịch sử review. |
 | `AD01TeacherRegistrationReview.md` | Hiển thị application status, note, reviewer và history. |
 | `AUTH07TeacherRegistration.md` | Đồng bộ field form với quyết định field profile/application; không hiển thị capability Teacher khi application chưa approved. |
+
+- **Student sẽ thực hiện đăng ký để lên làm teacher. student_profile (sẽ có 1 số data field). Student sẽ được nâng lên làm teacher => Thảo luận xem là những field mới đó là những field gì để tạo ra được sự đồng bộ giữa teacher_register_form và teacher_profile. Tạo được sự đồng bộ giữa teacher_profile, student_profile, teacher_register_form.**
 
 ### course_moderation
 
@@ -250,7 +254,7 @@ Các vấn đề liên quan để tang tính đồng bộ của database và UI
 | `STD03StudentFavorites.md` | Dùng dữ liệu favorite, thêm empty state, remove và undo. |
 | `INS01InstructorGrid.md`, `INS02InstructorList.md`, `INS03InstructorDetail.md` | Lấy dữ liệu instructor từ API projection, không dùng dữ liệu course hard-code. |
 
-### cart_payment_enrollment
+### cart_payment_enrollment (Bỏ)
 
 | File | Cần chỉnh sửa |
 | --- | --- |
@@ -293,6 +297,8 @@ Các vấn đề liên quan để tang tính đồng bộ của database và UI
 | `INTERVIEW01InterviewReport.md` | Hiển thị report generating, one-report rule, skill score và feedback theo dữ liệu API. |
 | `INTERVIEW02AIInterview.md` | Hiển thị max 12, early finish, pause/end state và text-only fallback. |
 | `INTERVIEW03InterviewSetup.md` | Hiển thị topic, level, permission microphone/camera và thông báo không lưu media. |
+
+- FE chỉnh sửa lại giao diện micro và camera, không làm dạng chatbot. 
 
 ### notification_audit
 

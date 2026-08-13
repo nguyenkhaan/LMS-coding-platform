@@ -1,3 +1,0 @@
-// LEGACY DATABASE FILE
-// The canonical database proposal is docs/DATABASE.txt.
-// Keep this file for compatibility; do not maintain a second schema here.
