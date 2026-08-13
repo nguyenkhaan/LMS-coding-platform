@@ -1,6 +1,6 @@
 from fastapi import Request
 
-from src.modules.rabbitmq.rabbitmq_manager import RabbitMQManager 
+from src.services.rabbitmq.rabbitmq_manager import RabbitMQManager 
 
 def get_rabbitmq_manager(
         request : Request 

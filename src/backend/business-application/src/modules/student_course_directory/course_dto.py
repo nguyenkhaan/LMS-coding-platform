@@ -1,3 +1,4 @@
+# Nho dung skill clean-comments de xoa di cac comment do AI tao ra **Quantrong** 
 from enum import Enum
 from datetime import datetime
 from typing import Optional
@@ -5,10 +6,6 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict
 from src.models.base_model import LessonContentType
 
-
-# ---------------------------------------------------------------------------
-# Shared enums
-# ---------------------------------------------------------------------------
 
 class PriceType(str, Enum):
     FREE = "free"
@@ -19,13 +16,6 @@ class EnrollStatus(str, Enum):
     ENROLLED = "enrolled"
     PENDING_PAYMENT = "pending_payment"
 
-
-# ContentType is not redefined here — use LessonContentType from src.models.base_model
-
-
-# ---------------------------------------------------------------------------
-# Public Course Catalog  (Endpoint 1 & 2)
-# ---------------------------------------------------------------------------
 
 class CourseItemResponse(BaseModel):
     id: int
@@ -72,10 +62,6 @@ class CourseDetailResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ---------------------------------------------------------------------------
-# Enroll / Unenroll  (Endpoint 3 & 9)
-# ---------------------------------------------------------------------------
-
 class EnrollResponse(BaseModel):
     status: EnrollStatus
     checkout_url: Optional[str] = None
@@ -86,10 +72,6 @@ class UnenrollResponse(BaseModel):
     message: str
     model_config = ConfigDict(from_attributes=True)
 
-
-# ---------------------------------------------------------------------------
-# Student Enrolled Courses  (Endpoint 4)
-# ---------------------------------------------------------------------------
 
 class EnrolledCourseResponse(BaseModel):
     id: int
@@ -105,9 +87,6 @@ class StudentCoursesResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ---------------------------------------------------------------------------
-# Study Mode  (Endpoint 5)
-# ---------------------------------------------------------------------------
 
 class LessonContentStudyResponse(BaseModel):
     id: int
@@ -140,21 +119,11 @@ class StudyResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-# ---------------------------------------------------------------------------
-# Progress  (Endpoint 6)
-# ---------------------------------------------------------------------------
-
 class CompleteContentResponse(BaseModel):
     message: str
     completed_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
-
-# ---------------------------------------------------------------------------
-# Quiz  (Endpoint 7)
-# NOTE: QuizOptionResponse intentionally has NO is_correct field — students
-#       must not receive the answer key when fetching questions.
-# ---------------------------------------------------------------------------
 
 class QuizOptionResponse(BaseModel):
     id: int
@@ -175,10 +144,6 @@ class QuizResponse(BaseModel):
     questions: list[QuizQuestionResponse]
     model_config = ConfigDict(from_attributes=True)
 
-
-# ---------------------------------------------------------------------------
-# Quiz Submit  (Endpoint 8)
-# ---------------------------------------------------------------------------
 
 class QuizSubmitRequest(BaseModel):
     # Map of question_id -> selected option_id

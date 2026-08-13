@@ -7,11 +7,13 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from src.modules.rabbitmq.rabbitmq_manager import RabbitMQManager
-from src.modules.rabbitmq.rabbitmq_service import handle_result
+from src.services.sse.sse_manager import SSEManager
+from src.services.rabbitmq.rabbitmq_manager import RabbitMQManager
+from src.services.rabbitmq.rabbitmq_handler import handle_result
 from src.bases.constants.rabbit_queue import RESULT_QUEUE
 # router 
 from src.modules.lesson_comment.lesson_comment_router import router as lesson_comment_router
+from src.modules.submission.submission_route import router as submission_router 
 from src.modules.student_course_directory.course_router import router as course_router
 from src.modules.student_course_directory.student_router import router as student_router
 from src.grpc.client import AuthGrpcClient
@@ -25,6 +27,7 @@ async def lifespan(app: FastAPI):
         Executed once when the application starts.
         Download and cache the JWT public key from the auth provider.
         Create RabbitMQ connection 
+        sse instance 
     """
     client = AuthGrpcClient(
         "localhost:50051"
@@ -35,7 +38,6 @@ async def lifespan(app: FastAPI):
     rabbitmq_manager = RabbitMQManager(
         url = RABBITMQ_URL
     ) 
-    
     # rabbit_mq consumer connect  
     await rabbitmq_manager.connect() 
     # consumer register 
@@ -45,13 +47,17 @@ async def lifespan(app: FastAPI):
     )
     # register to the application 
     app.state.rabbitmq_manager = rabbitmq_manager 
-    
+
+    # sse manager 
+    app.state.sse_manager = SSEManager()
+
     yield
     await rabbitmq_manager.close() 
     print('Rabbit MQ stopped')
     await client.close() 
     print('Grpc client stopped')
-    
+    app.state.sse_manager = None 
+    print('SSE connection stopped')
     # Cleanup if needed when the application shuts down.
     # Nguyen tac quan trong: Ai tao ra resource thi nguoi do phai dong resource
 
@@ -77,7 +83,7 @@ v1_router.include_router(health_router)
 v1_router.include_router(lesson_comment_router)
 v1_router.include_router(course_router)
 v1_router.include_router(student_router)
-
+v1_router.include_router(submission_router)
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc: RequestValidationError):
     errors = []

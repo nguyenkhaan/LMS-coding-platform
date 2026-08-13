@@ -43,3 +43,7 @@ def get_rabbitmq_manager(
 ```
 
 ### Cài đặt một số hàm service để xử lý rabbitmq 
+
+
+## Cài đặt SSE 
+SSE là cơ chế cho phép server đẩy dữ liệu tự động xuống client => Khi chấm bài xong thì tiến hành đẩy kết quả xuống client, bỏ tình trạng client phải pooling request liên tục. 
