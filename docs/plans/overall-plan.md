@@ -16,11 +16,12 @@ Ký hiệu đội phụ trách:
 - `docs/DATABASE.txt` là schema proposal canonical; model và Alembic migration trong source mới phản ánh database hiện tại.
 - API và UI không được sử dụng enum, field hoặc bảng mới trước khi migration và contract tương ứng được duyệt.
 - `LessonContent` trong MVP chỉ gồm `READING`, `QUIZ`, `PROBLEM`. Không xây dựng Video content, video progress hoặc HLS transcoder.
-- AI Interview chỉ lưu text chat và report. Microphone/camera là quyền sử dụng tại UI, không lưu audio/video recording.
-- Quyền Teacher chỉ có hiệu lực khi teacher application ở trạng thái `APPROVED`; role hoặc `teacher_profile.verified` không phải nguồn quyết định duy nhất.
+- AI Interview là voice-first: client chuyển microphone sang text để người học xem/sửa, có typed fallback; camera chỉ preview tùy chọn. Backend chỉ lưu text và report tổng hợp, không lưu audio/video recording hay feedback từng câu.
+- Quyền Teacher chỉ có hiệu lực khi teacher application ở trạng thái `APPROVED`; `teacher_profile` không tự cấp capability.
 - Mọi query dữ liệu cá nhân phải lọc theo current user hoặc resource ownership ở phía server.
 - Payment webhook, enrollment, quiz submit, judge result, interview report và payout settlement phải idempotent.
-- Dữ liệu tiền dùng kiểu chính xác `decimal`/`numeric`, đi kèm currency; không dùng `float` cho persistence.
+- Dữ liệu tiền dùng `decimal`/`numeric` hai chữ số thập phân với currency cố định `USD`; không dùng `float` cho persistence.
+- Checkout trực tiếp chỉ tạo transaction cho một course. Có thể có nhiều lịch sử transaction, nhưng service chỉ cho tối đa một `PENDING` chưa hết hạn cho mỗi `(student_id, course_id)`.
 - Hidden testcase, đáp án quiz, CCCD, token, secret và payment payload nhạy cảm không được trả sai đối tượng hoặc ghi vào log.
 - Mỗi task chỉ được coi là hoàn thành khi đầu ra, migration/test liên quan và tài liệu contract đã đồng bộ.
 
@@ -31,7 +32,7 @@ Phase 0: Chốt quyết định và contract
     -> Phase 1: Nền tảng, Auth, Notification/Audit foundation và khung FE
         -> Phase 2: Profile và Teacher Application
         -> Phase 3: Course, Catalog và Moderation
-            -> Phase 4: Cart, Payment, Enrollment và Revenue Ledger
+            -> Phase 4: Checkout trực tiếp, PayOS, Enrollment và Revenue Ledger
                 -> Phase 5: Learning, Quiz, Comment và Daily Activity foundation
                     -> Phase 6: Online Judge
         -> Phase 7: AI Interview
@@ -41,26 +42,48 @@ Phase 0: Chốt quyết định và contract
 
 Các task FE và BE trong cùng một lát cắt có thể thực hiện song song sau khi request/response, error code và state transition của lát cắt đó đã được chốt.
 
+### Bản đồ truy vết roadmap
+
+Mỗi task trong nhóm dưới đây phải dùng các nguồn tương ứng; tài liệu được nêu là điểm kiểm tra bắt buộc khi task thay đổi contract hoặc schema.
+
+| Task | PRD | API spec | `DATABASE.txt` / gate |
+|---|---|---|---|
+| BE-0.1–0.3, FE-0.1 | §3, §5–§7, §10 | §2, §4–§16 | Enum/tables canonical; open-gate revenue và activity; lowercase database path đã retired |
+| BE-1.1–1.2, FE-1.1 | §8, FR-001 | §1–§2 | `user` và hạ tầng shared; không tự thêm persisted field |
+| BE-1.3–1.5, FE-1.2 | §2, §6, FR-001/FR-010 | §3–§4, §12 | `user`, `user_role`, `notification`, `audit_log` |
+| BE-2.1–2.4, FE-2.1–2.2 | §2 Teacher, §3 Teacher application, FR-004 | §4–§5, §15 | `teacher_profile`, `teacher_register`, `teacher_register_history` |
+| BE-3.1–3.4, FE-3.1–3.3 | §2 Teacher/Student, §3 Course, FR-002–FR-004 | §6–§7, §15 | `courses`, `course_moderation_review`, `course_favorite`, `course_review`, curriculum tables |
+| BE-4.1–4.4, FE-4.1–4.2 | §3 Payment, §5 Payment trực tiếp, FR-005 | §9, §15 | `transaction`, `enrollment`; PayOS mock signed webhook |
+| BE-4.5, BE-8.1–8.2, FE-8.1 | §5 Wallet/payout, FR-009 | §10, §14–§15 | `wallet`, `wallet_ledger`, `payout_request`; revenue split/destination/settlement gate |
+| BE-5.1–5.2, FE-5.1 | §4 Learning, FR-006 | §7 | `lesson_content`, `lesson_content_progress`, `enrollment` |
+| BE-5.3, BE-8.4, FE-8.3 | §2 Student, FR-011 | §12, §14 | `student_daily_activity`; activity/timezone metric gate |
+| BE-5.4, FE-5.2 | §4 Quiz, FR-006 | §8.1, §15 | `quizzes`, `quiz_attempt`, `quiz_submission` |
+| BE-5.5, FE-5.3 | §6, FR-010 | §12 | Comment remains `GATED-SCHEMA` until canonical table is approved |
+| BE-6.1–6.4, FE-6.1–6.3 | §4 Online Judge, FR-007 | §8.2, §15 | `problem`, `problem_config`, `testcase`, `submission`, result/tag tables |
+| BE-7.1–7.3, FE-7.1–7.2 | §3/§6 AI Interview, FR-008 | §11, §15 | `interview_session`, text `interview_message`, aggregate `interview_reports` |
+| BE-8.3, BE-8.5, FE-8.2/8.4 | §6, FR-010–FR-011 | §12 | `notification`, `audit_log`, payment/enrollment and authorized projections |
+| BE-9.1–9.3, FE-9.1–9.3 | §8–§9 | §2, §15–§16 | Tất cả resource đã duyệt; không mở `GATED`/`GATED-SCHEMA` bằng test hoặc UI |
+
 ---
 
 ## Giai đoạn 0: Chốt quyết định nghiệp vụ và baseline contract
 
-**Mục tiêu:** Loại bỏ các điểm mâu thuẫn giữa tài liệu, schema hiện tại và schema đề xuất trước khi tạo migration hoặc triển khai UI mới.
+**Mục tiêu:** Loại bỏ các điểm mâu thuẫn giữa tài liệu, schema hiện tại và schema đề xuất trước khi tạo migration hoặc triển khai UI mới; cô lập rõ những policy còn mở vào workstream phụ thuộc của chúng.
 
-### [BE] Task BE-0.1: Chốt các quyết định nghiệp vụ đang mở
+### [BE] Task BE-0.1: Ghi nhận baseline quyết định Meeting 3
 
-**Tên:** Chốt course status, currency, order cardinality và các policy còn mở.
+**Tên:** Baseline nghiệp vụ đã chốt và các policy thực sự còn mở.
 
-**Mô tả:** Tổng hợp quyết định chính thức cho trạng thái course, currency và quy tắc làm tròn tiền, minimum payout, số course trong một order, số review trên một course, mô hình quiz attempt, điều kiện hoàn thành Problem và dữ liệu AI Interview report.
+**Mô tả:** Ghi nhận các quyết định đã duyệt làm baseline triển khai: Teacher Profile/Application 1-1, course lifecycle, USD, direct checkout một course, PayOS mock webhook ký, quiz attempt không save/resume, Problem passing score và AI Interview voice-first/text-only. Chỉ giữ revenue split/settlement và activity metrics là câu hỏi mở; `docs/database.txt` lowercase đã retired.
 
 **Yêu cầu đầu ra:**
 
-- Bảng quyết định có người duyệt, ngày duyệt, giá trị được chọn và lý do.
-- State machine cuối cùng cho teacher application, course, payment, payout và interview.
-- Policy activity day, timezone, streak, study time và problem solved cho Student Dashboard.
-- Cập nhật các quyết định vào PRD, gap analysis, database proposal và API spec nếu các tài liệu chưa thống nhất.
+- Decision ledger có người duyệt, ngày duyệt, giá trị đã chốt và lý do; không giữ chúng như blocker.
+- State machine canonical cho teacher application, course, payment, payout và interview; mapping legacy `PUBLISHED -> APPROVED`, `COMPLETE -> COMPLETED` được ghi rõ.
+- Danh sách tách biệt các policy chưa chốt: revenue split/payout destination/settlement và activity day/timezone/streak/study time.
+- Đồng bộ baseline vào PRD, gap analysis, `DATABASE.txt`, API spec và roadmap.
 
-**Chú ý đặc biệt:** Đây là task chặn các migration và API phụ thuộc. Không tự chọn giá trị còn mở chỉ để tiếp tục coding.
+**Chú ý đặc biệt:** Không mở lại quyết định đã duyệt hoặc tự chọn giá trị cho các policy còn mở chỉ để tiếp tục coding.
 
 ### [BE] Task BE-0.2: Lập bản đồ schema hiện tại sang schema mục tiêu
 
@@ -70,10 +93,10 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 **Yêu cầu đầu ra:**
 
-- Mapping `AGREE -> APPROVED`, `REJECT -> REJECTED` và mapping course/payment status đã được duyệt.
+- Mapping `AGREE -> APPROVED`, `REJECT -> REJECTED`, `PUBLISHED -> APPROVED`, `COMPLETE -> COMPLETED` và các enum canonical đã được duyệt.
 - Danh sách migration theo thứ tự, kèm chiến lược upgrade, backfill, validation và rollback.
 - Kế hoạch xử lý `Float -> Numeric`, `thumbnai_url -> thumbnail_url` và các foreign key/unique constraint mới.
-- Xác nhận `docs/database.txt` chỉ là legacy mirror, không tạo hai nguồn schema song song.
+- Ghi rõ `DATABASE.txt` là canonical; path lowercase lịch sử `docs/database.txt` đã retired, không tồn tại và không tạo nguồn schema song song.
 
 **Chú ý đặc biệt:** Migration enum PostgreSQL và thay đổi kiểu tiền phải được thử trên bản sao dữ liệu; không sửa migration lịch sử đã chạy ở môi trường dùng chung.
 
@@ -102,14 +125,14 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 - Danh sách màn hình theo Student, Teacher và Admin, kèm route frontend và API consumer.
 - Loại bỏ Video khỏi LessonContent builder, workspace, preview và progress.
-- Cập nhật các màn hình teacher application, course moderation, payment, payout, quiz, interview và dashboard theo lifecycle mới.
+- Cập nhật các màn hình teacher application (profile JSON + edit lock), course moderation, checkout/payment trực tiếp, payout, quiz restart-only, interview voice-first và dashboard theo lifecycle mới.
 - Danh sách asset còn thiếu hoặc chưa kiểm chứng, không mô tả chúng như thiết kế đã xác nhận.
 
 **Chú ý đặc biệt:** Microphone/camera trong Interview chỉ là permission và fallback UI; không thiết kế chức năng recording/upload media.
 
 ### Điều kiện hoàn thành giai đoạn 0
 
-- Không còn quyết định quan trọng bị ngầm định trong task triển khai.
+- Các quyết định Meeting 3 đã chốt được dùng làm baseline, không còn nhãn blocker/GATED trong task triển khai; mỗi policy còn mở có một gate riêng, không chặn các workstream độc lập.
 - Schema mapping, API coverage matrix và UI flow cùng dùng một bộ trạng thái.
 - FE và BE có thể phát triển song song từ contract đã duyệt.
 
@@ -241,13 +264,14 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 **Tên:** Schema Teacher Profile, application và review history.
 
-**Mô tả:** Tạo migration cho profile mở rộng, teacher application lifecycle, education, experience và lịch sử submit/review.
+**Mô tả:** Tạo migration cho Teacher Profile/Application 1-1, profile JSON và lịch sử submit/review tách biệt.
 
 **Yêu cầu đầu ra:**
 
 - Enum `DRAFT -> PENDING -> APPROVED | REJECTED` và backfill dữ liệu legacy.
-- Các bảng/field `teacher_profile`, `teacher_register`, `teacher_register_history`, `teacher_education`, `teacher_experience` đúng proposal đã duyệt.
-- Constraint ngăn trạng thái hoặc application làm việc không hợp lệ theo policy.
+- `teacher_profile` có `education_entries` và `experience_entries` JSON; không tạo bảng `teacher_education` hoặc `teacher_experience`.
+- `teacher_register.teacher_profile_id` là FK + unique tới profile, bảo đảm một application hiện hành cho một profile; history nằm ở `teacher_register_history`.
+- Service/migration policy bảo đảm `PENDING` khóa profile/application, `REJECTED` mới được sửa và submit lại, `APPROVED` chỉ mở whitelist application không nhạy cảm.
 - Migration test xác nhận upgrade và dữ liệu backfill.
 
 **Chú ý đặc biệt:** CCCD là dữ liệu nhạy cảm; phải xác định chính sách mã hóa/masking và không ghi raw value vào log/audit.
@@ -261,7 +285,7 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 **Yêu cầu đầu ra:**
 
 - `GET /users/me` trả user, profile, application status và `capabilities.can_teach`.
-- API cập nhật profile chỉ cho phép owner sửa field được whitelist.
+- API cập nhật Teacher Profile chỉ cho owner; `PENDING` bị khóa, còn `APPROVED` vẫn sửa các field profile nhưng không mở khóa identity/document của application.
 - Upload avatar/CV/CCCD qua object storage với file validation và URL an toàn.
 - Test chống đọc/sửa profile của user khác.
 
@@ -271,13 +295,14 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 **Tên:** Teacher application owner workflow.
 
-**Mô tả:** Triển khai save draft, update, submit, resubmit, current status và history cho Student.
+**Mô tả:** Triển khai save draft, update, submit, submit lại sau reject, current status và history cho Student.
 
 **Yêu cầu đầu ra:**
 
 - State transition được kiểm tra ở service, không nhận status tùy ý từ client.
 - Submit kiểm tra đủ field bắt buộc và ghi history event.
-- Application bị reject có thể sửa về `DRAFT`, sau đó resubmit về `PENDING`.
+- `DRAFT`/`REJECTED` được sửa và dùng cùng endpoint submit để chuyển sang `PENDING`; không có route resubmit riêng.
+- `PENDING` từ chối mọi update profile/application; `APPROVED` chỉ cho `bio`, `date_of_birth`, `motivation` và application field không nhạy cảm được whitelist.
 - API chỉ trả application của current user và mask dữ liệu nhạy cảm khi phù hợp.
 
 **Chú ý đặc biệt:** Mỗi transition phải atomic; request lặp không được tạo history hoặc side effect trùng ngoài policy.
@@ -305,9 +330,10 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 **Yêu cầu đầu ra:**
 
-- Form profile/application hỗ trợ education, experience và upload tài liệu.
+- Form Teacher Profile quản lý education/experience dạng JSON có validation; Application form quản lý PII/tài liệu xét duyệt tách biệt.
 - Hiển thị rõ trạng thái `DRAFT`, `PENDING`, `APPROVED`, `REJECTED` và note của reviewer.
-- Có save draft, validation trước submit và resubmit sau khi sửa.
+- Có save draft, validation trước submit và submit lại sau reject bằng cùng action; PENDING hiển thị read-only.
+- Khi APPROVED, UI chỉ cho sửa Teacher Profile và whitelist application không nhạy cảm; identity/document fields luôn read-only.
 - Lịch sử submit/review hiển thị theo thứ tự thời gian, không lộ dữ liệu nhạy cảm ngoài quyền.
 
 **Chú ý đặc biệt:** UI không mở Teacher Dashboard chỉ vì user có role/profile; phải dựa vào capability từ API.
@@ -321,7 +347,7 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 **Yêu cầu đầu ra:**
 
 - Bảng queue có filter, pagination, trạng thái và thời điểm submit.
-- Chi tiết có profile, education, experience, tài liệu, history và reviewer note.
+- Chi tiết có Teacher Profile (education/experience JSON), application/tài liệu, history và reviewer note.
 - Approve/reject có confirmation, loading, chống double-submit và cập nhật kết quả từ server.
 - Trạng thái invalid/đã được reviewer khác xử lý hiển thị đúng.
 
@@ -329,7 +355,7 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 ### Điều kiện hoàn thành giai đoạn 2
 
-- Luồng draft -> submit -> review -> reject/resubmit hoặc approve chạy end-to-end.
+- Luồng profile 1-1 + draft -> submit -> review -> reject/sửa/submit lại hoặc approve chạy end-to-end; PENDING không thể bị sửa.
 - Chỉ application approved mới kích hoạt Teacher capability.
 - History, notification và audit khớp với quyết định thực tế.
 
@@ -337,7 +363,7 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 ## Giai đoạn 3: Course Authoring, Moderation, Catalog và Instructor
 
-**Mục tiêu:** Cho phép Teacher đã duyệt xây dựng course; Admin kiểm duyệt; người dùng xem catalog, favorite và review đúng policy.
+**Mục tiêu:** Cho phép Teacher đã duyệt xây dựng course; Admin kiểm duyệt theo lifecycle canonical; người dùng xem catalog, favorite và review đúng policy.
 
 ### [BE] Task BE-3.1: Migration course moderation, favorite và review
 
@@ -347,7 +373,7 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 **Yêu cầu đầu ra:**
 
-- Backfill trạng thái course legacy và đổi `thumbnail_url`, kiểu giá chính xác.
+- Backfill `PUBLISHED -> APPROVED`, đổi `thumbnail_url`, price decimal hai chữ số và `currency: USD`.
 - Bảng `course_moderation_review`, `course_favorite`, `course_review` cùng index/constraint cần thiết.
 - Unique position cho section, lesson, lesson content theo parent.
 - Migration test và dữ liệu seed tối thiểu cho course lifecycle.
@@ -363,7 +389,7 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 **Yêu cầu đầu ra:**
 
 - Teacher chỉ thao tác course/problem/quiz/reading thuộc quyền của mình.
-- Course editable theo state; client không thể tự đặt status approved/public.
+- Course chỉ editable ở `DRAFT`/`REJECTED`; client không thể tự đặt status, currency, approved hoặc public.
 - Reorder atomic, không tạo position trùng hoặc chuyển item sang course khác.
 - Binding `(content_type, content_id)` được kiểm tra tồn tại, đúng loại và đúng ownership/course.
 
@@ -377,12 +403,12 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 **Yêu cầu đầu ra:**
 
-- Teacher submit/resubmit chỉ từ trạng thái hợp lệ và sau khi curriculum đạt validation tối thiểu.
-- Admin chỉ approve/reject course đang chờ duyệt; quyết định có note, reviewer và history.
+- Teacher submit/re-submit qua cùng action chỉ từ `DRAFT`/`REJECTED`, sau khi curriculum đạt validation tối thiểu; transition đến `PENDING_REVIEW`.
+- Admin chỉ approve/reject course `PENDING_REVIEW`; quyết định có note, reviewer và history.
 - Notification và audit được tạo cùng quyết định.
-- Course chưa approved không xuất hiện public; course archived vẫn áp dụng access policy cho learner đã mua.
+- Chỉ `APPROVED` xuất hiện ở catalog/bán được; `ARCHIVED` ẩn/ngừng bán nhưng learner đã enrollment vẫn truy cập được.
 
-**Chú ý đặc biệt:** Không trộn trạng thái review với visibility nếu Phase 0 quyết định tách hai state machine.
+**Chú ý đặc biệt:** Dùng đúng enum `DRAFT`, `PENDING_REVIEW`, `APPROVED`, `REJECTED`, `ARCHIVED`; `PUBLISHED` chỉ còn mapping migration legacy.
 
 ### [BE] Task BE-3.4: API Catalog, Instructor, Favorite và Course Review
 
@@ -392,12 +418,12 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 **Yêu cầu đầu ra:**
 
-- Catalog chỉ trả course eligible theo trạng thái/visibility đã duyệt.
+- Catalog chỉ trả course `APPROVED`.
 - Search/filter/tag/pagination ổn định và có index phù hợp.
 - Favorite thuộc current user và idempotent theo `(student_id, course_id)`.
-- Chỉ Student đã enrollment được review; rating tổng được tính từ review hoặc cache có thể tái tạo.
+- Chỉ Student đã enrollment được review và unique `(student_id, course_id)`; rating tổng được tính từ review hoặc cache có thể tái tạo.
 
-**Chú ý đặc biệt:** Không dùng lesson comment thay cho course review; multiplicity review theo quyết định Phase 0.
+**Chú ý đặc biệt:** Không dùng lesson comment thay cho course review; mỗi Student chỉ có một review cho một course.
 
 ### [FE] Task FE-3.1: Catalog, Course Detail, Instructor và Favorite UI
 
@@ -412,7 +438,7 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 - Favorite có add/remove, optimistic state an toàn và rollback khi API lỗi.
 - Instructor projection không dùng dữ liệu hard-code từ course card.
 
-**Chú ý đặc biệt:** Không hiển thị course chưa approved; không cho mua lại course đã enrollment.
+**Chú ý đặc biệt:** Chỉ hiển thị course `APPROVED`; không cho mua lại course đã enrollment.
 
 ### [FE] Task FE-3.2: Teacher Course Builder UI
 
@@ -446,57 +472,58 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 ### Điều kiện hoàn thành giai đoạn 3
 
-- Teacher approved có thể tạo, gửi duyệt, sửa và resubmit course.
-- Admin có thể approve/reject với history; catalog chỉ hiển thị course hợp lệ.
-- Favorite và review hoạt động theo current user/enrollment policy.
+- Teacher approved có thể tạo `DRAFT`, gửi `PENDING_REVIEW`, sửa/re-submit `REJECTED`; Admin có thể approve/reject/archive với history.
+- Catalog chỉ hiển thị/bán `APPROVED`; `ARCHIVED` vẫn mở cho learner đã enrollment.
+- Favorite và một review duy nhất cho mỗi Student/course hoạt động theo current user/enrollment policy.
 
 ---
 
-## Giai đoạn 4: Cart, PayOS, Order và Enrollment
+## Giai đoạn 4: Checkout trực tiếp, PayOS, Enrollment và Revenue Ledger
 
-**Mục tiêu:** Xây dựng luồng thương mại an toàn, chính xác và idempotent từ cart tới quyền học.
+**Mục tiêu:** Xây dựng luồng thanh toán trực tiếp một course an toàn, chính xác và idempotent từ transaction tới quyền học; không có Cart hoặc Order trong MVP.
 
 ### [BE] Task BE-4.1: Migration commerce và enrollment constraint
 
-**Tên:** Schema cart, order, transaction và enrollment.
+**Tên:** Schema direct transaction và enrollment.
 
-**Mô tả:** Tạo schema commerce theo order cardinality/currency đã chốt, chuyển transaction sang kiểu tiền chính xác và bổ sung idempotency.
+**Mô tả:** Migration commerce theo direct checkout đã chốt: transaction gắn trực tiếp Student/course, snapshot USD, expiry, provider state và idempotency.
 
 **Yêu cầu đầu ra:**
 
-- Bảng `cart`, `cart_item`, `orders`, `order_item` và liên kết transaction.
-- Payment status `PENDING`, `COMPLETED`, `FAILED`, `EXPIRED` cùng mapping legacy.
-- Price snapshot, currency, expiry, provider reference, signature state và idempotency key.
+- Không tạo hoặc loại bỏ `cart`, `cart_item`, `orders`, `order_item`; `transaction` trực tiếp có `student_id`, `course_id`.
+- Payment status `PENDING`, `COMPLETED`, `FAILED`, `EXPIRED` cùng mapping legacy `COMPLETE -> COMPLETED`.
+- Price snapshot USD decimal hai chữ số, expiry, PayOS reference, signature state và idempotency key.
 - Unique `(student_id, course_id)` cho enrollment và migration test.
+- Service workflow lock theo `(student_id, course_id)` để nhiều transaction lịch sử vẫn chỉ có một `PENDING` chưa hết hạn.
 
-**Chú ý đặc biệt:** Nếu MVP một course/order, schema và service phải enforce nhất quán dù cart có nhiều item.
+**Chú ý đặc biệt:** Quy tắc active-pending phụ thuộc thời gian không được mô hình hóa bằng static database `UNIQUE`; phải enforce trong transaction/service workflow.
 
-### [BE] Task BE-4.2: API Cart và Checkout
+### [BE] Task BE-4.2: API Direct Checkout
 
-**Tên:** Current-user cart và tạo checkout.
+**Tên:** Tạo checkout một course cho current Student.
 
-**Mô tả:** Triển khai list/add/remove cart, validate course eligibility và tạo order/payment pending từ price snapshot.
+**Mô tả:** Triển khai `POST /courses/{course_id}/checkout`, validate course eligibility và tạo/reuse transaction `PENDING` từ snapshot giá server.
 
 **Yêu cầu đầu ra:**
 
-- Cart chỉ thuộc current Student; course trùng hoặc đã enrollment bị chặn.
-- Checkout dùng giá từ server, lưu snapshot/currency/expiry và idempotency key.
-- Request lặp với cùng key trả lại kết quả cũ, không tạo order/transaction trùng.
+- Chỉ current Student checkout course `APPROVED` chưa enrollment; không có API Cart/Order.
+- Checkout dùng giá USD từ server, lưu snapshot/currency/expiry và idempotency key.
+- Request lặp với cùng key trả lại transaction cũ; request key khác khi đang có PENDING còn hạn phải trả/reuse active transaction, không tạo pending trùng.
 - Free course tạo enrollment theo cùng policy idempotency.
 
 **Chú ý đặc biệt:** Không tin amount, currency, course status hoặc ownership gửi từ client.
 
-### [BE] Task BE-4.3: PayOS Webhook và payment lifecycle
+### [BE] Task BE-4.3: PayOS mock webhook và payment lifecycle
 
-**Tên:** PayOS create, status và verified webhook.
+**Tên:** PayOS mô phỏng sát provider, status và verified webhook.
 
-**Mô tả:** Tích hợp PayOS, xác thực webhook và cập nhật payment lifecycle an toàn trước retry/race condition.
+**Mô tả:** Mô phỏng luồng PayOS gần integration thật, xác thực test signature ở webhook backend và cập nhật payment lifecycle an toàn trước retry/race condition.
 
 **Yêu cầu đầu ra:**
 
-- API tạo checkout và API owner/admin đọc payment status.
-- Webhook verify signature, transaction reference, amount và currency.
-- Xử lý webhook lặp bằng transaction/locking/idempotency; failed/expired không tạo enrollment.
+- API tạo checkout và API owner/Admin đọc payment status để frontend poll.
+- Chỉ webhook test có chữ ký hợp lệ được chuyển transaction sang `COMPLETED`; verify signature, transaction reference, amount và currency USD.
+- Webhook lặp dùng transaction/locking/idempotency; expiry worker chuyển pending quá hạn sang `EXPIRED`; failed/expired không tạo enrollment.
 - Ghi audit correlation và notification mà không lưu raw secret/payment token.
 
 **Chú ý đặc biệt:** Client polling chỉ đọc trạng thái; client không được tự xác nhận thanh toán thành công.
@@ -516,35 +543,35 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 **Chú ý đặc biệt:** Không gọi nhiều side effect không thể rollback trong cùng DB transaction nếu chưa có outbox/retry strategy.
 
-### [BE] Task BE-4.5: Wallet Ledger foundation và ghi nhận revenue split
+### [BE] Task BE-4.5: Wallet Ledger foundation và payment accounting
 
-**Tên:** Revenue ledger trong luồng payment completed.
+**Tên:** Ledger immutable trong luồng payment completed.
 
-**Mô tả:** Tạo schema wallet/ledger và tích hợp việc ghi doanh thu vào transaction xử lý payment thành công, để hoàn tất đầy đủ side effect commerce theo PRD trước khi mở khóa giai đoạn Learning.
+**Mô tả:** Tạo wallet/ledger USD và đường ghi idempotent từ payment completed. Revenue split, payout destination và settlement không được suy diễn trong task này; phần allocation/settlement chỉ mở sau policy được duyệt.
 
 **Yêu cầu đầu ra:**
 
-- Migration cho `wallet` và immutable `wallet_ledger`, có currency, source transaction/order và constraint idempotency.
-- Mỗi payment `COMPLETED` tạo đúng một nhóm revenue entries theo policy chia doanh thu đã duyệt.
+- Migration cho `wallet` và immutable `wallet_ledger`, currency USD, source `transaction` (không có order) và constraint idempotency.
+- Mỗi payment `COMPLETED` tạo payment-accounting/ledger side effect đúng một lần theo revenue policy được duyệt; nếu policy chưa có, không credit hay split bằng giá trị tự suy ra.
 - Enrollment, revenue ledger, notification và audit được điều phối bằng transaction/outbox strategy nhất quán.
 - Có reconciliation query/test và concurrency test chứng minh webhook lặp không nhân đôi doanh thu.
 
 **Chú ý đặc biệt:** Không cộng trực tiếp balance mà không có ledger entry. API wallet summary/ledger và payout workflow vẫn thuộc giai đoạn 8.
 
-### [FE] Task FE-4.1: Shopping Cart và Checkout UI
+### [FE] Task FE-4.1: Direct Checkout UI
 
-**Tên:** Cart, order summary và PayOS checkout.
+**Tên:** Course checkout trực tiếp và PayOS mock.
 
-**Mô tả:** Triển khai `PAY01` và `PAY02` theo order cardinality/currency đã chốt.
+**Mô tả:** Thay `PAY01` Cart bằng action checkout trực tiếp từ course; triển khai `PAY02` theo transaction USD và PayOS mock.
 
 **Yêu cầu đầu ra:**
 
-- Cart current user có add/remove, empty state và thông báo course đã enrollment.
-- Checkout hiển thị price snapshot, currency, expiry và QR/link từ server.
+- Không có Cart/add/remove/order summary; course đã enrollment không hiển thị action checkout.
+- Checkout hiển thị price snapshot USD, expiry và QR/link từ server.
 - Countdown dựa trên `expires_at`, không tự giả định thời gian cố định.
-- Chống double-submit và xử lý active payment đang tồn tại.
+- Chống double-submit và mở lại active payment còn hạn do server trả về.
 
-**Chú ý đặc biệt:** Tổng tiền hiển thị phải lấy từ response checkout, không tính như nguồn quyết định ở client.
+**Chú ý đặc biệt:** Tổng tiền hiển thị phải lấy từ response checkout, không tính như nguồn quyết định ở client; UI không có control đánh dấu thanh toán thành công.
 
 ### [FE] Task FE-4.2: Payment Result và Enrolled Course UI
 
@@ -557,15 +584,15 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 - Hiển thị đầy đủ `PENDING`, `COMPLETED`, `FAILED`, `EXPIRED`.
 - Polling có backoff/timeout và dừng khi trạng thái terminal hoặc component unmount.
 - Khi completed, xác nhận enrollment từ server rồi mới điều hướng vào học.
-- Reload trang vẫn khôi phục đúng trạng thái từ transaction/order code của owner.
+- Reload trang vẫn khôi phục đúng trạng thái từ `transaction_code` của owner.
 
 **Chú ý đặc biệt:** Không hiển thị thành công chỉ dựa vào redirect query hoặc dữ liệu từ client.
 
 ### Điều kiện hoàn thành giai đoạn 4
 
-- Cart/checkout/payment/enrollment chạy end-to-end trên PayOS sandbox.
-- Webhook sai chữ ký bị từ chối; webhook lặp không nhân đôi enrollment, revenue ledger, notification hoặc audit.
-- Payment thành công đã ghi revenue split vào immutable wallet ledger trước khi giai đoạn Learning bắt đầu.
+- Direct checkout/payment/enrollment chạy end-to-end với PayOS mock signed webhook; không có Cart/Order route hoặc UI.
+- Webhook sai chữ ký bị từ chối; webhook lặp không nhân đôi enrollment, revenue ledger, notification hoặc audit; frontend không thể chuyển payment sang `COMPLETED`.
+- Payment completed có payment-accounting/ledger side effect idempotent; không phát hành revenue split/settlement chưa được duyệt.
 - UI khôi phục đúng payment state sau reload và không cho mua lại course.
 
 ---
@@ -598,7 +625,7 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 **Yêu cầu đầu ra:**
 
 - Reading completion chỉ cho owner có access và idempotent.
-- Quiz completion dựa vào passing score/attempt hợp lệ; Problem completion dựa vào policy đã chốt.
+- Quiz completion dựa vào terminal submission của `quiz_attempt` hợp lệ và `quizzes.passing_score`; Problem completion chỉ khi `ACCEPTED` đạt `problem.passing_score` do Teacher cấu hình.
 - Progress unique theo `(enrollment_id, lesson_content_id)` và không tạo cho content ngoài course.
 - API progress trả phần trăm/continue-learning có thể tái tính từ dữ liệu nguồn.
 
@@ -608,31 +635,31 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 **Tên:** Nguồn dữ liệu hoạt động hằng ngày cho Student Dashboard.
 
-**Mô tả:** Tạo schema và cơ chế ghi/tổng hợp hoạt động trước khi Reading, Quiz và Online Judge bắt đầu phát sinh dữ liệu contribution, study time và solved problem.
+**Mô tả:** Chuẩn bị schema `student_daily_activity` và integration point cho Reading/Quiz/Judge. Chỉ mở aggregation/KPI sau khi activity day, timezone, streak, study time và solved-problem policy được duyệt.
 
 **Yêu cầu đầu ra:**
 
 - Migration cho `student_daily_activity` với unique `(student_id, activity_date)` và index phục vụ dashboard.
-- Contract event xác định nguồn contribution, study seconds và solved problem theo quyết định Phase 0.
-- Aggregation dùng timezone đã duyệt, idempotent theo source event và chịu được retry.
-- Reading completion, Quiz passed và Judge Accepted có integration point rõ ràng; event không được tính lặp.
+- Ghi rõ event contract đang chờ duyệt cho contribution, study seconds và solved problem; không phát hành metric giả trước gate này.
+- Sau khi policy được duyệt, aggregation dùng timezone đã chốt, idempotent theo source event và chịu được retry.
+- Reading completion, Quiz passed và Judge `ACCEPTED` đạt `problem.passing_score` có integration point rõ ràng; event không được tính lặp.
 
-**Chú ý đặc biệt:** `user_history.problem_count` chỉ là aggregate legacy. Nếu study time chưa có nguồn đo đáng tin cậy, không tự tạo số liệu; field phải giữ 0/không khả dụng theo contract.
+**Chú ý đặc biệt:** `user_history.problem_count` chỉ là aggregate legacy. Nếu policy/nguồn đo chưa được duyệt, field phải giữ 0/không khả dụng và dashboard không được diễn giải thành KPI thật.
 
 ### [BE] Task BE-5.4: API Quiz Authoring và Attempt Lifecycle
 
-**Tên:** Quiz management, start/resume/save/submit/history.
+**Tên:** Quiz management, start/submit/history không save-resume.
 
-**Mô tả:** Hoàn thiện Teacher quản lý quiz/question/option và Student thực hiện attempt theo passing score, retry và expiry policy.
+**Mô tả:** Hoàn thiện Teacher quản lý quiz/question/option và Student thực hiện mỗi `quiz_attempt` từ đầu, nộp một đáp án cuối và xem history.
 
 **Yêu cầu đầu ra:**
 
 - Teacher ownership được kiểm tra cho quiz/question/option.
-- Student start/resume/save/submit theo `IN_PROGRESS`, `SUBMITTED`, `ABANDONED`.
-- Không vượt attempt limit; submit lặp idempotent và cập nhật progress khi đạt điểm.
+- Start tạo row `quiz_attempt` mới; Student không save/resume, chỉ submit final `answers` khi `IN_PROGRESS`.
+- Không vượt attempt limit; mỗi attempt chỉ có một `quiz_submission` terminal; submit lặp trả kết quả đã có và cập nhật progress khi đạt điểm.
 - Learner payload không chứa `is_correct` hoặc answer key trước submit.
 
-**Chú ý đặc biệt:** Mô hình dùng `quiz_submission` mở rộng hay bảng `quiz_attempt` phải theo quyết định Phase 0, không triển khai cả hai song song.
+**Chú ý đặc biệt:** Dùng `quiz_attempt` riêng và quan hệ terminal 1-1 `quiz_submission.quiz_attempt_id`; không tạo saved-answer endpoint hoặc resume flow.
 
 ### [BE] Task BE-5.5: Hoàn thiện Lesson Comment API
 
@@ -666,14 +693,14 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 ### [FE] Task FE-5.2: Quiz Attempt UI
 
-**Tên:** Quiz preview, attempt, resume và result.
+**Tên:** Quiz preview, attempt restart-only và result.
 
 **Mô tả:** Triển khai `QUIZ01` và `QUIZ02` theo attempt contract.
 
 **Yêu cầu đầu ra:**
 
-- Preview hiển thị passing score, max attempts, attempts left và Resume khi có attempt active.
-- Answer save có trạng thái rõ ràng, khôi phục được sau reload nếu policy cho phép.
+- Preview hiển thị passing score, max attempts, attempts left và thông báo mỗi attempt mới bắt đầu lại từ đầu.
+- Form giữ câu trả lời cục bộ trước khi submit; không gọi API save hay khôi phục/resume attempt sau reload.
 - Submit có confirmation, chống double-submit và hiển thị score/passed/history.
 - Attempt limit, expired/abandoned và invalid state có giao diện riêng.
 
@@ -697,9 +724,9 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 ### Điều kiện hoàn thành giai đoạn 5
 
 - Student đã enrollment có thể học đúng ba loại content và thấy progress chính xác.
-- Quiz tuân thủ attempt/passing policy; client không thấy đáp án trước thời điểm cho phép.
+- Quiz dùng `quiz_attempt` restart-only và terminal submission duy nhất; client không thấy đáp án trước thời điểm cho phép.
 - Comment không thể bị đọc hoặc tạo bởi user không có quyền truy cập course.
-- Reading/Quiz activity được ghi idempotent vào nguồn daily activity và sẵn sàng cho Online Judge/Student Dashboard.
+- Reading/Quiz có integration point idempotent vào `student_daily_activity`; không phát hành KPI/heatmap/streak cho đến khi activity policy được duyệt.
 
 ---
 
@@ -716,7 +743,7 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 **Yêu cầu đầu ra:**
 
 - Dùng một relation Problem-Tag canonical, có unique composite và API filter.
-- Teacher chỉ quản lý problem/testcase/config thuộc quyền mình.
+- Teacher chỉ quản lý problem/testcase/config thuộc quyền mình và cấu hình `problem.passing_score` không âm.
 - File testcase được kiểm tra định dạng/kích thước và lưu qua object storage hoặc cơ chế đã duyệt.
 - Public problem projection không chứa hidden testcase input/output.
 
@@ -748,7 +775,7 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 - Submit tạo `PENDING`, worker chuyển `RUNNING` rồi terminal state.
 - Retry/duplicate result không cập nhật terminal submission sai hoặc tạo result detail trùng.
 - Hidden testcase response chỉ có status/runtime/memory/score aggregate được phép.
-- Accepted submission cập nhật đúng LessonContent progress và activity theo policy.
+- Chỉ submission `ACCEPTED` đạt `problem.passing_score` cập nhật LessonContent progress và activity theo policy.
 
 **Chú ý đặc biệt:** Message phải có correlation/idempotency key; queue retry và dead-letter policy phải được tài liệu hóa.
 
@@ -808,7 +835,7 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 - Hiển thị đủ các submission status, runtime, memory và score được phép.
 - Polling dừng ở terminal state, có backoff và cleanup.
 - Hidden testcase chỉ hiển thị summary, không có raw input/output/expected output.
-- Accepted result cập nhật completion/progress trong workspace.
+- Chỉ accepted result đạt `problem.passing_score` cập nhật completion/progress trong workspace.
 
 **Chú ý đặc biệt:** FE không suy luận hidden testcase từ thứ tự hay metadata ngoài contract.
 
@@ -817,33 +844,35 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 - Code không tin cậy luôn chạy ngoài Business Application và không có network.
 - Submission lifecycle chịu được retry, worker failure và duplicate message.
 - Hidden testcase được bảo vệ ở cả API và UI.
+- Problem progress chỉ được cập nhật khi `ACCEPTED` đạt ngưỡng Teacher cấu hình.
 
 ---
 
 ## Giai đoạn 7: AI Interview
 
-**Mục tiêu:** Cung cấp phiên phỏng vấn text tối đa 12 câu, có thể kết thúc sớm và tạo đúng một final report.
+**Mục tiêu:** Cung cấp trải nghiệm phỏng vấn voice-first tối đa 12 câu, có typed fallback, camera preview-only và đúng một final aggregate report.
 
 ### [BE] Task BE-7.1: Migration và API Interview Session
 
 **Tên:** Interview lifecycle, messages và owner access.
 
-**Mô tả:** Chuyển session từ boolean sang lifecycle, chuẩn hóa sender và triển khai create/list/chat/end.
+**Mô tả:** Chuyển session từ boolean sang lifecycle, chuẩn hóa sender và triển khai create/list/answer/end. API chỉ nhận answer text từ speech-to-text hoặc typed fallback.
 
 **Yêu cầu đầu ra:**
 
 - Status `ACTIVE`, `REPORT_GENERATING`, `COMPLETED`, `ABORTED`, `FAILED`.
 - Lưu `max_questions`, `question_count`, timestamps và sender `AI/STUDENT/SYSTEM`.
-- Chỉ session owner được chat/end/view; max 12 câu và early finish được enforce server-side.
+- Chỉ session owner được answer/end/view; max 12 câu và early finish được enforce server-side.
+- Endpoint answer từ chối audio/video/image payload; không có route hay state chatbot.
 - End session idempotent và chuyển sang report generation đúng một lần.
 
-**Chú ý đặc biệt:** Không thêm cột hoặc storage cho audio/video recording.
+**Chú ý đặc biệt:** Không thêm cột/storage cho audio/video recording hoặc camera analysis; chỉ persist `interview_message.content` text.
 
 ### [BE] Task BE-7.2: AI provider integration và conversation policy
 
-**Tên:** Sinh câu hỏi và quản lý hội thoại AI.
+**Tên:** Sinh câu hỏi phỏng vấn và quản lý answer flow AI.
 
-**Mô tả:** Tích hợp AI provider theo topic/level, kiểm soát prompt, timeout, retry, rate limit và fallback.
+**Mô tả:** Tích hợp AI provider theo topic/level, kiểm soát question/answer flow, prompt, timeout, retry, rate limit và fallback; không thiết kế chatbot UI.
 
 **Yêu cầu đầu ra:**
 
@@ -858,31 +887,31 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 **Tên:** Idempotent interview report generation.
 
-**Mô tả:** Tạo worker tổng hợp chat, sinh report cấu trúc và lưu một report duy nhất cho session.
+**Mô tả:** Tạo worker tổng hợp message text, sinh report cấu trúc và lưu một report duy nhất cho session.
 
 **Yêu cầu đầu ra:**
 
 - Unique `session_id` ở report và idempotency key cho report job.
-- Report schema có overall score, strengths, weaknesses, suggestions và skill/question feedback theo quyết định Phase 0.
+- Report schema chỉ có `overall_score`, `strengths`, `weaknesses`, `suggestions`; không có skill score hoặc feedback theo từng câu.
 - Success chuyển session `COMPLETED`; lỗi cuối chuyển `FAILED` nhưng vẫn cho phép policy retry có kiểm soát.
 - Tạo notification `AI_REPORT_READY` đúng một lần.
 
 **Chú ý đặc biệt:** Không ghi full prompt hoặc nội dung nhạy cảm vào application log.
 
-### [FE] Task FE-7.1: Interview Setup và Chat UI
+### [FE] Task FE-7.1: Interview Setup và Voice-first Answer UI
 
-**Tên:** Setup topic/level, permission và interview session.
+**Tên:** Setup topic/level, microphone/camera preview và answer flow.
 
-**Mô tả:** Triển khai setup và chat theo `INTERVIEW02/03`, gồm text-only fallback và lifecycle server.
+**Mô tả:** Triển khai setup và interview answer flow theo `INTERVIEW02/03`: microphone speech-to-text có thể xem/sửa, typed fallback và lifecycle server; không dùng UI chatbot.
 
 **Yêu cầu đầu ra:**
 
 - Chọn topic/level, hiển thị thông báo tối đa 12 câu và chính sách không lưu media.
-- Microphone/camera permission có trạng thái allow/deny/unavailable; chat text luôn là fallback.
+- Microphone/camera permission có trạng thái allow/deny/unavailable; microphone chỉ tạo text local trước khi gửi và camera chỉ preview-only; typed text luôn là fallback.
 - Hiển thị question count, early finish, end confirmation và session terminal states.
-- Chống gửi nhiều message đồng thời và xử lý rate limit/provider error.
+- Chống gửi nhiều answer đồng thời và xử lý rate limit/provider error.
 
-**Chú ý đặc biệt:** Không upload hoặc lưu stream microphone/camera lên backend trong MVP.
+**Chú ý đặc biệt:** Không upload/lưu stream microphone/camera lên backend, không gửi media tới AI provider và không dùng dữ liệu camera cho proctoring trong MVP.
 
 ### [FE] Task FE-7.2: Interview History và Report UI
 
@@ -894,16 +923,16 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 - Danh sách chỉ hiển thị session current user, có pagination/empty state.
 - `REPORT_GENERATING` có polling/backoff; completed hiển thị report; failed/aborted có hướng dẫn phù hợp.
-- Skill score và question feedback chỉ render khi contract trả về.
+- Chỉ render final aggregate report; không render skill score hoặc feedback theo từng câu.
 - Reload hoặc mở lại report không tạo job/report mới.
 
 **Chú ý đặc biệt:** Không gọi endpoint end session chỉ để kiểm tra report status.
 
 ### Điều kiện hoàn thành giai đoạn 7
 
-- Session owner hoàn thành được interview tối đa 12 câu và nhận một report duy nhất.
+- Session owner hoàn thành được interview voice-first hoặc typed fallback tối đa 12 câu và nhận một aggregate report duy nhất.
 - Provider lỗi/retry không tạo duplicate message/report.
-- Không có audio/video recording được lưu trong database hoặc object storage.
+- Không có audio/video/image được gửi, lưu trong database/object storage hoặc dùng để đánh giá; camera chỉ preview tại client.
 
 ---
 
@@ -915,7 +944,7 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 **Tên:** Teacher wallet summary và ledger read model.
 
-**Mô tả:** Xây dựng API đọc wallet/ledger từ nền tảng revenue accounting đã hoàn thành ở giai đoạn 4, phục vụ Teacher xem số dư và lịch sử giao dịch.
+**Mô tả:** Xây dựng API đọc wallet/ledger USD từ payment-accounting foundation ở giai đoạn 4, phục vụ Teacher xem số dư và lịch sử giao dịch trong phạm vi revenue policy đã duyệt.
 
 **Yêu cầu đầu ra:**
 
@@ -924,22 +953,22 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 - API wallet summary và ledger chỉ trả dữ liệu current Teacher.
 - Test xác nhận summary khớp tổng ledger và không rò rỉ dữ liệu Teacher khác.
 
-**Chú ý đặc biệt:** Task này không tạo lại revenue entry từ payment; write path duy nhất nằm ở BE-4.5. Balance không được tính từ riêng trang ledger hiện tại.
+**Chú ý đặc biệt:** Task này không tạo lại revenue entry từ payment; write path duy nhất nằm ở BE-4.5. Balance không được tính từ riêng trang ledger hiện tại hoặc từ revenue split tự suy diễn.
 
 ### [BE] Task BE-8.2: Payout lifecycle và Admin settlement
 
 **Tên:** Payout request, review và settlement.
 
-**Mô tả:** Triển khai Teacher tạo payout request và Admin approve/reject/settle theo lifecycle.
+**Mô tả:** Triển khai Teacher tạo payout request và Admin approve/reject/settle theo lifecycle, với USD/minimum đã chốt. Revenue split, payout destination và settlement mechanism là input còn mở; không tự suy ra từ Teacher Profile.
 
 **Yêu cầu đầu ra:**
 
-- Validate amount, currency, minimum và available balance theo policy.
+- Validate amount USD, minimum `0.00 USD` và available balance theo policy.
 - Tạo reserve ledger atomically; chỉ payout `PENDING` được review.
 - `APPROVED -> PROCESSING -> COMPLETED | FAILED`; reject/failure tạo compensating entry đúng một lần.
-- Reviewer, settlement reference, failure reason, audit và notification được lưu.
+- Reviewer, settlement reference, failure reason, audit và notification được lưu; destination/transfer provider chỉ được tích hợp sau khi có canonical policy/source.
 
-**Chú ý đặc biệt:** Không sửa/xóa ledger entry cũ để hoàn tiền; luôn dùng entry bù trừ.
+**Chú ý đặc biệt:** Không sửa/xóa ledger entry cũ để hoàn tiền; luôn dùng entry bù trừ. Không phát hành settlement thật hoặc credit arbitrary amount khi revenue split/destination chưa được duyệt.
 
 ### [BE] Task BE-8.3: Notification và Audit query API
 
@@ -960,11 +989,11 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 **Tên:** Current-user KPI, activity và recommendation.
 
-**Mô tả:** Xây dựng dashboard projection từ enrollment, progress, interview, submission, daily activity và Problem-Tag.
+**Mô tả:** Sau khi activity contract được duyệt, xây dựng dashboard projection từ enrollment, progress, interview, submission, daily activity và Problem-Tag. Trước gate này chỉ phát hành các projection không phụ thuộc metric.
 
 **Yêu cầu đầu ra:**
 
-- API chỉ trả current Student: KPI, heatmap, streak, study time, continue learning, recent interview và recommended problems.
+- API chỉ trả current Student; KPI, heatmap, streak và study time chỉ xuất hiện khi metric/timezone contract đã duyệt; continue learning, recent interview và recommendation không được suy diễn sai từ metric thiếu.
 - API đọc `student_daily_activity` đã được ghi từ giai đoạn 5/6, không tổng hợp lại side effect trong request dashboard.
 - Recommendation có rule/fallback rõ ràng và không chỉ dựa vào `user_history.problem_count`.
 - Query có index, pagination/limit và performance test hợp lý.
@@ -980,7 +1009,7 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 **Yêu cầu đầu ra:**
 
 - Teacher chỉ thấy doanh thu, course, Student và progress thuộc course mình.
-- Admin quản lý account status, xem payment/order và audit theo filter/pagination.
+- Admin quản lý account status, xem payment transaction/enrollment và audit theo filter/pagination; không có order resource.
 - User bị ban bị từ chối ở request tiếp theo và refresh session bị vô hiệu hóa theo policy.
 - Aggregate có cache/invalidation hoặc query optimization được đo trước khi áp dụng.
 
@@ -994,12 +1023,12 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 **Yêu cầu đầu ra:**
 
-- Hiển thị available/pending balance, currency và ledger có filter/pagination.
+- Hiển thị available/pending balance USD và ledger có filter/pagination.
 - Form payout validate sơ bộ nhưng hiển thị kết quả quyết định từ server.
 - Hiển thị đầy đủ pending, approved, rejected, processing, completed, failed.
 - Reject/failure reason và compensating balance được refresh chính xác.
 
-**Chú ý đặc biệt:** Không tính balance bằng cách cộng danh sách trang hiện tại ở client.
+**Chú ý đặc biệt:** Không tính balance bằng cách cộng danh sách trang hiện tại ở client hoặc suy diễn revenue split/payout destination.
 
 ### [FE] Task FE-8.2: Notification Center UI
 
@@ -1020,11 +1049,11 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 **Tên:** KPI, activity, continue learning và recommendation.
 
-**Mô tả:** Triển khai `STD01` hoàn toàn từ current-user dashboard API.
+**Mô tả:** Triển khai `STD01` từ current-user dashboard API, với trạng thái unavailable rõ ràng cho KPI/activity khi metric contract chưa được duyệt.
 
 **Yêu cầu đầu ra:**
 
-- Profile/capability, KPI, contribution heatmap, streak và study time đúng timezone/contract.
+- Profile/capability và các metric đã duyệt đúng timezone/contract; KPI/heatmap/streak/study time chưa có policy phải hiển thị unavailable, không dùng mock.
 - Continue Learning điều hướng tới LessonContent hợp lệ gần nhất.
 - Interview history và recommended problems có empty/loading/error state.
 - Không sử dụng mock data trong production flow.
@@ -1048,9 +1077,9 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 
 ### Điều kiện hoàn thành giai đoạn 8
 
-- Revenue/payout có ledger truy vết và chịu được retry/failure.
+- Wallet/ledger USD có truy vết và chịu được retry/failure; payout settlement thật chỉ hoàn thành sau khi revenue split/destination/settlement policy được duyệt.
 - Notification, dashboard và audit luôn đúng phạm vi current user/role.
-- Các aggregate có nguồn dữ liệu và định nghĩa metric rõ ràng.
+- Các aggregate chỉ được phát hành khi có nguồn dữ liệu và định nghĩa metric rõ ràng.
 
 ---
 
@@ -1067,7 +1096,7 @@ Các task FE và BE trong cùng một lát cắt có thể thực hiện song so
 **Yêu cầu đầu ra:**
 
 - Authorization matrix có automated test cho cross-user/cross-role access.
-- Rate limit cho login/OTP, payment, judge submit và interview chat.
+- Rate limit cho login/OTP, direct checkout, signed payment webhook, judge submit và interview answer flow.
 - Markdown/HTML được sanitize ở boundary phù hợp; upload có MIME/size validation.
 - Secret scan, dependency audit và log redaction pass.
 
@@ -1173,22 +1202,23 @@ Một task chỉ được đánh dấu hoàn thành khi đáp ứng toàn bộ �
 
 | Mốc | Phạm vi xác nhận | Điều kiện để đi tiếp |
 |---|---|---|
-| M0 | Quyết định, schema mapping, API/UI contract | Không còn blocker nghiệp vụ cho phase kế tiếp |
+| M0 | Quyết định, schema mapping, API/UI contract | Các quyết định đã chốt là baseline; chỉ revenue settlement và activity metrics còn gate workstream tương ứng |
 | M1 | Auth và foundation | Login/token/guard hoạt động end-to-end |
 | M2 | Teacher capability | Application lifecycle và Admin review hoàn chỉnh |
 | M3 | Course supply | Authoring, moderation và catalog thống nhất trạng thái |
-| M4 | Commerce | Payment/enrollment idempotent trên sandbox |
+| M4 | Commerce | Direct checkout USD, signed PayOS mock webhook và enrollment idempotent |
 | M5 | Learning | Reading/Quiz/Problem access và progress đúng rule |
 | M6 | Judge | Sandbox an toàn, hidden testcase không bị lộ |
-| M7 | Interview | Một session tạo tối đa một report, không lưu recording |
-| M8 | Operations | Ledger/payout/dashboard/notification/audit có nguồn dữ liệu đúng |
+| M7 | Interview | Voice-first/typed fallback, một session tạo tối đa một aggregate report và không lưu media |
+| M8 | Operations | Ledger/payout/dashboard/notification/audit có nguồn dữ liệu đúng; metric và settlement chỉ mở sau policy tương ứng |
 | M9 | Release | Security, E2E, migration và staging acceptance đạt |
 
 ## 6. Ngoài phạm vi của kế hoạch MVP
 
 - Video như một loại `LessonContent`, video progress, HLS transcoding hoặc lưu media recording.
 - Live classroom/video conference.
-- Checkout nhiều course nếu Phase 0 vẫn chốt một course/order cho MVP.
+- Cart, Order, Order Item hoặc checkout nhiều course.
 - Payout tự động không qua Admin.
-- Subscription, coupon engine phức tạp hoặc multi-currency settlement khi chưa được duyệt.
+- Subscription, coupon engine phức tạp, multi-currency settlement, hoặc revenue split/payout destination chưa được duyệt.
+- Giao diện chatbot cho AI Interview, xử lý/lưu media microphone-camera, camera proctoring hoặc feedback theo từng câu.
 - Các tính năng chỉ xuất hiện trong wireframe cũ nhưng không có trong PRD/API contract đã chốt.

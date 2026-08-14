@@ -1,7 +1,3 @@
-// CANONICAL DATABASE PROPOSAL
-// docs/database.txt is retained as a legacy mirror. Update this file first.
-// Constraints marked in comments still require enforcement in migration/service.
-
 enum AccountStatus {
   BANNED
   UNVERIFIED
@@ -18,7 +14,7 @@ enum TeacherRegisterStatus {
 enum CourseStatus {
   DRAFT
   PENDING_REVIEW
-  APPROVED // Proposed mapping of the current PUBLISHED state; confirm before migration.
+  APPROVED // Legacy PUBLISHED rows map here during migration.
   REJECTED
   ARCHIVED
 }
@@ -73,12 +69,6 @@ enum ProblemSubmissionStatus {
   COMPILE_ERROR
 }
 
-enum PaymentMethod {
-  PAYOS
-  CASH // Legacy compatibility only; confirm whether it remains supported.
-  TRANSFER // Legacy compatibility only; confirm whether it remains supported.
-}
-
 enum PaymentStatus {
   PENDING
   COMPLETED
@@ -93,12 +83,6 @@ enum PayoutStatus {
   PROCESSING
   COMPLETED
   FAILED
-}
-
-enum QuizAttemptStatus {
-  IN_PROGRESS
-  SUBMITTED
-  ABANDONED
 }
 
 enum NotificationType {
@@ -133,8 +117,6 @@ Table user {
   password string // NOT NULL for local account
   avatar_url string
   refresh_token string
-  status string // default: verified
-  active boolean // default: False
   account_status AccountStatus // default: UNVERIFIED
   created_at datetime // NOT NULL; default: lambda
   updated_at datetime // NOT NULL; default: lambda
@@ -152,49 +134,49 @@ Table user_role {
 Table student_profile {
   user_id integer PK // FK user.id
   bio string
-  school string
-  major string
-  github_url string
-  facebook_url string
-  linkedln_url string // API alias: linkedin_url
+  learning_preferences string // JSON object/array; personal learning settings.
+  social_links string //JSOn or a social link string 
+  // full_name and avatar_url are projected from user, not duplicated here.
 }
 
 // Teacher Profile
 Table teacher_profile {
   user_id integer PK // FK user.id
-  bio string
-  professional_title string
-  phone string
-  address string
-  primary_category string
+  avatar_url string
+  headline string
+  expertise_tags string // JSON array.
   years_of_experience integer
-  portfolio_link string
-  school_address string
-  cv_url string
-  bank string
-  bank_account string
-  account_holder_name string
-  verified boolean // Legacy compatibility; capability comes from approved application.
+  education_entries string // JSON array.
+  experience_entries string // JSON array.
+  github_url string //default: null 
+  linkedin_url string //default: null 
+  website_url string  //default: null 
+  email string  // Khong dung email nay de dang nhap 
+  phone string  
   created_at datetime // NOT NULL; default: lambda
   updated_at datetime // NOT NULL; default: lambda
 }
 
-// Teacher Register
+// Teacher Application. One current application belongs to one Teacher Profile.
 Table teacher_register {
   id integer PK
-  teacher_id integer // NOT NULL; FK user.id
-  motivation string
-  cccd string unique // NOT NULL; UNIQUE; sensitive data
-  cccd_front_url string
-  cccd_back_url string
+  teacher_profile_id integer // NOT NULL; UNIQUE; FK teacher_profile.user_id
+  bio string // Application statement; editable after approval because it is non-sensitive.
+  education_evidence_urls string // JSON array; sensitive supporting-document URLs.
+  legal_full_name string // Sensitive identity data. - ? 
+  date_of_birth date // Editable after approval under the approved non-sensitive-field policy.
+  identity_number string unique // NOT NULL; UNIQUE; sensitive data.
+  identity_front_url string // Sensitive document URL.
+  identity_back_url string // Sensitive document URL.
+  selfie_with_id_url string // Sensitive document URL.
+  cv_url string // Sensitive document URL.
+  motivation string //default: ""
   status TeacherRegisterStatus // NOT NULL; default: DRAFT
-  reviewed_note string
-  reviewed_by integer // FK user.id; nullable until review
-  reviewed_at datetime
-  submitted_at datetime
-  created_at datetime // NOT NULL; default: lambda
-  updated_at datetime // NOT NULL; default: lambda
-  deleted_at datetime
+  created_at datetime // NOT NULL; default: lambda  
+  updated_at datetime // NOT NULL; default: lambda 
+  deleted_at datetime //default: null 
+  // DRAFT and REJECTED are editable; PENDING locks profile and application.
+  // APPROVED permits only whitelisted non-sensitive fields; identity/document fields remain locked.
 }
 
 // Teacher application history
@@ -203,31 +185,10 @@ Table teacher_register_history {
   id integer PK
   teacher_register_id integer // NOT NULL; FK teacher_register.id
   status TeacherRegisterStatus // NOT NULL
-  note string
-  acted_by integer // NOT NULL; FK user.id
-  acted_at datetime // NOT NULL; default: lambda
-}
-
-// Teacher education
-Table teacher_education {
-  id integer PK
-  teacher_id integer // NOT NULL; FK user.id
-  school string // NOT NULL
-  degree string
-  field_of_study string
-  started_at date
-  ended_at date
-}
-
-// Teacher experience
-Table teacher_experience {
-  id integer PK
-  teacher_id integer // NOT NULL; FK user.id
-  company string // NOT NULL
-  job_title string
-  description string
-  started_at date
-  ended_at date
+  reviewed_note string
+  submitted_at datetime // Now 
+  approved_at datetime //default: null 
+  acted_by user_id 
 }
 
 // Course
@@ -236,17 +197,12 @@ Table courses {
   title string // NOT NULL
   teacher_id integer // NOT NULL; FK user.id
   slug string unique // NOT NULL; UNIQUE
-  rating decimal // default: 0; derived/cache from course_review
   field string
   tags string // Legacy field; normalized tag relation remains an open question.
   description string
   thumbnail_url string
-  price decimal // NOT NULL; default: 0; currency is an open question
+  price decimal // NOT NULL; default: 0; USD scale: 2.
   status CourseStatus // NOT NULL; default: DRAFT
-  submitted_at datetime
-  reviewed_by integer // FK user.id
-  reviewed_note string
-  reviewed_at datetime
   created_at datetime // NOT NULL; default: lambda
   updated_at datetime // NOT NULL; default: lambda
   deleted_at datetime
@@ -256,10 +212,9 @@ Table courses {
 Table course_moderation_review {
   id integer PK
   course_id integer // NOT NULL; FK courses.id
-  status CourseStatus // NOT NULL
-  note string
-  reviewed_by integer // NOT NULL; FK user.id
-  reviewed_at datetime // NOT NULL; default: lambda
+  reviewed_note string
+  approved_at datetime 
+  submitted_at datetime // NOT NULL; default: lambda
 }
 
 // Section
@@ -356,17 +311,16 @@ Table quiz_options {
   is_correct boolean // NOT NULL; default: False
 }
 
-// Quiz Submission also represents an attempt until a separate attempt table is approved.
+// Immutable history of final quiz submissions. Closing/exiting a quiz without
+// submission creates no record; the learner restarts from the beginning.
 Table quiz_submission {
   id integer PK
   quiz_id integer // NOT NULL; FK quizzes.id
   student_id integer // NOT NULL; FK user.id
   attempt_no integer // NOT NULL
-  status QuizAttemptStatus // NOT NULL; default: IN_PROGRESS
-  score decimal // default: 0
-  answers string // Serialized answer snapshot
-  started_at datetime // NOT NULL; default: lambda
-  submitted_at datetime
+  score decimal // NOT NULL; default: 0
+  answers string // Serialized final answer snapshot; never exposed before submission.
+  submitted_at datetime // NOT NULL; default: lambda
   // UNIQUE(quiz_id, student_id, attempt_no)
 }
 
@@ -384,6 +338,7 @@ Table problem {
   sample_output string
   explanation string
   difficulty ProblemDifficulty // NOT NULL
+  passing_score decimal // NOT NULL; default: 0; Accepted submission must meet this score for completion.
   public boolean // NOT NULL; default: True
   created_at datetime // NOT NULL; default: lambda
 }
@@ -456,48 +411,6 @@ Table submission_result_detail {
   // UNIQUE(submission_id, testcase_id)
 }
 
-// Cart
-Table cart {
-  id integer PK
-  student_id integer // NOT NULL; FK user.id
-  created_at datetime // NOT NULL; default: lambda
-  updated_at datetime // NOT NULL; default: lambda
-  // UNIQUE(student_id)
-}
-
-// Cart Item
-Table cart_item {
-  id integer PK
-  cart_id integer // NOT NULL; FK cart.id
-  course_id integer // NOT NULL; FK courses.id
-  added_at datetime // NOT NULL; default: lambda
-  // UNIQUE(cart_id, course_id)
-}
-
-// Order
-// The one-course vs multi-course cardinality is still an open question.
-Table orders {
-  id integer PK
-  student_id integer // NOT NULL; FK user.id
-  status string // Payment/order lifecycle validated by service.
-  subtotal decimal // NOT NULL; default: 0
-  currency string // Required after currency decision.
-  expires_at datetime
-  created_at datetime // NOT NULL; default: lambda
-  updated_at datetime // NOT NULL; default: lambda
-  idempotency_key string unique // UNIQUE per student/command
-}
-
-// Order Item
-Table order_item {
-  id integer PK
-  order_id integer // NOT NULL; FK orders.id
-  course_id integer // NOT NULL; FK courses.id
-  price_snapshot decimal // NOT NULL
-  currency string // Required after currency decision.
-  // UNIQUE(order_id, course_id)
-}
-
 // Enrollment
 Table enrollment {
   id integer PK
@@ -509,26 +422,25 @@ Table enrollment {
   // UNIQUE(student_id, course_id)
 }
 
-// Transaction
+// Direct one-course payment transaction. Cart and Order are outside this MVP.
 Table transaction {
   id integer PK
-  order_id integer // FK orders.id; nullable for legacy records
-  order_item_id integer // FK order_item.id; nullable for legacy records
-  user_id integer // NOT NULL; FK user.id; legacy compatibility
-  course_id integer // NOT NULL; FK courses.id; legacy compatibility
-  payment_method PaymentMethod // NOT NULL
-  amount decimal // NOT NULL; default: 0
-  currency string // Required after currency decision.
+  student_id integer // NOT NULL; FK user.id
+  course_id integer // NOT NULL; FK courses.id
+  amount decimal // NOT NULL; default: 0; immutable USD price snapshot, scale: 2.
   status PaymentStatus // NOT NULL; default: PENDING
   transaction_code string unique // NOT NULL; UNIQUE
-  payos_code string unique // UNIQUE when provided
+  payos_code string unique // UNIQUE when provided by the real or simulated PayOS callback.
   payos_link string
-  idempotency_key string unique // UNIQUE per provider command
+  idempotency_key string unique // NOT NULL; UNIQUE per checkout command.
   signature_verified boolean // NOT NULL; default: False
   expires_at datetime
   completed_at datetime
   created_at datetime // NOT NULL; default: lambda
   updated_at datetime // NOT NULL; default: lambda
+  // A transactionally locked service workflow expires/reuses stale rows before creating a new one.
+  // At most one PENDING transaction with expires_at in the future may exist per (student_id, course_id).
+  // A time-dependent rule cannot be represented by a static database UNIQUE constraint.
 }
 
 // Course Favorite
@@ -549,16 +461,16 @@ Table course_review {
   content string
   created_at datetime // NOT NULL; default: lambda
   updated_at datetime // NOT NULL; default: lambda
-  // UNIQUE(course_id, student_id) unless Product Owner allows multiple reviews.
+  // UNIQUE(course_id, student_id)
 }
 
 // Wallet
 Table wallet {
   id integer PK
   teacher_id integer // NOT NULL; FK user.id
-  available_balance decimal // NOT NULL; default: 0
-  pending_balance decimal // NOT NULL; default: 0
-  currency string // Required after currency decision.
+  available_balance decimal // NOT NULL; default: 0; USD scale: 2.
+  pending_balance decimal // NOT NULL; default: 0; USD scale: 2.
+  currency Currency // NOT NULL; default: USD
   created_at datetime // NOT NULL; default: lambda
   updated_at datetime // NOT NULL; default: lambda
   // UNIQUE(teacher_id)
@@ -571,8 +483,8 @@ Table wallet_ledger {
   transaction_id integer // FK transaction.id
   payout_request_id integer // FK payout_request.id
   entry_type string // Revenue, reserve, release or refund; validate in service.
-  amount decimal // NOT NULL
-  currency string // Required after currency decision.
+  amount decimal // NOT NULL; USD scale: 2.
+  currency Currency // NOT NULL; default: USD
   created_at datetime // NOT NULL; default: lambda
   // Ledger rows are immutable; corrections use a new compensating row.
 }
@@ -582,8 +494,8 @@ Table payout_request {
   id integer PK
   wallet_id integer // NOT NULL; FK wallet.id
   teacher_id integer // NOT NULL; FK user.id
-  amount decimal // NOT NULL
-  currency string // Required after currency decision.
+  amount decimal // NOT NULL; USD scale: 2; minimum: 0.00 USD.
+  currency Currency // NOT NULL; default: USD
   status PayoutStatus // NOT NULL; default: PENDING
   reviewed_by integer // FK user.id
   reviewed_at datetime
@@ -608,6 +520,7 @@ Table interview_session {
 }
 
 // Interview Message
+// Text comes from speech-to-text or typed fallback. No audio/video data is persisted.
 Table interview_message {
   id integer PK
   session_id integer // NOT NULL; FK interview_session.id
@@ -621,13 +534,12 @@ Table interview_reports {
   id integer PK
   session_id integer // NOT NULL; FK interview_session.id
   overall_score decimal // default: 0
-  skill_scores string // Serialized/projection format to be confirmed.
-  question_feedback string // Serialized/projection format to be confirmed.
   strengths string
   weaknesses string
   suggestions string
   generated_at datetime // NOT NULL; default: lambda
   // UNIQUE(session_id)
+  // One aggregate report per session; no per-question feedback is persisted in MVP.
 }
 
 // Notification
@@ -653,16 +565,6 @@ Table audit_log {
   note string
   correlation_id string
   do_at datetime // NOT NULL; default: lambda
-}
-
-// User History
-// Legacy aggregate; not the source for dashboard activity or streak.
-Table user_history {
-  id integer PK
-  created_at datetime // NOT NULL; default: lambda
-  updated_at datetime // NOT NULL; default: lambda
-  problem_count integer // Legacy aggregate only.
-  user_id integer // NOT NULL; FK user.id
 }
 
 // Daily Student Activity

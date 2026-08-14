@@ -7,7 +7,7 @@ LMS Coding Platform là nền tảng học lập trình kết hợp:
 - Bán và học khóa học online.
 - Lesson gồm Reading, Quiz và Coding Problem.
 - Online Judge chạy và chấm code theo testcase trong môi trường an toàn.
-- AI Interview có text chat và tùy chọn microphone/camera trong phiên; hệ thống chỉ lưu chat và report, không lưu recording media.
+- AI Interview voice-first: microphone được speech-to-text thành câu trả lời, có fallback nhập text; camera chỉ preview tùy chọn tại client. Hệ thống chỉ lưu message text và một report tổng hợp, không lưu recording media.
 - Dashboard cho Student, Teacher và Admin.
 
 Các nhóm chức năng trên thuộc phạm vi MVP. Video không phải là một loại `LessonContent` trong MVP. Các wireframe còn có Video cần được chỉnh lại ở phần FE, không tạo thêm Video model, enum hoặc progress trong database.
@@ -21,19 +21,21 @@ Database proposal được ghi trong [DATABASE.txt](../DATABASE.txt). Các kho�
 - Đăng ký/đăng nhập bằng local account hoặc Google.
 - Gửi hồ sơ đăng ký trở thành Teacher, lưu nháp, submit và resubmit sau khi bị reject.
 - Xem catalog, course detail, instructor, favorite course và review course đã học.
-- Thêm course vào cart và thanh toán qua PayOS.
+- Mua trực tiếp từng course qua PayOS mô phỏng; frontend không tự xác nhận thanh toán.
 - Không mua lại course đã enrollment. Payment success chỉ tạo một enrollment cho một Student/course.
 - Học Reading, Quiz và Problem theo thứ tự lesson.
 - Đánh dấu Reading hoàn thành; hoàn thành Quiz theo passing score và attempt hợp lệ; hoàn thành Problem theo rule Accepted/pass score đã chốt.
 - Submit code, xem kết quả testcase an toàn và lịch sử submission.
 - Thực hiện AI Interview tối đa 12 câu; AI có thể kết thúc sớm.
-- Xem notification, progress, order, enrollment và interview report của chính mình.
+- Xem notification, progress, transaction, enrollment và interview report của chính mình.
 
 ### Teacher
 
 - Một User có thể đồng thời là Student và Teacher.
 - Student có thể tạo `teacher_profile` và application, nhưng chưa có quyền Teacher chỉ vì có role hoặc profile.
 - Capability Teacher chỉ active khi application đạt `APPROVED`.
+- Mỗi `teacher_profile` có một application hiện hành; dữ liệu học vấn/kinh nghiệm lưu JSON trong profile, còn application giữ dữ liệu xét duyệt và PII.
+- Application `PENDING` khóa profile/application; `REJECTED` mở lại để sửa và submit. Khi `APPROVED`, Teacher vẫn sửa các field của `teacher_profile`; trong application chỉ whitelist field không nhạy cảm (như bio, ngày sinh, motivation) được sửa, còn giấy tờ định danh vẫn khóa.
 - Sau khi được duyệt, Teacher tạo course, section, lesson và LessonContent gồm Reading, Quiz, Problem.
 - Teacher submit course để Admin review. Course bị reject có thể sửa và resubmit.
 - Teacher cấu hình giá course, passing score và số lần retry của Quiz/Problem theo contract.
@@ -48,7 +50,7 @@ Database proposal được ghi trong [DATABASE.txt](../DATABASE.txt). Các kho�
 - Duyệt/reject teacher application, kèm note và lịch sử quyết định.
 - Duyệt/reject course được Teacher submit, kèm note và lịch sử review.
 - Duyệt hoặc reject payout request theo lifecycle payout.
-- Theo dõi payment, order, enrollment, PayOS webhook và notification.
+- Theo dõi transaction, enrollment, PayOS webhook và notification.
 - Quản lý nội dung vi phạm và review theo policy vận hành.
 
 ## 3. Trạng thái nghiệp vụ
@@ -59,7 +61,7 @@ Luồng chuẩn:
 
 `DRAFT -> PENDING -> APPROVED | REJECTED`
 
-Sau khi bị `REJECTED`, Student được sửa hồ sơ ở `DRAFT` và submit lại về `PENDING`. Quyền Teacher chỉ được cấp ở `APPROVED`. Dữ liệu cũ `AGREE` cần map thành `APPROVED`, `REJECT` map thành `REJECTED` khi migration.
+Sau khi bị `REJECTED`, Student được mở quyền sửa profile/application và submit lại về `PENDING`; `PENDING` khóa dữ liệu đang xét duyệt. Sau `APPROVED`, chỉ field không nhạy cảm trong whitelist được sửa, còn giấy tờ định danh vẫn khóa. Quyền Teacher chỉ được cấp ở `APPROVED`. Dữ liệu cũ `AGREE` cần map thành `APPROVED`, `REJECT` map thành `REJECTED` khi migration.
 
 ### Course moderation
 
@@ -67,21 +69,20 @@ Luồng review được mô tả như sau:
 
 `DRAFT -> PENDING_REVIEW -> APPROVED | REJECTED`
 
-Tên canonical giữa `PENDING_REVIEW/APPROVED` và `PENDING/PUBLISHED` vẫn cần chốt trước khi sửa DB/API. `ARCHIVED` là trạng thái truy cập/visibility riêng cần được giữ cho policy course đã mua; course chưa được approve không được xuất hiện trong public catalog.
+`APPROVED` là trạng thái public duy nhất. `ARCHIVED` ngừng bán và ẩn khỏi catalog mới nhưng giữ quyền truy cập cho Student đã enrollment; `PUBLISHED` chỉ là giá trị legacy cần map sang `APPROVED` khi migration.
 
-### Order, payment và enrollment
+### Payment và enrollment
 
 Luồng chính:
 
-1. Student tạo checkout cho course chưa enrollment.
-2. Hệ thống snapshot giá và tạo payment ở trạng thái `PENDING`.
-3. PayOS webhook hợp lệ chuyển payment sang `COMPLETED`.
-4. Hệ thống tạo enrollment một lần theo transaction/order idempotency.
-5. Hệ thống ghi nhận doanh thu vào wallet ledger và gửi notification.
+1. Student tạo checkout trực tiếp cho một course `APPROVED` chưa enrollment.
+2. Hệ thống snapshot giá `USD` hai chữ số thập phân và tạo transaction `PENDING` có expiry.
+3. Mỗi Student/course có thể có nhiều transaction lịch sử, nhưng service chỉ cho một `PENDING` còn hạn tại một thời điểm.
+4. Webhook PayOS mô phỏng có chữ ký test hợp lệ là nơi duy nhất chuyển transaction sang `COMPLETED`.
+5. Hệ thống tạo enrollment một lần theo transaction idempotency.
+6. Hệ thống ghi nhận doanh thu vào wallet ledger và gửi notification.
 
-Payment có các trạng thái đề xuất `PENDING`, `COMPLETED`, `FAILED`, `EXPIRED`. `COMPLETE` là tên cũ trong database; mapping cuối cần được thực hiện cùng migration. Payment failed hoặc expired không tạo enrollment.
-
-Số course trong một order vẫn là open question vì PRD hiện mô tả một course/order nhưng checkout wireframe hiển thị nhiều item.
+Payment có các trạng thái `PENDING`, `COMPLETED`, `FAILED`, `EXPIRED`. `COMPLETE` là tên legacy cần map sang `COMPLETED` khi migration. Payment failed hoặc expired không tạo enrollment; frontend chỉ đọc/poll trạng thái sau khi mở trang PayOS mô phỏng.
 
 ### Payout
 
@@ -123,8 +124,8 @@ Không thêm `VIDEO`, `video_content`, `watched_percent` hoặc video completion
 ### Completion và progress
 
 - Reading hoàn thành khi Student có quyền truy cập và thực hiện action đánh dấu hoàn thành.
-- Quiz hoàn thành khi score đạt `quizzes.passing_score` và attempt còn hợp lệ.
-- Problem hoàn thành khi submission đạt Accepted và pass score nếu policy lesson yêu cầu.
+- Quiz hoàn thành khi terminal `quiz_submission.score` đạt `quizzes.passing_score` trong một `quiz_attempt` hợp lệ; attempt đang làm không save/resume.
+- Problem hoàn thành khi submission đạt `ACCEPTED` và score đạt `problem.passing_score` do Teacher cấu hình.
 - Progress được lưu theo `enrollment_id` và `lesson_content_id`; dữ liệu score/attempt có thể lấy từ Quiz/OJ theo contract.
 
 ### Online Judge
@@ -137,27 +138,27 @@ Problem recommendation cần quan hệ Problem–Tag. `user_history.problem_coun
 
 ## 5. Commerce và Teacher Finance
 
-### Cart, payment và enrollment
+### Payment trực tiếp và enrollment
 
-- Cart, order và order item phải gắn với current Student.
-- Checkout phải lưu price snapshot và expiry.
-- Payment webhook phải verify signature và idempotent theo provider/transaction code.
+- MVP không có Cart, Order hoặc Order Item; một checkout tạo transaction cho đúng một course.
+- Transaction phải lưu price snapshot `USD`, expiry, provider reference và idempotency key.
+- Payment webhook PayOS mô phỏng phải verify chữ ký test và idempotent theo provider/transaction code.
 - Enrollment creation phải atomic và idempotent.
-- Student không được tạo checkout mới cho course đã enrollment.
-- Currency, amount type, rounding và số item trong một order cần được chốt trước khi hoàn thiện schema/API.
+- Student không được tạo checkout mới cho course đã enrollment; chỉ một transaction `PENDING` còn hạn được tồn tại cho mỗi Student/course.
+- Amount persistence dùng decimal hai chữ số thập phân với currency `USD`.
 
 ### Wallet và payout
 
 - Wallet ledger là immutable; không sửa trực tiếp các entry đã ghi nhận.
 - Mỗi payment thành công tạo các entry revenue theo revenue split được duyệt.
 - Payout có owner, amount, status, reviewer, settlement reference và failure reason.
-- Minimum payout và currency chỉ được dùng làm validation sau khi Product Owner chốt.
+- Currency là `USD`, amount dùng decimal hai chữ số thập phân và minimum payout là `0.00 USD`; revenue split và settlement mechanism vẫn cần được duyệt.
 
 ## 6. AI Interview, Notification và Audit
 
 ### AI Interview data
 
-Database lưu topic, level, status, question count, timestamps, message text và một final report. Sender message được giới hạn ở `AI`, `STUDENT`, `SYSTEM`. Microphone/camera chỉ là permission của UI; không lưu audio/video recording.
+Database lưu topic, level, status, question count, timestamps, message text và một final report tổng hợp. Sender message được giới hạn ở `AI`, `STUDENT`, `SYSTEM`; message của Student đến từ speech-to-text hoặc text fallback. Microphone/camera chỉ là permission của UI, camera preview-only, không lưu audio/video recording hoặc feedback theo từng câu.
 
 ### Notification
 
@@ -182,11 +183,11 @@ Audit log ghi actor, action, target type/id, note và thời gian cho các thao 
 - **FR-002 Catalog:** search, filter, detail, instructor, favorite và course review.
 - **FR-003 Course authoring:** course, section, lesson, Reading/Quiz/Problem content, reorder và submit review.
 - **FR-004 Moderation:** Admin review teacher application và course, note, history, approve/reject/resubmit.
-- **FR-005 Commerce:** cart, checkout, PayOS, payment lifecycle và enrollment idempotency; order cardinality chờ quyết định.
+- **FR-005 Commerce:** direct checkout cho một course, PayOS mô phỏng có webhook ký, transaction lifecycle và enrollment idempotency.
 - **FR-006 Learning:** Reading/Quiz/Problem progress, passing score, retry policy và content access.
 - **FR-007 Online Judge:** editor, run, submit, hidden testcase projection, testcase result và submission history.
-- **FR-008 AI Interview:** setup, text chat, tùy chọn microphone/camera, tối đa 12 câu, end/resume và report.
-- **FR-009 Teacher finance:** revenue ledger, payout lifecycle và Admin approval; revenue split/currency theo policy được chốt.
+- **FR-008 AI Interview:** setup voice-first, speech-to-text/text fallback, camera preview tùy chọn, tối đa 12 câu, end/abort và aggregate report.
+- **FR-009 Teacher finance:** revenue ledger, payout lifecycle và Admin approval; currency `USD`, revenue split theo policy cần được chốt.
 - **FR-010 Communication:** lesson comments/replies, notifications và audit.
 - **FR-011 Student dashboard:** profile/capability, KPI, activity, Continue learning, interview history và recommended problems của current user.
 
@@ -194,6 +195,7 @@ Audit log ghi actor, action, target type/id, note và thời gian cho các thao 
 
 - Password phải được hash; JWT/JWK do Auth Provider quản lý.
 - Payment webhook phải verify signature và idempotent.
+- Frontend không được chuyển transaction sang `COMPLETED`; chỉ webhook backend đã xác thực mới được tạo enrollment.
 - Judge sandbox không có network, giới hạn CPU/RAM/time.
 - File upload lưu qua object storage; URL lưu database.
 - Mutation nhạy cảm phải có authorization theo role và resource ownership.
@@ -208,7 +210,8 @@ Audit log ghi actor, action, target type/id, note và thời gian cho các thao 
 - Live classroom hoặc video conference.
 - Payout tự động không qua Admin.
 - Subscription hoặc coupon engine phức tạp.
-- Checkout nhiều course trong một order cho tới khi có quyết định chính thức.
+- Cart, Order, Order Item và checkout nhiều course.
+- Giao diện chatbot cho AI Interview, lưu/đánh giá camera và microphone, hoặc feedback theo từng câu.
 
 ## 10. Nguồn sự thật và open questions
 
@@ -217,16 +220,11 @@ Audit log ghi actor, action, target type/id, note và thời gian cho các thao 
 - Nghiệp vụ và phạm vi: tài liệu này cùng các quyết định đã được Product Owner xác nhận.
 - Khoảng cách cần xử lý: [gap-analysis.md](gap-analysis.md).
 - Schema proposal: [DATABASE.txt](../DATABASE.txt).
+- `docs/DATABASE.txt` là nguồn schema proposal duy nhất; path lowercase lịch sử `docs/database.txt` đã retired và không được đồng bộ.
 - API hiện tại: [api_spec.md](../specs/api_spec.md).
 - UI: các wireframe Markdown trong `docs/ui`.
 
 ### Open questions
 
-- Course status dùng một enum hay tách review status khỏi public/archive? Tên canonical là `PENDING_REVIEW/APPROVED` hay `PENDING/PUBLISHED`?
-- Currency chính thức là gì; đơn vị lưu trữ và minimum payout là bao nhiêu?
-- Một order chỉ có một course hay checkout nhiều item được phép?
-- Field nào thuộc `teacher_profile`, field nào thuộc teacher application và có cần history table riêng không?
-- Quiz mở rộng `quiz_submission` hay thêm `quiz_attempt`; có bắt buộc save/resume không?
-- Problem completion chỉ cần Accepted hay có pass score riêng theo lesson content?
-- Skill score/question feedback của Interview lưu riêng hay tạo từ report payload?
-- `docs/database.txt` có phải legacy file cần đồng bộ với `docs/DATABASE.txt` không?
+- Revenue split, payout destination và settlement mechanism chính thức là gì?
+- Activity event, timezone, streak và study-time được định nghĩa như thế nào?
