@@ -1,42 +1,48 @@
-"""Seed a full debug dataset for the business-application database.
+"""Seed a complete local test dataset for the business-application database.
 
 Usage:
     cd src/backend/business-application
     uv run python seed.py
 
-This script is destructive by design: it truncates the business-application
-tables and rebuilds a fresh demo dataset for local debugging.
+The command truncates every table registered by the current ORM schema before
+inserting deterministic demo data. Run it only against a disposable database.
 """
 
 from __future__ import annotations
 
 import asyncio
 from dataclasses import dataclass
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
 from typing import Any
 
 from sqlalchemy import text
 
-import src.models  # noqa: F401 - ensure all ORM tables are registered
+import src.models  # noqa: F401 - registers every table before TRUNCATE
 from src.db import Base, async_session_maker
 from src.helpers.pwd_hash import password_hash
 from src.models.audit_log_model import AuditLogModel
 from src.models.base_model import (
     AccountStatus,
-    ActionType,
+    AuditAction,
     CourseStatus,
-    InterViewLevel,
+    Currency,
+    InterviewLevel,
+    InterviewMessageSender,
+    InterviewStatus,
     LessonContentType,
-    LoginMethod,
-    PaymentMethod,
+    NotificationType,
     PaymentStatus,
+    PayoutStatus,
     ProblemDifficulty,
     ProblemSubmissionStatus,
     Role,
     TeacherRegisterStatus,
 )
-from src.models.comment_model import CommentModel
+from src.models.course_favorite_model import CourseFavoriteModel
+from src.models.course_moderation_review_model import CourseModerationReviewModel
 from src.models.course_model import CourseModel
+from src.models.course_review_model import CourseReviewModel
 from src.models.enrollment_model import EnrollmentModel
 from src.models.interview_message_model import InterviewMessageModel
 from src.models.interview_report_model import InterviewReportModel
@@ -48,6 +54,7 @@ from src.models.lesson_model import LessonModel
 from src.models.notification_model import NotificationModel
 from src.models.problem_config_model import ProblemConfigModel
 from src.models.problem_model import ProblemModel
+from src.models.problem_tag_mapping_model import ProblemTagMappingModel
 from src.models.problem_tag_model import ProblemTagModel
 from src.models.quiz_enrollment_model import QuizEnrollmentModel
 from src.models.quiz_model import QuizModel
@@ -57,16 +64,17 @@ from src.models.quiz_submission_model import QuizSubmissionModel
 from src.models.reading_content_model import ReadingContentModel
 from src.models.role_model import UserRoleModel
 from src.models.section_model import SectionModel
+from src.models.student_daily_activity_model import StudentDailyActivityModel
 from src.models.student_profile_model import StudentProfileModel
 from src.models.submission_model import SubmissionModel
 from src.models.submission_result_detail_model import SubmissionResultDetailModel
 from src.models.teacher_profile_model import TeacherProfileModel
+from src.models.teacher_register_history_model import TeacherRegisterHistoryModel
 from src.models.teacher_register_model import TeacherRegisterModel
 from src.models.testcase_model import TestcaseModel
 from src.models.transaction_model import TransactionModel
-from src.models.user_history_model import UserHistoryModel
-from src.models.user_identity_provider_model import UserIdentityModel
 from src.models.user_model import UserModel
+from src.models.wallet_model import PayoutRequestModel, WalletLedgerModel, WalletModel
 
 
 @dataclass(frozen=True)
@@ -79,46 +87,25 @@ class SeedAccount:
     address: str
 
 
+# Keep these credentials stable: they are used for local debug and testing.
 SEED_ACCOUNTS: tuple[SeedAccount, ...] = (
-    SeedAccount(
-        key="admin",
-        full_name="Cloudian Admin",
-        email="cloudian@gmail.com",
-        password="admin123",
-        role=Role.ADMIN,
-        address="Cloudian HQ",
-    ),
-    SeedAccount(
-        key="teacher",
-        full_name="Cloudian Teacher",
-        email="teacher@gmail.com",
-        password="teacher123",
-        role=Role.TEACHER,
-        address="Cloudian School",
-    ),
-    SeedAccount(
-        key="student",
-        full_name="Cloudian Student",
-        email="student@gmail.com",
-        password="student123",
-        role=Role.STUDENT,
-        address="Cloudian Campus",
-    ),
+    SeedAccount("student", "Cloudian Student", "student@gmail.com", "student123", Role.STUDENT, "Cloudian Campus"),
+    SeedAccount("teacher", "Cloudian Teacher", "teacher@gmail.com", "teacher123", Role.TEACHER, "Cloudian School"),
+    SeedAccount("admin", "Cloudian Admin", "cloudian@gmail.com", "admin123", Role.ADMIN, "Cloudian HQ"),
 )
 
 
-def now() -> datetime:
+def utc_now() -> datetime:
     return datetime.now(UTC)
 
 
-async def reset_business_database(session) -> None:
+async def reset_business_database(session: Any) -> None:
     table_names = ", ".join(f'"{table.name}"' for table in Base.metadata.sorted_tables)
     await session.execute(text(f"TRUNCATE {table_names} RESTART IDENTITY CASCADE"))
 
 
-async def seed_users(session) -> dict[str, UserModel]:
+async def seed_users(session: Any, seed_time: datetime) -> dict[str, UserModel]:
     users: dict[str, UserModel] = {}
-    seed_time = now()
 
     for account in SEED_ACCOUNTS:
         user = UserModel(
@@ -127,682 +114,361 @@ async def seed_users(session) -> dict[str, UserModel]:
             password=password_hash.hash(account.password),
             address=account.address,
             avatar_url=None,
-            active=True,
+            refresh_token=None,
             account_status=AccountStatus.ACTIVE,
             created_at=seed_time,
             updated_at=seed_time,
         )
         session.add(user)
         await session.flush()
-
-        session.add(
-            UserRoleModel(
-                user_id=user.id,
-                role=account.role,
-            )
-        )
-        session.add(
-            UserIdentityModel(
-                user_id=user.id,
-                method=LoginMethod.LOCAL,
-                provider_id=None,
-            )
-        )
-        session.add(
-            UserHistoryModel(
-                user_id=user.id,
-                problem_count=0 if account.role == Role.ADMIN else (2 if account.role == Role.STUDENT else 5),
-                created_at=seed_time,
-                updated_at=seed_time,
-            )
-        )
-
-        if account.role == Role.TEACHER:
-            session.add(
-                TeacherProfileModel(
-                    user_id=user.id,
-                    bio="Seeded teacher account for debugging.",
-                    school_address="Cloudian School",
-                    verified=True,
-                    cv_url="https://example.com/cv/teacher.pdf",
-                    created_at=seed_time,
-                    updated_at=seed_time,
-                )
-            )
-        elif account.role == Role.STUDENT:
-            session.add(
-                StudentProfileModel(
-                    user_id=user.id,
-                    bio="Seeded student account for debugging.",
-                    school="Cloudian Campus",
-                    major="Computer Science",
-                    github_url="https://github.com/cloudian-student",
-                    facebook_url=None,
-                    linkedln_url=None,
-                )
-            )
-
+        session.add(UserRoleModel(user_id=user.id, role=account.role))
         users[account.key] = user
 
+    teacher = users["teacher"]
+    student = users["student"]
+    session.add_all(
+        [
+            TeacherProfileModel(
+                user_id=teacher.id,
+                avatar_url="https://example.com/avatars/teacher.png",
+                headline="Backend engineer and Python instructor",
+                expertise_tags='["Python", "FastAPI", "PostgreSQL"]',
+                years_of_experience=6,
+                education_entries='[{"school": "Cloudian University", "degree": "BSc Computer Science"}]',
+                experience_entries='[{"company": "Cloudian", "role": "Senior Backend Engineer"}]',
+                github_url="https://github.com/cloudian-teacher",
+                linkedin_url="https://linkedin.com/in/cloudian-teacher",
+                website_url="https://teacher.example.com",
+                email="teacher.contact@example.com",
+                phone="+84900000001",
+                created_at=seed_time - timedelta(days=90),
+                updated_at=seed_time - timedelta(days=2),
+            ),
+            TeacherProfileModel(
+                user_id=student.id,
+                avatar_url="https://example.com/avatars/student-teacher.png",
+                headline="Aspiring programming tutor",
+                expertise_tags='["Python", "Algorithms"]',
+                years_of_experience=1,
+                education_entries='[{"school": "Cloudian Campus", "degree": "BSc Computer Science"}]',
+                experience_entries='[]',
+                github_url="https://github.com/cloudian-student",
+                linkedin_url=None,
+                website_url=None,
+                email="student.contact@example.com",
+                phone="+84900000002",
+                created_at=seed_time - timedelta(days=10),
+                updated_at=seed_time - timedelta(days=1),
+            ),
+            StudentProfileModel(
+                user_id=student.id,
+                bio="Seeded student account for course, quiz, and coding-practice tests.",
+                learning_preferences='{"pace": "self-paced", "topics": ["Python", "algorithms"]}',
+                social_links='{"github": "https://github.com/cloudian-student"}',
+            ),
+        ]
+    )
     await session.flush()
     return users
 
 
-async def seed_reference_data(session) -> dict[str, Any]:
-    seed_time = now()
+async def seed_teacher_registers(
+    session: Any, users: dict[str, UserModel], seed_time: datetime
+) -> dict[str, TeacherRegisterModel]:
+    admin = users["admin"]
+    teacher = users["teacher"]
+    student = users["student"]
+    approved = TeacherRegisterModel(
+        teacher_profile_id=teacher.id,
+        bio="I teach practical backend development and algorithm design.",
+        education_evidence_urls='["https://example.com/evidence/teacher-degree.pdf"]',
+        legal_full_name="Cloudian Teacher",
+        date_of_birth=date(1992, 5, 20),
+        identity_number="012345678901",
+        identity_front_url="https://example.com/identity/teacher-front.png",
+        identity_back_url="https://example.com/identity/teacher-back.png",
+        selfie_with_id_url="https://example.com/identity/teacher-selfie.png",
+        cv_url="https://example.com/cv/teacher.pdf",
+        motivation="I want to publish high-quality backend courses.",
+        status=TeacherRegisterStatus.APPROVED,
+        created_at=seed_time - timedelta(days=80),
+        updated_at=seed_time - timedelta(days=75),
+    )
+    pending = TeacherRegisterModel(
+        teacher_profile_id=student.id,
+        bio="I would like to help beginner students learn Python.",
+        education_evidence_urls='["https://example.com/evidence/student-transcript.pdf"]',
+        legal_full_name="Cloudian Student",
+        date_of_birth=date(2003, 8, 14),
+        identity_number="012345678902",
+        identity_front_url="https://example.com/identity/student-front.png",
+        identity_back_url="https://example.com/identity/student-back.png",
+        selfie_with_id_url="https://example.com/identity/student-selfie.png",
+        cv_url="https://example.com/cv/student.pdf",
+        motivation="I enjoy mentoring peers in coding clubs.",
+        status=TeacherRegisterStatus.PENDING,
+        created_at=seed_time - timedelta(days=2),
+        updated_at=seed_time - timedelta(days=1),
+    )
+    session.add_all([approved, pending])
+    await session.flush()
+    session.add_all(
+        [
+            TeacherRegisterHistoryModel(
+                teacher_register_id=approved.id,
+                status=TeacherRegisterStatus.PENDING,
+                reviewed_note="Application submitted.",
+                submitted_at=seed_time - timedelta(days=80),
+                acted_by=teacher.id,
+            ),
+            TeacherRegisterHistoryModel(
+                teacher_register_id=approved.id,
+                status=TeacherRegisterStatus.APPROVED,
+                reviewed_note="Approved for seed data.",
+                submitted_at=seed_time - timedelta(days=75),
+                approved_at=seed_time - timedelta(days=75),
+                acted_by=admin.id,
+            ),
+            TeacherRegisterHistoryModel(
+                teacher_register_id=pending.id,
+                status=TeacherRegisterStatus.PENDING,
+                reviewed_note=None,
+                submitted_at=seed_time - timedelta(days=1),
+                acted_by=student.id,
+            ),
+        ]
+    )
+    return {"approved": approved, "pending": pending}
 
+
+async def seed_reference_data(session: Any) -> dict[str, Any]:
     languages = {
-        "python": LanguageModel(
-            name="Python",
-            default_time_limit=1000.0,
-            default_memory_limit=256.0,
-            is_active=True,
-        ),
-        "cpp": LanguageModel(
-            name="C++",
-            default_time_limit=1000.0,
-            default_memory_limit=256.0,
-            is_active=True,
-        ),
-        "javascript": LanguageModel(
-            name="JavaScript",
-            default_time_limit=1000.0,
-            default_memory_limit=256.0,
-            is_active=True,
-        ),
+        "python": LanguageModel(name="Python", default_time_limit=1000, default_memory_limit=256, is_active=True),
+        "cpp": LanguageModel(name="C++", default_time_limit=1000, default_memory_limit=256, is_active=True),
+        "javascript": LanguageModel(name="JavaScript", default_time_limit=1500, default_memory_limit=256, is_active=True),
     }
-    session.add_all(languages.values())
-
     tags = {
         "arrays": ProblemTagModel(tag_name="Arrays"),
+        "hash_map": ProblemTagModel(tag_name="Hash Map"),
         "strings": ProblemTagModel(tag_name="Strings"),
-        "dynamic_programming": ProblemTagModel(tag_name="Dynamic Programming"),
     }
-    session.add_all(tags.values())
+    session.add_all([*languages.values(), *tags.values()])
     await session.flush()
-
-    return {
-        "seed_time": seed_time,
-        "languages": languages,
-        "tags": tags,
-    }
+    return {"languages": languages, "tags": tags}
 
 
-async def seed_quiz(session, seed_time: datetime) -> dict[str, Any]:
+async def seed_quiz(session: Any, seed_time: datetime) -> QuizModel:
     quiz = QuizModel(
         title="Python Fundamentals Checkpoint",
-        passing_score=80.0,
+        passing_score=Decimal("80"),
         start_date=seed_time - timedelta(days=1),
         end_date=seed_time + timedelta(days=30),
         attempts=3,
-        deleted_at=None,
     )
     session.add(quiz)
     await session.flush()
-
-    q1 = QuizQuestionModel(
+    variables_question = QuizQuestionModel(
         quiz_id=quiz.id,
         title="Variables",
         content="Which keyword is used to define a constant in Python?",
         question_type="single_choice",
-        points=5.0,
+        points=Decimal("5"),
     )
-    q2 = QuizQuestionModel(
+    length_question = QuizQuestionModel(
         quiz_id=quiz.id,
         title="Lists",
         content="What is the output of len([1, 2, 3, 4])?",
         question_type="single_choice",
-        points=5.0,
+        points=Decimal("5"),
     )
-    session.add_all([q1, q2])
+    session.add_all([variables_question, length_question])
     await session.flush()
-
     session.add_all(
         [
-            QuizOptionModel(question_id=q1.id, content="const", is_correct=False),
-            QuizOptionModel(question_id=q1.id, content="let", is_correct=False),
-            QuizOptionModel(question_id=q1.id, content="There is no constant keyword", is_correct=True),
-            QuizOptionModel(question_id=q1.id, content="final", is_correct=False),
-            QuizOptionModel(question_id=q2.id, content="3", is_correct=False),
-            QuizOptionModel(question_id=q2.id, content="4", is_correct=True),
-            QuizOptionModel(question_id=q2.id, content="5", is_correct=False),
-            QuizOptionModel(question_id=q2.id, content="6", is_correct=False),
+            QuizOptionModel(question_id=variables_question.id, content="const", is_correct=False),
+            QuizOptionModel(question_id=variables_question.id, content="There is no constant keyword", is_correct=True),
+            QuizOptionModel(question_id=length_question.id, content="3", is_correct=False),
+            QuizOptionModel(question_id=length_question.id, content="4", is_correct=True),
         ]
     )
-    await session.flush()
-
-    return {"quiz": quiz}
+    return quiz
 
 
-async def seed_problem(session, refs: dict[str, Any], users: dict[str, UserModel]) -> dict[str, Any]:
-    seed_time = refs["seed_time"]
-    teacher = users["teacher"]
-    python = refs["languages"]["python"]
-    cpp = refs["languages"]["cpp"]
-    arrays = refs["tags"]["arrays"]
-    strings = refs["tags"]["strings"]
-
+async def seed_problem(session: Any, refs: dict[str, Any], teacher: UserModel, student: UserModel, seed_time: datetime) -> dict[str, Any]:
     problem = ProblemModel(
         teacher_id=teacher.id,
-        title="Two Sum Seed",
+        title="Two Sum",
         slug="two-sum-seed",
-        statement="Given an array of integers and a target value, return the indices of the two numbers that add up to the target.",
-        input_description="The first line contains n and target. The second line contains n integers.",
-        output_description="Print the zero-based indices of the two numbers.",
+        statement="Return the indices of two numbers whose sum equals the target.",
+        input_description="The first line contains n and target; the second line contains n integers.",
+        output_description="Print the zero-based indices.",
         constraints="1 <= n <= 1000",
         sample_input="4 9\n2 7 11 15",
         sample_output="0 1",
-        explanation="A simple hash map solution is enough for debug.",
+        explanation="A hash map tracks complements in linear time.",
         difficulty=ProblemDifficulty.EASY,
+        passing_score=Decimal("100"),
         public=True,
-        created_at=seed_time,
+        created_at=seed_time - timedelta(days=12),
     )
-    problem.tags.extend([arrays, strings])
     session.add(problem)
     await session.flush()
-
     session.add_all(
         [
-            ProblemConfigModel(
-                problem_id=problem.id,
-                language_id=python.id,
-                time_limit_ms=1000.0,
-                memory_limit_mb=256.0,
-            ),
-            ProblemConfigModel(
-                problem_id=problem.id,
-                language_id=cpp.id,
-                time_limit_ms=1000.0,
-                memory_limit_mb=256.0,
-            ),
+            ProblemTagMappingModel(problem_id=problem.id, tag_id=refs["tags"]["arrays"].id),
+            ProblemTagMappingModel(problem_id=problem.id, tag_id=refs["tags"]["hash_map"].id),
+            ProblemConfigModel(problem_id=problem.id, language_id=refs["languages"]["python"].id, time_limit_ms=1000, memory_limit_mb=256),
+            ProblemConfigModel(problem_id=problem.id, language_id=refs["languages"]["cpp"].id, time_limit_ms=1000, memory_limit_mb=256),
         ]
     )
-
-    testcase_1 = TestcaseModel(
-        problem_id=problem.id,
-        input_file="1.in",
-        output_file="1.out",
-        score=50.0,
-        is_hidden=False,
-    )
-    testcase_2 = TestcaseModel(
-        problem_id=problem.id,
-        input_file="2.in",
-        output_file="2.out",
-        score=50.0,
-        is_hidden=True,
-    )
-    session.add_all([testcase_1, testcase_2])
+    visible_testcase = TestcaseModel(problem_id=problem.id, input_file="two-sum-visible.in", output_file="two-sum-visible.out", score=Decimal("50"), is_hidden=False)
+    hidden_testcase = TestcaseModel(problem_id=problem.id, input_file="two-sum-hidden.in", output_file="two-sum-hidden.out", score=Decimal("50"), is_hidden=True)
+    session.add_all([visible_testcase, hidden_testcase])
     await session.flush()
-
     submission = SubmissionModel(
         problem_id=problem.id,
-        student_id=users["student"].id,
-        language_id=python.id,
-        source_code="def two_sum(nums, target):\n    seen = {}\n    for i, n in enumerate(nums):\n        diff = target - n\n        if diff in seen:\n            return [seen[diff], i]\n        seen[n] = i\n",
+        student_id=student.id,
+        language_id=refs["languages"]["python"].id,
+        source_code="def two_sum(numbers, target):\n    seen = {}\n    for index, value in enumerate(numbers):\n        if target - value in seen:\n            return [seen[target - value], index]\n        seen[value] = index\n",
         status=ProblemSubmissionStatus.ACCEPTED,
-        score=100.0,
-        runtime_ms=12.5,
-        memory_kb=512.0,
-        submitted_at=seed_time,
+        score=Decimal("100"),
+        runtime_ms=Decimal("12.5"),
+        memory_kb=Decimal("512"),
+        submitted_at=seed_time - timedelta(days=3),
     )
     session.add(submission)
     await session.flush()
-
     session.add_all(
         [
-            SubmissionResultDetailModel(
-                submission_id=submission.id,
-                testcase_id=testcase_1.id,
-                status=ProblemSubmissionStatus.ACCEPTED,
-                runtime_ms=11.8,
-                memory_kb=500.0,
-            ),
-            SubmissionResultDetailModel(
-                submission_id=submission.id,
-                testcase_id=testcase_2.id,
-                status=ProblemSubmissionStatus.ACCEPTED,
-                runtime_ms=12.5,
-                memory_kb=512.0,
-            ),
+            SubmissionResultDetailModel(submission_id=submission.id, testcase_id=visible_testcase.id, status=ProblemSubmissionStatus.ACCEPTED, runtime_ms=Decimal("11.8"), memory_kb=Decimal("500")),
+            SubmissionResultDetailModel(submission_id=submission.id, testcase_id=hidden_testcase.id, status=ProblemSubmissionStatus.ACCEPTED, runtime_ms=Decimal("12.5"), memory_kb=Decimal("512")),
         ]
     )
-
-    return {
-        "problem": problem,
-        "submission": submission,
-    }
+    return {"problem": problem, "submission": submission}
 
 
-async def seed_courses_and_curriculum(
-    session,
-    users: dict[str, UserModel],
-    quiz: QuizModel,
-    problem: ProblemModel,
-    seed_time: datetime,
-) -> dict[str, Any]:
-    teacher = users["teacher"]
-
+async def seed_courses_and_curriculum(session: Any, teacher: UserModel, quiz: QuizModel, problem: ProblemModel, seed_time: datetime) -> dict[str, Any]:
     free_course = CourseModel(
-        title="Python Fundamentals",
-        teacher_id=teacher.id,
-        slug="python-fundamentals",
-        rating=4.8,
-        field="Programming",
-        tags="python,basics",
-        description="A friendly starter course for new Python learners.",
-        thumbnai_url="https://example.com/courses/python-fundamentals.png",
-        price=0.0,
-        status=CourseStatus.PUBLISHED,
-        created_at=seed_time - timedelta(days=10),
-        updated_at=seed_time - timedelta(days=2),
-        deleted_at=None,
+        title="Python Fundamentals", teacher_id=teacher.id, slug="python-fundamentals", field="Programming", tags="python,basics",
+        description="A practical starter course for new Python learners.", thumbnail_url="https://example.com/courses/python-fundamentals.png",
+        price=Decimal("0.00"), status=CourseStatus.APPROVED, created_at=seed_time - timedelta(days=12), updated_at=seed_time - timedelta(days=2),
     )
     paid_course = CourseModel(
-        title="Advanced Algorithms",
-        teacher_id=teacher.id,
-        slug="advanced-algorithms",
-        rating=4.9,
-        field="Computer Science",
-        tags="algorithms,data-structures",
-        description="A paid course for deeper algorithm practice.",
-        thumbnai_url="https://example.com/courses/advanced-algorithms.png",
-        price=299000.0,
-        status=CourseStatus.PUBLISHED,
-        created_at=seed_time - timedelta(days=8),
-        updated_at=seed_time - timedelta(days=1),
-        deleted_at=None,
+        title="Advanced Algorithms", teacher_id=teacher.id, slug="advanced-algorithms", field="Computer Science", tags="algorithms,data-structures",
+        description="A paid course for deeper algorithm practice.", thumbnail_url="https://example.com/courses/advanced-algorithms.png",
+        price=Decimal("29.90"), status=CourseStatus.APPROVED, created_at=seed_time - timedelta(days=8), updated_at=seed_time - timedelta(days=1),
     )
     draft_course = CourseModel(
-        title="AI Interview Lab",
-        teacher_id=teacher.id,
-        slug="ai-interview-lab",
-        rating=0.0,
-        field="Career",
-        tags="interview,ai",
-        description="Draft course for interview preparation workflows.",
-        thumbnai_url="https://example.com/courses/ai-interview-lab.png",
-        price=199000.0,
-        status=CourseStatus.DRAFT,
-        created_at=seed_time - timedelta(days=3),
-        updated_at=seed_time - timedelta(days=3),
-        deleted_at=None,
+        title="AI Interview Lab", teacher_id=teacher.id, slug="ai-interview-lab", field="Career", tags="interview,ai",
+        description="A draft course for interview preparation.", thumbnail_url="https://example.com/courses/ai-interview-lab.png",
+        price=Decimal("19.90"), status=CourseStatus.DRAFT, created_at=seed_time - timedelta(days=3), updated_at=seed_time - timedelta(days=3),
     )
     session.add_all([free_course, paid_course, draft_course])
     await session.flush()
-
+    session.add(CourseModerationReviewModel(course_id=free_course.id, reviewed_note="Approved for publication.", approved_at=seed_time - timedelta(days=10), submitted_at=seed_time - timedelta(days=11)))
     intro_section = SectionModel(course_id=free_course.id, title="Getting Started", position=0)
     practice_section = SectionModel(course_id=free_course.id, title="Practice", position=1)
     paid_section = SectionModel(course_id=paid_course.id, title="Core Concepts", position=0)
     session.add_all([intro_section, practice_section, paid_section])
     await session.flush()
-
-    lesson_intro = LessonModel(
-        section_id=intro_section.id,
-        title="Welcome to Python",
-        summary="Course introduction and setup guidance.",
-        score=10.0,
-        position=0,
-        created_at=seed_time - timedelta(days=9),
-        updated_at=seed_time - timedelta(days=9),
-    )
-    lesson_quiz = LessonModel(
-        section_id=intro_section.id,
-        title="Python Basics Quiz",
-        summary="Short quiz to check foundational knowledge.",
-        score=20.0,
-        position=1,
-        created_at=seed_time - timedelta(days=9),
-        updated_at=seed_time - timedelta(days=9),
-    )
-    lesson_problem = LessonModel(
-        section_id=practice_section.id,
-        title="Two Sum Practice",
-        summary="Solve a classic array problem.",
-        score=30.0,
-        position=0,
-        created_at=seed_time - timedelta(days=9),
-        updated_at=seed_time - timedelta(days=9),
-    )
-    paid_lesson = LessonModel(
-        section_id=paid_section.id,
-        title="Algorithm Thinking",
-        summary="A short reading lesson for the paid course.",
-        score=15.0,
-        position=0,
-        created_at=seed_time - timedelta(days=7),
-        updated_at=seed_time - timedelta(days=7),
-    )
-    session.add_all([lesson_intro, lesson_quiz, lesson_problem, paid_lesson])
+    intro_lesson = LessonModel(section_id=intro_section.id, title="Welcome to Python", summary="Course introduction and setup.", score=Decimal("10"), position=0, created_at=seed_time - timedelta(days=11), updated_at=seed_time - timedelta(days=11))
+    quiz_lesson = LessonModel(section_id=intro_section.id, title="Python Basics Quiz", summary="Check foundational knowledge.", score=Decimal("20"), position=1, created_at=seed_time - timedelta(days=10), updated_at=seed_time - timedelta(days=10))
+    problem_lesson = LessonModel(section_id=practice_section.id, title="Two Sum Practice", summary="Solve a classic array problem.", score=Decimal("30"), position=0, created_at=seed_time - timedelta(days=9), updated_at=seed_time - timedelta(days=9))
+    paid_lesson = LessonModel(section_id=paid_section.id, title="Algorithm Thinking", summary="A reading lesson for the paid course.", score=Decimal("15"), position=0, created_at=seed_time - timedelta(days=7), updated_at=seed_time - timedelta(days=7))
+    session.add_all([intro_lesson, quiz_lesson, problem_lesson, paid_lesson])
     await session.flush()
-
-    reading_1 = ReadingContentModel(
-        title="Why Python is a good starter language",
-        content="Python is easy to read, has a large ecosystem, and is great for automation.",
-        created_at=seed_time - timedelta(days=9),
-        updated_at=seed_time - timedelta(days=9),
-    )
-    reading_2 = ReadingContentModel(
-        title="Algorithm basics",
-        content="Look for patterns, reduce the problem, and test edge cases.",
-        created_at=seed_time - timedelta(days=7),
-        updated_at=seed_time - timedelta(days=7),
-    )
-    session.add_all([reading_1, reading_2])
+    intro_reading = ReadingContentModel(title="Why Python is a good starter language", content="Python is readable, has a large ecosystem, and is great for automation.", created_at=seed_time - timedelta(days=11), updated_at=seed_time - timedelta(days=11))
+    paid_reading = ReadingContentModel(title="Algorithm basics", content="Look for patterns, reduce the problem, and test edge cases.", created_at=seed_time - timedelta(days=7), updated_at=seed_time - timedelta(days=7))
+    session.add_all([intro_reading, paid_reading])
     await session.flush()
-
-    lesson_content_reading = LessonContentModel(
-        lesson_id=lesson_intro.id,
-        content_type=LessonContentType.READING,
-        content_id=reading_1.id,
-        media_url=None,
-        position=0,
-        created_at=seed_time - timedelta(days=9),
-    )
-    lesson_content_quiz = LessonContentModel(
-        lesson_id=lesson_quiz.id,
-        content_type=LessonContentType.QUIZ,
-        content_id=quiz.id,
-        media_url=None,
-        position=0,
-        created_at=seed_time - timedelta(days=9),
-    )
-    lesson_content_problem = LessonContentModel(
-        lesson_id=lesson_problem.id,
-        content_type=LessonContentType.PROBLEM,
-        content_id=problem.id,
-        media_url=None,
-        position=0,
-        created_at=seed_time - timedelta(days=9),
-    )
-    lesson_content_paid = LessonContentModel(
-        lesson_id=paid_lesson.id,
-        content_type=LessonContentType.READING,
-        content_id=reading_2.id,
-        media_url=None,
-        position=0,
-        created_at=seed_time - timedelta(days=7),
-    )
-    session.add_all(
-        [
-            lesson_content_reading,
-            lesson_content_quiz,
-            lesson_content_problem,
-            lesson_content_paid,
-        ]
-    )
-    await session.flush()
-
-    return {
-        "free_course": free_course,
-        "paid_course": paid_course,
-        "draft_course": draft_course,
-        "intro_section": intro_section,
-        "practice_section": practice_section,
-        "lesson_content_reading": lesson_content_reading,
-        "lesson_content_quiz": lesson_content_quiz,
-        "lesson_content_problem": lesson_content_problem,
-        "lesson_content_paid": lesson_content_paid,
+    contents = {
+        "intro": LessonContentModel(lesson_id=intro_lesson.id, content_type=LessonContentType.READING, content_id=intro_reading.id, position=0, created_at=seed_time - timedelta(days=11)),
+        "quiz": LessonContentModel(lesson_id=quiz_lesson.id, content_type=LessonContentType.QUIZ, content_id=quiz.id, position=0, created_at=seed_time - timedelta(days=10)),
+        "problem": LessonContentModel(lesson_id=problem_lesson.id, content_type=LessonContentType.PROBLEM, content_id=problem.id, position=0, created_at=seed_time - timedelta(days=9)),
+        "paid": LessonContentModel(lesson_id=paid_lesson.id, content_type=LessonContentType.READING, content_id=paid_reading.id, position=0, created_at=seed_time - timedelta(days=7)),
     }
+    session.add_all(contents.values())
+    await session.flush()
+    return {"free_course": free_course, "paid_course": paid_course, "contents": contents}
 
 
-async def seed_enrollment_and_progress(
-    session,
+async def seed_learning_and_commerce(
+    session: Any,
     users: dict[str, UserModel],
+    quiz: QuizModel,
     graph: dict[str, Any],
     seed_time: datetime,
 ) -> dict[str, Any]:
+    teacher = users["teacher"]
     student = users["student"]
-
-    free_enrollment = EnrollmentModel(
-        student_id=student.id,
-        course_id=graph["free_course"].id,
-        status="active",
-        enrolled_at=seed_time - timedelta(days=5),
-        completed_at=None,
-    )
-    paid_enrollment = EnrollmentModel(
-        student_id=student.id,
-        course_id=graph["paid_course"].id,
-        status="active",
-        enrolled_at=seed_time - timedelta(days=2),
-        completed_at=None,
-    )
+    free_enrollment = EnrollmentModel(student_id=student.id, course_id=graph["free_course"].id, status="active", enrolled_at=seed_time - timedelta(days=5))
+    paid_enrollment = EnrollmentModel(student_id=student.id, course_id=graph["paid_course"].id, status="active", enrolled_at=seed_time - timedelta(days=2))
     session.add_all([free_enrollment, paid_enrollment])
     await session.flush()
-
     session.add_all(
         [
-            LessonContentProgressModel(
-                enrollment_id=free_enrollment.id,
-                lesson_content_id=graph["lesson_content_reading"].id,
-                completed=True,
-                completed_at=seed_time - timedelta(days=5),
-            ),
-            LessonContentProgressModel(
-                enrollment_id=free_enrollment.id,
-                lesson_content_id=graph["lesson_content_quiz"].id,
-                completed=True,
-                completed_at=seed_time - timedelta(days=4),
-            ),
-            LessonContentProgressModel(
-                enrollment_id=free_enrollment.id,
-                lesson_content_id=graph["lesson_content_problem"].id,
-                completed=True,
-                completed_at=seed_time - timedelta(days=3),
-            ),
-            LessonContentProgressModel(
-                enrollment_id=paid_enrollment.id,
-                lesson_content_id=graph["lesson_content_paid"].id,
-                completed=False,
-                completed_at=None,
-            ),
+            LessonContentProgressModel(enrollment_id=free_enrollment.id, lesson_content_id=graph["contents"]["intro"].id, completed=True, completed_at=seed_time - timedelta(days=5)),
+            LessonContentProgressModel(enrollment_id=free_enrollment.id, lesson_content_id=graph["contents"]["quiz"].id, completed=True, completed_at=seed_time - timedelta(days=4)),
+            LessonContentProgressModel(enrollment_id=free_enrollment.id, lesson_content_id=graph["contents"]["problem"].id, completed=True, completed_at=seed_time - timedelta(days=3)),
+            LessonContentProgressModel(enrollment_id=paid_enrollment.id, lesson_content_id=graph["contents"]["paid"].id, completed=False),
+            QuizEnrollmentModel(quiz_id=quiz.id, student_id=student.id, enrolled_at=seed_time - timedelta(days=4)),
+            QuizSubmissionModel(quiz_id=quiz.id, student_id=student.id, attempt_no=1, score=Decimal("100"), answers='{"variables": "no_constant_keyword", "list_length": "4"}', submitted_at=seed_time - timedelta(days=4)),
+            CourseFavoriteModel(student_id=student.id, course_id=graph["free_course"].id, created_at=seed_time - timedelta(days=5)),
+            CourseReviewModel(course_id=graph["free_course"].id, student_id=student.id, rating=Decimal("5"), content="Clear explanations and useful practice.", created_at=seed_time - timedelta(days=2), updated_at=seed_time - timedelta(days=1)),
         ]
     )
-
-    session.add(
-        QuizEnrollmentModel(
-            quiz_id=graph["lesson_content_quiz"].content_id,
-            student_id=student.id,
-            enrolled_at=seed_time - timedelta(days=4),
-        )
+    transaction = TransactionModel(
+        student_id=student.id, course_id=graph["paid_course"].id, amount=Decimal("29.90"), status=PaymentStatus.COMPLETED,
+        transaction_code="TRX-SEED-0001", payos_code="PAYOS-SEED-0001", payos_link="https://payos.example.com/checkout/TRX-SEED-0001",
+        idempotency_key="seed-paid-course-checkout-0001", signature_verified=True, expires_at=seed_time - timedelta(days=2),
+        completed_at=seed_time - timedelta(days=2), created_at=seed_time - timedelta(days=2), updated_at=seed_time - timedelta(days=2),
     )
-    session.add(
-        QuizSubmissionModel(
-            quiz_id=graph["lesson_content_quiz"].content_id,
-            student_id=student.id,
-            score=100.0,
-            submitted_at=seed_time - timedelta(days=4),
-            answers={"1": 3, "2": 2},
-        )
-    )
-
-    return {
-        "free_enrollment": free_enrollment,
-        "paid_enrollment": paid_enrollment,
-    }
-
-
-async def seed_commenting(session, users: dict[str, UserModel], graph: dict[str, Any], seed_time: datetime) -> None:
-    student = users["student"]
-    teacher = users["teacher"]
-
-    parent = CommentModel(
-        lesson_content_id=graph["lesson_content_reading"].id,
-        user_id=student.id,
-        parent_id=None,
-        content="This explanation is clear, but can you add a variable example?",
-        created_at=seed_time - timedelta(days=4),
-        updated_at=seed_time - timedelta(days=4),
-    )
-    session.add(parent)
+    wallet = WalletModel(teacher_id=teacher.id, available_balance=Decimal("24.90"), pending_balance=Decimal("5.00"), currency=Currency.USD, created_at=seed_time - timedelta(days=2), updated_at=seed_time - timedelta(days=1))
+    session.add_all([transaction, wallet])
     await session.flush()
-
-    session.add(
-        CommentModel(
-            lesson_content_id=graph["lesson_content_reading"].id,
-            user_id=teacher.id,
-            parent_id=parent.id,
-            content="Yes, I will add a short example in the next update.",
-            created_at=seed_time - timedelta(days=4),
-            updated_at=seed_time - timedelta(days=4),
-        )
-    )
-
-
-async def seed_teacher_registers(session, users: dict[str, UserModel], seed_time: datetime) -> None:
-    admin = users["admin"]
-    teacher = users["teacher"]
-    student = users["student"]
-
+    payout = PayoutRequestModel(wallet_id=wallet.id, teacher_id=teacher.id, amount=Decimal("5.00"), currency=Currency.USD, status=PayoutStatus.PENDING, created_at=seed_time - timedelta(hours=4), updated_at=seed_time - timedelta(hours=4))
+    session.add(payout)
+    await session.flush()
     session.add_all(
         [
-            TeacherRegisterModel(
-                teacher_id=student.id,
-                motivation="I want to become a teacher and share what I learn.",
-                cccd="012345678901",
-                cccd_front_url="https://example.com/identity/student-front.png",
-                cccd_back_url="https://example.com/identity/student-back.png",
-                status=TeacherRegisterStatus.PENDING,
-                reviewed_note=None,
-                reviewed_by=None,
-                reviewed_at=None,
-                created_at=seed_time - timedelta(days=1),
-                updated_at=seed_time - timedelta(days=1),
-                deleted_at=None,
-            ),
-            TeacherRegisterModel(
-                teacher_id=teacher.id,
-                motivation="I already teach backend and want to publish paid courses.",
-                cccd="012345678902",
-                cccd_front_url="https://example.com/identity/teacher-front.png",
-                cccd_back_url="https://example.com/identity/teacher-back.png",
-                status=TeacherRegisterStatus.AGREE,
-                reviewed_note="Approved for seed data.",
-                reviewed_by=admin.id,
-                reviewed_at=seed_time - timedelta(hours=12),
-                created_at=seed_time - timedelta(days=2),
-                updated_at=seed_time - timedelta(hours=12),
-                deleted_at=None,
-            ),
+            WalletLedgerModel(wallet_id=wallet.id, transaction_id=transaction.id, entry_type="revenue", amount=Decimal("29.90"), currency=Currency.USD, created_at=seed_time - timedelta(days=2)),
+            WalletLedgerModel(wallet_id=wallet.id, payout_request_id=payout.id, entry_type="reserve", amount=Decimal("5.00"), currency=Currency.USD, created_at=seed_time - timedelta(hours=4)),
         ]
     )
+    return {"transaction": transaction, "wallet": wallet, "payout": payout}
 
 
-async def seed_transactions_notifications_audit_logs(
-    session,
+async def seed_activity_and_communication(
+    session: Any,
     users: dict[str, UserModel],
-    graph: dict[str, Any],
+    submission: SubmissionModel,
+    transaction: TransactionModel,
+    approved_register: TeacherRegisterModel,
     seed_time: datetime,
 ) -> None:
     admin = users["admin"]
     teacher = users["teacher"]
     student = users["student"]
-
-    session.add(
-        TransactionModel(
-            user_id=student.id,
-            course_id=graph["paid_course"].id,
-            payment_method=PaymentMethod.TRANSFER,
-            amount=299000.0,
-            status=PaymentStatus.COMPLETE,
-            transaction_code="TRX-20260804-0001",
-            payos_code="PAYOS-20260804-0001",
-            payos_link="https://payos.example.com/checkout/TRX-20260804-0001",
-            created_at=seed_time - timedelta(days=2),
-            updated_at=seed_time - timedelta(days=2),
-        )
+    interview = InterviewSessionModel(
+        student_id=student.id, topic="Python Backend Developer", level=InterviewLevel.JUNIOR, status=InterviewStatus.COMPLETED,
+        max_questions=12, question_count=3, started_at=seed_time - timedelta(days=1), ended_at=seed_time - timedelta(days=1) + timedelta(minutes=25), report_generated_at=seed_time - timedelta(days=1) + timedelta(minutes=26),
     )
-
-    session.add_all(
-        [
-            NotificationModel(
-                sender_id=admin.id,
-                user_id=student.id,
-                content="Your teacher application is waiting for review.",
-                is_read=False,
-                created_at=seed_time - timedelta(days=1),
-            ),
-            NotificationModel(
-                sender_id=teacher.id,
-                user_id=student.id,
-                content="Nice work on the quiz. Keep going!",
-                is_read=True,
-                created_at=seed_time - timedelta(days=1),
-            ),
-        ]
-    )
-
-    session.add_all(
-        [
-            AuditLogModel(
-                user_id=admin.id,
-                action=ActionType.JOIN,
-                note="Seed admin account created.",
-                do_at=seed_time - timedelta(days=10),
-            ),
-            AuditLogModel(
-                user_id=admin.id,
-                action=ActionType.SOMETHING,
-                note="Approved teacher registration for seeded dataset.",
-                do_at=seed_time - timedelta(hours=12),
-            ),
-        ]
-    )
-
-
-async def seed_interview(session, users: dict[str, UserModel], seed_time: datetime) -> None:
-    student = users["student"]
-
-    session_model = InterviewSessionModel(
-        student_id=student.id,
-        topic="Python Backend Developer",
-        level=InterViewLevel.JUNIOR,
-        status=False,
-        started_at=seed_time - timedelta(days=1),
-        ended_at=(seed_time - timedelta(days=1)) + timedelta(minutes=25),
-    )
-    session.add(session_model)
+    session.add(interview)
     await session.flush()
-
     session.add_all(
         [
-            InterviewMessageModel(
-                session_id=session_model.id,
-                sender="AI",
-                content="Tell me about a backend project you built.",
-                created_at=seed_time - timedelta(days=1),
-            ),
-            InterviewMessageModel(
-                session_id=session_model.id,
-                sender="HUMAN",
-                content="I built a FastAPI service with async PostgreSQL access.",
-                created_at=(seed_time - timedelta(days=1)) + timedelta(minutes=2),
-            ),
-            InterviewMessageModel(
-                session_id=session_model.id,
-                sender="AI",
-                content="How would you improve its reliability?",
-                created_at=(seed_time - timedelta(days=1)) + timedelta(minutes=4),
-            ),
-            InterviewMessageModel(
-                session_id=session_model.id,
-                sender="HUMAN",
-                content="I would add retries, better monitoring, and integration tests.",
-                created_at=(seed_time - timedelta(days=1)) + timedelta(minutes=6),
-            ),
+            InterviewMessageModel(session_id=interview.id, sender=InterviewMessageSender.AI, content="Tell me about a backend project you built.", created_at=seed_time - timedelta(days=1)),
+            InterviewMessageModel(session_id=interview.id, sender=InterviewMessageSender.STUDENT, content="I built a FastAPI service with async PostgreSQL access.", created_at=seed_time - timedelta(days=1) + timedelta(minutes=2)),
+            InterviewMessageModel(session_id=interview.id, sender=InterviewMessageSender.SYSTEM, content="Interview completed; generating report.", created_at=seed_time - timedelta(days=1) + timedelta(minutes=25)),
+            InterviewReportModel(session_id=interview.id, overall_score=Decimal("8.5"), strengths="Clear backend thinking and practical testing instincts.", weaknesses="Could be more specific about scaling trade-offs.", suggestions="Practice system-design answers with concrete metrics.", generated_at=seed_time - timedelta(days=1) + timedelta(minutes=26)),
+            NotificationModel(sender_id=admin.id, user_id=teacher.id, type=NotificationType.TEACHER_APPLICATION_APPROVED, target_type="teacher_register", target_id=approved_register.id, content="Your teacher application was approved.", is_read=True, created_at=seed_time - timedelta(days=75)),
+            NotificationModel(sender_id=None, user_id=student.id, type=NotificationType.PAYMENT_SUCCESS, target_type="transaction", target_id=transaction.id, content="Your Advanced Algorithms payment completed successfully.", is_read=False, created_at=seed_time - timedelta(days=2)),
+            NotificationModel(sender_id=teacher.id, user_id=student.id, type=NotificationType.JUDGE_RESULT, target_type="submission", target_id=submission.id, content="Your Two Sum submission was accepted.", is_read=True, created_at=seed_time - timedelta(days=3)),
+            AuditLogModel(user_id=admin.id, action=AuditAction.ACCOUNT_STATUS_UPDATE, target_type="user", target_id=student.id, note="Seed student account activated.", correlation_id="seed-account-status-001", do_at=seed_time - timedelta(days=10)),
+            AuditLogModel(user_id=admin.id, action=AuditAction.TEACHER_APPLICATION_REVIEW, target_type="teacher_register", target_id=approved_register.id, note="Seed teacher application approved.", correlation_id="seed-teacher-review-001", do_at=seed_time - timedelta(days=75)),
+            StudentDailyActivityModel(student_id=student.id, activity_date=(seed_time - timedelta(days=3)).date(), contribution_count=2, study_seconds=3600, solved_problem_count=1, created_at=seed_time - timedelta(days=3), updated_at=seed_time - timedelta(days=3)),
+            StudentDailyActivityModel(student_id=student.id, activity_date=(seed_time - timedelta(days=2)).date(), contribution_count=1, study_seconds=1800, solved_problem_count=0, created_at=seed_time - timedelta(days=2), updated_at=seed_time - timedelta(days=2)),
         ]
-    )
-
-    session.add(
-        InterviewReportModel(
-            session_id=session_model.id,
-            overall_score=8.5,
-            strengths="Clear backend thinking, good testing instincts, and practical architecture.",
-            weaknesses="Could be more specific about scaling trade-offs and observability.",
-            suggestions="Practice system design answers and mention concrete metrics.",
-            generated_at=(seed_time - timedelta(days=1)) + timedelta(minutes=10),
-        )
     )
 
 
@@ -810,35 +476,28 @@ async def seed_database() -> None:
     async with async_session_maker() as session:
         async with session.begin():
             await reset_business_database(session)
-
-            seed_time = now()
-            users = await seed_users(session)
+            seed_time = utc_now()
+            users = await seed_users(session, seed_time)
+            teacher_registers = await seed_teacher_registers(session, users, seed_time)
             refs = await seed_reference_data(session)
-            quiz_pack = await seed_quiz(session, refs["seed_time"])
-            problem_pack = await seed_problem(session, refs, users)
-            graph = await seed_courses_and_curriculum(
+            quiz = await seed_quiz(session, seed_time)
+            problem_data = await seed_problem(session, refs, users["teacher"], users["student"], seed_time)
+            graph = await seed_courses_and_curriculum(session, users["teacher"], quiz, problem_data["problem"], seed_time)
+            commerce_data = await seed_learning_and_commerce(session, users, quiz, graph, seed_time)
+            await seed_activity_and_communication(
                 session,
                 users,
-                quiz_pack["quiz"],
-                problem_pack["problem"],
+                problem_data["submission"],
+                commerce_data["transaction"],
+                teacher_registers["approved"],
                 seed_time,
             )
-            await seed_enrollment_and_progress(session, users, graph, seed_time)
-            await seed_commenting(session, users, graph, seed_time)
-            await seed_teacher_registers(session, users, seed_time)
-            await seed_transactions_notifications_audit_logs(session, users, graph, seed_time)
-            await seed_interview(session, users, seed_time)
 
     print("Seed completed successfully.")
     print("Created debug accounts:")
-    print("- cloudian@gmail.com / admin123")
-    print("- teacher@gmail.com / teacher123")
-    print("- student@gmail.com / student123")
-    print("Seeded supporting data:")
-    print("- courses, sections, lessons, lesson contents, and progress")
-    print("- quiz, quiz questions, options, enrollment, and submission")
-    print("- problem, tags, configs, testcases, and accepted submission")
-    print("- teacher register requests, payments, notifications, comments, audit logs, and interview session")
+    for account in SEED_ACCOUNTS:
+        print(f"- {account.email} / {account.password}")
+    print("Seeded data covers all current schema tables and core test flows.")
 
 
 def main() -> None:

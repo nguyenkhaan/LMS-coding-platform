@@ -1,7 +1,5 @@
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from sqlite3 import Date
-
 from fastapi import FastAPI, APIRouter
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -12,7 +10,6 @@ from src.services.rabbitmq.rabbitmq_manager import RabbitMQManager
 from src.services.rabbitmq.submission_execution_result_consumer import handle_submission_execution_result
 from src.bases.constants.submission_queues import SUBMISSION_EXECUTION_RESULT_QUEUE
 # router 
-from src.modules.lesson_comment.lesson_comment_router import router as lesson_comment_router
 from src.modules.submission.submission_route import router as submission_router 
 from src.modules.student_course_directory.course_router import router as course_router
 from src.modules.student_course_directory.student_router import router as student_router
@@ -83,7 +80,6 @@ app.add_middleware(
 v1_router = APIRouter(prefix="/api/v1")
 
 v1_router.include_router(health_router)
-v1_router.include_router(lesson_comment_router)
 v1_router.include_router(course_router)
 v1_router.include_router(student_router)
 v1_router.include_router(submission_router)

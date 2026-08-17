@@ -1,66 +1,135 @@
-from enum import Enum 
+from datetime import UTC, datetime
+from enum import Enum
 
-class AccountStatus(str , Enum): 
-    BANNED = 'banned' 
-    ACTIVE = 'active' 
+from sqlalchemy import DateTime
+from sqlalchemy.orm import Mapped, mapped_column
 
-class TeacherRegisterStatus(str , Enum): 
-    AGREE = 'agree' 
-    REJECT = 'reject' 
-    PENDING = 'pending' 
 
-class CourseStatus(str , Enum): 
-    DRAFT = 'draft' 
-    PENDING_REVIEW = 'pending_review' 
-    PUBLISHED = 'published' 
-    ARCHIVED = 'archived' 
+def utc_now() -> datetime:
+    return datetime.now(UTC)
 
-class LessonContentType(str, Enum): 
-    READING = 'reading' 
-    QUIZ = 'quiz' 
-    PROBLEM = 'problem' 
 
-class ProblemDifficulty(str, Enum): 
-    EASY = 'easy' 
-    MEDIUM = 'medium'  
-    HARD = 'hard' 
+class TimestampMixin:
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
 
-class Role(str , Enum): 
-    ADMIN = 'admin' 
-    TEACHER = 'teacher' 
-    STUDENT = 'student' 
 
-class InterViewLevel(str, Enum): 
-    INTERN = 'intern' 
-    FRESHER = 'fresher' 
-    JUNIOR = 'junior' 
-    SENIOR = 'senior' 
+class AccountStatus(str, Enum):
+    BANNED = "BANNED"
+    UNVERIFIED = "UNVERIFIED"
+    ACTIVE = "ACTIVE"
+
+
+class TeacherRegisterStatus(str, Enum):
+    DRAFT = "DRAFT"
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+
+class CourseStatus(str, Enum):
+    DRAFT = "DRAFT"
+    PENDING_REVIEW = "PENDING_REVIEW"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    ARCHIVED = "ARCHIVED"
+
+
+class LessonContentType(str, Enum):
+    READING = "READING"
+    QUIZ = "QUIZ"
+    PROBLEM = "PROBLEM"
+
+
+class ProblemDifficulty(str, Enum):
+    EASY = "EASY"
+    MEDIUM = "MEDIUM"
+    HARD = "HARD"
+
+
+class Role(str, Enum):
+    ADMIN = "ADMIN"
+    TEACHER = "TEACHER"
+    STUDENT = "STUDENT"
+
+
+class InterviewLevel(str, Enum):
+    INTERN = "INTERN"
+    FRESHER = "FRESHER"
+    JUNIOR = "JUNIOR"
+    SENIOR = "SENIOR"
+
+
+class InterviewStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    REPORT_GENERATING = "REPORT_GENERATING"
+    COMPLETED = "COMPLETED"
+    ABORTED = "ABORTED"
+    FAILED = "FAILED"
+
+
+class InterviewMessageSender(str, Enum):
+    AI = "AI"
+    STUDENT = "STUDENT"
+    SYSTEM = "SYSTEM"
+
 
 class ProblemSubmissionStatus(str, Enum):
-    PENDING = 'pending'
-    RUNNING = 'running'
-    ACCEPTED = 'accepted'
-    WRONG_ANSWER = 'wrong_answer'
-    TIME_LIMIT_EXCEEDED = 'time_limit_exceeded'
-    MEMORY_LIMIT_EXCEEDED = 'memory_limit_exceeded'
-    RUNTIME_ERROR = 'runtime_error'
-    COMPILE_ERROR = 'compile_error'
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    ACCEPTED = "ACCEPTED"
+    WRONG_ANSWER = "WRONG_ANSWER"
+    TIME_LIMIT_EXCEEDED = "TIME_LIMIT_EXCEEDED"
+    MEMORY_LIMIT_EXCEEDED = "MEMORY_LIMIT_EXCEEDED"
+    RUNTIME_ERROR = "RUNTIME_ERROR"
+    COMPILE_ERROR = "COMPILE_ERROR"
 
-class PaymentMethod(str, Enum):
-    CASH = 'cash'
-    TRANSFER = 'transfer'
 
 class PaymentStatus(str, Enum):
-    COMPLETE = 'complete'
-    PENDING = 'pending'
-    FAILED = 'failed'
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    EXPIRED = "EXPIRED"
 
-class ActionType(str, Enum):
-    JOIN = 'join'
-    INTERVIEW = 'interview'
-    SOMETHING = 'something'
 
-class LoginMethod(str, Enum): 
-    GOOGLE = 'google' 
-    LOCAL = 'local' 
-    
+class PayoutStatus(str, Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+class NotificationType(str, Enum):
+    PAYMENT_SUCCESS = "PAYMENT_SUCCESS"
+    PAYMENT_FAILED = "PAYMENT_FAILED"
+    TEACHER_APPLICATION_APPROVED = "TEACHER_APPLICATION_APPROVED"
+    TEACHER_APPLICATION_REJECTED = "TEACHER_APPLICATION_REJECTED"
+    COURSE_APPROVED = "COURSE_APPROVED"
+    COURSE_REJECTED = "COURSE_REJECTED"
+    JUDGE_RESULT = "JUDGE_RESULT"
+    AI_REPORT_READY = "AI_REPORT_READY"
+    PAYOUT_APPROVED = "PAYOUT_APPROVED"
+    PAYOUT_REJECTED = "PAYOUT_REJECTED"
+
+
+class AuditAction(str, Enum):
+    JOIN = "JOIN"
+    INTERVIEW = "INTERVIEW"
+    TEACHER_APPLICATION_REVIEW = "TEACHER_APPLICATION_REVIEW"
+    COURSE_MODERATION = "COURSE_MODERATION"
+    PAYMENT_WEBHOOK = "PAYMENT_WEBHOOK"
+    PAYOUT_REVIEW = "PAYOUT_REVIEW"
+    ACCOUNT_STATUS_UPDATE = "ACCOUNT_STATUS_UPDATE"
+
+
+class Currency(str, Enum):
+    USD = "USD"
+
+
+InterViewLevel = InterviewLevel
