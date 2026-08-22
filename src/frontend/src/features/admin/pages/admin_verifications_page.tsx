@@ -1,279 +1,524 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-  ShieldCheck,
-  Check,
-  X,
-  RefreshCw,
-  Search,
-  FileText,
-  Download,
-  ExternalLink,
-  LogOut,
-  UserCheck
+	ShieldCheck,
+	CheckCircle2,
+	XCircle,
+	FileText,
+	Download,
+	ExternalLink,
+	Eye,
+	Clock,
+	AlertCircle,
+	Check,
+	ChevronRight,
+	BookOpen,
+	Users,
+	Sparkles
 } from 'lucide-react';
+import { toast } from 'sonner';
 
-interface Applicant {
-  id: string;
-  name: string;
-  initials: string;
-  email: string;
-  phone: string;
-  applied: string;
-  expertise: string[];
-  status: 'Pending' | 'Review' | 'Approved' | 'Rejected';
-  bio: string;
-  experience: string;
+interface TeacherApplicant {
+	id: string;
+	applicationId: string;
+	fullName: string;
+	dob: string;
+	idNumber: string;
+	bio: string;
+	status: 'PENDING REVIEW' | 'APPROVED' | 'REJECTED';
+	motivation: string;
+	idFrontUrl: string;
+	idBackUrl: string;
+	selfieUrl: string;
+	educationDoc: string;
+	cvDoc: string;
+	timeline: {
+		date: string;
+		title: string;
+		badge: string;
+		badgeType: 'green' | 'orange';
+		description: string;
+	}[];
 }
 
-const APPLICANTS: Applicant[] = [
-  {
-    id: 'TR-0001',
-    name: 'Edythe Andrew',
-    initials: 'EA',
-    email: 'edythe@example.com',
-    phone: '+1 123 456 7890',
-    applied: '16 Jan 2024',
-    expertise: ['Programming', 'Algorithms', 'Data Structures'],
-    status: 'Pending',
-    bio: 'Experienced software engineer with 8 years in backend development, specialising in scalable systems and algorithm design. Passionate about teaching and mentoring junior developers.',
-    experience: 'Previously a lead engineer at TechCorp Inc. (2016-2023). Has been teaching programming workshops since 2019 and has a proven track record of student success.'
-  },
-  {
-    id: 'TR-0002',
-    name: 'Ronald Richard',
-    initials: 'RR',
-    email: 'ronald@example.com',
-    phone: '+1 987 654 3210',
-    applied: '18 Jan 2024',
-    expertise: ['React', 'TypeScript', 'UI Engineering'],
-    status: 'Pending',
-    bio: 'Frontend specialist with expertise in React ecosystem. Contributed to multiple open-source projects and enjoys sharing knowledge through workshops.',
-    experience: 'Senior frontend engineer at DesignHub (2018-2024). Teaches React fundamentals online with over 5,000 students enrolled.'
-  },
-  {
-    id: 'TR-0003',
-    name: 'Jenny Wilson',
-    initials: 'JW',
-    email: 'jenny@example.com',
-    phone: '+1 555 000 1234',
-    applied: '20 Jan 2024',
-    expertise: ['Machine Learning', 'Python', 'Data Science'],
-    status: 'Review',
-    bio: 'Data scientist and ML researcher with a PhD in Computer Science. Writes extensively about machine learning applications in education.',
-    experience: 'Research scientist at DataLab (2020-present). Adjunct professor teaching machine learning at State University.'
-  }
+const MOCK_APPLICANTS: TeacherApplicant[] = [
+	{
+		id: '1',
+		applicationId: 'TR-2025-00124',
+		fullName: 'Minh Trần',
+		dob: '12/05/1992',
+		idNumber: '1234567890',
+		bio: 'Senior Backend Engineer with 8 years of experience. Passionate about teaching clean architecture and scalable systems.',
+		status: 'PENDING REVIEW',
+		motivation: 'I want to share my knowledge with the next generation of developers. I believe that teaching is the best way to learn, and I have a structured approach to explaining complex concepts.',
+		idFrontUrl: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&auto=format&fit=crop&q=80',
+		idBackUrl: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&auto=format&fit=crop&q=80',
+		selfieUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80',
+		educationDoc: 'Bachelor_Degree_Certificate.pdf',
+		cvDoc: 'Minh_Tran_Resume.pdf',
+		timeline: [
+			{
+				date: '12 Oct 2025',
+				title: 'Application Submitted',
+				badge: 'NEW',
+				badgeType: 'green',
+				description: 'Application received and queued for manual verification.'
+			},
+			{
+				date: '14 Oct 2025',
+				title: 'Initial Review',
+				badge: 'PENDING',
+				badgeType: 'orange',
+				description: 'Documents verified. Awaiting final admin approval.'
+			}
+		]
+	},
+	{
+		id: '2',
+		applicationId: 'TR-2025-00125',
+		fullName: 'Edythe Andrew',
+		dob: '24/08/1994',
+		idNumber: '0987654321',
+		bio: 'Fullstack Architect with microservices expertise. Enjoys building open source tooling and coaching engineers.',
+		status: 'PENDING REVIEW',
+		motivation: 'Building practical hands-on curricula that directly help students pass technical interviews and land high-paying engineering roles.',
+		idFrontUrl: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&auto=format&fit=crop&q=80',
+		idBackUrl: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=600&auto=format&fit=crop&q=80',
+		selfieUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=600&auto=format&fit=crop&q=80',
+		educationDoc: 'Master_Computer_Science.pdf',
+		cvDoc: 'Edythe_Andrew_CV.pdf',
+		timeline: [
+			{
+				date: '15 Oct 2025',
+				title: 'Application Submitted',
+				badge: 'NEW',
+				badgeType: 'green',
+				description: 'Application submitted with certified degree certificates.'
+			}
+		]
+	}
 ];
 
-const STATUS_BADGE: Record<string, string> = {
-  Pending: 'bg-amber-50 border border-amber-300 text-amber-800',
-  Review: 'bg-indigo-50 border border-indigo-200 text-indigo-900',
-  Approved: 'bg-emerald-50 border border-emerald-300 text-emerald-800',
-  Rejected: 'bg-rose-50 border border-rose-300 text-rose-700'
+export const AdminVerificationsPage: React.FC = () => {
+	const navigate = useNavigate();
+	const [applicants, setApplicants] = useState<TeacherApplicant[]>(MOCK_APPLICANTS);
+	const [selectedApplicantId, setSelectedApplicantId] = useState<string>(MOCK_APPLICANTS[0].id);
+	const [reviewerNote, setReviewerNote] = useState<string>('');
+	const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+	const currentApplicant = applicants.find((a) => a.id === selectedApplicantId) || applicants[0];
+
+	const handleApprove = () => {
+		setApplicants((prev) =>
+			prev.map((a) =>
+				a.id === currentApplicant.id ? { ...a, status: 'APPROVED' } : a
+			)
+		);
+		toast.success(`Application ${currentApplicant.applicationId} (${currentApplicant.fullName}) has been APPROVED!`);
+	};
+
+	const handleReject = () => {
+		if (!reviewerNote.trim()) {
+			toast.error('Please enter a reviewer note explaining the reason for rejection or changes requested.');
+			return;
+		}
+		setApplicants((prev) =>
+			prev.map((a) =>
+				a.id === currentApplicant.id ? { ...a, status: 'REJECTED' } : a
+			)
+		);
+		toast.warning(`Application ${currentApplicant.applicationId} marked as REJECTED (Changes requested).`);
+	};
+
+	return (
+		<div className="w-full min-h-screen bg-gray-50 flex flex-col font-['Inter'] antialiased">
+			
+			{/* 1. Hero Breadcrumb Banner (Figma Signature Pastel Gradient) */}
+			<div className="w-full py-10 bg-gradient-to-r from-red-50 via-sky-50 to-blue-100 border-b border-slate-200 flex flex-col justify-center items-center gap-1.5 text-center">
+				<h1 className="text-3xl lg:text-4xl font-extrabold text-zinc-900 tracking-tight">
+					Teacher Registration Review
+				</h1>
+				<div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-neutral-600">
+					<Link to="/dashboard" className="text-neutral-500 hover:text-zinc-900 transition-colors">
+						Home
+					</Link>
+					<span className="text-neutral-400 font-normal">&gt;</span>
+					<span className="text-zinc-900 font-semibold">Admin Review Dashboard</span>
+				</div>
+			</div>
+
+			{/* 2. Main Body Container (max-w-[1340px] centered) */}
+			<div className="max-w-[1340px] w-full mx-auto px-6 py-8 flex flex-col lg:flex-row gap-8 items-start flex-1">
+				
+				{/* Left Moderation Sidebar */}
+				<div className="w-full lg:w-72 shrink-0 flex flex-col gap-6">
+					
+					{/* Moderation Navigation Card */}
+					<div className="bg-white rounded-2xl border border-neutral-200 p-5 shadow-xs flex flex-col gap-2">
+						<span className="text-xs font-bold text-neutral-400 uppercase tracking-wider px-3 pb-2 border-b border-slate-100">
+							Moderation
+						</span>
+
+						<Link
+							to="/admin/courses"
+							className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-neutral-600 hover:bg-slate-50 text-sm font-medium transition-colors cursor-pointer"
+						>
+							<BookOpen className="w-4 h-4 text-neutral-400" />
+							<span>Course Approval</span>
+						</Link>
+
+						<div className="flex items-center gap-3 px-3 py-2.5 bg-indigo-50/80 rounded-xl text-indigo-900 text-sm font-bold shadow-xs">
+							<Users className="w-4 h-4 text-indigo-900" />
+							<span>Teachers Review</span>
+						</div>
+					</div>
+
+					{/* Applicant Switcher Queue */}
+					<div className="bg-white rounded-2xl border border-neutral-200 p-5 shadow-xs flex flex-col gap-3">
+						<span className="text-xs font-bold text-neutral-400 uppercase tracking-wider border-b border-slate-100 pb-2">
+							Pending Queue ({applicants.length})
+						</span>
+
+						<div className="flex flex-col gap-2">
+							{applicants.map((app) => (
+								<button
+									key={app.id}
+									onClick={() => setSelectedApplicantId(app.id)}
+									className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer flex flex-col gap-1 ${
+										selectedApplicantId === app.id
+											? 'bg-indigo-900 text-white border-indigo-900 shadow-xs'
+											: 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-zinc-800'
+									}`}
+								>
+									<div className="flex justify-between items-center">
+										<span className="font-bold text-sm">{app.fullName}</span>
+										<span
+											className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+												app.status === 'APPROVED'
+													? 'bg-emerald-500 text-white'
+													: app.status === 'REJECTED'
+													? 'bg-rose-500 text-white'
+													: selectedApplicantId === app.id
+													? 'bg-amber-400 text-zinc-900'
+													: 'bg-amber-100 text-amber-900'
+											}`}
+										>
+											{app.status === 'PENDING REVIEW' ? 'PENDING' : app.status}
+										</span>
+									</div>
+									<span className={`text-xs ${selectedApplicantId === app.id ? 'text-slate-200' : 'text-neutral-500'}`}>
+										ID: {app.applicationId}
+									</span>
+								</button>
+							))}
+						</div>
+					</div>
+
+				</div>
+
+				{/* Right Main Review Content Panel */}
+				<div className="flex-1 w-full flex flex-col gap-6">
+					
+					{/* 1. Application Status Card */}
+					<div className="w-full p-6 bg-white rounded-2xl border border-neutral-200 shadow-xs flex justify-between items-center">
+						<div className="flex flex-col gap-1">
+							<h2 className="text-xl font-bold text-zinc-900">Application Status</h2>
+							<span className="text-sm text-neutral-500 font-medium">
+								Application ID: <strong className="text-zinc-800">{currentApplicant.applicationId}</strong>
+							</span>
+						</div>
+
+						<span
+							className={`px-4 py-1.5 rounded-full text-xs font-extrabold tracking-wider border ${
+								currentApplicant.status === 'APPROVED'
+									? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+									: currentApplicant.status === 'REJECTED'
+									? 'bg-rose-50 text-rose-700 border-rose-300'
+									: 'bg-orange-50 text-amber-700 border-amber-400 animate-pulse'
+							}`}
+						>
+							{currentApplicant.status}
+						</span>
+					</div>
+
+					{/* 2. Applicant Information Card */}
+					<div className="w-full p-6 bg-white rounded-2xl border border-neutral-200 shadow-xs flex flex-col gap-6">
+						<h3 className="text-lg font-bold text-zinc-900 border-b border-slate-100 pb-3">
+							Applicant Information
+						</h3>
+
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+							<div className="flex flex-col gap-1">
+								<span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+									Legal Full Name
+								</span>
+								<span className="text-base font-bold text-zinc-900">
+									{currentApplicant.fullName}
+								</span>
+							</div>
+
+							<div className="flex flex-col gap-1">
+								<span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+									Date of Birth
+								</span>
+								<span className="text-base font-bold text-zinc-900">
+									{currentApplicant.dob}
+								</span>
+							</div>
+
+							<div className="flex flex-col gap-1">
+								<span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+									Identity Number
+								</span>
+								<span className="text-base font-bold text-zinc-900">
+									{currentApplicant.idNumber}
+								</span>
+							</div>
+
+							<div className="flex flex-col gap-1">
+								<span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+									Bio
+								</span>
+								<p className="text-sm text-neutral-600 leading-relaxed">
+									{currentApplicant.bio}
+								</p>
+							</div>
+						</div>
+					</div>
+
+					{/* 3. Identity Documents Card */}
+					<div className="w-full p-6 bg-white rounded-2xl border border-neutral-200 shadow-xs flex flex-col gap-5">
+						<h3 className="text-lg font-bold text-zinc-900 border-b border-slate-100 pb-3">
+							Identity Documents
+						</h3>
+
+						<div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+							{/* Identity Front */}
+							<div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col justify-between gap-3">
+								<div className="flex justify-between items-center">
+									<span className="text-xs font-bold text-zinc-800">Identity Front</span>
+									<span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">
+										VERIFIED
+									</span>
+								</div>
+								<div className="h-32 bg-slate-200 rounded-lg overflow-hidden relative group">
+									<img
+										src={currentApplicant.idFrontUrl}
+										alt="Identity Front"
+										className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+									/>
+								</div>
+								<button
+									onClick={() => setPreviewImage(currentApplicant.idFrontUrl)}
+									className="text-xs font-bold text-indigo-900 underline hover:text-rose-500 cursor-pointer text-left"
+								>
+									View Document &rarr;
+								</button>
+							</div>
+
+							{/* Identity Back */}
+							<div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col justify-between gap-3">
+								<div className="flex justify-between items-center">
+									<span className="text-xs font-bold text-zinc-800">Identity Back</span>
+									<span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full">
+										VERIFIED
+									</span>
+								</div>
+								<div className="h-32 bg-slate-200 rounded-lg overflow-hidden relative group">
+									<img
+										src={currentApplicant.idBackUrl}
+										alt="Identity Back"
+										className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+									/>
+								</div>
+								<button
+									onClick={() => setPreviewImage(currentApplicant.idBackUrl)}
+									className="text-xs font-bold text-indigo-900 underline hover:text-rose-500 cursor-pointer text-left"
+								>
+									View Document &rarr;
+								</button>
+							</div>
+
+							{/* Selfie with ID */}
+							<div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col justify-between gap-3">
+								<div className="flex justify-between items-center">
+									<span className="text-xs font-bold text-zinc-800">Selfie with ID</span>
+									<span className="px-2 py-0.5 bg-orange-100 text-amber-800 text-[10px] font-bold rounded-full">
+										PENDING
+									</span>
+								</div>
+								<div className="h-32 bg-slate-200 rounded-lg overflow-hidden relative group">
+									<img
+										src={currentApplicant.selfieUrl}
+										alt="Selfie with ID"
+										className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+									/>
+								</div>
+								<button
+									onClick={() => setPreviewImage(currentApplicant.selfieUrl)}
+									className="text-xs font-bold text-indigo-900 underline hover:text-rose-500 cursor-pointer text-left"
+								>
+									View Document &rarr;
+								</button>
+							</div>
+						</div>
+					</div>
+
+					{/* 4. Credentials & Documents Attachment Card */}
+					<div className="w-full p-6 bg-white rounded-2xl border border-neutral-200 shadow-xs flex flex-col gap-4">
+						<h3 className="text-lg font-bold text-zinc-900 border-b border-slate-100 pb-3">
+							Documents &amp; Certificates
+						</h3>
+
+						<div className="flex flex-col gap-3">
+							{/* Doc 1 */}
+							<div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-4">
+								<div className="flex items-center gap-3">
+									<div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-900 flex items-center justify-center shrink-0">
+										<FileText className="w-5 h-5" />
+									</div>
+									<div className="flex flex-col">
+										<span className="text-sm font-bold text-zinc-900">Education Evidence</span>
+										<span className="text-xs text-neutral-500">{currentApplicant.educationDoc}</span>
+									</div>
+								</div>
+
+								<button
+									onClick={() => toast.success(`Downloading ${currentApplicant.educationDoc}...`)}
+									className="px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-neutral-200 text-zinc-800 text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
+								>
+									<Download className="w-3.5 h-3.5" />
+									<span>Download</span>
+								</button>
+							</div>
+
+							{/* Doc 2 */}
+							<div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-4">
+								<div className="flex items-center gap-3">
+									<div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-900 flex items-center justify-center shrink-0">
+										<FileText className="w-5 h-5" />
+									</div>
+									<div className="flex flex-col">
+										<span className="text-sm font-bold text-zinc-900">CV / Resume</span>
+										<span className="text-xs text-neutral-500">{currentApplicant.cvDoc}</span>
+									</div>
+								</div>
+
+								<button
+									onClick={() => toast.success(`Downloading ${currentApplicant.cvDoc}...`)}
+									className="px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-neutral-200 text-zinc-800 text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5 shadow-xs"
+								>
+									<Download className="w-3.5 h-3.5" />
+									<span>Download</span>
+								</button>
+							</div>
+						</div>
+					</div>
+
+					{/* 5. Motivation Card */}
+					<div className="w-full p-6 bg-white rounded-2xl border border-neutral-200 shadow-xs flex flex-col gap-3">
+						<h3 className="text-lg font-bold text-zinc-900 border-b border-slate-100 pb-2">
+							Motivation
+						</h3>
+						<p className="text-sm text-neutral-600 leading-relaxed italic bg-slate-50 p-4 rounded-xl border border-slate-100">
+							&ldquo;{currentApplicant.motivation}&rdquo;
+						</p>
+					</div>
+
+					{/* 6. Reviewer Note Card */}
+					<div className="w-full p-6 bg-white rounded-2xl border border-neutral-200 shadow-xs flex flex-col gap-3">
+						<h3 className="text-lg font-bold text-zinc-900 border-b border-slate-100 pb-2">
+							Reviewer Note
+						</h3>
+						<textarea
+							rows={3}
+							value={reviewerNote}
+							onChange={(e) => setReviewerNote(e.target.value)}
+							placeholder="Add your moderation feedback or notes for the applicant here..."
+							className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-zinc-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-indigo-900/20 focus:outline-none resize-none"
+						/>
+					</div>
+
+					{/* 7. Review History Timeline Card */}
+					<div className="w-full p-6 bg-white rounded-2xl border border-neutral-200 shadow-xs flex flex-col gap-4">
+						<h3 className="text-lg font-bold text-zinc-900 border-b border-slate-100 pb-2">
+							Review History
+						</h3>
+
+						<div className="flex flex-col gap-4">
+							{currentApplicant.timeline.map((item, idx) => (
+								<div key={idx} className="flex flex-col sm:flex-row items-start gap-4">
+									<span className="w-28 text-xs font-semibold text-neutral-400 shrink-0 sm:pt-2">
+										{item.date}
+									</span>
+									<div className="flex-1 p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-1.5 shadow-xs">
+										<div className="flex justify-between items-center">
+											<span className="text-sm font-bold text-zinc-900">{item.title}</span>
+											<span
+												className={`px-2 py-0.5 text-[10px] font-bold rounded-full ${
+													item.badgeType === 'green'
+														? 'bg-emerald-100 text-emerald-800'
+														: 'bg-orange-100 text-amber-800'
+												}`}
+											>
+												{item.badge}
+											</span>
+										</div>
+										<p className="text-xs text-neutral-500 leading-relaxed">
+											{item.description}
+										</p>
+									</div>
+								</div>
+							))}
+						</div>
+					</div>
+
+					{/* 8. Decision Action Buttons */}
+					<div className="w-full pt-4 flex items-center justify-end gap-4">
+						<button
+							onClick={handleReject}
+							className="px-8 py-3 rounded-2xl border-2 border-rose-500 text-rose-600 font-bold text-sm hover:bg-rose-50 transition-colors cursor-pointer"
+						>
+							Reject
+						</button>
+						<button
+							onClick={handleApprove}
+							className="px-8 py-3 rounded-2xl bg-indigo-900 hover:bg-indigo-950 text-white font-bold text-sm shadow-md transition-all cursor-pointer"
+						>
+							Approve
+						</button>
+					</div>
+
+				</div>
+
+			</div>
+
+			{/* Document Image Modal Preview */}
+			{previewImage && (
+				<div
+					onClick={() => setPreviewImage(null)}
+					className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 cursor-pointer"
+				>
+					<div
+						onClick={(e) => e.stopPropagation()}
+						className="max-w-2xl w-full bg-white rounded-2xl p-4 overflow-hidden relative shadow-2xl"
+					>
+						<div className="flex justify-between items-center pb-3 border-b border-slate-100">
+							<h4 className="font-bold text-zinc-900 text-sm">Document Preview</h4>
+							<button
+								onClick={() => setPreviewImage(null)}
+								className="text-neutral-400 hover:text-zinc-900 text-lg font-bold cursor-pointer"
+							>
+								✕
+							</button>
+						</div>
+						<div className="mt-3 max-h-[70vh] overflow-auto flex justify-center">
+							<img src={previewImage} alt="Document" className="max-w-full rounded-lg" />
+						</div>
+					</div>
+				</div>
+			)}
+
+		</div>
+	);
 };
-
-const CHECKLIST_LABELS = [
-  'Email verified',
-  'Phone verified',
-  'ID document reviewed',
-  'Background check',
-  'Profile complete'
-];
-const INITIAL_CHECKLIST = [true, true, false, false, false];
-
-export function AdminVerificationsPage() {
-  const [selectedId, setSelectedId] = useState<string>(APPLICANTS[0].id);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [checklist, setChecklist] = useState<boolean[]>(INITIAL_CHECKLIST);
-
-  const selected = APPLICANTS.find((a) => a.id === selectedId) ?? APPLICANTS[0];
-  const filteredApplicants = APPLICANTS.filter((a) =>
-    a.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  function toggleCheck(i: number) {
-    setChecklist((prev) => prev.map((v, idx) => (idx === i ? !v : v)));
-  }
-
-  return (
-    <div className="w-full flex flex-col justify-start items-start font-['Inter'] antialiased">
-      
-      {/* 1. HERO BANNER */}
-      <div className="self-stretch px-6 lg:px-20 py-14 bg-gradient-to-br from-indigo-900 to-indigo-500 flex flex-col justify-center items-center gap-3 text-center border-b border-neutral-200/60">
-        <h1 className="text-white text-3xl lg:text-4xl font-extrabold tracking-tight">Identity &amp; Teacher Review</h1>
-        <div className="opacity-80 text-white text-xs sm:text-sm font-medium flex items-center gap-2">
-          <Link to="/dashboard" className="hover:underline">Dashboard</Link>
-          <span>&gt;</span>
-          <Link to="/admin/dashboard" className="hover:underline">Admin</Link>
-          <span>&gt;</span>
-          <span>Teacher Registration Review</span>
-        </div>
-      </div>
-
-      {/* 2. SUBHEADER CONTROLS */}
-      <div className="self-stretch bg-white border-b border-neutral-200 px-6 lg:px-20 py-4 shadow-xs">
-        <div className="max-w-[1608px] w-full mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="flex items-center gap-3">
-            <span className="text-zinc-900 text-lg font-bold">Request #{selected.id}</span>
-            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${STATUS_BADGE[selected.status]}`}>
-              {selected.status}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <button className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl px-4 py-2 text-sm font-semibold transition-colors cursor-pointer shadow-2xs">
-              <Check size={14} /> Approve Request
-            </button>
-            <button className="flex items-center gap-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl px-4 py-2 text-sm font-semibold transition-colors cursor-pointer shadow-2xs">
-              <X size={14} /> Reject
-            </button>
-            <button className="flex items-center gap-1.5 border border-neutral-300 bg-white hover:bg-slate-50 text-zinc-700 rounded-xl px-4 py-2 text-sm font-semibold transition-colors cursor-pointer shadow-2xs">
-              <RefreshCw size={14} /> Request Changes
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. MAIN BODY (2 Columns) */}
-      <div className="max-w-[1608px] w-full mx-auto px-6 py-8 flex flex-col lg:flex-row justify-start items-start gap-6">
-        
-        {/* Left Queue Panel */}
-        <aside className="w-full lg:w-72 shrink-0 bg-white rounded-2xl border border-neutral-200 p-5 shadow-sm">
-          <h2 className="text-zinc-900 text-base font-semibold mb-3">Pending Requests</h2>
-          
-          {/* Search Queue */}
-          <div className="relative mb-4">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
-            <input
-              type="text"
-              placeholder="Search applicant…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-neutral-200 rounded-xl text-xs sm:text-sm text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900"
-            />
-          </div>
-
-          <div className="space-y-2">
-            {filteredApplicants.map((a) => {
-              const isSel = a.id === selectedId;
-              return (
-                <button
-                  key={a.id}
-                  onClick={() => setSelectedId(a.id)}
-                  className={`w-full flex items-center justify-between p-3 rounded-xl border text-left transition-all cursor-pointer ${
-                    isSel
-                      ? 'bg-indigo-50 border-indigo-900 ring-1 ring-indigo-900 shadow-2xs'
-                      : 'bg-white border-neutral-200 hover:bg-slate-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className="w-8 h-8 rounded-full bg-indigo-900 text-white font-bold text-xs flex items-center justify-center font-mono shrink-0">
-                      {a.initials}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-zinc-900 truncate">{a.name}</p>
-                      <p className="text-xs text-neutral-400 font-mono">{a.id}</p>
-                    </div>
-                  </div>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${STATUS_BADGE[a.status]}`}>
-                    {a.status}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </aside>
-
-        {/* Right Content */}
-        <div className="flex-1 w-full space-y-6">
-          
-          {/* Applicant Info Card */}
-          <div className="bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm space-y-4">
-            <div className="flex justify-between items-center pb-3 border-b border-neutral-100">
-              <h3 className="text-zinc-900 text-base font-semibold">Applicant Profile</h3>
-              <span className="text-xs text-neutral-400">Applied: {selected.applied}</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs sm:text-sm">
-              <div>
-                <span className="text-neutral-500 text-xs block">Full Name</span>
-                <span className="font-semibold text-zinc-900">{selected.name}</span>
-              </div>
-              <div>
-                <span className="text-neutral-500 text-xs block">Email Address</span>
-                <span className="font-semibold text-zinc-900">{selected.email}</span>
-              </div>
-              <div>
-                <span className="text-neutral-500 text-xs block">Phone Number</span>
-                <span className="font-semibold text-zinc-900">{selected.phone}</span>
-              </div>
-              <div>
-                <span className="text-neutral-500 text-xs block">Requested Expertise</span>
-                <div className="flex flex-wrap gap-1.5 mt-1">
-                  {selected.expertise.map((exp, i) => (
-                    <span key={i} className="px-2 py-0.5 bg-slate-100 rounded-md text-zinc-700 text-xs font-medium">
-                      {exp}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 2-Column: Identity Docs & Checklist */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            
-            {/* Identity Docs */}
-            <div className="bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm space-y-4">
-              <h3 className="text-zinc-900 text-base font-semibold">Identity Documentation (CCCD)</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="h-32 bg-slate-50 border border-neutral-200 rounded-xl flex flex-col items-center justify-center p-3 text-center">
-                  <FileText className="w-8 h-8 text-indigo-900 mb-1" />
-                  <span className="text-xs font-semibold text-zinc-800">Front ID Card</span>
-                  <span className="text-[10px] text-neutral-400 mt-0.5">Uploaded</span>
-                </div>
-                <div className="h-32 bg-slate-50 border border-neutral-200 rounded-xl flex flex-col items-center justify-center p-3 text-center">
-                  <FileText className="w-8 h-8 text-indigo-900 mb-1" />
-                  <span className="text-xs font-semibold text-zinc-800">Back ID Card</span>
-                  <span className="text-[10px] text-neutral-400 mt-0.5">Uploaded</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Verification Checklist */}
-            <div className="bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm space-y-4">
-              <h3 className="text-zinc-900 text-base font-semibold">Verification Checklist</h3>
-              <div className="space-y-2.5">
-                {CHECKLIST_LABELS.map((label, idx) => (
-                  <label
-                    key={idx}
-                    onClick={() => toggleCheck(idx)}
-                    className="flex items-center gap-3 text-sm text-zinc-800 cursor-pointer select-none"
-                  >
-                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
-                      checklist[idx] ? 'bg-emerald-600 border-emerald-600' : 'bg-white border-neutral-300'
-                    }`}>
-                      {checklist[idx] && <Check size={12} strokeWidth={3} className="text-white" />}
-                    </div>
-                    <span>{label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-          </div>
-
-          {/* Additional Info / Bio */}
-          <div className="bg-white rounded-2xl border border-neutral-200 p-6 shadow-sm space-y-3">
-            <h3 className="text-zinc-900 text-base font-semibold">Bio &amp; Professional Experience</h3>
-            <p className="text-neutral-700 text-sm leading-relaxed">{selected.bio}</p>
-            <p className="text-neutral-600 text-xs leading-relaxed">{selected.experience}</p>
-          </div>
-
-        </div>
-
-      </div>
-
-    </div>
-  );
-}
