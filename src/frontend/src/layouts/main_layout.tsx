@@ -237,7 +237,7 @@ export const MainLayout: React.FC = () => {
       </main>
 
       {/* 3. DREAMS LMS FOOTER (NO CART) */}
-      <footer className="self-stretch px-6 lg:px-20 pt-20 pb-10 bg-blue-950 flex flex-col justify-start items-start gap-14 mt-auto">
+      <footer className="self-stretch px-6 lg:px-20 pt-12 pb-10 bg-blue-950 flex flex-col justify-start items-start gap-10 mt-auto">
         <div className="max-w-[1810px] w-full mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
           
           {/* Col 1: About LMS */}

@@ -1,3 +1,4 @@
+import { ScrollToTop } from '@/components/scroll_to_top';
 import React from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import { MainLayout } from '@/layouts/main_layout';
@@ -109,7 +110,9 @@ const NotFoundPage = () => (
 
 export const AppRoutes: React.FC = () => {
 	return (
-		<Routes>
+		<>
+			<ScrollToTop />
+			<Routes>
 			{/* Public / Main Layout */}
 			<Route element={<MainLayout />}>
 				<Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -224,5 +227,6 @@ export const AppRoutes: React.FC = () => {
 
 			<Route path="*" element={<NotFoundPage />} />
 		</Routes>
+		</>
 	);
 };

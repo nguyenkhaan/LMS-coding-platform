@@ -151,7 +151,7 @@ export function InterviewWorkspacePage() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-slate-100 flex flex-col justify-start items-start font-['Inter'] antialiased">
+    <div className="w-full bg-slate-100 flex flex-col justify-start items-start font-['Inter'] antialiased">
       
       {/* 1. HERO BANNER */}
       <div className="self-stretch px-6 lg:px-12 py-4 bg-gradient-to-r from-indigo-900 to-indigo-950 flex justify-between items-center text-white border-b border-indigo-800/60 shadow-xs">
@@ -174,7 +174,7 @@ export function InterviewWorkspacePage() {
       </div>
 
       {/* 2. MAIN 2-COLUMN WORKSPACE */}
-      <div className="max-w-[1840px] w-full mx-auto px-6 lg:px-10 py-6 flex flex-col xl:flex-row justify-start items-start gap-8">
+      <div className="max-w-[1680px] w-full mx-auto px-6 lg:px-10 pt-6 pb-10 flex flex-col xl:flex-row justify-start items-start gap-8">
         
         {/* LEFT COLUMN: Camera Feed + Directly Attached Control Bar */}
         <div className="flex-[62] w-full flex flex-col items-center gap-5 min-w-0">

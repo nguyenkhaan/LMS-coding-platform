@@ -47,7 +47,7 @@ export function InterviewSetupPage() {
       </div>
 
       {/* 2. MAIN 2-COLUMN SETUP SECTION */}
-      <div className="self-stretch max-w-5xl mx-auto w-full px-6 py-12">
+      <div className="self-stretch max-w-5xl mx-auto w-full px-6 pt-8 pb-10">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
           
           {/* Left Card: Topic & Level Selection */}
