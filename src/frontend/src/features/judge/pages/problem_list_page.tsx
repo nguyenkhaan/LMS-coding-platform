@@ -64,17 +64,21 @@ export function ProblemListPage() {
     <div className="w-full flex flex-col justify-start items-start font-['Inter'] antialiased">
       
       {/* 1. HERO / PAGE TITLE BANNER (bg-gradient-to-br from-indigo-900 to-indigo-500) */}
-      <div className="self-stretch px-6 lg:px-20 py-14 bg-gradient-to-br from-indigo-900 to-indigo-500 flex flex-col justify-center items-center gap-3 text-center">
-        <h1 className="text-white text-4xl font-extrabold tracking-tight">Problem List</h1>
-        <div className="opacity-80 text-white text-sm font-medium flex items-center gap-2">
-          <Link to="/dashboard" className="hover:underline">Dashboard</Link>
-          <span>&gt;</span>
-          <span>Problem List</span>
+      <div className="w-full py-10 bg-gradient-to-r from-red-50 via-sky-50 to-blue-100 border-b border-slate-200 flex flex-col justify-center items-center gap-1.5 text-center">
+        <h1 className="text-3xl lg:text-4xl font-extrabold text-zinc-900 tracking-tight">
+          Problem List
+        </h1>
+        <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-neutral-600">
+          <Link to="/dashboard" className="text-neutral-500 hover:text-zinc-900 transition-colors">
+            Dashboard
+          </Link>
+          <span className="text-neutral-400 font-normal">&gt;</span>
+          <span className="text-zinc-900 font-semibold">Problem List</span>
         </div>
       </div>
 
       {/* 2. MAIN CONTENT & TABLE SECTION */}
-      <div className="self-stretch max-w-[1810px] mx-auto w-full px-6 lg:px-20 py-12 flex flex-col justify-start items-start gap-8">
+      <div className="self-stretch max-w-[1340px] mx-auto w-full px-6 py-8 flex flex-col justify-start items-start gap-8">
         
         {/* Toolbar (Search + Filters) */}
         <div className="self-stretch flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">

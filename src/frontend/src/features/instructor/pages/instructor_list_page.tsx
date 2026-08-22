@@ -232,21 +232,17 @@ export const InstructorListPage: React.FC = () => {
 	return (
 		<div className="w-full min-h-screen bg-gray-50 flex flex-col font-['Inter'] antialiased">
 			
-			{/* 1. Hero Breadcrumb Banner (Unified style) */}
-			<div className="w-full bg-gradient-to-r from-indigo-900 to-indigo-950 py-8">
-				<div className="max-w-[1340px] w-full mx-auto px-6 flex justify-between items-center">
-					<div className="flex flex-col gap-1">
-						<h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-white">
-							Instructor Directory
-						</h1>
-						<div className="flex items-center gap-1.5 text-xs text-slate-300">
-							<Link to="/dashboard" className="text-slate-300 hover:text-white transition-colors">
-								Dashboard
-							</Link>
-							<span className="text-slate-400">&gt;</span>
-							<span className="text-white font-semibold">Instructors</span>
-						</div>
-					</div>
+			{/* 1. Hero Breadcrumb Banner (Figma Signature Pastel Gradient) */}
+			<div className="w-full py-10 bg-gradient-to-r from-red-50 via-sky-50 to-blue-100 border-b border-slate-200 flex flex-col justify-center items-center gap-1.5 text-center">
+				<h1 className="text-3xl lg:text-4xl font-extrabold text-zinc-900 tracking-tight">
+					Instructor List
+				</h1>
+				<div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-neutral-600">
+					<Link to="/dashboard" className="text-neutral-500 hover:text-zinc-900 transition-colors">
+						Dashboard
+					</Link>
+					<span className="text-neutral-400 font-normal">&gt;</span>
+					<span className="text-zinc-900 font-semibold">Instructors</span>
 				</div>
 			</div>
 
