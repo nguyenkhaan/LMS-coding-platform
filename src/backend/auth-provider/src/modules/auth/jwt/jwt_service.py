@@ -1,30 +1,43 @@
 from src.cores.settings import JWT_ACCESS_PRIVATE, JWT_REFRESH_SECRET
 from src.bases.enum.jwt_enum import TokenType
-from datetime import timedelta, datetime, timezone
-from src.bases.constant.jwt_constant import ACCESS_LIVE_TIME, REFRESH_LIVE_TIME
-import jwt 
-RS_ALGORITHM = "RS256"
-ALGROTHM = "HS256"
+from datetime import datetime, timedelta, timezone
 
-class JwtService: 
-    def get_Secret_token(self , type : TokenType): 
-        match type: 
-            case TokenType.ACCESS_TOKEN: 
-                return JWT_ACCESS_PRIVATE 
-            case TokenType.REFRESH_TOKEN: 
-                return JWT_REFRESH_SECRET 
+import jwt
+
+RS_ALGORITHM = "RS256"
+REFRESH_ALGORITHM = "HS256"
+
+class JwtService:
+    def get_secret_token(self, token_type: TokenType):
+        match token_type:
+            case TokenType.ACCESS_TOKEN:
+                return JWT_ACCESS_PRIVATE
+            case TokenType.REFRESH_TOKEN:
+                return JWT_REFRESH_SECRET
+
+    @staticmethod
+    def get_algorithm(token_type: TokenType) -> str:
+        return RS_ALGORITHM if token_type == TokenType.ACCESS_TOKEN else REFRESH_ALGORITHM
+
     async def create_token(
-            self, data : dict, type : TokenType , expires_delta : timedelta | None = None 
-    ): 
-        secret_key = self.get_Secret_token(type) 
-        to_encode = data.copy() 
-        if expires_delta: 
-            expire = datetime.now(timezone.utc) + expires_delta # khi hoi ham thi phai truyen vao mot doi tuong timedelta 
-        else: 
-            expire = datetime.now(timezone.utc) + timedelta(minutes=60) 
-        to_encode.update({
-            'exp': expire 
-        })
-        algo = RS_ALGORITHM if (type == TokenType.ACCESS_TOKEN) else ALGROTHM
-        encoded_jwt = jwt.encode(to_encode, secret_key, algorithm=algo)
-        return encoded_jwt
+        self, data: dict, token_type: TokenType, expires_delta: timedelta | None = None
+    ) -> str:
+        expires_at = datetime.now(timezone.utc) + (expires_delta or timedelta(minutes=60))
+        payload = {
+            **data,
+            "exp": expires_at,
+            "token_type": token_type.value,
+        }
+        return jwt.encode(
+            payload,
+            self.get_secret_token(token_type),
+            algorithm=self.get_algorithm(token_type),
+        )
+
+    async def verify_token(self, token: str, token_type: TokenType) -> dict:
+        return jwt.decode(
+            token,
+            self.get_secret_token(token_type),
+            algorithms=[self.get_algorithm(token_type)],
+            options={"require": ["exp", "sub", "token_type"]},
+        )

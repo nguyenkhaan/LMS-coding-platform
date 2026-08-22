@@ -1,5 +1,5 @@
 # src/bases/constant/redis_key.py
-
+# Cac ham save duoc su dung de luu lai value, giup viec truy xuat nguoc de dang hon 
 class RedisKey:
     @staticmethod
     def session(session_id: str) -> str:
@@ -28,10 +28,16 @@ class RedisKey:
     @staticmethod
     def password_reset(code: str) -> str:
         return f"lms:auth-provider:password-reset:{code}"
+    @staticmethod
+    def save_password_reset(user_id : str) -> str: 
+        return f"lms:auth-provider:password-reset:user:{user_id}"
+    
     @staticmethod 
     def verify_register(otp : str) -> str: 
-        return f"lms:auth-provider:verify-register:{otp}"
-
+        return f"lms:auth-provider:verify-register:{otp}" 
+    @staticmethod 
+    def save_verify_register(user_id : str) -> str: 
+        return f"lms:auth-provider:verify-register:user:{user_id}"
 """
 BAI THO DE THUONG 
 @classmethod: call it from class, pass the cls 

@@ -1,41 +1,30 @@
-from datetime import datetime, UTC 
-from typing import TYPE_CHECKING, List, Optional
-from sqlalchemy import func, Enum as SQLEnum, DateTime
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from src.models.base_model import AccountStatus
+
 from src.db import Base
+from src.models.base_model import AccountStatus, TimestampMixin
 
 if TYPE_CHECKING:
-    from src.models.user_identity_provider_model import UserIdentityModel
-    
+    from src.models.role_model import UserRoleModel
 
-class UserModel(Base):
+
+class UserModel(TimestampMixin, Base):
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    full_name: Mapped[str] = mapped_column(nullable=False)
+    address: Mapped[str | None] = mapped_column(nullable=True)
     email: Mapped[str] = mapped_column(unique=True, nullable=False)
-    active: Mapped[bool] = mapped_column(default=False)
-    full_name: Mapped[str] = mapped_column(nullable=False) 
-    address : Mapped[str] = mapped_column(nullable=False) 
-    password: Mapped[str] = mapped_column(nullable=False)
-    avatar_url : Mapped[Optional[str]] = mapped_column(nullable=True) 
-    active: Mapped[bool] = mapped_column(nullable=False, default=False)
-    created_at : Mapped[datetime] = mapped_column(
-            DateTime(timezone=True), 
-            default = lambda : datetime.now(UTC), 
-            nullable = False 
-        ) 
-    updated_at : Mapped[datetime] = mapped_column(
-            DateTime(timezone=True), 
-            default = lambda : datetime.now(UTC), 
-            onupdate = lambda : datetime.now(UTC), 
-            nullable = False 
-        )
-    account_status : Mapped[AccountStatus] = mapped_column(
-        SQLEnum(AccountStatus), 
-        nullable=False, 
-        default=AccountStatus.ACTIVE
-    ) 
-    roles: Mapped[List["RoleModel"]] = relationship(back_populates="user")
-    identities: Mapped[List["UserIdentityModel"]] = relationship(back_populates="user", cascade="all, delete-orphan")
-from src.models.role_model import RoleModel
+    password: Mapped[str | None] = mapped_column(nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(nullable=True)
+    refresh_token: Mapped[str | None] = mapped_column(nullable=True)
+    account_status: Mapped[AccountStatus] = mapped_column(
+        SQLEnum(AccountStatus), default=AccountStatus.UNVERIFIED, nullable=False
+    )
+
+    roles: Mapped[list["UserRoleModel"]] = relationship(back_populates="user")
+
+
+from src.models.role_model import UserRoleModel

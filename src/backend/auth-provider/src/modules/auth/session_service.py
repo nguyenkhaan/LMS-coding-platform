@@ -52,9 +52,12 @@ class SessionService:
             RedisKey.authorization_code(code)
         )
 
+    async def delete_value(self, key: str):
+        await self.redis.delete(key)
+
     async def get_value(self, key: str):
         return await self.redis.get(key)
-
+    
     async def set_value(self, key: str, value, expire: int | None = None):
         return await self.redis.set(
             key,

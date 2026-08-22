@@ -1,14 +1,30 @@
-from enum import Enum 
+from datetime import UTC, datetime
+from enum import Enum
 
-class LoginMethod(str, Enum): 
-    GOOGLE = 'google' 
-    LOCAL = 'local' 
+from sqlalchemy import DateTime
+from sqlalchemy.orm import Mapped, mapped_column
 
-class Role(str , Enum): 
-    ADMIN = 'admin' 
-    TEACHER = 'teacher' 
-    STUDENT = 'student' 
 
-class AccountStatus(str , Enum): 
-    BANNED = 'banned' 
-    ACTIVE = 'active' 
+def utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
+class TimestampMixin:
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False
+    )
+
+
+class AccountStatus(str, Enum):
+    BANNED = "BANNED"
+    UNVERIFIED = "UNVERIFIED"
+    ACTIVE = "ACTIVE"
+
+
+class Role(str, Enum):
+    ADMIN = "ADMIN"
+    TEACHER = "TEACHER"
+    STUDENT = "STUDENT"
