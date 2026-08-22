@@ -297,22 +297,30 @@ const HomePage = () => {
 	);
 };
 
-const CourseCatalogPage = () => <div className="p-8 max-w-7xl mx-auto"><h2 className="text-2xl font-bold">Danh sách Khóa học (COURSE01)</h2></div>;
-const CourseDetailPage = () => <div className="p-8 max-w-7xl mx-auto"><h2 className="text-2xl font-bold">Chi tiết Khóa học (COURSE02)</h2></div>;
-const CheckoutPage = () => <div className="p-8 max-w-7xl mx-auto"><h2 className="text-2xl font-bold">Thanh toán PayOS (PAY02)</h2></div>;
+import { ProblemListPage } from '@/features/judge/pages/ProblemListPage';
+import { OJWorkspacePage } from '@/features/judge/pages/OJWorkspacePage';
+import { ClassroomPage } from '@/features/classroom/pages/ClassroomPage';
+import { InterviewSetupPage } from '@/features/interview/pages/InterviewSetupPage';
+import { InterviewWorkspacePage } from '@/features/interview/pages/InterviewWorkspacePage';
+import { InterviewReportPage } from '@/features/interview/pages/InterviewReportPage';
+import { StudentDashboardPage } from '@/features/student/pages/StudentDashboardPage';
+import { StudentProfilePage } from '@/features/student/pages/StudentProfilePage';
+import { EnrolledCoursesPage } from '@/features/student/pages/EnrolledCoursesPage';
+import { StudentFavoritesPage } from '@/features/student/pages/StudentFavoritesPage';
+import { StudentHistoryPage } from '@/features/student/pages/StudentHistoryPage';
+import { BecomeTeacherPage } from '@/features/teacher/pages/BecomeTeacherPage';
+import { AdminVerificationsPage } from '@/features/admin/pages/AdminVerificationsPage';
+import { InstructorListPage } from '@/features/instructor/pages/InstructorListPage';
 
-const ProblemListPage = () => <div className="p-8 max-w-7xl mx-auto"><h2 className="text-2xl font-bold">Danh sách Bài tập OJ (OJ01)</h2></div>;
-const OJWorkspacePage = () => <div className="p-8 max-w-7xl mx-auto"><h2 className="text-2xl font-bold">Online Judge Workspace (OJ02)</h2></div>;
-const InterviewPage = () => <div className="p-8 max-w-7xl mx-auto"><h2 className="text-2xl font-bold">AI Mock Interview (INTERVIEW02)</h2></div>;
+// Role 1 Placeholder Pages
+const CourseCatalogPage = () => <div className="p-8 max-w-7xl mx-auto"><h2 className="text-2xl font-bold">Danh sách Khóa học (COURSE01 - Role 1)</h2></div>;
+const CourseDetailPage = () => <div className="p-8 max-w-7xl mx-auto"><h2 className="text-2xl font-bold">Chi tiết Khóa học (COURSE02 - Role 1)</h2></div>;
+const CheckoutPage = () => <div className="p-8 max-w-7xl mx-auto"><h2 className="text-2xl font-bold">Thanh toán PayOS (PAY02 - Role 1)</h2></div>;
 
 const LoginPage = () => <div className="p-6 rounded-2xl border border-[hsl(var(--border-color))] bg-[hsl(var(--bg-card))] text-center"><h2 className="text-xl font-bold mb-4">Đăng nhập</h2><p className="text-xs text-[hsl(var(--text-secondary))]">Form đăng nhập học viên / giảng viên</p></div>;
 const RegisterPage = () => <div className="p-6 rounded-2xl border border-[hsl(var(--border-color))] bg-[hsl(var(--bg-card))] text-center"><h2 className="text-xl font-bold mb-4">Đăng ký</h2><p className="text-xs text-[hsl(var(--text-secondary))]">Form tạo tài khoản mới</p></div>;
 
-const StudentDashboard = () => <div><h2 className="text-2xl font-bold mb-4">Student Dashboard (STD01)</h2></div>;
-const TeacherDashboard = () => <div><h2 className="text-2xl font-bold mb-4">Teacher Dashboard & Analytics (TC01/TC04)</h2></div>;
-const AdminVerifications = () => <div><h2 className="text-2xl font-bold mb-4">Duyệt CCCD Giảng viên (AD01)</h2></div>;
-
-const ClassroomPage = () => <div className="p-8 flex-1"><h2 className="text-2xl font-bold">Classroom Learning Workspace (CLASS01)</h2></div>;
+const TeacherDashboard = () => <div><h2 className="text-2xl font-bold mb-4">Teacher Dashboard & Analytics (TC01/TC04 - Role 1)</h2></div>;
 const UnauthorizedPage = () => <div className="p-12 text-center"><h2 className="text-2xl font-bold text-rose-500">403 - Bạn không có quyền truy cập trang này</h2></div>;
 const NotFoundPage = () => <div className="p-12 text-center"><h2 className="text-2xl font-bold">404 - Trang không tồn tại</h2></div>;
 
@@ -321,15 +329,35 @@ export const AppRoutes: React.FC = () => {
 		<Routes>
 			{/* Public / Student Layout */}
 			<Route element={<MainLayout />}>
-				<Route path="/" element={<HomePage />} />
+				<Route path="/" element={<Navigate to="/dashboard" replace />} />
 				<Route path="/courses" element={<CourseCatalogPage />} />
 				<Route path="/courses/:courseSlug" element={<CourseDetailPage />} />
+				<Route path="/courses/enrolled" element={<EnrolledCoursesPage />} />
+				<Route path="/student/courses" element={<EnrolledCoursesPage />} />
+				<Route path="/enrolled-courses" element={<EnrolledCoursesPage />} />
+				<Route path="/instructors" element={<InstructorListPage />} />
+				<Route path="/become-teacher" element={<BecomeTeacherPage />} />
+				<Route path="/teacher/apply" element={<BecomeTeacherPage />} />
 				<Route path="/practice" element={<ProblemListPage />} />
-				<Route path="/practice/:problemSlug" element={<OJWorkspacePage />} />
-				<Route path="/interview" element={<InterviewPage />} />
+				<Route path="/submissions" element={<StudentHistoryPage />} />
+				<Route path="/practice/history" element={<StudentHistoryPage />} />
+				<Route path="/interview" element={<InterviewSetupPage />} />
+				<Route path="/interview/:sessionId" element={<InterviewWorkspacePage />} />
+				<Route path="/interview/report" element={<InterviewReportPage />} />
+				<Route path="/interview/report/:sessionId" element={<InterviewReportPage />} />
 				<Route path="/checkout/:courseId" element={<CheckoutPage />} />
+				<Route path="/dashboard" element={<StudentDashboardPage />} />
+				<Route path="/student/profile" element={<StudentProfilePage />} />
+				<Route path="/profile" element={<StudentProfilePage />} />
+				<Route path="/student/favorites" element={<StudentFavoritesPage />} />
+				<Route path="/favorites" element={<StudentFavoritesPage />} />
+				<Route path="/learn/:courseSlug" element={<ClassroomPage />} />
+				<Route path="/classroom/workspace" element={<ClassroomPage />} />
 				<Route path="/unauthorized" element={<UnauthorizedPage />} />
 			</Route>
+
+			{/* Fullscreen OJ Workspace (OJ02 standalone) */}
+			<Route path="/practice/:problemSlug" element={<OJWorkspacePage />} />
 
 			{/* Auth Layout */}
 			<Route element={<AuthLayout />}>
@@ -340,7 +368,9 @@ export const AppRoutes: React.FC = () => {
 			{/* Student Protected Hub */}
 			<Route element={<RoleGuard allowedRoles={['STUDENT', 'TEACHER', 'ADMIN']} />}>
 				<Route element={<DashboardLayout role="STUDENT" />}>
-					<Route path="/student/dashboard" element={<StudentDashboard />} />
+					<Route path="/student/dashboard" element={<StudentDashboardPage />} />
+					<Route path="/student/favorites" element={<StudentFavoritesPage />} />
+					<Route path="/student/history" element={<StudentHistoryPage />} />
 				</Route>
 			</Route>
 
@@ -348,8 +378,8 @@ export const AppRoutes: React.FC = () => {
 			<Route element={<RoleGuard allowedRoles={['TEACHER']} requireTeacherApproved={false} />}>
 				<Route element={<DashboardLayout role="TEACHER" />}>
 					<Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-					<Route path="/teacher/courses" element={<div>Quản lý khóa học</div>} />
-					<Route path="/teacher/earnings" element={<div>Doanh thu</div>} />
+					<Route path="/teacher/courses" element={<div>Quản lý khóa học (Role 1)</div>} />
+					<Route path="/teacher/earnings" element={<div>Doanh thu (Role 1)</div>} />
 					<Route path="/teacher/students" element={<div>Học viên</div>} />
 				</Route>
 			</Route>
@@ -358,16 +388,9 @@ export const AppRoutes: React.FC = () => {
 			<Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
 				<Route element={<DashboardLayout role="ADMIN" />}>
 					<Route path="/admin/dashboard" element={<div>Tổng quan Admin</div>} />
-					<Route path="/admin/verifications" element={<AdminVerifications />} />
-					<Route path="/admin/courses" element={<div>Duyệt khóa học</div>} />
+					<Route path="/admin/verifications" element={<AdminVerificationsPage />} />
+					<Route path="/admin/courses" element={<div>Duyệt khóa học (AD02 - Role 1)</div>} />
 					<Route path="/admin/users" element={<div>Quản trị tài khoản</div>} />
-				</Route>
-			</Route>
-
-			{/* Classroom Workspace */}
-			<Route element={<RoleGuard allowedRoles={['STUDENT', 'TEACHER', 'ADMIN']} />}>
-				<Route element={<ClassroomLayout />}>
-					<Route path="/learn/:courseSlug" element={<ClassroomPage />} />
 				</Route>
 			</Route>
 
