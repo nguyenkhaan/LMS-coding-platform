@@ -30,7 +30,7 @@ from src.modules.auth.auth_dto import (
     RegisterRequest,
     RegisterResponse,
     ResendOtpResponse,
-    ResetPasswordResponse,
+    VerifyPasswordChangingResponse, 
     VerifyRegisterResponse,
     VerifyResetEmailResponse,
 )
@@ -39,7 +39,7 @@ from src.modules.auth.session_service import SessionService
 
 
 OTP_LIVE_TIME = 300
-
+RESET_PASSWORD_LIVE_TIME = 300 # seconds 
 
 class AuthService:
     def __init__(
@@ -65,7 +65,18 @@ class AuthService:
         )
         await self.session_service.set_value(latest_otp_key, otp_code, OTP_LIVE_TIME)
         return otp_code
-
+    async def _create_reset_password_code(self, user_id : int) -> str: 
+        latest_code_key = RedisKey.save_reset_password(str(user_id))
+        latest_code = await self.session_service.get_value(latest_code_key) 
+        if latest_code is not None: 
+            await self.session_service.delete_value(RedisKey.reset_password(latest_code))
+        payload = json.dumps({"user_id" : str(user_id) , "type": "reset_password" })
+        reset_code = random_string(8) 
+        await self.session_service.set_value(
+            RedisKey.reset_password(reset_code), payload ,RESET_PASSWORD_LIVE_TIME
+        )
+        await self.session_service.set_value(latest_code_key , reset_code , RESET_PASSWORD_LIVE_TIME)
+        return reset_code 
     @staticmethod
     def _require_active_account(user: UserModel) -> None:
         if user.account_status != AccountStatus.ACTIVE:
@@ -243,11 +254,58 @@ class AuthService:
     async def logout(self):
         return LogoutResponse(message="Logout successfully")
 
-    async def forgot_password(self, email: str):
-        return ForgotPasswordResponse(message="Password reset link sent", code="demo-code")
+    async def forgot_password(self, email: str): 
+        stmt = select(UserModel.id, UserModel.email).where(UserModel.email == email) 
+        result = (await self.db_session.execute(stmt)).first() 
+        if result is None: 
+            raise HTTPException(
+                detail = "User not found", 
+                status_code = 404 
+            ) 
+        reset_code = await self._create_reset_password_code(result.id) 
+        # Tam thoi van su dung ham random(8) de co the sinh ra duoc 8 ki tu. Tien hanh tang len 16 sau 
+        print("Reset password token will send to client: ", reset_code) 
+        return ForgotPasswordResponse(message="Password reset link sent", code=reset_code)
 
-    async def reset_password(self, code: str, new_password: str):
-        return ResetPasswordResponse(message="Password reset successfully")
+    # Verify lai reset link gui den cho user va tien hanh thay doi password cho user 
+    # Nhan vao ma code -> Xac dinh user nay la ai -> Cap nhat password moi 
+    # Tam thoi cac ham ben duoi van tien hanh tra code trong response. 
+    
+    async def change_password(self, user_id : int): 
+        stmt = select(UserModel.id, UserModel.email).where(UserModel.id == int(user_id)) 
+        result = (await self.db_session.execute(stmt)).first() 
+        if result is None: 
+            return ForgotPasswordResponse(message = "Password resent link sent", code = "")
+        reset_code = await self._create_reset_password_code(result.id) 
+        # Tam thoi van su dung ham random(8) de co the sinh ra duoc 8 ki tu. Tien hanh tang len 16 sau 
+        print("Reset password token will send to client: ", reset_code) 
+        return ForgotPasswordResponse(message="Password reset link sent", code=reset_code)
+
+
+    async def verify_password_changing(self, code: str, new_password: str):
+        reset_password_key = RedisKey.reset_password(code) 
+        payload = await self.session_service.get_value(reset_password_key)
+        if not(payload): 
+            raise HTTPException(
+                status_code = 400, 
+                detail = "Invalid code" 
+            ) 
+        payload = json.loads(payload) 
+        user_id = payload.get('user_id')
+        password=  password_hash.hash(new_password)
+
+        user = await self.db_session.scalar(
+            select(UserModel).where(UserModel.id == int(user_id))
+        )
+        if not(user): 
+            raise HTTPException(
+                status_code = 400, 
+                detail = "Invalid code" 
+            ) 
+        user.password = password 
+        await self.db_session.commit() 
+        return VerifyPasswordChangingResponse(message="Password reset successfully")
+    
     async def resend_otp(self, email: str):
         stmt = select(UserModel).where(UserModel.email == email)
         user = await self.db_session.scalar(stmt)

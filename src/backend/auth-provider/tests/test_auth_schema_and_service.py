@@ -2,7 +2,12 @@ import base64
 import json
 import os
 import unittest
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
+
+import jwt
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 os.environ.setdefault("BACKEND_URL", "http://localhost:4001")
 os.environ.setdefault("JWT_ACCESS_PRIVATE", base64.b64encode(b"test-private-key").decode())
@@ -14,6 +19,7 @@ os.environ.setdefault("UPSTASH_REDIS_REST_TOKEN", "test-token")
 os.environ.setdefault("RABBITMQ_URL", "amqp://guest:guest@localhost/")
 
 from fastapi import HTTPException
+from fastapi.security import HTTPAuthorizationCredentials
 from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import configure_mappers
 
@@ -25,6 +31,7 @@ from src.modules.auth.auth_dto import RegisterRequest
 from src.modules.auth.auth_service import AuthService
 from src.modules.auth.jwt.jwt_service import JwtService
 from src.bases.enum.jwt_enum import TokenType
+from src.middlewares.auth_middleware import get_current_user
 
 
 class FakeDatabaseSession:
@@ -259,3 +266,60 @@ class AuthServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.refresh_token, "refresh_token-2")
         self.assertEqual(user.refresh_token, "refresh_token-2")
         self.assertEqual(database.commits, 1)
+
+
+class CurrentUserMiddlewareTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        self.private_key = private_key.private_bytes(
+            serialization.Encoding.PEM,
+            serialization.PrivateFormat.PKCS8,
+            serialization.NoEncryption(),
+        ).decode()
+        self.public_key = private_key.public_key().public_bytes(
+            serialization.Encoding.PEM,
+            serialization.PublicFormat.SubjectPublicKeyInfo,
+        ).decode()
+
+    def create_token(self, *, token_type=TokenType.ACCESS_TOKEN.value, sub="7"):
+        return jwt.encode(
+            {
+                "sub": sub,
+                "email": "student@example.com",
+                "roles": ["STUDENT"],
+                "token_type": token_type,
+                "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+            },
+            self.private_key,
+            algorithm="RS256",
+        )
+
+    async def test_get_current_user_returns_verified_access_token_claims(self):
+        credentials = HTTPAuthorizationCredentials(
+            scheme="Bearer", credentials=self.create_token()
+        )
+
+        with patch("src.middlewares.auth_middleware.JWT_ACCESS_PUBLIC", self.public_key):
+            current_user = await get_current_user(credentials)
+
+        self.assertEqual(current_user["sub"], 7)
+        self.assertEqual(current_user["email"], "student@example.com")
+        self.assertEqual(current_user["roles"], ["STUDENT"])
+
+    async def test_get_current_user_rejects_a_refresh_token_even_when_rs256_signed(self):
+        credentials = HTTPAuthorizationCredentials(
+            scheme="Bearer",
+            credentials=self.create_token(token_type=TokenType.REFRESH_TOKEN.value),
+        )
+
+        with patch("src.middlewares.auth_middleware.JWT_ACCESS_PUBLIC", self.public_key):
+            with self.assertRaises(HTTPException) as raised:
+                await get_current_user(credentials)
+
+        self.assertEqual(raised.exception.status_code, 401)
+
+    async def test_get_current_user_rejects_missing_bearer_credentials(self):
+        with self.assertRaises(HTTPException) as raised:
+            await get_current_user(None)
+
+        self.assertEqual(raised.exception.status_code, 401)

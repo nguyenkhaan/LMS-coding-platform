@@ -18,12 +18,13 @@ from src.modules.auth.auth_dto import (
     RegisterResponse,
     ResendOtpRequest,
     ResendOtpResponse,
-    ResetPasswordRequest,
-    ResetPasswordResponse,
+    VerifyPasswordChangingResponse,
+    VerifyPasswordChangingRequest,
     VerifyResetEmailResponse,
 )
 from src.modules.auth.auth_dependency import get_auth_service
 from src.modules.auth.auth_service import AuthService
+from src.middlewares.auth_middleware import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["OAuth"])
 
@@ -66,13 +67,23 @@ async def verify(
     return response
 
 
-@router.post("/reset-password")
+@router.post("/change-password")
 async def reset_password(
-    data: ResetPasswordRequest = Body(...),
     auth_service: AuthService = Depends(get_auth_service),
+    user: dict = Depends(get_current_user),
 ):
-    return await auth_service.reset_password(data.code, data.new_password)
+    return await auth_service.change_password(user["sub"])
 
+@router.post("/verify-password-changing")
+async def verify_password_changing(
+    data : VerifyPasswordChangingRequest, 
+    auth_service : AuthService = Depends(get_auth_service) 
+    
+): 
+    return await auth_service.verify_password_changing(
+        data.code, 
+        data.new_password
+    )
 
 @router.get("/verify-reset-email")
 async def verify_reset_email(

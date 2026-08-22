@@ -68,6 +68,12 @@ class ForgotPasswordResponse(BaseModel):
     message: str
     code: str
 
+class ChangePasswordRequest(BaseModel): 
+    ... 
+
+class ChangePasswordResponse(BaseModel): 
+    message : str 
+    code : str  
 
 class ResendOtpRequest(BaseModel):
     email: EmailStr
@@ -89,14 +95,14 @@ class ChangeEmailResponse(BaseModel):
     token: str
 
 
-class ResetPasswordRequest(BaseModel):
+class VerifyPasswordChangingRequest(BaseModel):
     code: str
     new_password: str
 
 
-class ResetPasswordResponse(AuthBase):
+class VerifyPasswordChangingResponse(AuthBase):
     """
-        dto for reset password 
+        dto for verify reset password 
     """
 
 

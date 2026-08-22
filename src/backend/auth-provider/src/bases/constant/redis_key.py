@@ -26,11 +26,11 @@ class RedisKey:
         return f"lms:auth-provider:login-attempt:{email}"
 
     @staticmethod
-    def password_reset(code: str) -> str:
-        return f"lms:auth-provider:password-reset:{code}"
+    def reset_password(code: str) -> str:
+        return f"lms:auth-provider:reset-password:{code}"
     @staticmethod
-    def save_password_reset(user_id : str) -> str: 
-        return f"lms:auth-provider:password-reset:user:{user_id}"
+    def save_reset_password(user_id : str) -> str: 
+        return f"lms:auth-provider:reset-password:user:{user_id}"
     
     @staticmethod 
     def verify_register(otp : str) -> str: 
