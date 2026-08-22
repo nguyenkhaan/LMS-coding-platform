@@ -12,7 +12,9 @@ from src.bases.constants.submission_queues import SUBMISSION_EXECUTION_RESULT_QU
 # router 
 from src.modules.submission.submission_route import router as submission_router 
 from src.modules.student_course_directory.course_router import router as course_router
+from src.modules.student_course_directory.instructor_router import router as instructor_router
 from src.modules.student_course_directory.student_router import router as student_router
+from src.modules.student_course_directory.favorite_router import router as favorite_router
 from src.grpc.client import AuthGrpcClient
 from src.modules.health.health_router import router as health_router
 from src.jwk_service import PublicKeyService
@@ -81,7 +83,9 @@ v1_router = APIRouter(prefix="/api/v1")
 
 v1_router.include_router(health_router)
 v1_router.include_router(course_router)
+v1_router.include_router(instructor_router)
 v1_router.include_router(student_router)
+v1_router.include_router(favorite_router)
 v1_router.include_router(submission_router)
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc: RequestValidationError):

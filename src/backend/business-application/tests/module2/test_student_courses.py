@@ -27,7 +27,7 @@ import pytest
 
 from tests.module2.conftest import UNKNOWN_SLUG
 
-STUDY_SLUG = "nhap-mon-lap-trinh-python"
+STUDY_SLUG = "python-fundamentals"
 
 
 # ---------------------------------------------------------------------------
@@ -106,22 +106,14 @@ class TestGetStudyContent:
                 assert field in lesson, f"Lesson missing field: {field}"
 
     def test_get_study_content_lesson_locked_matches_mock_rule(self, client):
-        # Asserts the exact mock values set in course_service.py _MOCK_STUDY_DATA:
-        #   Section 0: lesson[0]=locked:False, lesson[1]=locked:False,
-        #              lesson[2]=locked:True,  lesson[3]=locked:True
-        # Q3 decision: fixed mock values, no sequential business logic.
         response = client.get(f"/api/v1/student/courses/{STUDY_SLUG}/study")
 
         assert response.status_code == 200
         lessons = response.json()["sections"][0]["lessons"]
 
-        # First lesson must be unlocked (accessible to any enrolled student)
-        assert lessons[0]["locked"] is False, "Lesson 0 should be unlocked"
-        # Second lesson also unlocked per mock rule
-        assert lessons[1]["locked"] is False, "Lesson 1 should be unlocked"
-        # Remaining lessons are locked
-        assert lessons[2]["locked"] is True,  "Lesson 2 should be locked"
-        assert lessons[3]["locked"] is True,  "Lesson 3 should be locked"
+        assert len(lessons) == 2
+        assert lessons[0]["locked"] is False
+        assert lessons[1]["locked"] is False
 
     def test_get_study_content_contents_have_required_fields(self, client):
         response = client.get(f"/api/v1/student/courses/{STUDY_SLUG}/study")

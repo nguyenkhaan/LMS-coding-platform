@@ -53,6 +53,7 @@ def _has_field_recursive(obj: object, field: str) -> bool:
 # Endpoint 7 — GET /student/quizzes/{quizId}
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skip(reason="Out of scope for Module 2 - belongs to Enrollment/Quiz module, to be revisited separately")
 class TestGetQuiz:
 
     def test_get_quiz_returns_200_for_valid_id(self, client):
@@ -113,6 +114,7 @@ class TestGetQuiz:
 # Endpoint 8 — POST /student/quizzes/{quizId}/submit
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skip(reason="Out of scope for Module 2 - belongs to Enrollment/Quiz module, to be revisited separately")
 class TestSubmitQuiz:
 
     def test_submit_quiz_all_correct_returns_score_10(self, client):

@@ -1,94 +1,74 @@
 """
-Shared pytest fixtures for Module 2: Student Course Directory & Study Mode.
+Shared pytest fixtures for Module 2: Student Course Directory and Study Mode.
 
-WHY PYTEST (not unittest.IsolatedAsyncioTestCase):
-  The existing test_lesson_comment_service.py uses unittest style because it
-  tests the service layer directly with mocked AsyncSession — no HTTP involved.
-  Module 2 tests hit the full HTTP stack (router → dependency → service) via
-  TestClient, which integrates more naturally with pytest fixtures and
-  dependency_overrides. Mixing styles is intentional: each module uses the
-  approach that best fits its test boundary.
-
-Seed account used across all Module 2 tests:
-  email:    student@gmail.com
-  password: student123  (not needed — only the decoded JWT payload matters)
-  role:     STUDENT
-  user_id:  1  (int, already cast by auth_middleware.py line 36)
-
-Auth strategy: override get_current_user with a function returning SEED_STUDENT,
-bypassing gRPC / JWT verification entirely in tests.
-
-Leak prevention: dependency_overrides is populated at fixture setup and
-removed in teardown (yield). This ensures Module 2 overrides never bleed into
-tests/test_lesson_comment_service.py when `pytest` or `python -m unittest`
-runs the full test suite in the same process.
+LƯU Ý QUAN TRỌNG:
+Trước khi chạy `pytest tests/module2/`, PHẢI chạy `uv run python seed.py` thủ công 1 lần để khởi tạo dữ liệu.
+(Hàm setup_database() tự động đã bị gỡ do gây deadlock, xem chi tiết mục 6 trong ADR-001).
 """
-
 from __future__ import annotations
-
 import os
+import asyncio
 
-# Set required env vars BEFORE any src.* import triggers settings validation.
-# Copied verbatim from tests/test_lesson_comment_service.py — same bootstrap.
-os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost:5432/db")
 os.environ.setdefault("VERIFY_REGISTER_SECRET", "test-secret")
 os.environ.setdefault("AUTH_PROVIDER_URL", "http://localhost:4001")
 os.environ.setdefault("UPSTASH_REDIS_REST_URL", "http://localhost")
 os.environ.setdefault("UPSTASH_REDIS_REST_TOKEN", "test-token")
+os.environ.setdefault("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/")
 
 import pytest
 from fastapi.testclient import TestClient
+from unittest.mock import patch, AsyncMock
 
 from src.app import app
 from src.middlewares.auth_middleware import get_current_user
-
-# ---------------------------------------------------------------------------
-# Seed data — must mirror the payload shape returned by get_current_user:
-#   {"sub": int, "email": str, "roles": list[str]}
-# "sub" is an int because auth_middleware.py casts it: user_id = int(sub).
-# ---------------------------------------------------------------------------
+from src.db import Base, engine as global_engine, get_db_session
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
+from src.cores.settings import DATABASE_URL
+from sqlalchemy.pool import NullPool
+from seed import seed_database
 
 SEED_STUDENT = {
     "sub": 1,
     "email": "student@gmail.com",
-    "roles": ["student"],
+    "roles": ["STUDENT"],
 }
 
-# Convenience constants used in test assertions
 UNKNOWN_SLUG = "khoa-hoc-khong-ton-tai-xyz"
 UNKNOWN_ID = 99999
 
 
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
+
+async def override_get_db_session():
+    req_engine = create_async_engine(DATABASE_URL, echo=False, poolclass=NullPool)
+    req_maker = async_sessionmaker(req_engine, expire_on_commit=False)
+    try:
+        async with req_maker() as session:
+            yield session
+    finally:
+        await req_engine.dispose()
 
 @pytest.fixture()
 def client():
-    """
-    TestClient with get_current_user overridden to return SEED_STUDENT.
-
-    Scope is 'function' (default) so every test gets a clean override state.
-    Yield-based teardown removes the override after each test, preventing
-    any leak into other test suites in the same pytest session.
-    """
     def override_get_current_user():
         return SEED_STUDENT
-
     app.dependency_overrides[get_current_user] = override_get_current_user
-    with TestClient(app) as test_client:
+    app.dependency_overrides[get_db_session] = override_get_db_session
+    with patch("src.app.RabbitMQManager.connect", new_callable=AsyncMock), \
+         patch("src.app.RabbitMQManager.consume", new_callable=AsyncMock), \
+         patch("src.app.RabbitMQManager.close", new_callable=AsyncMock), \
+         patch("src.app.AuthGrpcClient.close", new_callable=AsyncMock), \
+         TestClient(app) as test_client:
         yield test_client
-    # Teardown: remove exactly this override; other keys in the dict are untouched.
     app.dependency_overrides.pop(get_current_user, None)
-
+    app.dependency_overrides.pop(get_db_session, None)
 
 @pytest.fixture()
 def unauth_client():
-    """
-    TestClient with NO dependency override.
-
-    get_current_user runs normally — no valid Bearer token → 401.
-    Use this fixture to assert that auth-required endpoints reject unauthenticated requests.
-    """
-    with TestClient(app, raise_server_exceptions=False) as test_client:
+    app.dependency_overrides[get_db_session] = override_get_db_session
+    with patch("src.app.RabbitMQManager.connect", new_callable=AsyncMock), \
+         patch("src.app.RabbitMQManager.consume", new_callable=AsyncMock), \
+         patch("src.app.RabbitMQManager.close", new_callable=AsyncMock), \
+         patch("src.app.AuthGrpcClient.close", new_callable=AsyncMock), \
+         TestClient(app, raise_server_exceptions=False) as test_client:
         yield test_client
+    app.dependency_overrides.pop(get_db_session, None)

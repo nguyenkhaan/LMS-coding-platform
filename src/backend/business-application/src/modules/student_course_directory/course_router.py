@@ -85,3 +85,80 @@ async def unenroll_course(
             detail="Invalid user id in authorization token",
         )
     return await service.unenroll_course(slug, user_id)
+
+# ---------------------------------------------------------------------------
+# Endpoint 11 — PUT /courses/{course_id}/favorite
+# ---------------------------------------------------------------------------
+from src.modules.student_course_directory.course_dto import CourseFavoriteToggleResponse
+from src.middlewares.role_middleware import require_role
+from src.models.base_model import Role
+
+@router.put("/{course_id}/favorite", response_model=CourseFavoriteToggleResponse, status_code=200)
+async def add_favorite_course(
+    course_id: Annotated[int, Path()],
+    user: dict = Depends(require_role(Role.STUDENT)),
+    service: CourseService = Depends(get_course_service),
+) -> CourseFavoriteToggleResponse:
+    user_id: int | None = user.get("sub", None)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid user id in authorization token")
+    return await service.add_favorite_course(course_id, user_id)
+
+# ---------------------------------------------------------------------------
+# Endpoint 12 — DELETE /courses/{course_id}/favorite
+# ---------------------------------------------------------------------------
+@router.delete("/{course_id}/favorite", response_model=CourseFavoriteToggleResponse, status_code=200)
+async def remove_favorite_course(
+    course_id: Annotated[int, Path()],
+    user: dict = Depends(require_role(Role.STUDENT)),
+    service: CourseService = Depends(get_course_service),
+) -> CourseFavoriteToggleResponse:
+    user_id: int | None = user.get("sub", None)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid user id in authorization token")
+    return await service.remove_favorite_course(course_id, user_id)
+# ---------------------------------------------------------------------------
+# Endpoint 13 — POST /courses/{course_id}/reviews
+# ---------------------------------------------------------------------------
+from src.modules.student_course_directory.course_dto import CourseReviewWrite, CourseReviewView, CourseReviewListResponse
+
+@router.post("/{course_id}/reviews", response_model=CourseReviewView, status_code=200)
+async def add_course_review(
+    course_id: Annotated[int, Path()],
+    payload: CourseReviewWrite,
+    user: dict = Depends(require_role(Role.STUDENT)),
+    service: CourseService = Depends(get_course_service),
+) -> CourseReviewView:
+    user_id: int | None = user.get("sub", None)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid user id in authorization token")
+    return await service.add_course_review(course_id, user_id, payload)
+
+# ---------------------------------------------------------------------------
+# Endpoint 14 — PATCH /courses/{course_id}/reviews/{review_id}
+# ---------------------------------------------------------------------------
+@router.patch("/{course_id}/reviews/{review_id}", response_model=CourseReviewView, status_code=200)
+async def update_course_review(
+    course_id: Annotated[int, Path()],
+    review_id: Annotated[int, Path()],
+    payload: CourseReviewWrite,
+    user: dict = Depends(require_role(Role.STUDENT)),
+    service: CourseService = Depends(get_course_service),
+) -> CourseReviewView:
+    user_id: int | None = user.get("sub", None)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid user id in authorization token")
+    return await service.update_course_review(course_id, review_id, user_id, payload)
+
+# ---------------------------------------------------------------------------
+# Endpoint 15 — GET /courses/{course_id}/reviews
+# ---------------------------------------------------------------------------
+@router.get("/{course_id}/reviews", response_model=CourseReviewListResponse, status_code=200)
+async def get_course_reviews(
+    course_id: Annotated[int, Path()],
+    rating: Annotated[int | None, Query()] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    size: Annotated[int, Query(ge=1, le=100)] = 10,
+    service: CourseService = Depends(get_course_service),
+) -> CourseReviewListResponse:
+    return await service.get_course_reviews(course_id, rating, page, size)

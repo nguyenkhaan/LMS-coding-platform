@@ -110,3 +110,19 @@ async def submit_quiz(
 ) -> QuizSubmitResponse:
     user_id = _extract_user_id(user)
     return await service.submit_quiz(quiz_id, payload, user_id)
+# ---------------------------------------------------------------------------
+# Endpoint 6.5 — GET /student/progress
+# ---------------------------------------------------------------------------
+from src.modules.student_course_directory.course_dto import ProgressListResponse
+from fastapi import Query
+
+@router.get("/progress", response_model=ProgressListResponse, status_code=200)
+async def get_student_progress(
+    course_id: Annotated[int | None, Query()] = None,
+    page: Annotated[int, Query(ge=1)] = 1,
+    size: Annotated[int, Query(ge=1, le=100)] = 10,
+    user: dict = Depends(get_current_user),
+    service: CourseService = Depends(get_course_service),
+) -> ProgressListResponse:
+    user_id = _extract_user_id(user)
+    return await service.get_student_progress(user_id, course_id, page, size)

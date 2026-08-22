@@ -86,16 +86,16 @@ class TestGetCourseCatalog:
 class TestGetCourseDetail:
 
     def test_get_course_detail_returns_200_for_existing_slug(self, client):
-        response = client.get("/api/v1/courses/nhap-mon-lap-trinh-python")
+        response = client.get("/api/v1/courses/python-fundamentals")
 
         assert response.status_code == 200
         body = response.json()
-        assert body["slug"] == "nhap-mon-lap-trinh-python"
+        assert body["slug"] == "python-fundamentals"
         assert "sections" in body
         assert isinstance(body["sections"], list)
 
     def test_get_course_detail_response_has_all_required_fields(self, client):
-        response = client.get("/api/v1/courses/nhap-mon-lap-trinh-python")
+        response = client.get("/api/v1/courses/python-fundamentals")
 
         assert response.status_code == 200
         body = response.json()
@@ -105,7 +105,7 @@ class TestGetCourseDetail:
             assert field in body, f"Missing field: {field}"
 
     def test_get_course_detail_sections_have_required_fields(self, client):
-        response = client.get("/api/v1/courses/nhap-mon-lap-trinh-python")
+        response = client.get("/api/v1/courses/python-fundamentals")
 
         assert response.status_code == 200
         sections = response.json()["sections"]

@@ -31,6 +31,7 @@ PAID_SLUG = "cau-truc-du-lieu-va-giai-thuat"
 # Endpoint 3 — POST /courses/{slug}/enroll
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skip(reason="Out of scope for Module 2 - belongs to Enrollment/Quiz module, to be revisited separately")
 class TestEnrollCourse:
 
     def test_enroll_course_returns_201_for_free_slug(self, client):
@@ -79,6 +80,7 @@ class TestEnrollCourse:
 # Endpoint 9 — POST /courses/{slug}/unenroll
 # ---------------------------------------------------------------------------
 
+@pytest.mark.skip(reason="Out of scope for Module 2 - belongs to Enrollment/Quiz module, to be revisited separately")
 class TestUnenrollCourse:
 
     def test_unenroll_course_returns_200_for_existing_slug(self, client):

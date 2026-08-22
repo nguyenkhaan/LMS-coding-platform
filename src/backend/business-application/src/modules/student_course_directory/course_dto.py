@@ -72,6 +72,64 @@ class UnenrollResponse(BaseModel):
     message: str
     model_config = ConfigDict(from_attributes=True)
 
+class CourseFavoriteView(BaseModel):
+    id: int
+    student_id: int
+    course_id: int
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class CourseFavoriteToggleResponse(BaseModel):
+    # for PUT
+    id: int | None = None
+    student_id: int | None = None
+    course_id: int
+    created_at: datetime | None = None
+    is_favorited: bool
+    model_config = ConfigDict(from_attributes=True)
+
+class CourseFavoriteItemResponse(CourseFavoriteView):
+    course: CourseItemResponse
+
+class CourseFavoriteListResponse(BaseModel):
+    items: list[CourseFavoriteItemResponse]
+    total_items: int
+    total_pages: int
+    current_page: int
+    model_config = ConfigDict(from_attributes=True)
+
+class CourseReviewWrite(BaseModel):
+    rating: float
+    content: str | None = None
+
+class CourseReviewView(BaseModel):
+    id: int
+    course_id: int
+    student_id: int
+    student_name: str | None = None
+    rating: float
+    content: str | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
+    model_config = ConfigDict(from_attributes=True)
+
+class RatingSummary(BaseModel):
+    average_rating: float
+    total_reviews: int
+    five_stars: int
+    four_stars: int
+    three_stars: int
+    two_stars: int
+    one_stars: int
+
+class CourseReviewListResponse(BaseModel):
+    items: list[CourseReviewView]
+    summary: RatingSummary
+    total_items: int
+    total_pages: int
+    current_page: int
+    model_config = ConfigDict(from_attributes=True)
+
 
 class EnrolledCourseResponse(BaseModel):
     id: int
@@ -88,11 +146,43 @@ class StudentCoursesResponse(BaseModel):
 
 
 
+class InstructorItemResponse(BaseModel):
+    id: int
+    full_name: str
+    headline: Optional[str]
+    avatar_url: Optional[str]
+    enrolled_students: int
+    course_count: int
+    rating: float
+    model_config = ConfigDict(from_attributes=True)
+
+class InstructorCatalogResponse(BaseModel):
+    total_items: int
+    total_pages: int
+    current_page: int
+    items: list[InstructorItemResponse]
+    model_config = ConfigDict(from_attributes=True)
+
+class InstructorDetailResponse(BaseModel):
+    id: int
+    full_name: str
+    headline: Optional[str]
+    avatar_url: str | None
+    # TODO: bio field missing in teacher_profile_model, gap giữa api_spec.md và DB schema, cần leader dự án quyết định thêm cột hay sửa spec
+    expertise_tags: list[str]
+    enrolled_students: int
+    course_count: int
+    rating: float
+    courses: list[CourseItemResponse]
+    model_config = ConfigDict(from_attributes=True)
+
 class LessonContentStudyResponse(BaseModel):
     id: int
     content_type: LessonContentType
     media_url: Optional[str] = None
-    completed: bool
+    position: int
+    locked: bool = False
+    completed: bool = False
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -113,16 +203,29 @@ class SectionStudyResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class LessonContentProgressView(BaseModel):
+    id: int
+    enrollment_id: int
+    lesson_content_id: int
+    completed: bool
+    completed_at: datetime | None = None
+    model_config = ConfigDict(from_attributes=True)
+
+class ProgressListResponse(BaseModel):
+    items: list[LessonContentProgressView]
+    total_items: int
+    total_pages: int
+    current_page: int
+    model_config = ConfigDict(from_attributes=True)
+
 class StudyResponse(BaseModel):
-    course_slug: str
+    course: CourseItemResponse
     sections: list[SectionStudyResponse]
     model_config = ConfigDict(from_attributes=True)
 
 
-class CompleteContentResponse(BaseModel):
-    message: str
-    completed_at: datetime
-    model_config = ConfigDict(from_attributes=True)
+class CompleteContentResponse(LessonContentProgressView):
+    pass
 
 
 class QuizOptionResponse(BaseModel):
