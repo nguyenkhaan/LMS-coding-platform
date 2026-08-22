@@ -11,9 +11,9 @@ interface CourseCardProps {
 
 export const FigmaCourseCard: React.FC<CourseCardProps> = ({ course, isFav, toggleFav }) => {
 	return (
-		<div className="w-[280px] h-[340px] bg-white rounded-xl border border-slate-100 shadow-xs flex flex-col overflow-hidden relative group hover:shadow-md transition-all duration-300">
+		<div className="w-full h-full min-h-[360px] bg-white rounded-2xl border border-neutral-200 shadow-xs flex flex-col overflow-hidden relative group hover:shadow-lg transition-all duration-300">
 			{/* Image thumbnail placeholder */}
-			<div className="h-28 bg-[#392C7D] relative flex items-end justify-between p-3 select-none">
+			<div className="h-36 bg-gradient-to-tr from-[#392C7D] to-indigo-900 relative flex items-end justify-between p-3.5 select-none">
 				<span className="px-2 py-0.5 bg-[#FF4667] text-white text-[10px] font-semibold rounded-lg">
 					{course.category}
 				</span>

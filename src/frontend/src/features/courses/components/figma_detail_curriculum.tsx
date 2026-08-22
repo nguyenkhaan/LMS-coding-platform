@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { BookOpen, ChevronDown, ChevronUp, PlayCircle, HelpCircle, FileText, Lock } from 'lucide-react';
 
 interface ContentItem {
@@ -115,14 +116,14 @@ export const FigmaDetailCurriculum: React.FC = () => {
 	};
 
 	return (
-		<div className="w-[940px] flex flex-col gap-6">
-			<div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm">
+		<div className="w-full flex flex-col gap-6">
+			<div className="bg-white rounded-2xl border border-neutral-200 p-6 shadow-xs">
 				<h2 className="text-zinc-900 text-xl font-bold border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
 					<BookOpen className="w-5 h-5 text-[#392C7D]" />
 					Course Syllabus
 				</h2>
 				
-				<div className="divide-y divide-slate-100 border border-slate-100 rounded-xl overflow-hidden bg-white">
+				<div className="divide-y divide-slate-100 border border-slate-200 rounded-xl overflow-hidden bg-white">
 					{sections.map((section, idx) => {
 						const isSecExpanded = expanded[section.id] ?? false;
 						return (
@@ -163,18 +164,54 @@ export const FigmaDetailCurriculum: React.FC = () => {
 												{/* Contents list */}
 												<div className="grid grid-cols-1 md:grid-cols-2 gap-2 mt-1">
 													{lesson.contents.map((content) => {
-														const getIcon = () => {
-															if (content.type === 'QUIZ') return <HelpCircle className="w-3.5 h-3.5 text-orange-500" />;
-															if (content.type === 'PROBLEM') return <PlayCircle className="w-3.5 h-3.5 text-cyan-500" />;
-															return <FileText className="w-3.5 h-3.5 text-indigo-500" />;
-														};
+														if (content.type === 'QUIZ') {
+															return (
+																<Link
+																	key={content.id}
+																	to="/quiz/quiz-control-flow-01/preview"
+																	className="flex items-center justify-between p-2.5 rounded-xl border border-amber-200 bg-amber-50 hover:bg-amber-100/80 text-xs font-semibold text-amber-900 transition-colors cursor-pointer group shadow-xs"
+																>
+																	<div className="flex items-center gap-2">
+																		<HelpCircle className="w-4 h-4 text-amber-600 group-hover:scale-110 transition-transform" />
+																		<span>{content.title}</span>
+																	</div>
+																	<span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-200 text-amber-900 font-bold uppercase tracking-wider">
+																		Start Quiz &rarr;
+																	</span>
+																</Link>
+															);
+														}
+														if (content.type === 'PROBLEM') {
+															return (
+																<Link
+																	key={content.id}
+																	to="/practice/two-sum"
+																	className="flex items-center justify-between p-2.5 rounded-xl border border-indigo-100 bg-white hover:bg-indigo-50/70 text-xs font-semibold text-zinc-800 transition-colors cursor-pointer group shadow-xs"
+																>
+																	<div className="flex items-center gap-2">
+																		<PlayCircle className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform" />
+																		<span>{content.title}</span>
+																	</div>
+																	<span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-900 font-bold uppercase tracking-wider">
+																		Solve &rarr;
+																	</span>
+																</Link>
+															);
+														}
 														return (
-															<div key={content.id} className="flex items-center justify-between p-2 rounded-lg border border-slate-100 bg-white text-[11px] font-semibold text-neutral-600 shadow-xs">
-																<div className="flex items-center gap-1.5">
-																	{getIcon()}
+															<Link
+																key={content.id}
+																to="/learn/python-foundations"
+																className="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-neutral-700 transition-colors cursor-pointer group shadow-xs"
+															>
+																<div className="flex items-center gap-2">
+																	<FileText className="w-4 h-4 text-slate-500" />
 																	<span>{content.title}</span>
 																</div>
-															</div>
+																<span className="text-[10px] text-neutral-400 font-normal">
+																	Read
+																</span>
+															</Link>
 														);
 													})}
 												</div>

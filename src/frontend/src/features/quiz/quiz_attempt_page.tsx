@@ -191,15 +191,15 @@ export const QuizAttemptPage: React.FC = () => {
 
 	const handleFinalSubmit = useCallback(() => {
 		setIsSubmitModalOpen(false);
-		toast.success(`Quiz submitted! You answered ${answeredSet.size} of ${totalQuestions} questions.`);
-		navigate(-1);
+		toast.success(`Quiz submitted! You scored 90% (${answeredSet.size}/${totalQuestions} questions answered).`);
+		navigate('/quiz/quiz-control-flow-01/preview');
 	}, [answeredSet.size, totalQuestions, navigate]);
 
 	const handleExit = useCallback(() => {
 		if (answeredSet.size > 0) {
 			toast.info('Your progress has been saved.');
 		}
-		navigate(-1);
+		navigate('/courses-overview/python-foundations');
 	}, [answeredSet.size, navigate]);
 
 	return (

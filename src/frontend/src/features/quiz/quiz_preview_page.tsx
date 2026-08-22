@@ -160,7 +160,7 @@ export const QuizPreviewPage: React.FC = () => {
   };
 
   const handleBack = () => {
-    navigate(-1);
+    navigate('/courses-overview/python-foundations');
   };
 
   return (
@@ -170,7 +170,7 @@ export const QuizPreviewPage: React.FC = () => {
         <div className="w-full max-w-[1296px] mx-auto px-4 py-3 flex items-center justify-between gap-4">
           {/* Left: logo + breadcrumb */}
           <div className="flex items-center gap-3 min-w-0">
-            <Link to="/" className="flex items-center gap-2 shrink-0" aria-label="Dreams LMS home">
+            <Link to="/dashboard" className="flex items-center gap-2 shrink-0" aria-label="SkillBoost LMS home">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#392C7D] to-purple-600 flex items-center justify-center text-white shadow">
                 <BookOpen className="w-4 h-4" />
               </div>

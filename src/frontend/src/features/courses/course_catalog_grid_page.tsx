@@ -221,7 +221,7 @@ export const CourseCatalogGridPage: React.FC = () => {
 								<p className="text-neutral-500 text-xs mt-1">Try resetting filters to discover courses.</p>
 							</div>
 						) : (
-							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
 								{paginatedCourses.map((course) => (
 									<FigmaCourseCard
 										key={course.id}
