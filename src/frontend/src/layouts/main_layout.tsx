@@ -16,7 +16,7 @@ import {
   GraduationCap,
   FileText
 } from 'lucide-react';
-import { NotificationDropdown } from '@/features/notification/components/NotificationDropdown';
+import { NotificationDropdown } from '@/features/notification/components/notification_dropdown';
 
 export const MainLayout: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuthStore();

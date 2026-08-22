@@ -2,8 +2,8 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useEnrolledCourses } from '@/features/courses/hooks/useEnrolledCourses';
-import { FigmaHeader } from '../courses/components/FigmaHeader';
-import { FigmaFooter } from '../courses/components/FigmaFooter';
+import { FigmaHeader } from '../courses/components/figma_header';
+import { FigmaFooter } from '../courses/components/figma_footer';
 import { LayoutDashboard, BookOpen, User, LogOut, Sparkles } from 'lucide-react';
 
 export const EnrolledCoursesPage: React.FC = () => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, Link, useParams } from 'react-router-dom';
 import { ArrowLeft, Code2 } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 
 export const ClassroomLayout: React.FC = () => {
 	const { courseSlug } = useParams<{ courseSlug: string }>();

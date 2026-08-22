@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card } from '@/components/ui/Card'; // Assuming a Card component exists, otherwise use a div
+import { Card } from '@/components/ui/card'; // Assuming a Card component exists, otherwise use a div
 
 export const PaymentMethodSelection: React.FC = () => (
   <div className="self-stretch bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col">

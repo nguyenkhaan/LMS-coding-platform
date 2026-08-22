@@ -1,11 +1,11 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { FigmaDetailHero } from './components/FigmaDetailHero';
-import { FigmaDetailSidebar } from './components/FigmaDetailSidebar';
-import { FigmaCourseThumbnailCard } from './components/FigmaCourseThumbnailCard';
-import { FigmaDetailReviews } from './components/FigmaDetailReviews';
+import { FigmaDetailHero } from './components/figma_detail_hero';
+import { FigmaDetailSidebar } from './components/figma_detail_sidebar';
+import { FigmaCourseThumbnailCard } from './components/figma_course_thumbnail_card';
+import { FigmaWriteReviewForm } from './components/figma_write_review_form';
 
-export const CourseReviewsFigma: React.FC = () => {
+export const CourseWriteReviewPage: React.FC = () => {
 	const { courseSlug } = useParams<{ courseSlug: string }>();
 	const isEnrolled = false;
 	const navigate = useNavigate();
@@ -43,7 +43,7 @@ export const CourseReviewsFigma: React.FC = () => {
 					</div>
 
 					{/* Section body */}
-					<FigmaDetailReviews />
+					<FigmaWriteReviewForm />
 				</div>
 
 				{/* Right: Sidebar card */}

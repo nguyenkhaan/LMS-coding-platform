@@ -1,8 +1,8 @@
 import React from 'react';
-import { CheckoutHeader } from './CheckoutHeader';
-import { BillingInfoForm } from './BillingInfoForm';
-import { PaymentMethodSelection } from './PaymentMethodSelection';
-import { OrderSummary } from './OrderSummary';
+import { CheckoutHeader } from './checkout_header';
+import { BillingInfoForm } from './billing_info_form';
+import { PaymentMethodSelection } from './payment_method_selection';
+import { OrderSummary } from './order_summary';
 
 const CheckoutPage: React.FC = () => (
   <div className="w-full min-h-screen bg-slate-50 flex flex-col items-center">

@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, RotateCcw, AlertCircle, BookOpen } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { Skeleton } from '@/components/ui/Skeleton';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { CourseCard } from '../components/CourseCard';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty_state';
+import { CourseCard } from '../components/course_card';
 import { courseApi } from '../services/courseApi';
 import { CourseItem, PriceType } from '@/types/course';
 

@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import { BookOpen, ChevronDown } from 'lucide-react';
-import { FigmaHeader } from './components/FigmaHeader';
-import { FigmaHeroBanner } from './components/FigmaHeroBanner';
-import { FigmaFilterSidebar } from './components/FigmaFilterSidebar';
-import { FigmaCourseCard } from './components/FigmaCourseCard';
-import { FigmaPagination } from './components/FigmaPagination';
-import { FigmaFooter } from './components/FigmaFooter';
+import { FigmaHeader } from './components/figma_header';
+import { FigmaHeroBanner } from './components/figma_hero_banner';
+import { FigmaFilterSidebar } from './components/figma_filter_sidebar';
+import { FigmaCourseCard } from './components/figma_course_card';
+import { FigmaPagination } from './components/figma_pagination';
+import { FigmaFooter } from './components/figma_footer';
 import { FigmaCourse } from './components/figma-types';
 
 // 20 Mock Courses based on Figma Catalog contents
@@ -117,7 +117,7 @@ const ALL_COURSES: FigmaCourse[] = Array.from({ length: 20 }, (_, idx) => {
 	};
 });
 
-export const CourseCatalogFigma: React.FC = () => {
+export const CourseCatalogGridPage: React.FC = () => {
 	const [search, setSearch] = useState<string>('');
 	const [selectedCats, setSelectedCats] = useState<string[]>([]);
 	const [selectedLevels, setSelectedLevels] = useState<string[]>([]);

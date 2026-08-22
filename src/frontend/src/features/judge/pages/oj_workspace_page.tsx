@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/stores/useAuthStore';
-import { NotificationDropdown } from '@/features/notification/components/NotificationDropdown';
+import { NotificationDropdown } from '@/features/notification/components/notification_dropdown';
 import { GraduationCap, ShieldCheck, LogOut, FileText } from 'lucide-react';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';

@@ -1,8 +1,8 @@
 ﻿import React, { useState } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { FigmaHeader } from '../courses/components/FigmaHeader';
-import { FigmaFooter } from '../courses/components/FigmaFooter';
+import { FigmaHeader } from '../courses/components/figma_header';
+import { FigmaFooter } from '../courses/components/figma_footer';
 import { toast } from 'sonner';
 import {
   Search,

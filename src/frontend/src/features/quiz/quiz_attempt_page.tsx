@@ -1,10 +1,10 @@
 ﻿import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { QuizHeader } from './components/QuizHeader';
-import { QuizQuestionPanel } from './components/QuizQuestionPanel';
-import { QuizNavigator } from './components/QuizNavigator';
-import { QuizSubmitModal } from './components/QuizSubmitModal';
+import { QuizHeader } from './components/quiz_header';
+import { QuizQuestionPanel } from './components/quiz_question_panel';
+import { QuizNavigator } from './components/quiz_navigator';
+import { QuizSubmitModal } from './components/quiz_submit_modal';
 
 // ---------------------------------------------------------------------------
 // Static mock data — replace with API data when the quiz service is ready
