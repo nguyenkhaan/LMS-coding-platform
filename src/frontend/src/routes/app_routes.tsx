@@ -46,6 +46,7 @@ import { BecomeTeacherPage } from '@/features/teacher/pages/become_teacher_page'
 import { ProblemListPage } from '@/features/judge/pages/problem_list_page';
 import { OJWorkspacePage } from '@/features/judge/pages/oj_workspace_page';
 import { ClassroomPage } from '@/features/classroom/pages/classroom_page';
+import { LessonProblemPreviewPage } from '@/features/classroom/pages/lesson_problem_preview_page';
 import { InterviewSetupPage } from '@/features/interview/pages/interview_setup_page';
 import { InterviewWorkspacePage } from '@/features/interview/pages/interview_workspace_page';
 import { InterviewReportPage } from '@/features/interview/pages/interview_report_page';
@@ -156,6 +157,9 @@ export const AppRoutes: React.FC = () => {
 				{/* Classroom Workspace */}
 				<Route path="/learn/:courseSlug" element={<ClassroomPage />} />
 				<Route path="/classroom/workspace" element={<ClassroomPage />} />
+				<Route path="/classroom/lesson/problem-preview" element={<LessonProblemPreviewPage />} />
+				<Route path="/classroom/problem-preview" element={<LessonProblemPreviewPage />} />
+				<Route path="/prog01" element={<LessonProblemPreviewPage />} />
 
 				{/* Payment */}
 				<Route path="/checkout/:courseId" element={<CheckoutPage />} />
