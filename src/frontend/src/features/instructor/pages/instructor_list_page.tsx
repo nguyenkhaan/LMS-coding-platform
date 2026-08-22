@@ -515,9 +515,11 @@ export const InstructorListPage: React.FC = () => {
 														<span className="text-neutral-400 font-normal">({inst.reviewCount})</span>
 													</div>
 												</div>
-												<h4 className="text-base font-bold text-zinc-900 group-hover:text-indigo-900 transition-colors line-clamp-1">
-													{inst.name}
-												</h4>
+												<Link to={`/instructors/${inst.id}`} className="hover:underline">
+													<h4 className="text-base font-bold text-zinc-900 group-hover:text-indigo-900 transition-colors line-clamp-1">
+														{inst.name}
+													</h4>
+												</Link>
 												<p className="text-xs text-neutral-500 line-clamp-2 leading-relaxed">
 													{inst.bio}
 												</p>

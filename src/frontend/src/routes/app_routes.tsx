@@ -41,6 +41,7 @@ import { EnrolledCoursesPage } from '@/features/student/pages/enrolled_courses_p
 import { StudentFavoritesPage } from '@/features/student/pages/student_favorites_page';
 import { StudentHistoryPage } from '@/features/student/pages/student_history_page';
 import { InstructorListPage } from '@/features/instructor/pages/instructor_list_page';
+import { InstructorDetailPage } from '@/features/instructor/pages/instructor_detail_page';
 import { BecomeTeacherPage } from '@/features/teacher/pages/become_teacher_page';
 import { ProblemListPage } from '@/features/judge/pages/problem_list_page';
 import { OJWorkspacePage } from '@/features/judge/pages/oj_workspace_page';
@@ -134,6 +135,8 @@ export const AppRoutes: React.FC = () => {
 
 				{/* Instructor Directory */}
 				<Route path="/instructors" element={<InstructorListPage />} />
+				<Route path="/instructors/:instructorId" element={<InstructorDetailPage />} />
+				<Route path="/instructor/detail" element={<InstructorDetailPage />} />
 
 				{/* Become a Teacher */}
 				<Route path="/become-teacher" element={<BecomeTeacherPage />} />
