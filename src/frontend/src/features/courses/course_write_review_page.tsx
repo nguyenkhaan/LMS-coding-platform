@@ -4,18 +4,25 @@ import { FigmaDetailHero } from './components/figma_detail_hero';
 import { FigmaDetailSidebar } from './components/figma_detail_sidebar';
 import { FigmaCourseThumbnailCard } from './components/figma_course_thumbnail_card';
 import { FigmaWriteReviewForm } from './components/figma_write_review_form';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useEnrolledCourses } from './hooks/useEnrolledCourses';
 
 export const CourseWriteReviewPage: React.FC = () => {
 	const { courseSlug } = useParams<{ courseSlug: string }>();
-	const isEnrolled = false;
+	const { isAuthenticated } = useAuthStore();
+	const { isEnrolled: checkEnrolled } = useEnrolledCourses();
+	
+	const slug = courseSlug || "python-foundations";
+	const isEnrolled = isAuthenticated && checkEnrolled(slug);
 	const navigate = useNavigate();
 
 	const handleEnroll = () => {
-		const targetSlug = courseSlug || "python-foundations";
-		navigate(`/checkout/${targetSlug}`);
+		if (isEnrolled) {
+			navigate(`/learn/${slug}`);
+		} else {
+			navigate(`/checkout/${slug}`);
+		}
 	};
-
-	const slug = courseSlug || "python-foundations";
 
 	return (
 		<div className="w-full min-h-screen bg-gray-50 flex flex-col font-['Inter'] antialiased">
@@ -43,7 +50,27 @@ export const CourseWriteReviewPage: React.FC = () => {
 					</div>
 
 					{/* Section body */}
-					<FigmaWriteReviewForm />
+					{isEnrolled ? (
+						<FigmaWriteReviewForm slug={slug} />
+					) : (
+						<div className="w-[940px] bg-white rounded-2xl border border-slate-100 p-8 shadow-sm text-center flex flex-col items-center gap-4">
+							<div className="size-12 rounded-full bg-rose-50 flex items-center justify-center text-[#FF4667]">
+								<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+								</svg>
+							</div>
+							<h3 className="text-lg font-bold text-zinc-900">Enrollment Required</h3>
+							<p className="text-sm text-neutral-500 max-w-md">
+								You must be enrolled in this course to write a review. Only students who have active enrollment can share their learning experience.
+							</p>
+							<button 
+								onClick={handleEnroll}
+								className="mt-2 px-6 py-2.5 bg-[#392C7D] text-white rounded-lg text-sm font-semibold hover:bg-[#392C7D]/90 transition-all cursor-pointer"
+							>
+								Enroll in Course
+							</button>
+						</div>
+					)}
 				</div>
 
 				{/* Right: Sidebar card */}

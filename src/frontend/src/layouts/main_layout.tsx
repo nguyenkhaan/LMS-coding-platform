@@ -1,5 +1,5 @@
-import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/useAuthStore';
 import {
   MapPin,
@@ -21,6 +21,15 @@ import { NotificationDropdown } from '@/features/notification/components/notific
 export const MainLayout: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/courses?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50 text-zinc-900 font-['Inter'] antialiased">
@@ -168,9 +177,18 @@ export const MainLayout: React.FC = () => {
 
           {/* Actions (Search + Notifications + User profile) */}
           <div className="flex justify-start items-center gap-3">
-            <button className="p-2.5 rounded-[40px] border border-neutral-200 hover:bg-slate-50 transition-colors cursor-pointer" title="Search">
-              <Search className="w-4 h-4 text-gray-700" />
-            </button>
+            <form onSubmit={handleSearchSubmit} className="relative flex items-center">
+              <input
+                type="text"
+                placeholder="Search courses..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 pr-3.5 py-1.5 border border-neutral-200 rounded-[40px] text-xs font-semibold focus:outline-none focus:border-[#392C7D] transition-all bg-white text-[#111827] w-40 sm:w-56 focus:w-60"
+              />
+              <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2 hover:text-[#392C7D] cursor-pointer" title="Search">
+                <Search className="w-3.5 h-3.5 text-neutral-400" />
+              </button>
+            </form>
 
             {/* Notification Center */}
             <NotificationDropdown />

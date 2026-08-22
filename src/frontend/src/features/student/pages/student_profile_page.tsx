@@ -17,6 +17,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { StudentSidebar } from '../components/student_sidebar';
 
 export function StudentProfilePage() {
   const navigate = useNavigate();
@@ -100,82 +101,8 @@ export function StudentProfilePage() {
       {/* 3. MAIN WORKSPACE (2 Columns: Left Menu Sidebar + Right Profile Details Card) */}
       <div className="max-w-[1560px] w-full mx-auto px-6 lg:px-12 py-8 flex flex-col lg:flex-row justify-start items-start gap-8">
         
-        {/* LEFT SIDEBAR MENU (w-72) */}
-        <aside className="w-full lg:w-72 bg-white rounded-2xl border border-neutral-200 p-5 shadow-xs shrink-0 flex flex-col gap-6">
-          
-          {/* Main Menu Group */}
-          <div className="flex flex-col gap-3">
-            <span className="text-zinc-900 text-sm font-bold tracking-wide px-2">Main Menu</span>
-            <div className="flex flex-col gap-1 text-sm font-medium">
-              
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="px-3.5 py-2.5 rounded-xl flex items-center gap-3 text-neutral-600 hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                <span>Dashboard</span>
-              </button>
-
-              {/* My Profile - ACTIVE */}
-              <button
-                className="px-3.5 py-2.5 rounded-xl flex items-center gap-3 bg-rose-50 text-rose-500 font-bold transition-colors cursor-pointer"
-              >
-                <User className="w-4 h-4 text-rose-500" />
-                <span>My Profile</span>
-              </button>
-
-              <button
-                onClick={() => navigate('/student/courses')}
-                className="px-3.5 py-2.5 rounded-xl flex items-center gap-3 text-neutral-600 hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                <BookOpen className="w-4 h-4" />
-                <span>Enrolled Courses</span>
-              </button>
-
-              <button
-                onClick={() => navigate('/student/favorites')}
-                className="px-3.5 py-2.5 rounded-xl flex items-center gap-3 text-neutral-600 hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                <Heart className="w-4 h-4" />
-                <span>Favorites</span>
-              </button>
-
-              <button
-                onClick={() => navigate('/interview')}
-                className="px-3.5 py-2.5 rounded-xl flex items-center gap-3 text-neutral-600 hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                <Bot className="w-4 h-4 text-indigo-900" />
-                <span>AI Interview</span>
-              </button>
-
-            </div>
-          </div>
-
-          <div className="h-px bg-neutral-200" />
-
-          {/* Account Settings Group */}
-          <div className="flex flex-col gap-3">
-            <span className="text-zinc-900 text-sm font-bold tracking-wide px-2">Account Settings</span>
-            <div className="flex flex-col gap-1 text-sm font-medium">
-              <button
-                onClick={() => alert('Opening settings...')}
-                className="px-3.5 py-2.5 rounded-xl flex items-center gap-3 text-neutral-600 hover:bg-slate-50 transition-colors cursor-pointer"
-              >
-                <Settings className="w-4 h-4" />
-                <span>Settings</span>
-              </button>
-
-              <button
-                onClick={logout}
-                className="px-3.5 py-2.5 rounded-xl flex items-center gap-3 text-neutral-600 hover:bg-rose-50 hover:text-rose-500 transition-colors cursor-pointer"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
-              </button>
-            </div>
-          </div>
-
-        </aside>
+        {/* LEFT SIDEBAR MENU */}
+        <StudentSidebar activePath="/student/profile" />
 
         {/* RIGHT MAIN WORKSPACE: PROFILE INFORMATION CARD */}
         <div className="flex-1 w-full min-w-0 bg-white rounded-2xl border border-neutral-200 shadow-xs p-6 sm:p-8 flex flex-col gap-6">

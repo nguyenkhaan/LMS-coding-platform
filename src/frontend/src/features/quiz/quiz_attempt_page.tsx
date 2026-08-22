@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { QuizHeader } from './components/quiz_header';
 import { QuizQuestionPanel } from './components/quiz_question_panel';
@@ -132,6 +132,7 @@ const MOCK_QUIZ = {
 // ---------------------------------------------------------------------------
 export const QuizAttemptPage: React.FC = () => {
 	const navigate = useNavigate();
+	const { quizId } = useParams<{ quizId: string }>();
 
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [answers, setAnswers] = useState<Record<number, string>>({}); // questionId -> optionId
@@ -191,9 +192,10 @@ export const QuizAttemptPage: React.FC = () => {
 
 	const handleFinalSubmit = useCallback(() => {
 		setIsSubmitModalOpen(false);
-		toast.success(`Quiz submitted! You scored 90% (${answeredSet.size}/${totalQuestions} questions answered).`);
-		navigate('/quiz/quiz-control-flow-01/preview');
-	}, [answeredSet.size, totalQuestions, navigate]);
+		toast.success(`Quiz submitted!`);
+		const targetQuizId = quizId || 'quiz-control-flow-01';
+		navigate(`/quiz/${targetQuizId}/result`, { state: { answers } });
+	}, [answers, quizId, navigate]);
 
 	const handleExit = useCallback(() => {
 		if (answeredSet.size > 0) {

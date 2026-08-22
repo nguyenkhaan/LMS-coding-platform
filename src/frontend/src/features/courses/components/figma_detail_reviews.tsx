@@ -1,5 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Star, CheckCircle, ThumbsUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useEnrolledCourses } from '../hooks/useEnrolledCourses';
+import { toast } from 'sonner';
 
 interface ReviewItem {
 	id: number;
@@ -11,10 +15,20 @@ interface ReviewItem {
 	completedPercent: number;
 	comment: string;
 	helpfulCount: number;
+	isCurrentUser?: boolean;
 }
 
-export const FigmaDetailReviews: React.FC = () => {
-	const reviews: ReviewItem[] = [
+interface FigmaDetailReviewsProps {
+	slug?: string;
+}
+
+export const FigmaDetailReviews: React.FC<FigmaDetailReviewsProps> = ({ slug = "python-foundations" }) => {
+	const navigate = useNavigate();
+	const { isAuthenticated, user } = useAuthStore();
+	const { isEnrolled: checkEnrolled } = useEnrolledCourses();
+	const isEnrolled = isAuthenticated && checkEnrolled(slug);
+
+	const defaultReviews: ReviewItem[] = [
 		{
 			id: 1,
 			name: "Nguyen Minh Anh",
@@ -71,14 +85,41 @@ export const FigmaDetailReviews: React.FC = () => {
 			helpfulCount: 9
 		}
 	];
+	const [reviews, setReviews] = useState<ReviewItem[]>([]);
+
+	useEffect(() => {
+		const storedReviews = localStorage.getItem(`course_reviews_${slug}`);
+		if (storedReviews) {
+			setReviews(JSON.parse(storedReviews));
+		} else {
+			localStorage.setItem(`course_reviews_${slug}`, JSON.stringify(defaultReviews));
+			setReviews(defaultReviews);
+		}
+	}, [slug]);
+
+	const myReview = reviews.find(r => r.isCurrentUser || (user && r.name === (user.fullName || user.email)));
+	const hasExistingReview = !!myReview;
+
+	const handleWriteReviewClick = () => {
+		if (!isEnrolled) {
+			toast.error("Only enrolled students can write a review. Please enroll in the course first.");
+			return;
+		}
+		navigate(`/courses-reviews/write/${slug}`);
+	};
 
 	const [filter, setFilter] = useState<string>("All");
 
-	const filteredReviews = filter === "All" 
-		? reviews 
-		: filter === "Verified" 
-			? reviews.filter(r => r.verified)
-			: reviews.filter(r => `${r.rating}★` === filter);
+	let filteredReviews = [...reviews];
+	if (filter === "Verified") {
+		filteredReviews = reviews.filter(r => r.verified);
+	} else if (filter.endsWith("★")) {
+		filteredReviews = reviews.filter(r => `${r.rating}★` === filter);
+	} else if (filter === "Highest") {
+		filteredReviews = [...reviews].sort((a, b) => b.rating - a.rating);
+	} else if (filter === "Newest") {
+		filteredReviews = [...reviews];
+	}
 
 	return (
 		<div className="w-[940px] flex flex-col gap-6">
@@ -114,21 +155,30 @@ export const FigmaDetailReviews: React.FC = () => {
 				</div>
 			</div>
 
-			{/* Filter Chips */}
-			<div className="flex flex-wrap gap-2.5 items-center border-b border-slate-100 pb-3">
-				{["All", "5★", "4★", "3★", "Verified", "Newest", "Highest"].map((chip) => (
-					<button
-						key={chip}
-						onClick={() => ["Newest", "Highest"].includes(chip) ? null : setFilter(chip)}
-						className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
-							filter === chip || (["Newest", "Highest"].includes(chip) && chip === "Newest")
-								? 'bg-[#392C7D] text-white border-[#392C7D] shadow-xs'
-								: 'bg-white text-neutral-500 border-slate-200 hover:bg-slate-50'
-						}`}
-					>
-						{chip === "Verified" ? "Verified Purchase" : chip}
-					</button>
-				))}
+			{/* Filter Chips & Write Review CTA */}
+			<div className="flex flex-wrap justify-between items-center border-b border-slate-100 pb-3 gap-3">
+				<div className="flex flex-wrap gap-2.5 items-center">
+					{["All", "5★", "4★", "3★", "Verified", "Newest", "Highest"].map((chip) => (
+						<button
+							key={chip}
+							onClick={() => setFilter(chip)}
+							className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
+								filter === chip
+									? 'bg-[#392C7D] text-white border-[#392C7D] shadow-xs'
+									: 'bg-white text-neutral-500 border-slate-200 hover:bg-slate-50'
+							}`}
+						>
+							{chip === "Verified" ? "Verified Purchase" : chip}
+						</button>
+					))}
+				</div>
+
+				<button
+					onClick={handleWriteReviewClick}
+					className="px-5 py-2 bg-[#FF4667] text-white text-xs font-semibold rounded-lg hover:bg-[#e03d5b] transition-all cursor-pointer shadow-xs flex items-center gap-1.5 shrink-0"
+				>
+					{hasExistingReview ? "Edit your Review" : "Write a Review"}
+				</button>
 			</div>
 
 			{/* Reviews List */}

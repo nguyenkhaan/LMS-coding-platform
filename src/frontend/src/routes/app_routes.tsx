@@ -23,13 +23,20 @@ import { PaymentResultPage } from '@/features/payment/payment_result_page';
 // Quiz Pages (Role 1)
 import QuizAttemptPage from '@/features/quiz/quiz_attempt_page';
 import QuizPreviewPage from '@/features/quiz/quiz_preview_page';
+import { QuizResultPage } from '@/features/quiz/quiz_result_page';
 
 // Teacher Studio Pages (Role 1)
+import { TeacherDashboardPage } from '@/features/teacher/teacher_dashboard_page';
 import { TeacherProfilePage } from '@/features/teacher/teacher_profile_page';
+import { TeacherStudentsPage } from '@/features/teacher/teacher_students_page';
 import { TeacherEarningsPage } from '@/features/teacher/teacher_earnings_page';
+import { TeacherSettingsPage } from '@/features/teacher/teacher_settings_page';
 import { CourseBuilderPage } from '@/features/teacher/teacher_course_builder_page';
 import { CourseApprovalStatusPage } from '@/features/teacher/teacher_course_approval_status_page';
 import { TeacherWalletPage } from '@/features/wallet/teacher_wallet_page';
+
+// Student settings page
+import { StudentSettingsPage } from '@/features/student/pages/student_settings_page';
 
 // Admin Pages (Role 1 & 2)
 import CourseApprovalReviewPage from '@/features/admin/admin_course_approval_review_page';
@@ -68,11 +75,7 @@ const RegisterPage = () => (
 	</div>
 );
 
-const TeacherDashboard = () => (
-	<div>
-		<h2 className="text-2xl font-bold mb-4">Teacher Dashboard & Analytics</h2>
-	</div>
-);
+
 
 const TeacherPendingApprovalPage = () => (
 	<div className="min-h-screen bg-slate-50 flex flex-col justify-center items-center p-6 text-center select-none">
@@ -136,6 +139,7 @@ export const AppRoutes: React.FC = () => {
 				<Route path="/profile" element={<StudentProfilePage />} />
 				<Route path="/student/favorites" element={<StudentFavoritesPage />} />
 				<Route path="/favorites" element={<StudentFavoritesPage />} />
+				<Route path="/student/settings" element={<StudentSettingsPage />} />
 
 				{/* Instructor Directory */}
 				<Route path="/instructors" element={<InstructorListPage />} />
@@ -175,6 +179,7 @@ export const AppRoutes: React.FC = () => {
 			<Route path="/practice/:problemSlug" element={<OJWorkspacePage />} />
 			<Route path="/quiz/:quizId/attempt" element={<QuizAttemptPage />} />
 			<Route path="/quiz/:quizId/preview" element={<QuizPreviewPage />} />
+			<Route path="/quiz/:quizId/result" element={<QuizResultPage />} />
 
 			{/* Auth Layout */}
 			<Route element={<AuthLayout />}>
@@ -198,16 +203,15 @@ export const AppRoutes: React.FC = () => {
 
 			{/* Teacher Approved Protected Studio */}
 			<Route element={<RoleGuard allowedRoles={['TEACHER']} requireTeacherApproved={true} />}>
+				<Route path="/teacher/dashboard" element={<TeacherDashboardPage />} />
 				<Route path="/teacher/profile" element={<TeacherProfilePage />} />
+				<Route path="/teacher/course-builder" element={<CourseBuilderPage />} />
+				<Route path="/teacher/students" element={<TeacherStudentsPage />} />
 				<Route path="/teacher/earnings" element={<TeacherEarningsPage />} />
 				<Route path="/teacher/wallet" element={<TeacherWalletPage />} />
-				<Route path="/teacher/course-builder" element={<CourseBuilderPage />} />
+				<Route path="/teacher/settings" element={<TeacherSettingsPage />} />
+				<Route path="/teacher/courses" element={<Navigate to="/teacher/course-builder" replace />} />
 				<Route path="/teacher/courses/:courseId/review-status" element={<CourseApprovalStatusPage />} />
-				<Route element={<DashboardLayout role="TEACHER" />}>
-					<Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-					<Route path="/teacher/courses" element={<div>Manage Courses</div>} />
-					<Route path="/teacher/students" element={<div>Students Directory</div>} />
-				</Route>
 			</Route>
 
 			{/* Admin Protected Panel (2 Moderation Subpages) */}

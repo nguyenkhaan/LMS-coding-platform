@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { FigmaHeader } from '../courses/components/figma_header';
 import { FigmaFooter } from '../courses/components/figma_footer';
+import { TeacherSidebar } from './components/teacher_sidebar';
 import {
   LayoutDashboard,
   User,
@@ -304,9 +305,6 @@ export const TeacherEarningsPage: React.FC = () => {
               </div>
             </div>
             <div className="flex gap-4 relative z-10">
-              <button className="px-5 py-2.5 bg-white text-zinc-900 text-sm font-semibold rounded-full hover:bg-slate-100 transition-all cursor-pointer">
-                Become a Student
-              </button>
               <button
                 onClick={() => navigate('/teacher/dashboard')}
                 className="px-5 py-2.5 bg-[#FF4667] text-white text-sm font-semibold rounded-full hover:bg-[#e03d5b] transition-all cursor-pointer"
@@ -323,36 +321,7 @@ export const TeacherEarningsPage: React.FC = () => {
         <div className="w-full max-w-[1340px] mx-auto px-4 py-10 flex flex-col lg:flex-row gap-8 items-start">
           
           {/* Sidebar */}
-          <div className="w-full lg:w-72 shrink-0">
-            <div className="w-full bg-white rounded-2xl border border-gray-200 p-6 flex flex-col gap-6 shadow-sm">
-              <div className="flex flex-col gap-4">
-                <h3 className="text-xs font-bold text-[#111827] uppercase tracking-wider">Main Menu</h3>
-                <div className="flex flex-col gap-2">
-                  <NavItem to="/teacher/dashboard" icon={<LayoutDashboard className="w-4 h-4" />} label="Dashboard" />
-                  <NavItem to="/teacher/profile" icon={<User className="w-4 h-4" />} label="My Profile" />
-                  <NavItem to="/teacher/course-builder" icon={<BookOpen className="w-4 h-4" />} label="My Courses" />
-                  <NavItem to="/teacher/course-enrollment" icon={<BookOpen className="w-4 h-4" />} label="Course Enrollment" />
-                  <NavItem to="/teacher/students" icon={<Users className="w-4 h-4" />} label="Students" />
-                  <NavItem to="/teacher/earnings" icon={<DollarSign className="w-4 h-4" />} label="Earnings" active />
-                  <NavItem to="/teacher/wallet" icon={<Wallet className="w-4 h-4" />} label="Payout & Wallet" />
-                  <NavItem to="/teacher/messages" icon={<MessageSquare className="w-4 h-4" />} label="Messages" />
-                </div>
-              </div>
-              <div className="border-t border-gray-100 pt-6 flex flex-col gap-4">
-                <h3 className="text-xs font-bold text-[#111827] uppercase tracking-wider">Account Settings</h3>
-                <div className="flex flex-col gap-2">
-                  <NavItem to="/teacher/settings" icon={<Settings className="w-4 h-4" />} label="Settings" />
-                  <button
-                    onClick={handleLogout}
-                    className="flex items-center gap-3 py-1.5 px-2 rounded-lg text-[#6B7280] hover:text-rose-500 hover:bg-rose-50/50 transition-all text-sm text-left w-full cursor-pointer"
-                  >
-                    <LogOut className="w-4 h-4 text-rose-500" />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+          <TeacherSidebar activePath="/teacher/earnings" />
 
           {/* Main content area */}
           <div className="flex-1 w-full flex flex-col gap-6 min-w-0">

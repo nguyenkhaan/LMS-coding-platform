@@ -4,18 +4,25 @@ import { FigmaDetailHero } from './components/figma_detail_hero';
 import { FigmaDetailSidebar } from './components/figma_detail_sidebar';
 import { FigmaCourseThumbnailCard } from './components/figma_course_thumbnail_card';
 import { FigmaDetailReviews } from './components/figma_detail_reviews';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { useEnrolledCourses } from './hooks/useEnrolledCourses';
 
 export const CourseDetailReviewsPage: React.FC = () => {
 	const { courseSlug } = useParams<{ courseSlug: string }>();
-	const isEnrolled = false;
+	const { isAuthenticated } = useAuthStore();
+	const { isEnrolled: checkEnrolled } = useEnrolledCourses();
+	
+	const slug = courseSlug || "python-foundations";
+	const isEnrolled = isAuthenticated && checkEnrolled(slug);
 	const navigate = useNavigate();
 
 	const handleEnroll = () => {
-		const targetSlug = courseSlug || "python-foundations";
-		navigate(`/checkout/${targetSlug}`);
+		if (isEnrolled) {
+			navigate(`/learn/${slug}`);
+		} else {
+			navigate(`/checkout/${slug}`);
+		}
 	};
-
-	const slug = courseSlug || "python-foundations";
 
 	return (
 		<div className="w-full min-h-screen bg-gray-50 flex flex-col font-['Inter'] antialiased">
@@ -43,7 +50,7 @@ export const CourseDetailReviewsPage: React.FC = () => {
 					</div>
 
 					{/* Section body */}
-					<FigmaDetailReviews />
+					<FigmaDetailReviews slug={slug} />
 				</div>
 
 				{/* Right: Sidebar card */}

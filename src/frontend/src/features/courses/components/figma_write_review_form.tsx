@@ -1,16 +1,75 @@
 import React, { useState } from 'react';
 import { Star } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuthStore } from '@/stores/useAuthStore';
 
-export const FigmaWriteReviewForm: React.FC = () => {
-	const [rating, setRating] = useState<number>(5);
-	const [comment, setComment] = useState<string>("");
+interface FigmaWriteReviewFormProps {
+	slug?: string;
+}
+
+export const FigmaWriteReviewForm: React.FC<FigmaWriteReviewFormProps> = ({ slug = "python-foundations" }) => {
+	const navigate = useNavigate();
+	const { user } = useAuthStore();
+
+	// Load reviews from localStorage
+	const stored = localStorage.getItem(`course_reviews_${slug}`);
+	const reviews = stored ? JSON.parse(stored) : [];
+	
+	const myReview = reviews.find((r: any) => r.isCurrentUser || (user && r.name === (user.fullName || user.email)));
+
+	const [rating, setRating] = useState<number>(myReview ? myReview.rating : 5);
+	const [comment, setComment] = useState<string>(myReview ? myReview.comment : "");
 	const [hoveredRating, setHoveredRating] = useState<number | null>(null);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
-		console.log("Mock review submission:", { rating, comment });
-		alert(`Review submitted successfully! (Mock)\nRating: ${rating}/5 stars\nComment: ${comment}`);
-		setComment("");
+		if (!comment.trim()) {
+			alert("Please enter a review comment.");
+			return;
+		}
+
+		const storedReviews = localStorage.getItem(`course_reviews_${slug}`);
+		let reviewsList = storedReviews ? JSON.parse(storedReviews) : [];
+
+		const userName = user ? (user.fullName || user.email) : "Current Student";
+		const userInitials = user 
+			? (user.fullName 
+				? user.fullName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() 
+				: user.email.substring(0, 2).toUpperCase()) 
+			: "CS";
+
+		const existingIndex = reviewsList.findIndex((r: any) => r.isCurrentUser || r.name === userName);
+
+		if (existingIndex > -1) {
+			// Update existing review
+			reviewsList[existingIndex] = {
+				...reviewsList[existingIndex],
+				rating,
+				comment: comment.trim(),
+				time: "Just now",
+				isCurrentUser: true
+			};
+			alert("Review updated successfully!");
+		} else {
+			// Create new review
+			const newReview = {
+				id: Date.now(),
+				name: userName,
+				initials: userInitials,
+				verified: true,
+				time: "Just now",
+				rating,
+				completedPercent: 100,
+				comment: comment.trim(),
+				helpfulCount: 0,
+				isCurrentUser: true
+			};
+			reviewsList = [newReview, ...reviewsList];
+			alert("Review submitted successfully!");
+		}
+
+		localStorage.setItem(`course_reviews_${slug}`, JSON.stringify(reviewsList));
+		navigate(`/courses-reviews/${slug}`);
 	};
 
 	return (

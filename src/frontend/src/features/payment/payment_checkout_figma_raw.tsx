@@ -1,5 +1,20 @@
-<div className="w-[1600px] h-[1915px] relative bg-white overflow-hidden">
-  <div className="w-[1600px] left-0 top-[1506px] absolute bg-indigo-900 border-t border-neutral-200 inline-flex flex-col justify-start items-start">
+import React, { useState } from 'react';
+import { toast } from 'sonner';
+
+export const PaymentCheckoutFigmaRaw: React.FC = () => {
+  const [selectedMethod, setSelectedMethod] = useState<'vietqr' | 'bank' | 'card'>('vietqr');
+
+  const handleSelect = (method: 'vietqr' | 'bank' | 'card') => {
+    if (method !== 'vietqr') {
+      toast.error("Only VietQR / PayOS QR is supported by the backend.");
+      return;
+    }
+    setSelectedMethod(method);
+  };
+
+  return (
+    <div className="w-[1600px] h-[1915px] relative bg-white overflow-hidden">
+      <div className="w-[1600px] left-0 top-[1506px] absolute bg-indigo-900 border-t border-neutral-200 inline-flex flex-col justify-start items-start">
     <div className="w-[1600px] flex flex-col justify-center items-center">
       <div className="self-stretch px-80 py-12 relative bg-white flex flex-col justify-start items-center gap-2.5 overflow-hidden">
         <div className="w-[1296px] inline-flex justify-start items-start gap-24">
@@ -316,7 +331,12 @@
         <div className="self-stretch p-6 flex flex-col justify-start items-start gap-6">
           <div className="self-stretch flex flex-col justify-start items-start gap-2.5">
             <div className="self-stretch pb-3.5 flex flex-col justify-start items-start">
-              <div className="self-stretch p-5 bg-sidebar-accent rounded-xl outline outline-1 outline-offset-[-1.15px] outline-sidebar-primary inline-flex justify-start items-center gap-5">
+              <div 
+                onClick={() => handleSelect('vietqr')}
+                className={`self-stretch p-5 rounded-xl outline outline-1 outline-offset-[-1.15px] inline-flex justify-start items-center gap-5 cursor-pointer transition-all ${
+                  selectedMethod === 'vietqr' ? 'bg-sidebar-accent outline-sidebar-primary' : 'bg-sidebar outline-input'
+                }`}
+              >
                 <div className="size-5 relative rounded-full outline outline-1 outline-offset-[-1.15px] outline-sidebar-primary inline-flex flex-col justify-start items-start">
                   <div className="size-5 left-0 top-0 absolute bg-color-white--0_2% rounded-full shadow-[0px_1.148913025856018px_2.297826051712036px_-1.148913025856018px_rgba(0,0,0,0.10)] shadow-[0px_1.148913025856018px_3.4467391967773438px_0px_rgba(0,0,0,0.10)]" />
                   <div className="self-stretch inline-flex justify-center items-center">
@@ -350,7 +370,10 @@
               </div>
             </div>
             <div className="self-stretch pb-3.5 flex flex-col justify-start items-start">
-              <div className="self-stretch pl-4 pr-96 py-5 rounded-xl outline outline-1 outline-offset-[-1.15px] outline-input inline-flex justify-start items-center gap-4">
+              <div 
+                onClick={() => handleSelect('bank')}
+                className="self-stretch pl-4 pr-96 py-5 rounded-xl outline outline-1 outline-offset-[-1.15px] outline-input inline-flex justify-start items-center gap-4 cursor-not-allowed opacity-60 bg-slate-50/50"
+              >
                 <div className="size-5 rounded-full outline outline-1 outline-offset-[-1.15px] outline-sidebar-primary inline-flex flex-col justify-center items-start">
                   <div className="size-5 bg-color-white--0_2% rounded-full shadow-[0px_1.148913025856018px_2.297826051712036px_-1.148913025856018px_rgba(0,0,0,0.10)] shadow-[0px_1.148913025856018px_3.4467391967773438px_0px_rgba(0,0,0,0.10)]" />
                 </div>
@@ -367,12 +390,15 @@
                     <div className="justify-center text-popover-foreground text-base font-semibold font-['Plus_Jakarta_Sans'] leading-6">Bank transfer</div>
                   </div>
                   <div className="self-stretch flex flex-col justify-start items-start">
-                    <div className="justify-center text-muted-foreground text-sm font-medium font-['Plus_Jakarta_Sans'] leading-5">Auto-reconciled within 30 seconds</div>
+                    <div className="justify-center text-muted-foreground text-sm font-medium font-['Plus_Jakarta_Sans'] leading-5">Auto-reconciled within 30 seconds (Unsupported)</div>
                   </div>
                 </div>
               </div>
             </div>
-            <div className="self-stretch pl-4 pr-96 py-5 rounded-xl outline outline-1 outline-offset-[-1.15px] outline-input inline-flex justify-start items-center gap-4">
+            <div 
+              onClick={() => handleSelect('card')}
+              className="self-stretch pl-4 pr-96 py-5 rounded-xl outline outline-1 outline-offset-[-1.15px] outline-input inline-flex justify-start items-center gap-4 cursor-not-allowed opacity-60 bg-slate-50/50"
+            >
               <div className="size-5 rounded-full outline outline-1 outline-offset-[-1.15px] outline-sidebar-primary inline-flex flex-col justify-center items-start">
                 <div className="size-5 bg-color-white--0_2% rounded-full shadow-[0px_1.148913025856018px_2.297826051712036px_-1.148913025856018px_rgba(0,0,0,0.10)] shadow-[0px_1.148913025856018px_3.4467391967773438px_0px_rgba(0,0,0,0.10)]" />
               </div>
@@ -385,7 +411,7 @@
                   <div className="justify-center text-popover-foreground text-base font-semibold font-['Plus_Jakarta_Sans'] leading-6">Domestic &amp; international card</div>
                 </div>
                 <div className="self-stretch flex flex-col justify-start items-start">
-                  <div className="justify-center text-muted-foreground text-sm font-medium font-['Plus_Jakarta_Sans'] leading-5">Visa, Mastercard, JCB, NAPAS</div>
+                  <div className="justify-center text-muted-foreground text-sm font-medium font-['Plus_Jakarta_Sans'] leading-5">Visa, Mastercard, JCB, NAPAS (Unsupported)</div>
                 </div>
               </div>
             </div>
@@ -508,3 +534,7 @@
     </div>
   </div>
 </div>
+  );
+};
+
+export default PaymentCheckoutFigmaRaw;

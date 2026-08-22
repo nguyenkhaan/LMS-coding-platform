@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { BookOpen, ChevronDown } from 'lucide-react';
 import { FigmaHeader } from './components/figma_header';
 import { FigmaHeroBanner } from './components/figma_hero_banner';
@@ -118,7 +119,20 @@ const ALL_COURSES: FigmaCourse[] = Array.from({ length: 20 }, (_, idx) => {
 });
 
 export const CourseCatalogGridPage: React.FC = () => {
-	const [search, setSearch] = useState<string>('');
+	const [searchParams, setSearchParams] = useSearchParams();
+	const queryParam = searchParams.get('q') || '';
+	const [search, setSearch] = useState<string>(queryParam);
+
+	useEffect(() => {
+		setSearch(queryParam);
+		setCurrentPage(1);
+	}, [queryParam]);
+
+	const handleSearch = (val: string) => {
+		setSearch(val);
+		setSearchParams(val ? { q: val } : {}, { replace: true });
+	};
+
 	const [selectedCats, setSelectedCats] = useState<string[]>([]);
 	const [selectedLevels, setSelectedLevels] = useState<string[]>([]);
 	
@@ -204,7 +218,7 @@ export const CourseCatalogGridPage: React.FC = () => {
 					{/* Left: Filter Sidebar */}
 					<FigmaFilterSidebar
 						search={search}
-						setSearch={setSearch}
+						setSearch={handleSearch}
 						selectedCats={selectedCats}
 						toggleCat={toggleCat}
 						selectedLevels={selectedLevels}
