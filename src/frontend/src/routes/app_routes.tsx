@@ -54,15 +54,15 @@ import { Clock } from 'lucide-react';
 
 const LoginPage = () => (
 	<div className="p-6 rounded-2xl border border-[hsl(var(--border-color))] bg-[hsl(var(--bg-card))] text-center max-w-md mx-auto my-12">
-		<h2 className="text-xl font-bold mb-4">Đăng nhập</h2>
-		<p className="text-xs text-[hsl(var(--text-secondary))]">Form đăng nhập học viên / giảng viên</p>
+		<h2 className="text-xl font-bold mb-4">Sign In</h2>
+		<p className="text-xs text-[hsl(var(--text-secondary))]">Student & Instructor Sign In</p>
 	</div>
 );
 
 const RegisterPage = () => (
 	<div className="p-6 rounded-2xl border border-[hsl(var(--border-color))] bg-[hsl(var(--bg-card))] text-center max-w-md mx-auto my-12">
-		<h2 className="text-xl font-bold mb-4">Đăng ký</h2>
-		<p className="text-xs text-[hsl(var(--text-secondary))]">Form tạo tài khoản mới</p>
+		<h2 className="text-xl font-bold mb-4">Sign Up</h2>
+		<p className="text-xs text-[hsl(var(--text-secondary))]">Create a new account</p>
 	</div>
 );
 
@@ -198,20 +198,24 @@ export const AppRoutes: React.FC = () => {
 				<Route path="/teacher/courses/:courseId/review-status" element={<CourseApprovalStatusPage />} />
 				<Route element={<DashboardLayout role="TEACHER" />}>
 					<Route path="/teacher/dashboard" element={<TeacherDashboard />} />
-					<Route path="/teacher/courses" element={<div>Quản lý khóa học</div>} />
-					<Route path="/teacher/students" element={<div>Học viên</div>} />
+					<Route path="/teacher/courses" element={<div>Manage Courses</div>} />
+					<Route path="/teacher/students" element={<div>Students Directory</div>} />
 				</Route>
 			</Route>
 
-			{/* Admin Protected Panel */}
+			{/* Admin Protected Panel (2 Moderation Subpages) */}
 			<Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
+				{/* 1. Course Approval Review */}
 				<Route path="/admin/courses" element={<CourseApprovalReviewPage />} />
 				<Route path="/admin/course-review/:courseId" element={<CourseApprovalReviewPage />} />
-				<Route element={<DashboardLayout role="ADMIN" />}>
-					<Route path="/admin/dashboard" element={<div>Tổng quan Admin</div>} />
-					<Route path="/admin/verifications" element={<AdminVerificationsPage />} />
-					<Route path="/admin/users" element={<div>Quản trị tài khoản</div>} />
-				</Route>
+				
+				{/* 2. Teacher Registration Review */}
+				<Route path="/admin/verifications" element={<AdminVerificationsPage />} />
+				<Route path="/admin/teachers" element={<AdminVerificationsPage />} />
+				
+				{/* Admin Default Redirects */}
+				<Route path="/admin" element={<Navigate to="/admin/verifications" replace />} />
+				<Route path="/admin/dashboard" element={<Navigate to="/admin/verifications" replace />} />
 			</Route>
 
 			<Route path="*" element={<NotFoundPage />} />

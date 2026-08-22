@@ -2,24 +2,24 @@ import { Course, Section } from '@/types/course';
 
 export const MOCK_CLASSROOM_COURSE: Course = {
 	id: 101,
-	title: 'Lập Trình Python Căn Bản Đến Nâng Cao',
+	title: 'Python Foundations: From Zero to Mastery',
 	slug: 'python-basics',
 	price: 49.99,
 	status: 'APPROVED',
 	teacherId: 1,
-	teacherName: 'Thầy Hoàng Nam',
+	teacherName: 'Alex Johnson',
 	createdAt: '2026-08-01',
 	sections: [
 		{
 			id: 1,
 			courseId: 101,
-			title: 'Chương 1: Giới thiệu cú pháp Python',
+			title: 'Chapter 1: Introduction to Python Syntax',
 			position: 1,
 			lessons: [
 				{
 					id: 11,
 					sectionId: 1,
-					title: '1.1 Cài đặt môi trường & Biến trong Python',
+					title: '1.1 Environment Setup & Variables in Python',
 					position: 1,
 					contents: [
 						{
@@ -28,7 +28,7 @@ export const MOCK_CLASSROOM_COURSE: Course = {
 							contentType: 'READING',
 							contentId: 1,
 							position: 1,
-							title: 'Bài đọc: Cấu trúc biến và kiểu dữ liệu',
+							title: 'Reading: Variables & Data Types',
 							isCompleted: true
 						},
 						{
@@ -37,7 +37,7 @@ export const MOCK_CLASSROOM_COURSE: Course = {
 							contentType: 'PROBLEM',
 							contentId: 2,
 							position: 2,
-							title: 'Thực hành: Đảo ngược chuỗi (Reverse String)',
+							title: 'Practice: Reverse String Challenge',
 							isCompleted: false
 						}
 					]
@@ -45,7 +45,7 @@ export const MOCK_CLASSROOM_COURSE: Course = {
 				{
 					id: 12,
 					sectionId: 1,
-					title: '1.2 Câu lệnh điều kiện & Vòng lặp',
+					title: '1.2 Conditionals & Control Flow',
 					position: 2,
 					contents: [
 						{
@@ -54,7 +54,7 @@ export const MOCK_CLASSROOM_COURSE: Course = {
 							contentType: 'READING',
 							contentId: 2,
 							position: 1,
-							title: 'Bài đọc: If-Else & For-While Loops',
+							title: 'Reading: If-Else & For-While Loops',
 							isCompleted: false
 						},
 						{
@@ -63,7 +63,7 @@ export const MOCK_CLASSROOM_COURSE: Course = {
 							contentType: 'QUIZ',
 							contentId: 1,
 							position: 2,
-							title: 'Trắc nghiệm: Kiểm tra kiến thức vòng lặp',
+							title: 'Quiz: Control Flow Knowledge Check',
 							isCompleted: false
 						}
 					]
@@ -73,13 +73,13 @@ export const MOCK_CLASSROOM_COURSE: Course = {
 		{
 			id: 2,
 			courseId: 101,
-			title: 'Chương 2: Cấu trúc dữ liệu nâng cao',
+			title: 'Chapter 2: Advanced Data Structures',
 			position: 2,
 			lessons: [
 				{
 					id: 21,
 					sectionId: 2,
-					title: '2.1 List, Tuple và Dictionary',
+					title: '2.1 Lists, Tuples & Dictionaries',
 					position: 1,
 					contents: [
 						{
@@ -88,7 +88,7 @@ export const MOCK_CLASSROOM_COURSE: Course = {
 							contentType: 'READING',
 							contentId: 3,
 							position: 1,
-							title: 'Bài đọc: Tối ưu bộ nhớ với Dict & Set',
+							title: 'Reading: Memory Optimization with Sets & Dictionaries',
 							isCompleted: false
 						}
 					]

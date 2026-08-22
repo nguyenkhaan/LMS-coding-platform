@@ -17,6 +17,7 @@ import {
 	Sparkles
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { AdminSidebar } from '../components/admin_sidebar';
 
 interface TeacherApplicant {
 	id: string;
@@ -45,7 +46,7 @@ const MOCK_APPLICANTS: TeacherApplicant[] = [
 	{
 		id: '1',
 		applicationId: 'TR-2025-00124',
-		fullName: 'Minh Trần',
+		fullName: 'Minh Tran',
 		dob: '12/05/1992',
 		idNumber: '1234567890',
 		bio: 'Senior Backend Engineer with 8 years of experience. Passionate about teaching clean architecture and scalable systems.',
@@ -150,33 +151,14 @@ export const AdminVerificationsPage: React.FC = () => {
 			{/* 2. Main Body Container (max-w-[1340px] centered) */}
 			<div className="max-w-[1340px] w-full mx-auto px-6 py-8 flex flex-col lg:flex-row gap-8 items-start flex-1">
 				
-				{/* Left Moderation Sidebar */}
+				{/* Standardized Left Admin Sidebar with Applicant Queue */}
 				<div className="w-full lg:w-72 shrink-0 flex flex-col gap-6">
-					
-					{/* Moderation Navigation Card */}
-					<div className="bg-white rounded-2xl border border-neutral-200 p-5 shadow-xs flex flex-col gap-2">
-						<span className="text-xs font-bold text-neutral-400 uppercase tracking-wider px-3 pb-2 border-b border-slate-100">
-							Moderation
-						</span>
-
-						<Link
-							to="/admin/courses"
-							className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-neutral-600 hover:bg-slate-50 text-sm font-medium transition-colors cursor-pointer"
-						>
-							<BookOpen className="w-4 h-4 text-neutral-400" />
-							<span>Course Approval</span>
-						</Link>
-
-						<div className="flex items-center gap-3 px-3 py-2.5 bg-indigo-50/80 rounded-xl text-indigo-900 text-sm font-bold shadow-xs">
-							<Users className="w-4 h-4 text-indigo-900" />
-							<span>Teachers Review</span>
-						</div>
-					</div>
+					<AdminSidebar pendingTeachersCount={applicants.filter(a => a.status === 'PENDING REVIEW').length} />
 
 					{/* Applicant Switcher Queue */}
 					<div className="bg-white rounded-2xl border border-neutral-200 p-5 shadow-xs flex flex-col gap-3">
 						<span className="text-xs font-bold text-neutral-400 uppercase tracking-wider border-b border-slate-100 pb-2">
-							Pending Queue ({applicants.length})
+							Applicant Queue ({applicants.length})
 						</span>
 
 						<div className="flex flex-col gap-2">
@@ -213,7 +195,6 @@ export const AdminVerificationsPage: React.FC = () => {
 							))}
 						</div>
 					</div>
-
 				</div>
 
 				{/* Right Main Review Content Panel */}
