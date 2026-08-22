@@ -15,8 +15,12 @@ import {
   Radio,
   Maximize2,
   Activity,
-  ShieldCheck
+  ShieldCheck,
+  AlertCircle,
+  CheckCircle2,
+  X
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface ChatMessage {
   id: number;
@@ -31,7 +35,7 @@ const INITIAL_MESSAGES: ChatMessage[] = [
   {
     id: 1,
     sender: 'user',
-    senderName: 'Minh Trần',
+    senderName: 'Minh Tran',
     avatarInitials: 'MT',
     text: 'Fixed windows allow a burst of 2x the limit across the boundary. Token bucket smooths that because refill is continuous.',
     time: '27:45'
@@ -61,6 +65,7 @@ export function InterviewWorkspacePage() {
   const [inputText, setInputText] = useState<string>('');
   const [isAiResponding, setIsAiResponding] = useState<boolean>(false);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(27 * 60 + 14); // 27:14
+  const [showEndModal, setShowEndModal] = useState<boolean>(false);
 
   // Live countdown timer
   useEffect(() => {
@@ -112,7 +117,7 @@ export function InterviewWorkspacePage() {
     const userMsg: ChatMessage = {
       id: Date.now(),
       sender: 'user',
-      senderName: 'Minh Trần',
+      senderName: 'Minh Tran',
       avatarInitials: 'MT',
       text: inputText.trim(),
       time: formatTimer(secondsRemaining)
@@ -136,13 +141,13 @@ export function InterviewWorkspacePage() {
     }, 1800);
   };
 
-  const handleEndCall = () => {
-    if (window.confirm('Do you want to conclude the AI Mock Interview and generate your evaluation scorecard?')) {
-      if (cameraStream) {
-        cameraStream.getTracks().forEach((track) => track.stop());
-      }
-      navigate(`/interview/report/${sessionId || 'session-001'}`);
+  const handleConfirmEnd = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
     }
+    setShowEndModal(false);
+    toast.success('Interview session concluded! Generating evaluation report...');
+    navigate(`/interview/report/${sessionId || 'session-001'}`);
   };
 
   return (
@@ -168,7 +173,7 @@ export function InterviewWorkspacePage() {
         </div>
       </div>
 
-      {/* 2. MAIN 2-COLUMN WORKSPACE (Tightly coupled and aligned, NO awkward gaps) */}
+      {/* 2. MAIN 2-COLUMN WORKSPACE */}
       <div className="max-w-[1840px] w-full mx-auto px-6 lg:px-10 py-6 flex flex-col xl:flex-row justify-start items-start gap-8">
         
         {/* LEFT COLUMN: Camera Feed + Directly Attached Control Bar */}
@@ -192,7 +197,7 @@ export function InterviewWorkspacePage() {
                   MT
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-zinc-200 text-base lg:text-lg font-bold">Minh Trần</span>
+                  <span className="text-zinc-200 text-base lg:text-lg font-bold">Minh Tran</span>
                   <span className="text-zinc-500 text-xs font-medium">Camera preview inactive · Audio channel ready</span>
                 </div>
               </div>
@@ -201,7 +206,7 @@ export function InterviewWorkspacePage() {
             {/* Candidate Tag & Resolution Overlay (Top Left) */}
             <div className="absolute top-4 left-4 px-3.5 py-1.5 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 flex items-center gap-2.5 text-xs text-white shadow-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-semibold">Minh Trần (Candidate)</span>
+              <span className="font-semibold">Minh Tran (Candidate)</span>
               <span className="text-white/30">•</span>
               <span className="text-white/70 font-mono text-[11px]">1080p HD</span>
             </div>
@@ -226,7 +231,7 @@ export function InterviewWorkspacePage() {
 
           </div>
 
-          {/* 3 CIRCULAR FLOATING MEDIA CONTROLS (Snug ~20px directly under Camera, matching Figma specs) */}
+          {/* 3 CIRCULAR FLOATING MEDIA CONTROLS */}
           <div className="flex items-center justify-center gap-6">
             
             {/* Mic Button */}
@@ -257,7 +262,7 @@ export function InterviewWorkspacePage() {
 
             {/* End Call / Submit Button */}
             <button
-              onClick={handleEndCall}
+              onClick={() => setShowEndModal(true)}
               className="w-14 h-14 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center transition-all duration-200 shadow-lg hover:scale-105 cursor-pointer"
               title="End Interview & Submit"
             >
@@ -268,7 +273,7 @@ export function InterviewWorkspacePage() {
 
         </div>
 
-        {/* RIGHT COLUMN: AI Interviewer Chat (Height matches Camera + Controls = ~616px) */}
+        {/* RIGHT COLUMN: AI Interviewer Chat */}
         <div className="flex-[38] w-full bg-white rounded-3xl border border-neutral-200 shadow-md flex flex-col justify-between overflow-hidden h-[556px] lg:h-[616px] 2xl:h-[656px]">
           
           {/* Card Header: AI Profile + 27:14 Countdown Clock */}
@@ -364,6 +369,79 @@ export function InterviewWorkspacePage() {
         </div>
 
       </div>
+
+      {/* 3. CUSTOM BLURRED BACKDROP MODAL FOR ENDING INTERVIEW */}
+      {showEndModal && (
+        <div
+          onClick={() => setShowEndModal(false)}
+          className="fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-md w-full bg-white rounded-3xl p-6 sm:p-8 shadow-2xl border border-neutral-200 flex flex-col items-center text-center gap-5 relative animate-in fade-in zoom-in-95 duration-150"
+          >
+            {/* Close cross icon */}
+            <button
+              onClick={() => setShowEndModal(false)}
+              className="absolute top-4 right-4 text-neutral-400 hover:text-zinc-900 p-1.5 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            {/* Icon Header */}
+            <div className="w-16 h-16 rounded-full bg-rose-50 border-2 border-rose-100 flex items-center justify-center text-rose-600 shadow-xs">
+              <PhoneOff className="w-7 h-7" />
+            </div>
+
+            {/* Title & Description */}
+            <div className="flex flex-col gap-2">
+              <h3 className="text-xl font-bold text-zinc-900">
+                End AI Mock Interview?
+              </h3>
+              <p className="text-xs sm:text-sm text-neutral-500 leading-relaxed">
+                Do you want to conclude the current session? Your responses will be finalized and sent to AI engine to generate your comprehensive performance scorecard.
+              </p>
+            </div>
+
+            {/* Session Stats Summary Card */}
+            <div className="w-full p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between text-xs font-medium text-neutral-600">
+              <div className="flex flex-col items-start gap-0.5">
+                <span className="text-[10px] uppercase text-neutral-400 font-bold">Time Left</span>
+                <span className="font-mono font-bold text-zinc-900">{formatTimer(secondsRemaining)}</span>
+              </div>
+              <div className="h-6 w-px bg-slate-200" />
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-[10px] uppercase text-neutral-400 font-bold">Responses</span>
+                <span className="font-mono font-bold text-indigo-900">{messages.filter(m => m.sender === 'user').length} submitted</span>
+              </div>
+              <div className="h-6 w-px bg-slate-200" />
+              <div className="flex flex-col items-end gap-0.5">
+                <span className="text-[10px] uppercase text-neutral-400 font-bold">Track</span>
+                <span className="font-bold text-zinc-900">System Design</span>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="w-full flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowEndModal(false)}
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-zinc-700 font-semibold rounded-xl text-xs sm:text-sm transition-colors cursor-pointer"
+              >
+                Continue Session
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmEnd}
+                className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs sm:text-sm shadow-md transition-all cursor-pointer"
+              >
+                Yes, End &amp; Submit
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
