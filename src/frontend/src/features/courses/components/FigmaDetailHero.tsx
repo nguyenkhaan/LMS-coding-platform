@@ -13,15 +13,11 @@ export const FigmaDetailHero: React.FC<HeroProps> = ({ title, instructor, rating
 		<div className="w-full min-h-[260px] bg-[#392C7D] relative overflow-hidden flex items-center py-8">
 			{/* Overlay Tint */}
 			<div className="absolute inset-0 bg-black/45" />
-			<div className="w-full max-w-[1296px] mx-auto px-4 flex flex-col gap-3 text-white relative z-10">
+			<div className="w-full max-w-[1340px] mx-auto px-4 flex flex-col gap-3 text-white relative z-10">
 				<div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-rose-300">
-					<span>Home</span>
-					<span>&gt;</span>
-					<span>Courses</span>
-					<span>&gt;</span>
-					<span>Detail</span>
+					<span>Dashboard</span><span className="text-slate-400">&gt;</span><span>Courses</span><span className="text-slate-400">&gt;</span><span className="text-white">Detail</span>
 				</div>
-				<h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight text-white max-w-4xl leading-tight">
+				<h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-white max-w-4xl leading-tight">
 					{title}
 				</h1>
 				<p className="text-sm font-medium text-neutral-300">

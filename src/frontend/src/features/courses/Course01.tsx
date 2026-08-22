@@ -180,71 +180,66 @@ export const CourseCatalogFigma: React.FC = () => {
 	}, [filteredCourses, currentPage, pageSize]);
 
 	return (
-		<div className="min-h-screen bg-slate-50 flex flex-col justify-start items-center">
-			<div className="w-full max-w-[1620px] bg-white shadow-2xl rounded-3xl border border-neutral-100 overflow-hidden flex flex-col">
-				<FigmaHeader />
-				<FigmaHeroBanner />
+		<div className="w-full min-h-screen bg-gray-50 flex flex-col font-['Inter'] antialiased">
+			<FigmaHeroBanner />
 
-				{/* Main Core Catalog Section */}
-				<div className="w-full max-w-[1296px] mx-auto px-4 md:px-0 py-8 flex flex-col justify-start items-start gap-6">
-					{/* Toolbar Header info */}
-					<div className="w-full flex justify-between items-center border-b border-slate-100 pb-4">
-						<div className="flex flex-col gap-1">
-							<h2 className="text-[#392C7D] text-lg font-bold">Courses</h2>
-							<span className="text-neutral-500 text-xs">
-								{filteredCourses.length} courses matching your selection
-							</span>
-						</div>
-						<div className="text-xs text-neutral-400 font-semibold flex items-center gap-1 cursor-pointer hover:text-zinc-900 transition-colors">
-							<span>Sort: Most popular</span>
-							<ChevronDown className="w-3.5 h-3.5" />
-						</div>
+			{/* Main Core Catalog Section */}
+			<div className="w-full max-w-[1340px] mx-auto px-6 py-8 flex flex-col justify-start items-start gap-6">
+				{/* Toolbar Header info */}
+				<div className="w-full flex justify-between items-center border-b border-slate-100 pb-4">
+					<div className="flex flex-col gap-1">
+						<h2 className="text-[#392C7D] text-lg font-bold">Courses</h2>
+						<span className="text-neutral-500 text-xs">
+							{filteredCourses.length} courses matching your selection
+						</span>
 					</div>
-
-					{/* Sidebar & Course Grid Layout */}
-					<div className="w-full flex flex-col md:flex-row items-start gap-8 mt-2">
-						{/* Left: Filter Sidebar */}
-						<FigmaFilterSidebar
-							search={search}
-							setSearch={setSearch}
-							selectedCats={selectedCats}
-							toggleCat={toggleCat}
-							selectedLevels={selectedLevels}
-							toggleLevel={toggleLevel}
-							resetFilters={resetFilters}
-						/>
-
-						{/* Right: Cards List Grid */}
-						<div className="flex-1 w-full">
-							{paginatedCourses.length === 0 ? (
-								<div className="w-full h-80 flex flex-col justify-center items-center text-center p-8 bg-slate-50 rounded-2xl border border-neutral-200/50">
-									<BookOpen className="w-12 h-12 text-[#392C7D]/30 mb-3" />
-									<h4 className="text-[#392C7D] text-base font-bold">No courses found</h4>
-									<p className="text-neutral-500 text-xs mt-1">Try resetting filters to discover courses.</p>
-								</div>
-							) : (
-								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-									{paginatedCourses.map((course) => (
-										<FigmaCourseCard
-											key={course.id}
-											course={course}
-											isFav={favs.has(course.id)}
-											toggleFav={toggleFav}
-										/>
-									))}
-								</div>
-							)}
-							
-							<FigmaPagination
-								currentPage={currentPage}
-								totalPages={totalPages}
-								setCurrentPage={setCurrentPage}
-							/>
-						</div>
+					<div className="text-xs text-neutral-400 font-semibold flex items-center gap-1 cursor-pointer hover:text-zinc-900 transition-colors">
+						<span>Sort: Most popular</span>
+						<ChevronDown className="w-3.5 h-3.5" />
 					</div>
 				</div>
 
-				<FigmaFooter />
+				{/* Sidebar & Course Grid Layout */}
+				<div className="w-full flex flex-col md:flex-row items-start gap-8 mt-2">
+					{/* Left: Filter Sidebar */}
+					<FigmaFilterSidebar
+						search={search}
+						setSearch={setSearch}
+						selectedCats={selectedCats}
+						toggleCat={toggleCat}
+						selectedLevels={selectedLevels}
+						toggleLevel={toggleLevel}
+						resetFilters={resetFilters}
+					/>
+
+					{/* Right: Cards List Grid */}
+					<div className="flex-1 w-full">
+						{paginatedCourses.length === 0 ? (
+							<div className="w-full h-80 flex flex-col justify-center items-center text-center p-8 bg-slate-50 rounded-2xl border border-neutral-200/50">
+								<BookOpen className="w-12 h-12 text-[#392C7D]/30 mb-3" />
+								<h4 className="text-[#392C7D] text-base font-bold">No courses found</h4>
+								<p className="text-neutral-500 text-xs mt-1">Try resetting filters to discover courses.</p>
+							</div>
+						) : (
+							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+								{paginatedCourses.map((course) => (
+									<FigmaCourseCard
+										key={course.id}
+										course={course}
+										isFav={favs.has(course.id)}
+										toggleFav={toggleFav}
+									/>
+								))}
+							</div>
+						)}
+						
+						<FigmaPagination
+							currentPage={currentPage}
+							totalPages={totalPages}
+							setCurrentPage={setCurrentPage}
+						/>
+					</div>
+				</div>
 			</div>
 		</div>
 	);

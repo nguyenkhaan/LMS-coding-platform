@@ -197,18 +197,16 @@ export const TeacherProfilePage: React.FC = () => {
   const inputClass = 'w-full px-3 py-2 text-[14px] text-[#111827] border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] focus:ring-1 focus:ring-[#392C7D]/20 transition-all bg-white';
 
   return (
-    <div className='min-h-screen bg-slate-50 flex flex-col justify-start items-center'>
-      <div className='w-full max-w-[1892px] bg-white shadow-2xl rounded-3xl border border-neutral-100 overflow-hidden flex flex-col'>
-        <FigmaHeader />
+    <div className="w-full min-h-screen bg-gray-50 flex flex-col">
 
         {/* Page title banner */}
         <div className='w-full bg-gradient-to-r from-[#392C7D] to-purple-600 py-8 flex flex-col items-center justify-center gap-1'>
-          <h1 className='text-[36px] font-extrabold text-white tracking-tight'>My Profile</h1>
-          <p className='text-[13px] font-medium text-white/70'>Home &rsaquo; My Profile</p>
+          <h1 className='text-2xl lg:text-3xl font-bold text-white tracking-tight'>My Profile</h1>
+          <p className='text-[13px] font-medium text-white/70'>Dashboard &rsaquo; My Profile</p>
         </div>
 
         {/* Profile hero banner */}
-        <div className='w-full max-w-[1296px] mx-auto px-4 pt-8'>
+        <div className='w-full max-w-[1340px] mx-auto px-4 pt-8'>
           <div className='w-full bg-gradient-to-r from-cyan-700 to-blue-700 rounded-2xl overflow-hidden relative p-8 flex items-center justify-between text-white shadow-sm'>
             <div className='flex items-center gap-6 relative z-10'>
               <img
@@ -238,7 +236,7 @@ export const TeacherProfilePage: React.FC = () => {
         </div>
 
         {/* Body */}
-        <div className='w-full max-w-[1296px] mx-auto px-4 py-10 flex flex-col lg:flex-row gap-8 items-start'>
+        <div className='w-full max-w-[1340px] mx-auto px-4 py-10 flex flex-col lg:flex-row gap-8 items-start'>
 
           {/* Sidebar */}
           <div className='w-full lg:w-72 shrink-0'>
@@ -460,9 +458,7 @@ export const TeacherProfilePage: React.FC = () => {
           </div>
         </div>
 
-        <FigmaFooter />
-      </div>
-    </div>
+        </div>
   );
 };
 

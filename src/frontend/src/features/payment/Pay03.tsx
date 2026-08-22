@@ -15,7 +15,7 @@ export const PaymentResultPage: React.FC = () => {
     <div className="w-full min-h-screen bg-slate-50 flex flex-col items-center">
       <CheckoutHeader title="Payment Result" />
       
-      <div className="w-full max-w-[1296px] mx-auto px-4 py-12 flex flex-col items-center">
+      <div className="w-full max-w-[1340px] mx-auto px-4 py-12 flex flex-col items-center">
         {/* Main Result Card */}
         <div className="w-full max-w-[640px] bg-white rounded-3xl shadow-sm border border-gray-200 flex flex-col overflow-hidden">
           {/* Accent border at the top based on status */}
@@ -48,7 +48,7 @@ export const PaymentResultPage: React.FC = () => {
             </div>
 
             {/* Heading */}
-            <h2 className="text-[30px] font-extrabold text-[#111827] tracking-tight leading-tight mb-3">
+            <h2 className="text-2xl font-bold text-[#111827] tracking-tight leading-tight mb-3">
               {status === 'success' && 'Payment successful'}
               {status === 'pending' && 'Payment pending'}
               {(status === 'failed' || status === 'cancelled') && 'Payment failed'}
