@@ -4,12 +4,14 @@
 	--font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 	--font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
-	/* Brand palette — from docs/ui/theme.md */
+	/* Brand palette */
 	--color-brand-indigo: #392C7D;
 	--color-brand-indigo-dark: #2E3490;
 	--color-brand-violet: #5625E8;
 	--color-brand-coral: #FF4667;
 	--color-brand-orange: #FE893E;
+	--color-brand-purple: hsl(275, 90%, 60%);
+	--color-brand-cyan: hsl(190, 95%, 50%);
 
 	/* Status */
 	--color-success: #0FA05C;
@@ -52,7 +54,6 @@
 		min-height: 100vh;
 	}
 }
-
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
