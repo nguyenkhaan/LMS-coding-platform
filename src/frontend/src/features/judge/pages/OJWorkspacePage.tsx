@@ -1,7 +1,7 @@
 import { useAuthStore } from '@/stores/useAuthStore';
 import { NotificationDropdown } from '@/features/notification/components/NotificationDropdown';
 import { GraduationCap, ShieldCheck, LogOut, FileText } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import {
@@ -30,87 +30,148 @@ interface TestCase {
   expected: string;
 }
 
-const TEST_CASES: TestCase[] = [
-  { id: 1, nums: '[2, 7, 11, 15]', target: '9', expected: '[0, 1]' },
-  { id: 2, nums: '[3, 2, 4]', target: '6', expected: '[1, 2]' },
-  { id: 3, nums: '[3, 3]', target: '6', expected: '[0, 1]' }
-];
+interface ProblemDetail {
+  id: number;
+  codeId: string;
+  title: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  difficultyColor: string;
+  difficultyBorder: string;
+  successRate: string;
+  xp: number;
+  tags: string[];
+  description: string;
+  examples: {
+    input: string;
+    output: string;
+    explanation?: string;
+  }[];
+  constraints: string[];
+  testCases: TestCase[];
+  starterCodes: Record<string, { ext: string; monacoLang: string; code: string }>;
+}
 
-const CODE_TEMPLATES: Record<string, { ext: string; monacoLang: string; code: string }> = {
-  'Python 3': {
-    ext: 'solution.py',
-    monacoLang: 'python',
-    code: `class Solution:
-    def twoSum(self, nums: list[int], target: int) -> list[int]:
-        # Write your solution here
-        seen = {}
-        for i, num in enumerate(nums):
-            complement = target - num
-            if complement in seen:
-                return [seen[complement], i]
-            seen[num] = i
-        return []
-`
-  },
-  'C++ 20': {
-    ext: 'solution.cpp',
-    monacoLang: 'cpp',
-    code: `#include <vector>
-#include <unordered_map>
-using namespace std;
-
-class Solution {
-public:
-    vector<int> twoSum(vector<int>& nums, int target) {
-        unordered_map<int, int> seen;
-        for (int i = 0; i < nums.size(); ++i) {
-            int comp = target - nums[i];
-            if (seen.count(comp)) return {seen[comp], i};
-            seen[nums[i]] = i;
-        }
-        return {};
+const PROBLEMS_DATABASE: Record<string, ProblemDetail> = {
+  'add-two-number': {
+    id: 2,
+    codeId: 'OJ-002',
+    title: '2. Add Two Numbers',
+    difficulty: 'Medium',
+    difficultyColor: 'bg-amber-50 text-amber-800 border-amber-300',
+    difficultyBorder: 'border-amber-400',
+    successRate: '52.4%',
+    xp: 200,
+    tags: ['Linked List', 'Math', 'Recursion'],
+    description:
+      'You are given two non-empty linked lists representing two non-negative integers. The digits are stored in reverse order, and each of their nodes contains a single digit. Add the two numbers and return the sum as a linked list.',
+    examples: [
+      {
+        input: 'l1 = [2,4,3], l2 = [5,6,4]',
+        output: '[7,0,8]',
+        explanation: '342 + 465 = 807.'
+      },
+      {
+        input: 'l1 = [0], l2 = [0]',
+        output: '[0]'
+      },
+      {
+        input: 'l1 = [9,9,9,9,9,9,9], l2 = [9,9,9,9]',
+        output: '[8,9,9,9,0,0,0,1]'
+      }
+    ],
+    constraints: [
+      'The number of nodes in each linked list is in the range [1, 100].',
+      '0 <= Node.val <= 9',
+      'It is guaranteed that the list represents a number that does not have leading zeros.'
+    ],
+    testCases: [
+      { id: 1, nums: 'l1 = [2,4,3]', target: 'l2 = [5,6,4]', expected: '[7,0,8]' },
+      { id: 2, nums: 'l1 = [0]', target: 'l2 = [0]', expected: '[0]' },
+      { id: 3, nums: 'l1 = [9,9,9,9,9,9,9]', target: 'l2 = [9,9,9,9]', expected: '[8,9,9,9,0,0,0,1]' }
+    ],
+    starterCodes: {
+      'Python 3': {
+        ext: 'solution.py',
+        monacoLang: 'python',
+        code: "# Definition for singly-linked list.\n# class ListNode:\n#     def __init__(self, val=0, next=None):\n#         self.val = val\n#         self.next = next\n\nclass Solution:\n    def addTwoNumbers(self, l1, l2):\n        dummy = ListNode(0)\n        curr = dummy\n        carry = 0\n        \n        while l1 or l2 or carry:\n            val1 = l1.val if l1 else 0\n            val2 = l2.val if l2 else 0\n            \n            total = val1 + val2 + carry\n            carry = total // 10\n            curr.next = ListNode(total % 10)\n            curr = curr.next\n            \n            if l1: l1 = l1.next\n            if l2: l2 = l2.next\n            \n        return dummy.next\n"
+      },
+      'JavaScript': {
+        ext: 'solution.js',
+        monacoLang: 'javascript',
+        code: "/**\n * @param {ListNode} l1\n * @param {ListNode} l2\n * @return {ListNode}\n */\nvar addTwoNumbers = function(l1, l2) {\n    let dummy = new ListNode(0);\n    let curr = dummy;\n    let carry = 0;\n    \n    while (l1 !== null || l2 !== null || carry > 0) {\n        let sum = carry;\n        if (l1 !== null) {\n            sum += l1.val;\n            l1 = l1.next;\n        }\n        if (l2 !== null) {\n            sum += l2.val;\n            l2 = l2.next;\n        }\n        carry = Math.floor(sum / 10);\n        curr.next = new ListNode(sum % 10);\n        curr = curr.next;\n    }\n    \n    return dummy.next;\n};"
+      },
+      'C++ 20': {
+        ext: 'solution.cpp',
+        monacoLang: 'cpp',
+        code: "class Solution {\npublic:\n    ListNode* addTwoNumbers(ListNode* l1, ListNode* l2) {\n        ListNode dummy(0);\n        ListNode* tail = &dummy;\n        int carry = 0;\n        \n        while (l1 || l2 || carry) {\n            int sum = carry;\n            if (l1) { sum += l1->val; l1 = l1->next; }\n            if (l2) { sum += l2->val; l2 = l2->next; }\n            carry = sum / 10;\n            tail->next = new ListNode(sum % 10);\n            tail = tail->next;\n        }\n        \n        return dummy.next;\n    }\n};"
+      },
+      'Java 17': {
+        ext: 'Solution.java',
+        monacoLang: 'java',
+        code: "class Solution {\n    public ListNode addTwoNumbers(ListNode l1, ListNode l2) {\n        ListNode dummy = new ListNode(0);\n        ListNode curr = dummy;\n        int carry = 0;\n        \n        while (l1 != null || l2 != null || carry != 0) {\n            int sum = carry;\n            if (l1 != null) {\n                sum += l1.val;\n                l1 = l1.next;\n            }\n            if (l2 != null) {\n                sum += l2.val;\n                l2 = l2.next;\n            }\n            carry = sum / 10;\n            curr.next = new ListNode(sum % 10);\n            curr = curr.next;\n        }\n        \n        return dummy.next;\n    }\n}"
+      }
     }
-};`
   },
-  'JavaScript': {
-    ext: 'solution.js',
-    monacoLang: 'javascript',
-    code: `/**
- * @param {number[]} nums
- * @param {number} target
- * @return {number[]}
- */
-var twoSum = function(nums, target) {
-    const seen = new Map();
-    for (let i = 0; i < nums.length; i++) {
-        const complement = target - nums[i];
-        if (seen.has(complement)) {
-            return [seen.get(complement), i];
-        }
-        seen.set(nums[i], i);
+  'two-sum': {
+    id: 1,
+    codeId: 'OJ-001',
+    title: '1. Two Sum',
+    difficulty: 'Easy',
+    difficultyColor: 'bg-emerald-50 text-emerald-800 border-emerald-300',
+    difficultyBorder: 'border-emerald-400',
+    successRate: '68.2%',
+    xp: 100,
+    tags: ['Array', 'Hash Table'],
+    description:
+      'Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume that each input would have exactly one solution, and you may not use the same element twice.',
+    examples: [
+      {
+        input: 'nums = [2,7,11,15], target = 9',
+        output: '[0,1]',
+        explanation: 'Because nums[0] + nums[1] == 9, we return [0, 1].'
+      },
+      {
+        input: 'nums = [3,2,4], target = 6',
+        output: '[1,2]'
+      },
+      {
+        input: 'nums = [3,3], target = 6',
+        output: '[0,1]'
+      }
+    ],
+    constraints: [
+      '2 <= nums.length <= 10^4',
+      '-10^9 <= nums[i] <= 10^9',
+      '-10^9 <= target <= 10^9',
+      'Only one valid answer exists.'
+    ],
+    testCases: [
+      { id: 1, nums: '[2, 7, 11, 15]', target: '9', expected: '[0, 1]' },
+      { id: 2, nums: '[3, 2, 4]', target: '6', expected: '[1, 2]' },
+      { id: 3, nums: '[3, 3]', target: '6', expected: '[0, 1]' }
+    ],
+    starterCodes: {
+      'Python 3': {
+        ext: 'solution.py',
+        monacoLang: 'python',
+        code: "class Solution:\n    def twoSum(self, nums: list[int], target: int) -> list[int]:\n        # Write your solution here\n        seen = {}\n        for i, num in enumerate(nums):\n            complement = target - num\n            if complement in seen:\n                return [seen[complement], i]\n            seen[num] = i\n        return []\n"
+      },
+      'C++ 20': {
+        ext: 'solution.cpp',
+        monacoLang: 'cpp',
+        code: "#include <vector>\n#include <unordered_map>\nusing namespace std;\n\nclass Solution {\npublic:\n    vector<int> twoSum(vector<int>& nums, int target) {\n        unordered_map<int, int> seen;\n        for (int i = 0; i < nums.size(); ++i) {\n            int comp = target - nums[i];\n            if (seen.count(comp)) return {seen[comp], i};\n            seen[nums[i]] = i;\n        }\n        return {};\n    }\n};"
+      },
+      'JavaScript': {
+        ext: 'solution.js',
+        monacoLang: 'javascript',
+        code: "/**\n * @param {number[]} nums\n * @param {number} target\n * @return {number[]}\n */\nvar twoSum = function(nums, target) {\n    const seen = new Map();\n    for (let i = 0; i < nums.length; i++) {\n        const complement = target - nums[i];\n        if (seen.has(complement)) {\n            return [seen.get(complement), i];\n        }\n        seen.set(nums[i], i);\n    }\n    return [];\n};"
+      },
+      'Java 17': {
+        ext: 'Solution.java',
+        monacoLang: 'java',
+        code: "import java.util.HashMap;\nimport java.util.Map;\n\nclass Solution {\n    public int[] twoSum(int[] nums, int target) {\n        Map<Integer, Integer> seen = new HashMap<>();\n        for (int i = 0; i < nums.length; i++) {\n            int complement = target - nums[i];\n            if (seen.containsKey(complement)) {\n                return new int[]{seen.get(complement), i};\n            }\n            seen.put(nums[i], i);\n        }\n        return new int[]{};\n    }\n}"
+      }
     }
-    return [];
-};`
-  },
-  'Java 17': {
-    ext: 'Solution.java',
-    monacoLang: 'java',
-    code: `import java.util.HashMap;
-import java.util.Map;
-
-class Solution {
-    public int[] twoSum(int[] nums, int target) {
-        Map<Integer, Integer> seen = new HashMap<>();
-        for (int i = 0; i < nums.length; i++) {
-            int complement = target - nums[i];
-            if (seen.containsKey(complement)) {
-                return new int[]{seen.get(complement), i};
-            }
-            seen.put(nums[i], i);
-        }
-        return new int[]{};
-    }
-}`
   }
 };
 
@@ -119,16 +180,36 @@ export function OJWorkspacePage() {
   const navigate = useNavigate();
   const { problemSlug } = useParams<{ problemSlug: string }>();
 
+  // Determine problem detail from DB (fallback to two-sum or add-two-number)
+  const currentProblem: ProblemDetail = useMemo(() => {
+    if (problemSlug && PROBLEMS_DATABASE[problemSlug]) {
+      return PROBLEMS_DATABASE[problemSlug];
+    }
+    return PROBLEMS_DATABASE['add-two-number'] || PROBLEMS_DATABASE['two-sum'];
+  }, [problemSlug]);
+
   // State
   const [selectedLang, setSelectedLang] = useState<string>('Python 3');
-  const [code, setCode] = useState<string>(CODE_TEMPLATES['Python 3'].code);
+  const [code, setCode] = useState<string>(
+    currentProblem.starterCodes['Python 3']?.code || ''
+  );
   const [leftTab, setLeftTab] = useState<'Description' | 'Solutions' | 'Submissions' | 'Discussion'>('Description');
   const [bottomTab, setBottomTab] = useState<'Test Cases' | 'Output' | 'Console'>('Test Cases');
   const [selectedCaseIndex, setSelectedCaseIndex] = useState<number>(0);
   
   // Custom case inputs
-  const [caseInputs, setCaseInputs] = useState(TEST_CASES);
+  const [caseInputs, setCaseInputs] = useState<TestCase[]>(currentProblem.testCases);
   const [customConsoleInput, setCustomConsoleInput] = useState('nums = [2,7,11,15]\ntarget = 9');
+
+  // When problem or language changes, update code and testcases
+  useEffect(() => {
+    setCaseInputs(currentProblem.testCases);
+    setSelectedCaseIndex(0);
+    const starter = currentProblem.starterCodes[selectedLang] || currentProblem.starterCodes['Python 3'];
+    if (starter) {
+      setCode(starter.code);
+    }
+  }, [currentProblem, selectedLang]);
 
   // Execution & Verdict State
   const [isRunning, setIsRunning] = useState<boolean>(false);
@@ -161,7 +242,10 @@ export function OJWorkspacePage() {
 
   const handleLanguageChange = (lang: string) => {
     setSelectedLang(lang);
-    setCode(CODE_TEMPLATES[lang].code);
+    const starter = currentProblem.starterCodes[lang] || currentProblem.starterCodes['Python 3'];
+    if (starter) {
+      setCode(starter.code);
+    }
   };
 
   const handleRunCode = () => {
@@ -171,11 +255,11 @@ export function OJWorkspacePage() {
       setIsRunning(false);
       setExecutionResult({
         status: 'ACCEPTED',
-        output: '[0, 1]',
+        output: currentProblem.testCases[0]?.expected || '[0, 1]',
         runtime: '48 ms',
         memory: '14.2 MB',
-        passedCases: 3,
-        totalCases: 3
+        passedCases: currentProblem.testCases.length,
+        totalCases: currentProblem.testCases.length
       });
     }, 1000);
   };
@@ -187,17 +271,23 @@ export function OJWorkspacePage() {
       setIsSubmitting(false);
       setExecutionResult({
         status: 'ACCEPTED',
-        output: '[0, 1]',
+        output: currentProblem.testCases[0]?.expected || '[0, 1]',
         runtime: '42 ms (faster than 88.4%)',
         memory: '13.9 MB (less than 92.1%)',
-        passedCases: 3,
-        totalCases: 3
+        passedCases: currentProblem.testCases.length,
+        totalCases: currentProblem.testCases.length
       });
     }, 1500);
   };
 
-  const currentTemplate = CODE_TEMPLATES[selectedLang];
-  const activeCase = caseInputs[selectedCaseIndex];
+  const currentTemplate =
+    currentProblem.starterCodes[selectedLang] || currentProblem.starterCodes['Python 3'];
+  const activeCase = caseInputs[selectedCaseIndex] || caseInputs[0] || {
+    id: 1,
+    nums: '',
+    target: '',
+    expected: ''
+  };
 
   return (
     <div className="w-full min-h-screen bg-slate-100 flex flex-col justify-start items-start font-['Inter'] antialiased">
@@ -402,9 +492,7 @@ export function OJWorkspacePage() {
             <Link to="/practice" className="text-slate-300 hover:text-white transition-colors">Practice</Link>
             <span className="text-slate-400 font-normal">&gt;</span>
             <span className="text-white font-semibold">
-              {problemSlug
-                ? problemSlug.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
-                : 'Add Two Numbers'}
+              {currentProblem.title}
             </span>
           </div>
         </div>
@@ -412,11 +500,11 @@ export function OJWorkspacePage() {
         <div className="flex items-center gap-3">
           <div className="px-2.5 py-1 bg-green-500/10 rounded border border-green-500/20 flex items-center gap-1.5">
             <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
-            <span className="text-green-400 text-xs font-semibold">Success Rate: 48.2%</span>
+            <span className="text-green-400 text-xs font-semibold">Success Rate: {currentProblem.successRate}</span>
           </div>
           <div className="px-2.5 py-1 bg-white/10 rounded border border-white/20 flex items-center gap-1.5">
             <Zap className="w-3.5 h-3.5 text-amber-300" />
-            <span className="text-white text-xs font-semibold">150 XP</span>
+            <span className="text-white text-xs font-semibold">{currentProblem.xp} XP</span>
           </div>
         </div>
       </div>
@@ -431,7 +519,7 @@ export function OJWorkspacePage() {
               onChange={(e) => handleLanguageChange(e.target.value)}
               className="px-4 py-1.5 bg-white rounded-md border border-neutral-300 text-zinc-900 text-sm font-medium appearance-none pr-8 cursor-pointer focus:outline-none focus:ring-2 focus:ring-indigo-900/20"
             >
-              {Object.keys(CODE_TEMPLATES).map((lang) => (
+              {Object.keys(currentProblem.starterCodes).map((lang) => (
                 <option key={lang} value={lang}>
                   {lang}
                 </option>
@@ -472,8 +560,8 @@ export function OJWorkspacePage() {
           </div>
 
           {/* Difficulty Tag */}
-          <div className="px-3 py-1 bg-yellow-50 rounded-xl border border-amber-400 flex items-center">
-            <span className="text-amber-800 text-xs font-bold">Medium</span>
+          <div className={`px-3 py-1 rounded-xl border flex items-center ${currentProblem.difficultyColor}`}>
+            <span className="text-xs font-bold">{currentProblem.difficulty}</span>
           </div>
         </div>
       </div>
@@ -507,56 +595,47 @@ export function OJWorkspacePage() {
               <>
                 {/* Title + Badge */}
                 <div className="self-stretch flex justify-between items-center gap-3">
-                  <h2 className="text-zinc-900 text-xl font-bold font-['Inter']">1. Two Sum</h2>
-                  <div className="px-2 py-0.5 bg-yellow-50 rounded-md border border-amber-300">
-                    <span className="text-amber-800 text-xs font-bold">Medium</span>
+                  <h2 className="text-zinc-900 text-xl font-bold font-['Inter']">{currentProblem.title}</h2>
+                  <div className={`px-2 py-0.5 rounded-md border ${currentProblem.difficultyColor}`}>
+                    <span className="text-xs font-bold">{currentProblem.difficulty}</span>
                   </div>
                 </div>
 
                 {/* Topic Tags */}
                 <div className="flex items-center gap-2">
-                  <span className="px-2.5 py-1 bg-slate-100 rounded-xl text-zinc-600 text-xs font-medium">
-                    Array
-                  </span>
-                  <span className="px-2.5 py-1 bg-slate-100 rounded-xl text-zinc-600 text-xs font-medium">
-                    Hash Table
-                  </span>
+                  {currentProblem.tags.map((t) => (
+                    <span key={t} className="px-2.5 py-1 bg-slate-100 rounded-xl text-zinc-600 text-xs font-medium">
+                      {t}
+                    </span>
+                  ))}
                 </div>
 
                 {/* Problem Description Text */}
                 <div className="text-neutral-600 text-sm font-normal leading-relaxed">
-                  Given an array of integers <code className="bg-slate-100 px-1 py-0.5 rounded text-zinc-800 text-xs font-mono">nums</code> and an integer <code className="bg-slate-100 px-1 py-0.5 rounded text-zinc-800 text-xs font-mono">target</code>, return indices of the two numbers such that they add up to target.
-                  <br /><br />
-                  You may assume that each input would have <strong>exactly one solution</strong>, and you may not use the same element twice.
+                  {currentProblem.description}
                 </div>
 
-                {/* Example 1 */}
-                <div className="self-stretch flex flex-col gap-2">
-                  <span className="text-zinc-900 text-sm font-bold">Example 1:</span>
-                  <div className="p-3 bg-slate-50 rounded-lg border border-neutral-200 flex flex-col gap-1 font-mono text-xs text-zinc-900">
-                    <div><span className="font-bold">Input: </span>nums = [2,7,11,15], target = 9</div>
-                    <div><span className="font-bold">Output: </span>[0,1]</div>
-                    <div><span className="font-bold">Explanation: </span>Because nums[0] + nums[1] == 9, we return [0, 1].</div>
+                {/* Examples */}
+                {currentProblem.examples.map((ex, idx) => (
+                  <div key={idx} className="self-stretch flex flex-col gap-2">
+                    <span className="text-zinc-900 text-sm font-bold">Example {idx + 1}:</span>
+                    <div className="p-3 bg-slate-50 rounded-lg border border-neutral-200 flex flex-col gap-1 font-mono text-xs text-zinc-900">
+                      <div><span className="font-bold">Input: </span>{ex.input}</div>
+                      <div><span className="font-bold">Output: </span>{ex.output}</div>
+                      {ex.explanation && (
+                        <div><span className="font-bold">Explanation: </span>{ex.explanation}</div>
+                      )}
+                    </div>
                   </div>
-                </div>
-
-                {/* Example 2 */}
-                <div className="self-stretch flex flex-col gap-2">
-                  <span className="text-zinc-900 text-sm font-bold">Example 2:</span>
-                  <div className="p-3 bg-slate-50 rounded-lg border border-neutral-200 flex flex-col gap-1 font-mono text-xs text-zinc-900">
-                    <div><span className="font-bold">Input: </span>nums = [3,2,4], target = 6</div>
-                    <div><span className="font-bold">Output: </span>[1,2]</div>
-                  </div>
-                </div>
+                ))}
 
                 {/* Constraints */}
                 <div className="self-stretch flex flex-col gap-2">
                   <span className="text-zinc-900 text-sm font-bold">Constraints:</span>
                   <div className="flex flex-col gap-1.5 text-neutral-600 text-xs font-mono">
-                    <div>• 2 &lt;= nums.length &lt;= 10^4</div>
-                    <div>• -10^9 &lt;= nums[i] &lt;= 10^9</div>
-                    <div>• -10^9 &lt;= target &lt;= 10^9</div>
-                    <div>• Only one valid answer exists.</div>
+                    {currentProblem.constraints.map((c, idx) => (
+                      <div key={idx}>• {c}</div>
+                    ))}
                   </div>
                 </div>
               </>
@@ -564,11 +643,11 @@ export function OJWorkspacePage() {
 
             {leftTab === 'Solutions' && (
               <div className="space-y-4 text-sm text-neutral-700">
-                <h3 className="font-bold text-base text-zinc-900">Approach 1: One-pass Hash Table (Optimal)</h3>
-                <p>We can iterate through the array and store each element in a hash map with its index. For each element, we check if <code className="bg-slate-100 px-1 py-0.5 rounded font-mono">target - nums[i]</code> already exists in the map.</p>
+                <h3 className="font-bold text-base text-zinc-900">Approach: Optimal Solution</h3>
+                <p>We can iterate through the input elements using an optimal data structure to achieve minimal time complexity.</p>
                 <div className="p-3 bg-slate-50 rounded-lg border border-neutral-200 font-mono text-xs">
                   <p><strong>Time Complexity:</strong> O(n)</p>
-                  <p><strong>Space Complexity:</strong> O(n)</p>
+                  <p><strong>Space Complexity:</strong> O(1) or O(n)</p>
                 </div>
               </div>
             )}
@@ -602,11 +681,14 @@ export function OJWorkspacePage() {
             <div className="h-10 px-4 bg-gray-950 border-b border-gray-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                <span className="text-white text-xs font-semibold">{currentTemplate.ext}</span>
+                <span className="text-white text-xs font-semibold">{currentTemplate?.ext || 'solution.py'}</span>
               </div>
               <button 
-                onClick={() => setCode(CODE_TEMPLATES[selectedLang].code)}
-                className="text-neutral-400 hover:text-white text-xs flex items-center gap-1 transition-colors"
+                onClick={() => {
+                  const starter = currentProblem.starterCodes[selectedLang] || currentProblem.starterCodes['Python 3'];
+                  if (starter) setCode(starter.code);
+                }}
+                className="text-neutral-400 hover:text-white text-xs flex items-center gap-1 transition-colors cursor-pointer"
                 title="Reset to initial template"
               >
                 <RotateCcw className="w-3 h-3" />
@@ -618,10 +700,11 @@ export function OJWorkspacePage() {
             <div className="flex-1 min-h-[320px]">
               <Editor
                 height="100%"
-                language={currentTemplate.monacoLang}
+                language={currentTemplate?.monacoLang || 'python'}
                 value={code}
                 theme="vs-dark"
                 onChange={(val) => setCode(val ?? '')}
+                loading={<div className="h-full flex items-center justify-center text-xs text-slate-400">Loading code editor...</div>}
                 options={{
                   fontSize: 13,
                   minimap: { enabled: false },
@@ -686,13 +769,13 @@ export function OJWorkspacePage() {
                   {/* Case inputs details */}
                   <div className="flex flex-col gap-2.5">
                     <div className="flex flex-col gap-1">
-                      <label className="text-neutral-500 text-xs font-semibold">nums =</label>
+                      <label className="text-neutral-500 text-xs font-semibold">Input (nums / l1) =</label>
                       <div className="p-2 bg-slate-100 rounded-md border border-neutral-300 text-zinc-900 text-xs font-mono">
                         {activeCase.nums}
                       </div>
                     </div>
                     <div className="flex flex-col gap-1">
-                      <label className="text-neutral-500 text-xs font-semibold">target =</label>
+                      <label className="text-neutral-500 text-xs font-semibold">Target / l2 =</label>
                       <div className="p-2 bg-slate-100 rounded-md border border-neutral-300 text-zinc-900 text-xs font-mono">
                         {activeCase.target}
                       </div>
@@ -701,52 +784,56 @@ export function OJWorkspacePage() {
                 </>
               )}
 
-              {/* TAB 2: Output & Verdict */}
+              {/* TAB 2: Output */}
               {bottomTab === 'Output' && (
-                <div className="space-y-3 font-mono text-xs">
-                  {isRunning || isSubmitting ? (
-                    <div className="flex items-center gap-2 text-indigo-900 py-4 animate-pulse">
-                      <Sparkles className="w-4 h-4" />
-                      <span>{isRunning ? 'Running test cases on judge worker...' : 'Submitting solution to evaluator...'}</span>
-                    </div>
-                  ) : executionResult ? (
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-5 h-5 text-green-600" />
-                        <span className="text-green-600 font-bold text-sm">Accepted</span>
-                        <span className="text-neutral-400 text-xs">({executionResult.passedCases}/{executionResult.totalCases} test cases passed)</span>
+                <div className="flex flex-col gap-3">
+                  {executionResult ? (
+                    <>
+                      <div className="flex items-center gap-3">
+                        <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-md flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>{executionResult.status}</span>
+                        </span>
+                        <span className="text-xs text-neutral-500">
+                          Runtime: <strong>{executionResult.runtime}</strong> | Memory: <strong>{executionResult.memory}</strong>
+                        </span>
                       </div>
-                      <div className="p-3 bg-slate-50 rounded-lg border border-neutral-200 space-y-1">
-                        <div><span className="text-neutral-500">Your Output: </span><span className="text-zinc-900 font-semibold">{executionResult.output}</span></div>
-                        <div><span className="text-neutral-500">Expected: </span><span className="text-zinc-900 font-semibold">[0, 1]</span></div>
-                        <div><span className="text-neutral-500">Runtime: </span><span className="text-zinc-900">{executionResult.runtime}</span></div>
-                        <div><span className="text-neutral-500">Memory: </span><span className="text-zinc-900">{executionResult.memory}</span></div>
+
+                      <div className="p-3 bg-slate-50 rounded-md border border-neutral-200 font-mono text-xs text-zinc-900 flex flex-col gap-1">
+                        <div><span className="font-semibold text-neutral-500">Passed: </span>{executionResult.passedCases} / {executionResult.totalCases} Test Cases</div>
+                        <div><span className="font-semibold text-neutral-500">Your Output: </span>{executionResult.output}</div>
+                        <div><span className="font-semibold text-neutral-500">Expected: </span>{activeCase.expected}</div>
                       </div>
-                    </div>
+                    </>
                   ) : (
-                    <div className="text-neutral-400 py-4 italic">
-                      Click "Run Code" or "Submit Code" to see execution results.
+                    <div className="flex flex-col items-center justify-center h-40 text-neutral-400 text-xs">
+                      <Terminal className="w-8 h-8 text-neutral-300 mb-2" />
+                      <span>Click "Run Code" or "Submit Code" to test your solution</span>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* TAB 3: Console / Custom Input */}
+              {/* TAB 3: Console */}
               {bottomTab === 'Console' && (
-                <div className="flex-1 flex flex-col gap-2">
-                  <label className="text-neutral-500 text-xs font-semibold">Custom Stdin:</label>
+                <div className="flex flex-col gap-2 h-full">
+                  <span className="text-xs font-semibold text-neutral-500">Custom Standard Input (stdin):</span>
                   <textarea
                     value={customConsoleInput}
                     onChange={(e) => setCustomConsoleInput(e.target.value)}
-                    placeholder="Enter custom input..."
-                    className="flex-1 w-full p-2 bg-slate-50 rounded-md border border-neutral-300 font-mono text-xs text-zinc-900 resize-none focus:outline-none focus:ring-1 focus:ring-indigo-900"
+                    className="flex-1 w-full p-2 bg-slate-900 text-green-400 font-mono text-xs rounded-md border border-gray-700 resize-none focus:outline-none"
+                    placeholder="Enter custom inputs here..."
                   />
                 </div>
               )}
+
             </div>
           </div>
+
         </div>
+
       </div>
+
     </div>
   );
 }
