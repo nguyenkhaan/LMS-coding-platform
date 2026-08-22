@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   CheckCircle2,
@@ -13,8 +13,12 @@ import {
   Sparkles,
   Layers,
   Terminal,
-  HelpCircle
+  HelpCircle,
+  MessageSquare,
+  Clock,
+  ThumbsUp
 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface LessonItem {
   id: number;
@@ -25,12 +29,14 @@ interface LessonItem {
   isActive: boolean;
 }
 
-interface ChatMessage {
+interface CommentMessage {
   id: number;
   sender: string;
   role: 'Instructor' | 'Student';
   avatarInitials: string;
   text: string;
+  timeAgo: string;
+  likes: number;
 }
 
 const INITIAL_LESSONS: LessonItem[] = [
@@ -41,27 +47,33 @@ const INITIAL_LESSONS: LessonItem[] = [
   { id: 5, title: 'Lesson review & quiz', type: 'Quiz', path: '/quiz/quiz-control-flow-01/preview', isCompleted: false, isActive: false }
 ];
 
-const INITIAL_MESSAGES: ChatMessage[] = [
+const INITIAL_COMMENTS: CommentMessage[] = [
   {
     id: 1,
     sender: 'Thu Ha',
     role: 'Instructor',
     avatarInitials: 'TH',
-    text: 'Reminder: please submit problem set B before Friday midnight.'
+    text: 'Please review the opposing pointers template before tackling the practice problem set.',
+    timeAgo: '2 hours ago',
+    likes: 5
   },
   {
     id: 2,
     sender: 'Bao Anh',
     role: 'Student',
     avatarInitials: 'BA',
-    text: 'Is the sliding window template available on the resources tab?'
+    text: 'Is the sliding window template available on the resources tab?',
+    timeAgo: '1 hour ago',
+    likes: 2
   },
   {
     id: 3,
     sender: 'Thu Ha',
     role: 'Instructor',
     avatarInitials: 'TH',
-    text: 'Yes! Navigate to Resources -> templates.py to download it.'
+    text: 'Yes! Navigate to Resources -> templates.py to download it.',
+    timeAgo: '30 mins ago',
+    likes: 4
   }
 ];
 
@@ -69,7 +81,7 @@ export function ClassroomPage() {
   const navigate = useNavigate();
   const [lessons, setLessons] = useState<LessonItem[]>(INITIAL_LESSONS);
   const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(false);
-  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_MESSAGES);
+  const [comments, setComments] = useState<CommentMessage[]>(INITIAL_COMMENTS);
   const [inputMsg, setInputMsg] = useState<string>('');
   const [courseSearch, setCourseSearch] = useState<string>('');
 
@@ -80,32 +92,40 @@ export function ClassroomPage() {
     setLessons((prev) =>
       prev.map((l) => (l.id === activeLesson.id ? { ...l, isCompleted: !isLessonCompleted } : l))
     );
+    toast.success(isLessonCompleted ? 'Marked as uncompleted' : 'Lesson marked as completed!');
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendComment = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMsg.trim()) return;
 
-    const newMsg: ChatMessage = {
+    const newComment: CommentMessage = {
       id: Date.now(),
       sender: 'Minh Tran',
       role: 'Student',
       avatarInitials: 'MT',
-      text: inputMsg.trim()
+      text: inputMsg.trim(),
+      timeAgo: 'Just now',
+      likes: 0
     };
 
-    setMessages((prev) => [...prev, newMsg]);
+    setComments((prev) => [...prev, newComment]);
     setInputMsg('');
+    toast.success('Comment posted successfully!');
   };
 
   const handleSelectLesson = (lesson: LessonItem) => {
-    if (lesson.path && lesson.path !== '/learn/dsa-module-2') {
-      navigate(lesson.path);
-    } else {
-      setLessons((prev) =>
-        prev.map((l) => ({ ...l, isActive: l.id === lesson.id }))
-      );
+    if (lesson.type === 'Problem') {
+      navigate('/classroom/lesson/problem-preview');
+      return;
     }
+    if (lesson.type === 'Quiz') {
+      navigate('/quiz/quiz-control-flow-01/preview');
+      return;
+    }
+    setLessons((prev) =>
+      prev.map((l) => ({ ...l, isActive: l.id === lesson.id }))
+    );
   };
 
   const completedCount = lessons.filter((l) => l.isCompleted).length;
@@ -115,7 +135,7 @@ export function ClassroomPage() {
     <div className="w-full min-h-screen bg-gray-50 flex flex-col justify-start items-start font-['Inter'] antialiased">
       
       {/* 1. HERO BANNER */}
-      <div className="self-stretch px-6 lg:px-20 py-14 bg-gradient-to-r from-red-100 via-sky-100 to-blue-100 flex flex-col justify-center items-center gap-3 text-center border-b border-neutral-200/60">
+      <div className="self-stretch px-6 lg:px-20 py-14 bg-gradient-to-r from-red-100 via-sky-100 to-blue-100 flex flex-col justify-center items-center gap-3 text-center border-b border-neutral-200/60 font-['Inter']">
         <h1 className="text-zinc-900 text-4xl font-extrabold tracking-tight">Workspace</h1>
         <div className="opacity-80 text-zinc-700 text-sm font-medium flex items-center gap-2">
           <Link to="/dashboard" className="hover:underline">Dashboard</Link>
@@ -127,7 +147,7 @@ export function ClassroomPage() {
       </div>
 
       {/* 2. SUBHEADER: SEARCH & STUDENT PROFILE BAR */}
-      <div className="self-stretch bg-white/90 border-b border-neutral-200 backdrop-blur-xs px-6 lg:px-20 py-3.5 flex justify-between items-center shadow-xs">
+      <div className="self-stretch bg-white/90 border-b border-neutral-200 backdrop-blur-xs px-6 lg:px-20 py-3.5 flex justify-between items-center shadow-xs font-['Inter']">
         <div className="max-w-[1608px] w-full mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           
           {/* Search bar */}
@@ -144,7 +164,7 @@ export function ClassroomPage() {
 
           {/* Student Profile Info */}
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-900 text-xs font-bold font-['Plus_Jakarta_Sans']">
+            <div className="w-9 h-9 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-900 text-xs font-bold font-['Inter']">
               MT
             </div>
             <div className="flex flex-col text-left">
@@ -156,7 +176,7 @@ export function ClassroomPage() {
       </div>
 
       {/* 3. LESSON TITLE & ACTION BAR */}
-      <div className="max-w-[1608px] w-full mx-auto px-6 py-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="max-w-[1608px] w-full mx-auto px-6 py-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 font-['Inter']">
         <div className="flex flex-col gap-1">
           <h2 className="text-zinc-900 text-2xl font-bold tracking-tight">Data Structures &amp; Algorithms</h2>
           <p className="text-neutral-500 text-sm font-normal">Module 2 · Lesson 3 — Two-pointer patterns</p>
@@ -165,7 +185,7 @@ export function ClassroomPage() {
         {/* Complete Lesson Button */}
         <button
           onClick={handleToggleComplete}
-          className={`px-4 py-2 rounded-[10px] border text-sm font-medium transition-colors flex items-center gap-2 shadow-2xs cursor-pointer ${
+          className={`px-4 py-2 rounded-[10px] border text-sm font-medium transition-colors flex items-center gap-2 shadow-2xs cursor-pointer font-['Inter'] ${
             isLessonCompleted
               ? 'bg-green-50 border-green-500 text-green-700 font-semibold'
               : 'bg-white border-neutral-300 text-zinc-800 hover:bg-slate-50'
@@ -177,43 +197,30 @@ export function ClassroomPage() {
       </div>
 
       {/* 4. MAIN CONTENT CONTAINER (2-COLUMN) */}
-      <div className="max-w-[1608px] w-full mx-auto px-6 pb-16 flex flex-col lg:flex-row gap-8 items-start">
+      <div className="max-w-[1608px] w-full mx-auto px-6 pb-16 flex flex-col lg:flex-row gap-8 items-start font-['Inter']">
         
-        {/* LEFT COLUMN: Video Player + Markdown Course Article */}
-        <article className="flex-1 w-full bg-white rounded-2xl border border-neutral-200 p-6 lg:p-8 shadow-sm space-y-8">
+        {/* LEFT COLUMN: Markdown Course Reading Article (No Video) */}
+        <article className="flex-1 w-full bg-white rounded-2xl border border-neutral-200 p-6 lg:p-8 shadow-sm space-y-8 font-['Inter']">
           
-          {/* VIDEO / MEDIA PLAYER */}
-          <div className="w-full aspect-video bg-zinc-950 rounded-2xl overflow-hidden shadow-md flex flex-col justify-between p-4 relative group">
-            {/* Header badges inside video */}
-            <div className="flex justify-between items-center z-10">
-              <span className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-medium border border-white/10 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                Lesson 3 of 5
-              </span>
-              <span className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-full text-white text-xs font-mono border border-white/10">
-                12:35 / 18:40
-              </span>
+          {/* Reading Lesson Header Banner */}
+          <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl bg-indigo-900 text-white flex items-center justify-center shrink-0">
+                <BookOpen className="w-6 h-6" />
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs font-bold text-indigo-900 uppercase tracking-wider">
+                  Reading Lesson · Theory &amp; Concepts
+                </span>
+                <h3 className="text-lg font-bold text-zinc-900">
+                  Two-Pointer Patterns &amp; Array Traversal
+                </h3>
+              </div>
             </div>
 
-            {/* Centered Play Button */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <button
-                onClick={() => toast.info('Playing lesson lecture video...')}
-                className="w-16 h-16 rounded-full bg-rose-500/90 hover:bg-rose-600 text-white flex items-center justify-center shadow-lg transition-transform hover:scale-105 cursor-pointer"
-              >
-                <div className="w-0 h-0 border-y-8 border-y-transparent border-l-12 border-l-white ml-1" />
-              </button>
-            </div>
-
-            {/* Video Footer Controls Placeholder */}
-            <div className="z-10 flex flex-col gap-2">
-              <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden">
-                <div className="h-full bg-rose-500 rounded-full" style={{ width: '68%' }} />
-              </div>
-              <div className="flex justify-between items-center text-white/80 text-xs">
-                <span>Two-pointer Algorithm Execution Walkthrough</span>
-                <span>HD 1080p</span>
-              </div>
+            <div className="flex items-center gap-2 text-xs text-neutral-500 font-mono">
+              <Clock className="w-3.5 h-3.5" />
+              <span>15 min read</span>
             </div>
           </div>
 
@@ -228,6 +235,9 @@ export function ClassroomPage() {
           {/* Section 2: Opposing Pointers Pattern */}
           <section className="space-y-3">
             <h3 className="text-zinc-900 text-xl font-bold">2. Opposing Direction Strategy</h3>
+            <p className="text-neutral-600 text-sm leading-relaxed">
+              In sorted arrays, two pointers approach each other from opposing ends. This allows us to make monotonic decisions on whether to increment or decrement based on comparing the current element evaluation against the target metric:
+            </p>
             <div className="p-4 bg-slate-50 rounded-xl border border-neutral-200 text-sm text-neutral-700 space-y-2">
               <p className="font-semibold text-zinc-900">Standard Initialization:</p>
               <ul className="list-disc list-inside space-y-1 font-mono text-xs text-indigo-950">
@@ -238,10 +248,39 @@ export function ClassroomPage() {
             </div>
           </section>
 
+          {/* Section 3: Step-by-Step Decision Logic */}
+          <section className="space-y-3">
+            <h3 className="text-zinc-900 text-xl font-bold">3. Step-by-Step Traversal Logic</h3>
+            <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 text-sm text-neutral-700 space-y-2">
+              <ul className="list-disc list-inside space-y-2 text-xs text-neutral-800">
+                <li className="pl-4">If <code className="font-mono text-indigo-900 font-bold">current_sum == target</code>: Match found! Return the indices immediately.</li>
+                <li className="pl-4">If <code className="font-mono text-indigo-900 font-bold">current_sum &lt; target</code>: The sum is too small; increment <code className="font-mono text-indigo-900 font-bold">left += 1</code> to inspect a larger number.</li>
+                <li className="pl-4">If <code className="font-mono text-indigo-900 font-bold">current_sum &gt; target</code>: The sum is too large; decrement <code className="font-mono text-indigo-900 font-bold">right -= 1</code> to inspect a smaller number.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* Section 4: Complexity Analysis */}
+          <section className="space-y-2 pt-2 border-t border-neutral-100">
+            <h3 className="text-zinc-900 text-lg font-bold">4. Complexity &amp; Resource Evaluation</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div className="p-3.5 bg-emerald-50/60 rounded-xl border border-emerald-200">
+                <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide">Time Complexity</span>
+                <p className="text-emerald-950 font-bold text-lg font-mono mt-1">O(N)</p>
+                <p className="text-neutral-600 text-xs mt-0.5">Each element in the array is evaluated at most once as pointers converge.</p>
+              </div>
+              <div className="p-3.5 bg-sky-50/60 rounded-xl border border-sky-200">
+                <span className="text-xs font-bold text-sky-800 uppercase tracking-wide">Space Complexity</span>
+                <p className="text-sky-950 font-bold text-lg font-mono mt-1">O(1)</p>
+                <p className="text-neutral-600 text-xs mt-0.5">Operates in-place utilizing only two constant auxiliary pointer variables.</p>
+              </div>
+            </div>
+          </section>
+
           {/* Navigation to Practice Problem */}
           <div className="pt-6 border-t border-neutral-200 flex flex-col sm:flex-row justify-between items-center gap-4">
             <button
-              onClick={() => toast.info('Navigating to previous lesson.')}
+              onClick={() => toast.info('Already at the first theoretical topic of this module.')}
               className="text-neutral-500 hover:text-zinc-900 text-sm font-medium flex items-center gap-2 cursor-pointer transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -259,13 +298,13 @@ export function ClassroomPage() {
 
         </article>
 
-        {/* RIGHT COLUMN: Course Content & Cohort Chat (320px width) */}
-        <aside className="w-full lg:w-80 flex flex-col gap-6 shrink-0">
+        {/* RIGHT COLUMN: Course Content & Comments (320px width) */}
+        <aside className="w-full lg:w-80 flex flex-col gap-6 shrink-0 font-['Inter']">
           
           {/* Card 1: Course Content */}
-          <div className="bg-white rounded-2xl border border-neutral-200 p-5 shadow-sm flex flex-col gap-4">
+          <div className="bg-white rounded-2xl border border-neutral-200 p-5 shadow-sm flex flex-col gap-4 font-['Inter']">
             <div className="flex justify-between items-center">
-              <span className="text-zinc-900 text-base font-semibold font-['Plus_Jakarta_Sans']">Course content</span>
+              <span className="text-zinc-900 text-base font-semibold font-['Inter']">Course content</span>
               <span className="px-2.5 py-0.5 bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs font-bold rounded-[10px]">
                 {progressPercent}%
               </span>
@@ -279,8 +318,8 @@ export function ClassroomPage() {
               />
             </div>
 
-            {/* Lessons List */}
-            <div className="flex flex-col gap-2 pt-1">
+            {/* Lessons List with Direct Link Support */}
+            <div className="flex flex-col gap-2 pt-1 font-['Inter']">
               {lessons.map((lesson) => {
                 const isSelected = lesson.isActive;
                 return (
@@ -326,14 +365,17 @@ export function ClassroomPage() {
             </div>
           </div>
 
-          {/* Card 2: Cohort Chat */}
-          <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm flex flex-col overflow-hidden h-[420px]">
-            <div className="px-5 py-4 border-b border-neutral-200 flex items-center gap-2 bg-slate-50/50">
-              <span className="text-zinc-900 text-base font-semibold font-['Plus_Jakarta_Sans']">Cohort chat</span>
+          {/* Card 2: Comments (Replaces Cohort Chat, Inter font) */}
+          <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm flex flex-col overflow-hidden h-[420px] font-['Inter']">
+            <div className="px-5 py-4 border-b border-neutral-200 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="w-4 h-4 text-indigo-900" />
+                <span className="text-zinc-900 text-base font-semibold font-['Inter']">Comments ({comments.length})</span>
+              </div>
             </div>
 
-            <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 text-xs">
-              {messages.map((msg) => {
+            <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-4 text-xs font-['Inter']">
+              {comments.map((msg) => {
                 const isInstructor = msg.role === 'Instructor';
                 return (
                   <div key={msg.id} className="flex items-start gap-2.5">
@@ -342,10 +384,13 @@ export function ClassroomPage() {
                     }`}>
                       {msg.avatarInitials}
                     </div>
-                    <div className="flex flex-col gap-0.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-semibold text-zinc-900">{msg.sender}</span>
-                        <span className="text-[10px] text-neutral-400">· {msg.role}</span>
+                    <div className="flex flex-col gap-0.5 flex-1">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-semibold text-zinc-900">{msg.sender}</span>
+                          <span className="text-[10px] text-neutral-400">· {msg.role}</span>
+                        </div>
+                        <span className="text-[10px] text-neutral-400 font-mono">{msg.timeAgo}</span>
                       </div>
                       <div className="p-2.5 bg-slate-50 border border-neutral-100 rounded-xl rounded-tl-xs text-neutral-700 text-xs leading-relaxed">
                         {msg.text}
@@ -356,18 +401,18 @@ export function ClassroomPage() {
               })}
             </div>
 
-            <form onSubmit={handleSendMessage} className="p-3 border-t border-neutral-200 flex items-center gap-2 bg-white">
+            <form onSubmit={handleSendComment} className="p-3 border-t border-neutral-200 flex items-center gap-2 bg-white font-['Inter']">
               <input
                 type="text"
                 value={inputMsg}
                 onChange={(e) => setInputMsg(e.target.value)}
-                placeholder="Message your cohort…"
+                placeholder="Write a comment or question…"
                 className="flex-1 px-3 py-2 bg-slate-50 rounded-[10px] border border-neutral-200 text-xs text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900"
               />
               <button
                 type="submit"
                 disabled={!inputMsg.trim()}
-                className="w-8 h-8 bg-rose-500 hover:bg-rose-600 disabled:opacity-40 text-white rounded-[10px] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                className="w-8 h-8 bg-indigo-900 hover:bg-indigo-950 disabled:opacity-40 text-white rounded-[10px] flex items-center justify-center transition-colors cursor-pointer shrink-0"
               >
                 <Send className="w-3.5 h-3.5" />
               </button>
