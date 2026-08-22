@@ -4,7 +4,8 @@
 	--font-sans: 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
 	--font-mono: 'JetBrains Mono', monospace;
 
-	--color-brand-indigo: hsl(235, 75%, 55%);
+	--color-brand-indigo: hsl(249, 48%, 33%);
+	--color-brand-coral: hsl(349, 100%, 64%);
 	--color-brand-purple: hsl(275, 90%, 60%);
 	--color-brand-cyan: hsl(190, 95%, 50%);
 

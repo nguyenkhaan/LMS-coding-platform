@@ -41,7 +41,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role }) => {
 	];
 
 	const studentNav = [
-		{ to: '/student/dashboard', label: 'Khóa học của tôi', icon: BookOpen },
+		{ to: '/student/courses', label: 'Khóa học của tôi', icon: BookOpen },
 		{ to: '/student/favorites', label: 'Yêu thích', icon: LayoutDashboard },
 		{ to: '/student/history', label: 'Lịch sử nộp bài', icon: Code2 }
 	];
