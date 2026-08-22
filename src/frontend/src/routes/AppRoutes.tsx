@@ -143,16 +143,13 @@ export const AppRoutes: React.FC = () => {
 				{/* Payment */}
 				<Route path="/checkout/:courseId" element={<CheckoutPage />} />
 				<Route path="/payment-result" element={<PaymentResultPage />} />
-
-				{/* Quizzes */}
-				<Route path="/quiz/:quizId/attempt" element={<QuizAttemptPage />} />
-				<Route path="/quiz/:quizId/preview" element={<QuizPreviewPage />} />
-
 				<Route path="/unauthorized" element={<UnauthorizedPage />} />
 			</Route>
 
-			{/* Fullscreen OJ Workspace (OJ02 Standalone) */}
+			{/* Standalone Workspaces (OJ02 & Quiz Runners) */}
 			<Route path="/practice/:problemSlug" element={<OJWorkspacePage />} />
+			<Route path="/quiz/:quizId/attempt" element={<QuizAttemptPage />} />
+			<Route path="/quiz/:quizId/preview" element={<QuizPreviewPage />} />
 
 			{/* Auth Layout */}
 			<Route element={<AuthLayout />}>
