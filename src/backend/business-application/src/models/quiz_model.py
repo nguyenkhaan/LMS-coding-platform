@@ -7,9 +7,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from src.db import Base
 
 if TYPE_CHECKING:
+    from src.models.quiz_attempt_model import QuizAttemptModel
     from src.models.quiz_enrollment_model import QuizEnrollmentModel
     from src.models.quiz_question_model import QuizQuestionModel
-    from src.models.quiz_submission_model import QuizSubmissionModel
 
 
 class QuizModel(Base):
@@ -25,4 +25,6 @@ class QuizModel(Base):
 
     questions: Mapped[list["QuizQuestionModel"]] = relationship(back_populates="quiz")
     enrollments: Mapped[list["QuizEnrollmentModel"]] = relationship(back_populates="quiz")
-    submissions: Mapped[list["QuizSubmissionModel"]] = relationship(back_populates="quiz")
+    attempts_history: Mapped[list["QuizAttemptModel"]] = relationship(
+        back_populates="quiz"
+    )

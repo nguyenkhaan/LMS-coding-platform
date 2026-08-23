@@ -37,6 +37,16 @@ enum Role {
   STUDENT
 }
 
+enum QuizAttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  ABANDONED
+}
+
+enum Currency {
+  USD
+}
+
 enum InterviewLevel {
   INTERN
   FRESHER
@@ -106,6 +116,7 @@ enum AuditAction {
   PAYMENT_WEBHOOK
   PAYOUT_REVIEW
   ACCOUNT_STATUS_UPDATE
+  ROLE_UPDATE
 }
 
 // User
@@ -128,6 +139,20 @@ Table user_role {
   user_id integer // NOT NULL; FK user.id
   role Role // NOT NULL
   // UNIQUE(user_id, role)
+}
+
+// External identity linked to a local user account.
+// Provider credentials/tokens are transient and are never stored in this table.
+Table user_identity {
+  id integer PK
+  user_id integer // NOT NULL; FK user.id
+  provider string // NOT NULL; normalized provider name, for example GOOGLE.
+  provider_id string // NOT NULL; immutable subject identifier verified with the provider.
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+  // UNIQUE(provider, provider_id)
+  // UNIQUE(user_id, provider)
+  // INDEX(user_id)
 }
 
 // Student Profile
@@ -264,6 +289,25 @@ Table lesson_content_progress {
   // UNIQUE(enrollment_id, lesson_content_id)
 }
 
+// Lesson Content Comment
+// A reply is a comment whose parent_id points to another comment in the same LessonContent.
+Table comment {
+  id integer PK
+  lesson_content_id integer // NOT NULL; FK lesson_content.id
+  user_id integer // NOT NULL; FK user.id
+  parent_id integer // FK comment.id ON DELETE CASCADE; default: null
+  content string // NOT NULL
+  created_at datetime // NOT NULL; default: lambda
+  updated_at datetime // NOT NULL; default: lambda
+  deleted_at datetime // default: null; soft-delete preserves reply threads.
+  // INDEX(lesson_content_id, created_at)
+  // INDEX(parent_id)
+  // INDEX(user_id)
+  // Service validates that parent_id belongs to the same lesson_content_id.
+  // Deleting a root comment hard-deletes its entire reply tree through ON DELETE CASCADE.
+  // A non-root comment with replies is soft-deleted; its API content becomes a tombstone projection.
+}
+
 // Reading Content
 Table reading_content {
   id integer PK
@@ -311,17 +355,30 @@ Table quiz_options {
   is_correct boolean // NOT NULL; default: False
 }
 
-// Immutable history of final quiz submissions. Closing/exiting a quiz without
-// submission creates no record; the learner restarts from the beginning.
-Table quiz_submission {
+// One row is created whenever a Student starts a Quiz.
+// Answers are not persisted here, so an unfinished attempt cannot be resumed.
+Table quiz_attempt {
   id integer PK
   quiz_id integer // NOT NULL; FK quizzes.id
   student_id integer // NOT NULL; FK user.id
   attempt_no integer // NOT NULL
+  status QuizAttemptStatus // NOT NULL; default: IN_PROGRESS
+  started_at datetime // NOT NULL; default: lambda
+  submitted_at datetime // default: null
+  // UNIQUE(quiz_id, student_id, attempt_no)
+  // INDEX(student_id, quiz_id, status)
+  // Attempt-limit validation and attempt_no allocation must be transactionally serialized by the service.
+}
+
+// Immutable terminal result of a submitted Quiz attempt. When the service marks
+// an unfinished attempt ABANDONED, it creates no submission row.
+Table quiz_submission {
+  id integer PK
+  quiz_attempt_id integer // NOT NULL; UNIQUE; FK quiz_attempt.id
   score decimal // NOT NULL; default: 0
   answers string // Serialized final answer snapshot; never exposed before submission.
   submitted_at datetime // NOT NULL; default: lambda
-  // UNIQUE(quiz_id, student_id, attempt_no)
+  // UNIQUE(quiz_attempt_id)
 }
 
 // Problem

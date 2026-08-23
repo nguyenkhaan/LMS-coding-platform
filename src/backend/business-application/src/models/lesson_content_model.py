@@ -8,6 +8,7 @@ from src.db import Base
 from src.models.base_model import LessonContentType, utc_now
 
 if TYPE_CHECKING:
+    from src.models.comment_model import CommentModel
     from src.models.lesson_content_progress_model import LessonContentProgressModel
     from src.models.lesson_model import LessonModel
 
@@ -36,3 +37,6 @@ class LessonContentModel(Base):
 
     lesson: Mapped["LessonModel"] = relationship(back_populates="contents")
     progresses: Mapped[list["LessonContentProgressModel"]] = relationship(back_populates="lesson_content")
+    comments: Mapped[list["CommentModel"]] = relationship(
+        back_populates="lesson_content"
+    )

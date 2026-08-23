@@ -57,6 +57,12 @@ class Role(str, Enum):
     STUDENT = "STUDENT"
 
 
+class QuizAttemptStatus(str, Enum):
+    IN_PROGRESS = "IN_PROGRESS"
+    SUBMITTED = "SUBMITTED"
+    ABANDONED = "ABANDONED"
+
+
 class InterviewLevel(str, Enum):
     INTERN = "INTERN"
     FRESHER = "FRESHER"
@@ -126,6 +132,7 @@ class AuditAction(str, Enum):
     PAYMENT_WEBHOOK = "PAYMENT_WEBHOOK"
     PAYOUT_REVIEW = "PAYOUT_REVIEW"
     ACCOUNT_STATUS_UPDATE = "ACCOUNT_STATUS_UPDATE"
+    ROLE_UPDATE = "ROLE_UPDATE"
 
 
 class Currency(str, Enum):

@@ -36,9 +36,11 @@ from src.models.base_model import (
     PayoutStatus,
     ProblemDifficulty,
     ProblemSubmissionStatus,
+    QuizAttemptStatus,
     Role,
     TeacherRegisterStatus,
 )
+from src.models.comment_model import CommentModel
 from src.models.course_favorite_model import CourseFavoriteModel
 from src.models.course_moderation_review_model import CourseModerationReviewModel
 from src.models.course_model import CourseModel
@@ -57,6 +59,7 @@ from src.models.problem_model import ProblemModel
 from src.models.problem_tag_mapping_model import ProblemTagMappingModel
 from src.models.problem_tag_model import ProblemTagModel
 from src.models.quiz_enrollment_model import QuizEnrollmentModel
+from src.models.quiz_attempt_model import QuizAttemptModel
 from src.models.quiz_model import QuizModel
 from src.models.quiz_option_model import QuizOptionModel
 from src.models.quiz_question_model import QuizQuestionModel
@@ -74,6 +77,7 @@ from src.models.teacher_register_model import TeacherRegisterModel
 from src.models.testcase_model import TestcaseModel
 from src.models.transaction_model import TransactionModel
 from src.models.user_model import UserModel
+from src.models.user_identity_model import UserIdentityModel
 from src.models.wallet_model import PayoutRequestModel, WalletLedgerModel, WalletModel
 
 
@@ -169,6 +173,15 @@ async def seed_users(session: Any, seed_time: datetime) -> dict[str, UserModel]:
         ]
     )
     await session.flush()
+    session.add(
+        UserIdentityModel(
+            user_id=student.id,
+            provider="GOOGLE",
+            provider_id="google-seed-student-001",
+            created_at=seed_time,
+            updated_at=seed_time,
+        )
+    )
     return users
 
 
@@ -412,10 +425,46 @@ async def seed_learning_and_commerce(
             LessonContentProgressModel(enrollment_id=free_enrollment.id, lesson_content_id=graph["contents"]["problem"].id, completed=True, completed_at=seed_time - timedelta(days=3)),
             LessonContentProgressModel(enrollment_id=paid_enrollment.id, lesson_content_id=graph["contents"]["paid"].id, completed=False),
             QuizEnrollmentModel(quiz_id=quiz.id, student_id=student.id, enrolled_at=seed_time - timedelta(days=4)),
-            QuizSubmissionModel(quiz_id=quiz.id, student_id=student.id, attempt_no=1, score=Decimal("100"), answers='{"variables": "no_constant_keyword", "list_length": "4"}', submitted_at=seed_time - timedelta(days=4)),
             CourseFavoriteModel(student_id=student.id, course_id=graph["free_course"].id, created_at=seed_time - timedelta(days=5)),
             CourseReviewModel(course_id=graph["free_course"].id, student_id=student.id, rating=Decimal("5"), content="Clear explanations and useful practice.", created_at=seed_time - timedelta(days=2), updated_at=seed_time - timedelta(days=1)),
         ]
+    )
+    quiz_attempt = QuizAttemptModel(
+        quiz_id=quiz.id,
+        student_id=student.id,
+        attempt_no=1,
+        status=QuizAttemptStatus.SUBMITTED,
+        started_at=seed_time - timedelta(days=4, minutes=20),
+        submitted_at=seed_time - timedelta(days=4),
+    )
+    session.add(quiz_attempt)
+    await session.flush()
+    session.add(
+        QuizSubmissionModel(
+            quiz_attempt_id=quiz_attempt.id,
+            score=Decimal("100"),
+            answers='{"variables": "no_constant_keyword", "list_length": "4"}',
+            submitted_at=seed_time - timedelta(days=4),
+        )
+    )
+    root_comment = CommentModel(
+        lesson_content_id=graph["contents"]["intro"].id,
+        user_id=student.id,
+        content="Could you explain why Python is a good first language?",
+        created_at=seed_time - timedelta(days=4),
+        updated_at=seed_time - timedelta(days=4),
+    )
+    session.add(root_comment)
+    await session.flush()
+    session.add(
+        CommentModel(
+            lesson_content_id=graph["contents"]["intro"].id,
+            user_id=teacher.id,
+            parent_id=root_comment.id,
+            content="Its readable syntax lets beginners focus on problem solving.",
+            created_at=seed_time - timedelta(days=3),
+            updated_at=seed_time - timedelta(days=3),
+        )
     )
     transaction = TransactionModel(
         student_id=student.id, course_id=graph["paid_course"].id, amount=Decimal("29.90"), status=PaymentStatus.COMPLETED,

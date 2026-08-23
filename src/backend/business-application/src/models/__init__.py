@@ -1,4 +1,5 @@
 from src.models.audit_log_model import AuditLogModel
+from src.models.comment_model import CommentModel
 from src.models.course_favorite_model import CourseFavoriteModel
 from src.models.course_moderation_review_model import CourseModerationReviewModel
 from src.models.course_model import CourseModel
@@ -17,6 +18,7 @@ from src.models.problem_model import ProblemModel
 from src.models.problem_tag_mapping_model import ProblemTagMappingModel
 from src.models.problem_tag_model import ProblemTagModel
 from src.models.quiz_enrollment_model import QuizEnrollmentModel
+from src.models.quiz_attempt_model import QuizAttemptModel
 from src.models.quiz_model import QuizModel
 from src.models.quiz_option_model import QuizOptionModel
 from src.models.quiz_question_model import QuizQuestionModel
@@ -34,16 +36,17 @@ from src.models.teacher_register_model import TeacherRegisterModel
 from src.models.testcase_model import TestcaseModel
 from src.models.transaction_model import TransactionModel
 from src.models.user_model import UserModel
+from src.models.user_identity_model import UserIdentityModel
 from src.models.wallet_model import PayoutRequestModel, WalletLedgerModel, WalletModel
 
 __all__ = [
-    "AuditLogModel", "CourseFavoriteModel", "CourseModerationReviewModel", "CourseModel",
+    "AuditLogModel", "CommentModel", "CourseFavoriteModel", "CourseModerationReviewModel", "CourseModel",
     "CourseReviewModel", "EnrollmentModel", "InterviewMessageModel", "InterviewReportModel",
     "InterviewSessionModel", "LanguageModel", "LessonContentModel", "LessonContentProgressModel",
     "LessonModel", "NotificationModel", "PayoutRequestModel", "ProblemConfigModel", "ProblemModel",
-    "ProblemTagMappingModel", "ProblemTagModel", "QuizEnrollmentModel", "QuizModel", "QuizOptionModel",
+    "ProblemTagMappingModel", "ProblemTagModel", "QuizAttemptModel", "QuizEnrollmentModel", "QuizModel", "QuizOptionModel",
     "QuizQuestionModel", "QuizSubmissionModel", "ReadingContentModel", "RoleModel", "SectionModel",
     "StudentDailyActivityModel", "StudentProfileModel", "SubmissionModel", "SubmissionResultDetailModel",
     "TeacherProfileModel", "TeacherRegisterHistoryModel", "TeacherRegisterModel", "TestcaseModel",
-    "TransactionModel", "UserModel", "UserRoleModel", "WalletLedgerModel", "WalletModel",
+    "TransactionModel", "UserIdentityModel", "UserModel", "UserRoleModel", "WalletLedgerModel", "WalletModel",
 ]
