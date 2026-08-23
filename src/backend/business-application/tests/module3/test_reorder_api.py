@@ -6,16 +6,16 @@ from src.middlewares.auth_middleware import get_current_user
 client = TestClient(app)
 
 def override_get_current_user_teacher():
-    return {"sub": "1", "role": "teacher"}
+    return {"sub": "1", "roles": ["TEACHER"]}
 
 def override_get_current_user_student():
-    return {"sub": "2", "role": "student"}
+    return {"sub": "2", "roles": ["STUDENT"]}
 
 @pytest.fixture(autouse=True)
 def setup_teardown():
     # Reset mock data
-    from src.modules.course.course_service import CourseService
-    CourseService._clear_mock_data()
+    from src.modules.teacher_course.teacher_course_service import TeacherCourseService
+    TeacherCourseService._reset_mock_data()
     
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     
@@ -42,7 +42,7 @@ def setup_teardown():
 def test_reorder_success():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     payload = {
-        "reorder_data": [
+        "items": [
             {"item_type": "section", "id": 2, "position": 1, "parent_id": None},
             {"item_type": "section", "id": 1, "position": 2, "parent_id": None},
             {"item_type": "lesson", "id": 2, "position": 1, "parent_id": 1},
@@ -51,13 +51,16 @@ def test_reorder_success():
     }
     response = client.put("/api/v1/teacher/courses/1/curriculum/reorder", json=payload)
     assert response.status_code == 200
-    assert response.json()["message"] == "Reordered successfully"
+    data = response.json()
+    assert "sections" in data
+    assert "lessons" in data
+    assert "lesson_contents" in data
 
 
 def test_reorder_course_not_found():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     payload = {
-        "reorder_data": [
+        "items": [
             {"item_type": "section", "id": 2, "position": 1, "parent_id": None}
         ]
     }
@@ -69,7 +72,7 @@ def test_reorder_course_not_found():
 def test_reorder_forbidden():
     app.dependency_overrides[get_current_user] = override_get_current_user_student
     payload = {
-        "reorder_data": [
+        "items": [
             {"item_type": "section", "id": 2, "position": 1, "parent_id": None}
         ]
     }
@@ -82,23 +85,23 @@ def test_reorder_item_not_in_course():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     # Section 3 belongs to Course 2. We try to reorder it in Course 1.
     payload = {
-        "reorder_data": [
+        "items": [
             {"item_type": "section", "id": 3, "position": 1, "parent_id": None}
         ]
     }
     response = client.put("/api/v1/teacher/courses/1/curriculum/reorder", json=payload)
-    assert response.status_code == 404
-    assert response.json()["error_code"] == "SECTION_NOT_FOUND"
+    assert response.status_code == 400
+    assert response.json()["error_code"] == "INVALID_REQUEST"
 
     # Also test for LESSON
     # Let's create a lesson in section 3 (course 2)
     client.post(f"/api/v1/teacher/sections/3/lessons", json={"title": "C2_L1", "position": 1})
     payload = {
-        "reorder_data": [
+        "items": [
             {"item_type": "lesson", "id": 3, "position": 1, "parent_id": 1} # Try to move it to section 1 of course 1
         ]
     }
     # Wait, the item belongs to course 2, but we pass course_id=1. It should throw LESSON_NOT_FOUND or similar for course 1 context.
     response2 = client.put("/api/v1/teacher/courses/1/curriculum/reorder", json=payload)
-    assert response2.status_code == 404
-    assert response2.json()["error_code"] == "LESSON_NOT_FOUND"
+    assert response2.status_code == 400
+    assert response2.json()["error_code"] == "INVALID_REQUEST"

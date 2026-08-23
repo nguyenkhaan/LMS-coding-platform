@@ -69,6 +69,11 @@ def test_create_course_success():
     data = response.json()
     assert data["title"] == payload["title"]
     assert "id" in data
+    assert "slug" in data
+    assert "rating" in data
+    assert data["currency"] == "USD"
+    assert "created_at" in data
+    assert "updated_at" in data
 
 def test_update_course_success():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
@@ -257,7 +262,7 @@ def test_reorder_curriculum_success():
 
     # Reorder payload
     reorder_payload = {
-        "reorder_data": [
+        "items": [
             {"item_type": "section", "id": s2_id, "position": 1, "parent_id": None},
             {"item_type": "section", "id": s1_id, "position": 2, "parent_id": None}
         ]
@@ -278,7 +283,7 @@ def test_reorder_curriculum_missing_item():
 
     # Reorder payload tries to reorder a non-existent section
     reorder_payload = {
-        "reorder_data": [
+        "items": [
             {"item_type": "section", "id": 9999, "position": 1, "parent_id": None}
         ]
     }
@@ -300,7 +305,7 @@ def test_reorder_curriculum_wrong_course():
 
     # Try to put c1's section into c2
     reorder_payload = {
-        "reorder_data": [
+        "items": [
             {"item_type": "section", "id": s1_id, "position": 1, "parent_id": None}
         ]
     }
@@ -314,7 +319,7 @@ def test_reorder_curriculum_forbidden():
     c1_id = c1_resp.json()["id"]
 
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
-    reorder_payload = {"reorder_data": []}
+    reorder_payload = {"items": []}
     resp = client.put(f"/api/v1/teacher/courses/{c1_id}/curriculum/reorder", json=reorder_payload)
     assert resp.status_code == 403
     assert resp.json()["error_code"] == "FORBIDDEN"
@@ -343,7 +348,7 @@ def test_reorder_curriculum_lesson_content():
 
     # Reorder contents
     reorder_payload = {
-        "reorder_data": [
+        "items": [
             {"item_type": "section", "id": s1_id, "position": 1, "parent_id": None},
             {"item_type": "lesson", "id": l1_id, "position": 1, "parent_id": s1_id},
             {"item_type": "lesson_content", "id": c2_id, "position": 1, "parent_id": l1_id},
@@ -370,7 +375,7 @@ def test_reorder_curriculum_content_wrong_course():
 
     # Reorder payload tries to reorder c1's content in c2
     reorder_payload = {
-        "reorder_data": [
+        "items": [
             {"item_type": "lesson_content", "id": c1_id, "position": 1, "parent_id": l1_id}
         ]
     }
@@ -393,7 +398,7 @@ def test_reorder_curriculum_duplicate_positions():
 
     # Reorder payload with duplicate positions
     reorder_payload = {
-        "reorder_data": [
+        "items": [
             {"item_type": "section", "id": s1_id, "position": 1, "parent_id": None},
             {"item_type": "section", "id": s2_id, "position": 1, "parent_id": None}
         ]
@@ -417,7 +422,7 @@ def test_reorder_curriculum_missing_or_extra_items():
 
     # Missing s2
     reorder_payload_missing = {
-        "reorder_data": [
+        "items": [
             {"item_type": "section", "id": s1_id, "position": 1, "parent_id": None}
         ]
     }

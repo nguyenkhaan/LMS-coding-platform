@@ -7,16 +7,16 @@ from src.middlewares.auth_middleware import get_current_user
 client = TestClient(app)
 
 def override_get_current_user_teacher():
-    return {"sub": "1", "role": "teacher"}
+    return {"sub": "1", "roles": ["TEACHER"]}
 
 def override_get_current_user_student():
-    return {"sub": "2", "role": "student"}
+    return {"sub": "2", "roles": ["STUDENT"]}
 
 @pytest.fixture(autouse=True)
 def setup_teardown():
     # Reset mock data before each test
-    from src.modules.course.course_service import CourseService
-    CourseService._clear_mock_data()
+    from src.modules.teacher_course.teacher_course_service import TeacherCourseService
+    TeacherCourseService._reset_mock_data()
     
     # Pre-create a course for teacher 1
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher

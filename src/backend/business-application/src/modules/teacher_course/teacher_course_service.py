@@ -62,6 +62,7 @@ class TeacherCourseService:
         return [TeacherCourseResponse(**c) for c in _courses.values() if c["teacher_id"] == teacher_id]
 
     async def create_course(self, teacher_id: int, data: TeacherCourseCreateRequest) -> TeacherCourseResponse:
+        from datetime import datetime, timezone
         global _course_id_counter
         course_id = _course_id_counter
         _course_id_counter += 1
@@ -70,13 +71,22 @@ class TeacherCourseService:
         course_data["id"] = course_id
         course_data["teacher_id"] = teacher_id
         course_data["status"] = getattr(data, "status", CourseStatus.DRAFT) or CourseStatus.DRAFT
+        
+        now = datetime.now(timezone.utc).isoformat()
+        course_data["created_at"] = now
+        course_data["updated_at"] = now
+        course_data["slug"] = f"course-{course_id}"
+        course_data["rating"] = 0.0
+        course_data["currency"] = "USD"
 
         _courses[course_id] = course_data
         return TeacherCourseResponse(**course_data)
 
     async def update_course(self, teacher_id: int, course_id: int, data: TeacherCourseUpdateRequest) -> TeacherCourseResponse:
+        from datetime import datetime, timezone
         course = self._get_course_or_404(course_id, teacher_id)
         self._partial_update(course, data)
+        course["updated_at"] = datetime.now(timezone.utc).isoformat()
         _courses[course_id] = course
         return TeacherCourseResponse(**course)
 
@@ -91,8 +101,10 @@ class TeacherCourseService:
         if course["status"] not in (CourseStatus.DRAFT, CourseStatus.REJECTED):
             raise HTTPException(status_code=409, detail="INVALID_STATE")
             
+        now = datetime.now(timezone.utc).isoformat()
         course["status"] = CourseStatus.PENDING_REVIEW
-        course["submitted_at"] = datetime.now(timezone.utc).isoformat()
+        course["submitted_at"] = now
+        course["updated_at"] = now
         
         _courses[course_id] = course
         return TeacherCourseResponse(**course)
@@ -346,7 +358,11 @@ class TeacherCourseService:
                 if item.section_id is not None:
                     _contents[item.id]["lesson_id"] = item.section_id
                     
-        return TeacherCourseReorderResponse(message="Reordered successfully")
+        return TeacherCourseReorderResponse(
+            sections=[TeacherCourseSectionResponse(**s) for s in existing_sections.values()],
+            lessons=[TeacherCourseLessonResponse(**l) for l in existing_lessons.values()],
+            lesson_contents=[TeacherCourseLessonContentResponse(**c) for c in existing_contents.values()]
+        )
 
 
 

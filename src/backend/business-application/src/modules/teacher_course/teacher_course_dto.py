@@ -41,6 +41,14 @@ class TeacherCourseResponse(TeacherCourseBase):
     status: CourseStatus
     teacher_id: int
     submitted_at: Optional[str] = None
+    slug: Optional[str] = None
+    rating: float = 0.0
+    currency: str = "USD"
+    reviewed_by: Optional[int] = None
+    reviewed_note: Optional[str] = None
+    reviewed_at: Optional[str] = None
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
 
 
 class TeacherCourseSectionCreateRequest(BaseModel):
@@ -128,13 +136,15 @@ class TeacherCourseReorderItem(BaseModel):
 class TeacherCourseReorderRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    items: List[TeacherCourseReorderItem] = Field(alias="reorder_data")
+    items: List[TeacherCourseReorderItem]
 
 
 class TeacherCourseReorderResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    message: str
+    sections: List[TeacherCourseSectionResponse]
+    lessons: List[TeacherCourseLessonResponse]
+    lesson_contents: List[TeacherCourseLessonContentResponse]
 
 
 class TeacherCourseDeleteResponse(BaseModel):
