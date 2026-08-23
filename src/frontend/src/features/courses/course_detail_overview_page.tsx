@@ -4,18 +4,23 @@ import { FigmaDetailHero } from './components/figma_detail_hero';
 import { FigmaDetailSidebar } from './components/figma_detail_sidebar';
 import { FigmaCourseThumbnailCard } from './components/figma_course_thumbnail_card';
 import { FigmaDetailBody } from './components/figma_detail_body';
+import { useEnrolledCourses } from '@/features/courses/hooks/useEnrolledCourses';
 
 export const CourseDetailOverviewPage: React.FC = () => {
 	const { courseSlug } = useParams<{ courseSlug: string }>();
-	const isEnrolled = false;
+	const { isEnrolled: checkEnrolled } = useEnrolledCourses();
 	const navigate = useNavigate();
 
-	const handleEnroll = () => {
-		const targetSlug = courseSlug || "python-foundations";
-		navigate(`/checkout/${targetSlug}`);
-	};
-
 	const slug = courseSlug || "python-foundations";
+	const isEnrolled = checkEnrolled(slug);
+
+	const handleEnroll = () => {
+		if (isEnrolled) {
+			navigate(`/learn/${slug}`);
+		} else {
+			navigate(`/checkout/${slug}`);
+		}
+	};
 
 	return (
 		<div className="w-full min-h-screen bg-gray-50 flex flex-col font-['Inter'] antialiased">
@@ -52,6 +57,7 @@ export const CourseDetailOverviewPage: React.FC = () => {
 					lessons={42}
 					isEnrolled={isEnrolled}
 					onEnroll={handleEnroll}
+					courseSlug={slug}
 				/>
 			</div>
 		</div>

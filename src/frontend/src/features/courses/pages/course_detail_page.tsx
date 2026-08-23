@@ -119,6 +119,19 @@ export const CourseDetailPage: React.FC = () => {
 		setIsFav(!isFav);
 	};
 
+	const handlePreviewClassroom = () => {
+		if (!course) return;
+
+		const hasLessons = course.sections && course.sections.some((sec) => sec.lesson_count > 0);
+		if (!hasLessons) {
+			toast.error('Không thể xem trước: Khóa học này chưa có bài học nào.');
+			return;
+		}
+
+		toast.success(`Đang mở chế độ xem trước cho "${course.title}"`);
+		navigate(`/learn/${course.slug}`);
+	};
+
 	// Enroll CTA click handler
 	const handleEnrollAction = async () => {
 		if (!courseSlug || !course) return;
@@ -393,15 +406,25 @@ export const CourseDetailPage: React.FC = () => {
 								</Button>
 							</Link>
 						) : (
-							<Button
-								className="w-full"
-								variant="primary"
-								size="md"
-								isLoading={actionLoading}
-								onClick={handleEnrollAction}
-							>
-								{isFree ? 'Đăng ký học ngay' : 'Mua khóa học (Checkout)'}
-							</Button>
+							<div className="flex flex-col gap-2.5 w-full">
+								<Button
+									className="w-full"
+									variant="primary"
+									size="md"
+									isLoading={actionLoading}
+									onClick={handleEnrollAction}
+								>
+									{isFree ? 'Đăng ký học ngay' : 'Mua khóa học (Checkout)'}
+								</Button>
+								<Button
+									className="w-full border-[hsl(var(--color-brand-indigo))] text-[hsl(var(--color-brand-indigo))] hover:bg-indigo-50/50 bg-white"
+									variant="outline"
+									size="md"
+									onClick={handlePreviewClassroom}
+								>
+									Preview Classroom
+								</Button>
+							</div>
 						)}
 
 						{/* Extra actions: favorite toggle */}

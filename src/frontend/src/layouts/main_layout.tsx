@@ -196,13 +196,23 @@ export const MainLayout: React.FC = () => {
             {isAuthenticated && user ? (
               <div className="flex items-center gap-2.5">
                 {user.roles.includes('TEACHER') && (
-                  <Link
-                    to="/teacher/dashboard"
-                    className="px-3.5 py-1.5 rounded-[40px] border border-indigo-900 text-indigo-900 text-xs font-semibold hover:bg-indigo-50 transition-colors flex items-center gap-1.5"
-                  >
-                    <GraduationCap className="w-3.5 h-3.5" />
-                    Teacher Portal
-                  </Link>
+                  location.pathname.startsWith('/teacher') ? (
+                    <Link
+                      to="/dashboard"
+                      className="px-3.5 py-1.5 rounded-[40px] border border-indigo-900 text-indigo-900 text-xs font-semibold hover:bg-indigo-50 transition-colors flex items-center gap-1.5"
+                    >
+                      <User className="w-3.5 h-3.5" />
+                      Switch to Student
+                    </Link>
+                  ) : (
+                    <Link
+                      to="/teacher/dashboard"
+                      className="px-3.5 py-1.5 rounded-[40px] border border-indigo-900 text-indigo-900 text-xs font-semibold hover:bg-indigo-50 transition-colors flex items-center gap-1.5"
+                    >
+                      <GraduationCap className="w-3.5 h-3.5" />
+                      Teacher Portal
+                    </Link>
+                  )
                 )}
                 {user.roles.includes('ADMIN') && (
                   <Link

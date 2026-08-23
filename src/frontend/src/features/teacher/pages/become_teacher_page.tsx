@@ -42,15 +42,35 @@ interface UploadedFileState {
 
 export function BecomeTeacherPage() {
   const navigate = useNavigate();
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
 
   // State Machine Status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED'
-  const [status, setStatus] = useState<TeacherApplicationStatus>('DRAFT');
+  const initialStatus: TeacherApplicationStatus = user?.teacherProfile?.status || 
+    (user?.roles.includes('TEACHER') ? 'APPROVED' : 'DRAFT');
+  const [status, setStatus] = useState<TeacherApplicationStatus>(initialStatus);
   
   // Admin review note (visible in REJECTED state)
   const [reviewNote, setReviewNote] = useState<string>(
     'Ảnh chụp selfie cầm CCCD bị mờ, không nhìn rõ số định danh cá nhân. Vui lòng chụp lại ảnh rõ nét trong điều kiện đủ sáng.'
   );
+
+  const handleStateChange = (newStatus: TeacherApplicationStatus) => {
+    setStatus(newStatus);
+    if (user) {
+      const updatedRoles = newStatus === 'APPROVED' 
+        ? (user.roles.includes('TEACHER') ? user.roles : [...user.roles, 'TEACHER'])
+        : user.roles.filter(r => r !== 'TEACHER');
+      
+      setUser({
+        ...user,
+        roles: updatedRoles,
+        teacherProfile: {
+          verified: newStatus === 'APPROVED',
+          status: newStatus as any
+        }
+      });
+    }
+  };
 
   // Core Form State (100% matched with teacher_registered table)
   const [formData, setFormData] = useState({
@@ -246,7 +266,7 @@ export function BecomeTeacherPage() {
       toast.error('Please complete all required fields and documents before submitting.');
       return;
     }
-    setStatus('PENDING');
+    handleStateChange('PENDING');
     toast.success('Application submitted successfully for Admin Review!');
   };
 
@@ -259,7 +279,7 @@ export function BecomeTeacherPage() {
       toast.error('Please resolve all missing/rejected items before resubmitting.');
       return;
     }
-    setStatus('PENDING');
+    handleStateChange('PENDING');
     toast.success('Updated application resubmitted for verification!');
   };
 
@@ -277,7 +297,7 @@ export function BecomeTeacherPage() {
             <button
               key={s}
               type="button"
-              onClick={() => setStatus(s)}
+              onClick={() => handleStateChange(s)}
               className={`px-3 py-1 rounded-md font-bold transition-colors cursor-pointer ${
                 status === s
                   ? s === 'APPROVED'

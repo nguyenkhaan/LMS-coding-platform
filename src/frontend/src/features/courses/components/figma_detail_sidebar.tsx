@@ -1,6 +1,8 @@
 import React from 'react';
 import { Award, CheckCircle, Play } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useCourseStore } from '@/stores/useCourseStore';
+import { toast } from 'sonner';
 
 interface SidebarProps {
 	price: number;
@@ -21,17 +23,46 @@ export const FigmaDetailSidebar: React.FC<SidebarProps> = ({
 	hasReviewed = false,
 	courseSlug = "python-foundations"
 }) => {
+	const navigate = useNavigate();
+	const { courses } = useCourseStore();
+
+	const handlePreviewClassroom = () => {
+		const activeCourse = courses.find((c) => c.slug === courseSlug || c.id === courseSlug);
+		
+		if (!activeCourse) {
+			toast.success(`Opening preview mode for "${courseSlug}"`);
+			navigate(`/learn/${courseSlug}`);
+			return;
+		}
+
+		const hasLessons = activeCourse.sections && activeCourse.sections.some((sec) => sec.lessons && sec.lessons.length > 0);
+		if (!hasLessons) {
+			toast.error('Không thể xem trước: Khóa học này chưa có bài học nào.');
+			return;
+		}
+
+		toast.success(`Đang mở chế độ xem trước cho "${activeCourse.title}"`);
+		navigate(`/learn/${courseSlug}`);
+	};
+
 	return (
 		<div className="w-[320px] flex flex-col gap-5">
 			<div className="bg-white rounded-2xl border border-slate-100 shadow-md p-6 flex flex-col gap-5">
-				{isPaid ? (
-					<div className="flex flex-col gap-2">
-						<span className="text-zinc-900 text-base font-bold leading-snug">You have paid for this course</span>
+				{isPaid || isEnrolled ? (
+					<div className="flex flex-col gap-3">
+						<div className="flex flex-col">
+							<span className="text-[#10B981] text-lg font-bold flex items-center gap-1.5 leading-snug">
+								<CheckCircle className="w-5 h-5 text-emerald-500" /> Enrolled
+							</span>
+							<span className="text-neutral-500 text-xs mt-1 leading-normal">
+								You have full lifetime access to this course
+							</span>
+						</div>
 						<button 
-							onClick={() => alert("Redirecting to classroom... (Mock)")}
+							onClick={() => navigate(`/learn/${courseSlug}`)}
 							className="w-full py-3 bg-[#392C7D] hover:bg-[#392C7D]/90 text-white text-sm font-semibold rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
 						>
-							Continue studying
+							Start Learning
 						</button>
 					</div>
 				) : (
@@ -45,13 +76,16 @@ export const FigmaDetailSidebar: React.FC<SidebarProps> = ({
 							onClick={onEnroll}
 							className="w-full py-3 bg-[#FF4667] hover:bg-[#e03d5b] text-white text-sm font-semibold rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
 						>
-							{isEnrolled ? "Continue Learning" : "Enroll now"}
+							Enroll now
 						</button>
 					</>
 				)}
 
 				{!isPaid && (
-					<button className="w-full py-2.5 bg-neutral-50 hover:bg-neutral-100 text-zinc-900 text-sm font-semibold rounded-xl transition-all border border-neutral-200 cursor-pointer flex items-center justify-center gap-2">
+					<button
+						onClick={handlePreviewClassroom}
+						className="w-full py-2.5 bg-neutral-50 hover:bg-neutral-100 text-zinc-900 text-sm font-semibold rounded-xl transition-all border border-neutral-200 cursor-pointer flex items-center justify-center gap-2"
+					>
 						<Play className="w-3.5 h-3.5 fill-[#392C7D] text-[#392C7D]" />
 						Preview classroom
 					</button>

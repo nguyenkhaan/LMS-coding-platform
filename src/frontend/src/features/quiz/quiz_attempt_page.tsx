@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { QuizHeader } from './components/quiz_header';
 import { QuizQuestionPanel } from './components/quiz_question_panel';
@@ -133,6 +133,9 @@ const MOCK_QUIZ = {
 export const QuizAttemptPage: React.FC = () => {
 	const navigate = useNavigate();
 	const { quizId } = useParams<{ quizId: string }>();
+	const location = useLocation();
+	const courseSlug = location.state?.courseSlug;
+	const lessonId = location.state?.lessonId;
 
 	const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 	const [answers, setAnswers] = useState<Record<number, string>>({}); // questionId -> optionId
@@ -194,8 +197,14 @@ export const QuizAttemptPage: React.FC = () => {
 		setIsSubmitModalOpen(false);
 		toast.success(`Quiz submitted!`);
 		const targetQuizId = quizId || 'quiz-control-flow-01';
-		navigate(`/quiz/${targetQuizId}/result`, { state: { answers } });
-	}, [answers, quizId, navigate]);
+		navigate(`/quiz/${targetQuizId}/result`, {
+			state: {
+				answers,
+				courseSlug,
+				lessonId
+			}
+		});
+	}, [answers, quizId, navigate, courseSlug, lessonId]);
 
 	const handleExit = useCallback(() => {
 		if (answeredSet.size > 0) {

@@ -19,10 +19,20 @@ export const useEnrolledCourses = () => {
 		setError(null);
 		try {
 			const data = await courseApi.fetchEnrolledCourses();
-			setEnrolledCourses(data.items);
+			const localEnrolled = JSON.parse(localStorage.getItem('local_enrolled_courses') || '[]');
+			const merged = [...data.items];
+
+			localEnrolled.forEach((localCourse: any) => {
+				if (!merged.some(c => c.slug === localCourse.slug || String(c.id) === String(localCourse.id))) {
+					merged.push(localCourse);
+				}
+			});
+
+			setEnrolledCourses(merged);
 		} catch (err) {
 			console.error('Lỗi khi tải danh sách khóa học đã đăng ký:', err);
-			setError('Không thể tải danh sách khóa học của bạn.');
+			const localEnrolled = JSON.parse(localStorage.getItem('local_enrolled_courses') || '[]');
+			setEnrolledCourses(localEnrolled);
 		} finally {
 			setIsLoading(false);
 		}
@@ -34,7 +44,7 @@ export const useEnrolledCourses = () => {
 
 	const isEnrolled = useCallback(
 		(slug: string): boolean => {
-			return enrolledCourses.some((course) => course.slug === slug);
+			return enrolledCourses.some((course) => course.slug === slug || String(course.id) === String(slug));
 		},
 		[enrolledCourses]
 	);

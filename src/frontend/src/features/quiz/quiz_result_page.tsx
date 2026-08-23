@@ -179,8 +179,10 @@ export const QuizResultPage: React.FC = () => {
   const { quizId } = useParams<{ quizId: string }>();
   const location = useLocation();
 
-  // Retrieve answers passed from QuizAttemptPage
+  // Retrieve answers, courseSlug, and lessonId passed from QuizAttemptPage
   const userAnswers: Record<number, string> = location.state?.answers || {};
+  const courseSlug = location.state?.courseSlug || 'python-foundations-for-problem-solving';
+  const lessonId = location.state?.lessonId;
 
   const isBackendQuiz = quizId !== 'quiz-control-flow-01' && quizId !== 'control-flow-01' && quizId !== '1';
   const questions = !isBackendQuiz && quizId === '1' ? BACKEND_QUIZ_QUESTIONS : MOCK_QUIZ_QUESTIONS;
@@ -200,11 +202,21 @@ export const QuizResultPage: React.FC = () => {
   const isPassed = scorePercent >= 70; // 70% passing threshold
 
   const handleRetry = () => {
-    navigate(`/quiz/${quizId || 'quiz-control-flow-01'}/attempt`);
+    navigate(`/quiz/${quizId || 'quiz-control-flow-01'}/attempt`, {
+      state: {
+        courseSlug,
+        lessonId
+      }
+    });
   };
 
   const handleBackToCourse = () => {
-    navigate('/courses-overview/python-foundations');
+    navigate(`/quiz/${quizId || 'quiz-control-flow-01'}/preview`, {
+      state: {
+        courseSlug,
+        lessonId
+      }
+    });
   };
 
   return (

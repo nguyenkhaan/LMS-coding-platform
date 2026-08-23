@@ -132,10 +132,10 @@ export const TeacherStudentsPage: React.FC = () => {
           </div>
           <div className="flex gap-4 relative z-10">
             <button
-              onClick={() => navigate('/teacher/dashboard')}
-              className="px-5 py-2.5 bg-[#FF4667] text-white text-sm font-semibold rounded-full hover:bg-[#e03d5b] transition-all cursor-pointer shadow-sm"
+              onClick={() => navigate('/dashboard')}
+              className="px-5 py-2.5 bg-white text-indigo-900 text-sm font-semibold rounded-full hover:bg-slate-50 transition-all cursor-pointer shadow-sm"
             >
-              Teacher Dashboard
+              Switch to Student
             </button>
           </div>
           <div className="absolute w-[400px] h-[400px] bg-white/5 rounded-full -right-24 -top-24 pointer-events-none" />
