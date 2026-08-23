@@ -7,6 +7,7 @@ from src.modules.auth.auth_service import AuthService
 from src.modules.auth.session_service import SessionService
 from src.cores.redis import redis_client
 from src.modules.auth.jwt.jwt_service import JwtService
+from src.services.email_client import SMTPClient
 
 def get_redis_client():
     redis_client = Redis.from_env()
@@ -26,9 +27,14 @@ def get_jwt_service() -> JwtService:
     return JwtService()
 
 
+def get_email_client() -> SMTPClient:
+    return SMTPClient()
+
+
 def get_auth_service(
     db_session: AsyncSession = Depends(get_db_session),
     session_service: SessionService = Depends(get_session_service),
     jwt_service: JwtService = Depends(get_jwt_service),
+    email_client: SMTPClient = Depends(get_email_client),
 ) -> AuthService:
-    return AuthService(db_session, session_service, jwt_service) 
+    return AuthService(db_session, session_service, jwt_service, email_client)

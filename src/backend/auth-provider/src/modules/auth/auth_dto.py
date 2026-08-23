@@ -1,6 +1,6 @@
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr 
+from pydantic import BaseModel, EmailStr, Field
 
 
 class AuthBase(BaseModel): 
@@ -64,16 +64,8 @@ class ForgotPasswordRequest(BaseModel):
     email: EmailStr
 
 
-class ForgotPasswordResponse(BaseModel):
-    message: str
-    code: str
-
-class ChangePasswordRequest(BaseModel): 
-    ... 
-
-class ChangePasswordResponse(BaseModel): 
-    message : str 
-    code : str  
+class ForgotPasswordResponse(AuthBase):
+    """Generic response that never exposes a password reset code."""
 
 class ResendOtpRequest(BaseModel):
     email: EmailStr
@@ -87,26 +79,27 @@ class ResendOtpResponse(AuthBase):
 
 class ChangeEmailRequest(BaseModel):
     new_email: EmailStr
-    password: str
+    password: str = Field(min_length=1, max_length=1024)
 
 
 class ChangeEmailResponse(BaseModel):
     message: str
-    token: str
+
+
+class ConfirmEmailChangeRequest(BaseModel):
+    token: str = Field(min_length=1, max_length=4096)
+
+
+class ConfirmEmailChangeResponse(AuthBase):
+    """Response returned after a new email address is verified."""
 
 
 class VerifyPasswordChangingRequest(BaseModel):
-    code: str
-    new_password: str
+    code: str = Field(min_length=1, max_length=4096)
+    new_password: str = Field(min_length=1, max_length=1024)
 
 
 class VerifyPasswordChangingResponse(AuthBase):
     """
         dto for verify reset password 
-    """
-
-
-class VerifyResetEmailResponse(AuthBase):
-    """
-        dto for verify reset email 
     """

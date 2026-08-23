@@ -13,6 +13,7 @@ os.environ.setdefault("BACKEND_URL", "http://localhost:4001")
 os.environ.setdefault("JWT_ACCESS_PRIVATE", base64.b64encode(b"test-private-key").decode())
 os.environ.setdefault("JWT_ACCESS_PUBLIC", base64.b64encode(b"test-public-key").decode())
 os.environ.setdefault("JWT_REFRESH_SECRET", "test-refresh-secret-with-at-least-32-bytes")
+os.environ.setdefault("JWT_EMAIL_CHANGE_SECRET", "test-email-change-secret-with-at-least-32-bytes")
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://user:password@localhost/test")
 os.environ.setdefault("UPSTASH_REDIS_REST_URL", "https://example.test")
 os.environ.setdefault("UPSTASH_REDIS_REST_TOKEN", "test-token")
@@ -27,8 +28,9 @@ from src.models.base_model import AccountStatus, Role
 from src.models.role_model import UserRoleModel
 from src.models.user_model import UserModel
 from src.bases.constant.redis_key import RedisKey
-from src.modules.auth.auth_dto import RegisterRequest
+from src.modules.auth.auth_dto import RegisterRequest, VerifyPasswordChangingRequest
 from src.modules.auth.auth_service import AuthService
+from src.modules.auth.auth_router import router as auth_router
 from src.modules.auth.jwt.jwt_service import JwtService
 from src.bases.enum.jwt_enum import TokenType
 from src.middlewares.auth_middleware import get_current_user
@@ -70,6 +72,7 @@ class FakeSessionService:
         self.values = []
         self.deleted_authorization_codes = []
         self.deleted_values = []
+        self.consumed_values = []
 
     async def set_value(self, key, value, expire=None):
         self.values.append((key, value, expire))
@@ -81,6 +84,10 @@ class FakeSessionService:
     async def delete_value(self, key):
         self.deleted_values.append(key)
         self.redis_values.pop(key, None)
+
+    async def consume_value(self, key):
+        self.consumed_values.append(key)
+        return self.redis_values.pop(key, None)
 
     async def create_authorization_code(self, code, data):
         self.authorization_payload = data
@@ -104,6 +111,14 @@ class FakeJwtService:
 
     async def verify_token(self, _token, _token_type):
         return self.refresh_payload
+
+
+class FakeEmailClient:
+    def __init__(self):
+        self.sent_messages = []
+
+    async def send_email(self, to, subject, body, html=None):
+        self.sent_messages.append((to, subject, body, html))
 
 
 def make_user(
@@ -149,6 +164,26 @@ class AuthSchemaTests(unittest.TestCase):
             if isinstance(constraint, UniqueConstraint)
         ]
         self.assertIn(frozenset({"user_id", "role"}), constraints)
+
+    def test_email_change_routes_use_an_authenticated_request_and_a_public_confirmation(self):
+        routes = {route.path: route for route in auth_router.routes}
+
+        self.assertIn("/auth/change-email", routes)
+        self.assertIn("/auth/confirm-email-change", routes)
+        self.assertNotIn("/auth/verify-reset-email", routes)
+        change_dependencies = {
+            dependency.call for dependency in routes["/auth/change-email"].dependant.dependencies
+        }
+        self.assertIn(get_current_user, change_dependencies)
+
+    def test_password_reset_confirmation_uses_token_not_code(self):
+        request = VerifyPasswordChangingRequest(
+            token="password-reset-token", new_password="new-password"
+        )
+
+        self.assertEqual(request.token, "password-reset-token")
+        with self.assertRaises(Exception):
+            VerifyPasswordChangingRequest(code="legacy-code", new_password="new-password")
 
 
 class AuthServiceTests(unittest.IsolatedAsyncioTestCase):
@@ -266,6 +301,173 @@ class AuthServiceTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.refresh_token, "refresh_token-2")
         self.assertEqual(user.refresh_token, "refresh_token-2")
         self.assertEqual(database.commits, 1)
+
+    async def test_forgot_password_returns_a_generic_response_without_sending_email_for_an_unknown_user(self):
+        email_client = FakeEmailClient()
+        service = AuthService(
+            FakeDatabaseSession([None]), FakeSessionService(), FakeJwtService(), email_client
+        )
+
+        response = await service.forgot_password("missing@example.com")
+
+        self.assertEqual(response.message, "Password reset link sent")
+        self.assertNotIn("code", response.model_dump())
+        self.assertEqual(email_client.sent_messages, [])
+
+    async def test_forgot_password_sends_a_detailed_reset_email_only_for_an_active_local_account(self):
+        from src.helpers.pwd_hash import password_hash
+
+        user = make_user(password=password_hash.hash("current-password"))
+        sessions = FakeSessionService()
+        email_client = FakeEmailClient()
+        service = AuthService(
+            FakeDatabaseSession([user]), sessions, FakeJwtService(), email_client
+        )
+
+        response = await service.forgot_password(user.email)
+
+        self.assertEqual(response.message, "Password reset link sent")
+        self.assertNotIn("code", response.model_dump())
+        self.assertEqual(len(email_client.sent_messages), 1)
+        recipient, subject, body, _ = email_client.sent_messages[0]
+        self.assertEqual(recipient, user.email)
+        self.assertEqual(subject, "Reset your password")
+        self.assertIn("within 5 minutes", body)
+        self.assertIn("If you did not request", body)
+        self.assertEqual(len(sessions.values), 2)
+
+    async def test_forgot_password_does_not_send_email_for_an_inactive_or_passwordless_account(self):
+        for user in (
+            make_user(account_status=AccountStatus.BANNED, password="password-hash"),
+            make_user(password=None),
+        ):
+            with self.subTest(account_status=user.account_status, password=user.password):
+                email_client = FakeEmailClient()
+                service = AuthService(
+                    FakeDatabaseSession([user]),
+                    FakeSessionService(),
+                    FakeJwtService(),
+                    email_client,
+                )
+
+                response = await service.forgot_password(user.email)
+
+                self.assertEqual(response.message, "Password reset link sent")
+                self.assertEqual(email_client.sent_messages, [])
+
+    async def test_change_password_does_not_send_email_when_the_authenticated_user_no_longer_exists(self):
+        email_client = FakeEmailClient()
+        service = AuthService(
+            FakeDatabaseSession([None]), FakeSessionService(), FakeJwtService(), email_client
+        )
+
+        response = await service.change_password(7)
+
+        self.assertEqual(response.message, "Password reset link sent")
+        self.assertNotIn("code", response.model_dump())
+        self.assertEqual(email_client.sent_messages, [])
+
+    async def test_verify_password_changing_consumes_a_valid_reset_token(self):
+        from src.helpers.pwd_hash import password_hash
+
+        reset_token = "single-use-reset-token"
+        user = make_user(password=password_hash.hash("old-password"))
+        sessions = FakeSessionService(
+            redis_values={
+                RedisKey.reset_password(reset_token): json.dumps(
+                    {"user_id": str(user.id), "type": "reset_password"}
+                )
+            }
+        )
+        service = AuthService(
+            FakeDatabaseSession([user]), sessions, FakeJwtService(), FakeEmailClient()
+        )
+
+        response = await service.verify_password_changing(reset_token, "new-password")
+
+        self.assertEqual(response.message, "Password reset successfully")
+        self.assertTrue(password_hash.verify("new-password", user.password))
+        self.assertEqual(sessions.consumed_values, [RedisKey.reset_password(reset_token)])
+
+    async def test_request_email_change_requires_password_and_sends_a_single_use_token_to_the_new_email(self):
+        from src.helpers.pwd_hash import password_hash
+
+        user = make_user(password=password_hash.hash("current-password"))
+        database = FakeDatabaseSession([user, None])
+        sessions = FakeSessionService()
+        jwt_service = FakeJwtService()
+        email_client = FakeEmailClient()
+        service = AuthService(database, sessions, jwt_service, email_client)
+
+        response = await service.request_email_change(
+            user.id, "new.student@example.com", "current-password"
+        )
+
+        self.assertEqual(response.message, "Email change confirmation sent")
+        self.assertEqual(len(jwt_service.created), 1)
+        claims, token_type = jwt_service.created[0]
+        self.assertEqual(token_type.value, "email_change_token")
+        self.assertEqual(claims["sub"], str(user.id))
+        self.assertEqual(claims["email"], "new.student@example.com")
+        self.assertTrue(claims["jti"])
+        self.assertEqual(len(email_client.sent_messages), 1)
+        self.assertEqual(email_client.sent_messages[0][0], "new.student@example.com")
+        self.assertNotIn("email_change_token-1", response.model_dump_json())
+        self.assertIn("email_change_token-1", email_client.sent_messages[0][2])
+
+    async def test_confirm_email_change_updates_email_once_and_consumes_the_token_id(self):
+        user = make_user(refresh_token="refresh-token-issued-for-old-email")
+        token_jti = "single-use-token-id"
+        database = FakeDatabaseSession([user, None])
+        sessions = FakeSessionService(
+            redis_values={
+                f"lms:auth-provider:email-change:{token_jti}": json.dumps(
+                    {"user_id": str(user.id), "email": "new.student@example.com"}
+                )
+            }
+        )
+        jwt_service = FakeJwtService(
+            refresh_payload={
+                "sub": str(user.id),
+                "email": "new.student@example.com",
+                "jti": token_jti,
+                "token_type": "email_change_token",
+            }
+        )
+        service = AuthService(database, sessions, jwt_service, FakeEmailClient())
+
+        response = await service.confirm_email_change("confirmation-token")
+
+        self.assertEqual(response.message, "Email changed successfully")
+        self.assertEqual(user.email, "new.student@example.com")
+        self.assertIsNone(user.refresh_token)
+        self.assertEqual(database.commits, 1)
+        self.assertEqual(
+            sessions.consumed_values,
+            [f"lms:auth-provider:email-change:{token_jti}"],
+        )
+
+    async def test_confirm_email_change_rejects_a_replayed_token(self):
+        token_jti = "already-consumed-token-id"
+        jwt_service = FakeJwtService(
+            refresh_payload={
+                "sub": "7",
+                "email": "new.student@example.com",
+                "jti": token_jti,
+                "token_type": "email_change_token",
+            }
+        )
+        sessions = FakeSessionService()
+        service = AuthService(FakeDatabaseSession(), sessions, jwt_service, FakeEmailClient())
+
+        with self.assertRaises(HTTPException) as raised:
+            await service.confirm_email_change("replayed-token")
+
+        self.assertEqual(raised.exception.status_code, 400)
+        self.assertEqual(
+            sessions.consumed_values,
+            [f"lms:auth-provider:email-change:{token_jti}"],
+        )
 
 
 class CurrentUserMiddlewareTests(unittest.IsolatedAsyncioTestCase):

@@ -72,7 +72,10 @@ Copy the two Base64 strings into the `.env` file.
 JWT_ACCESS_PRIVATE=<base64-encoded-private-key>
 JWT_ACCESS_PUBLIC=<base64-encoded-public-key>
 JWT_REFRESH_SECRET=<any-long-random-string>
+JWT_EMAIL_CHANGE_SECRET=<a-different-long-random-string>
 BACKEND_URL=http://localhost:4001
+EMAIL_CHANGE_CONFIRM_URL=http://localhost:5173/confirm-email-change
+PASSWORD_CHANGE_CONFIRM_URL=http://localhost:5173/confirm-password-change
 DATABASE_URL=postgresql+asyncpg://<your_supabase_user>:<your_supabase_password>@<your_supabase_host>:5432/<your_supabase_db>
 UPSTASH_REDIS_REST_URL=https://<your-upstash-id>.upstash.io
 UPSTASH_REDIS_REST_TOKEN=<your-upstash-token>
@@ -90,6 +93,26 @@ Run the FastAPI application:
 uv run main.py
 ```
 *(The server will start Uvicorn, serving the API on [http://localhost:4001](http://localhost:4001) with hot-reload enabled).*
+
+### Change-email configuration
+
+Set `JWT_EMAIL_CHANGE_SECRET` to a random secret independent of `JWT_REFRESH_SECRET`.
+`EMAIL_CHANGE_CONFIRM_URL` must point to the frontend confirmation page. The email link
+places the token in its URL fragment (`#token=...`), so the browser does not send it to
+the frontend server or include it in referrer headers. That page must read the fragment
+and call `POST /api/auth/confirm-email-change` with `{ "token": "..." }` over HTTPS.
+
+The flow is:
+
+1. An authenticated user calls `POST /api/auth/change-email` with `new_email` and their current password.
+2. The service sends a ten-minute, one-time confirmation link to `new_email`.
+3. The frontend submits its fragment token to `POST /api/auth/confirm-email-change`.
+
+### Password-reset configuration
+
+Set `PASSWORD_CHANGE_CONFIRM_URL` to the frontend password-reset page. The service sends
+an eligible user a five-minute, one-time link with the reset token in the URL fragment;
+the frontend submits that token and the new password to `POST /api/auth/verify-password-changing`.
 
 ---
 

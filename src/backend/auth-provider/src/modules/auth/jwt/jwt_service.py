@@ -1,4 +1,8 @@
-from src.cores.settings import JWT_ACCESS_PRIVATE, JWT_REFRESH_SECRET
+from src.cores.settings import (
+    JWT_ACCESS_PRIVATE,
+    JWT_EMAIL_CHANGE_SECRET,
+    JWT_REFRESH_SECRET,
+)
 from src.bases.enum.jwt_enum import TokenType
 from datetime import datetime, timedelta, timezone
 
@@ -14,6 +18,8 @@ class JwtService:
                 return JWT_ACCESS_PRIVATE
             case TokenType.REFRESH_TOKEN:
                 return JWT_REFRESH_SECRET
+            case TokenType.EMAIL_CHANGE_TOKEN:
+                return JWT_EMAIL_CHANGE_SECRET
 
     @staticmethod
     def get_algorithm(token_type: TokenType) -> str:

@@ -57,6 +57,10 @@ class SessionService:
 
     async def get_value(self, key: str):
         return await self.redis.get(key)
+
+    async def consume_value(self, key: str):
+        """Atomically read and delete a one-time value."""
+        return await self.redis.getdel(key)
     
     async def set_value(self, key: str, value, expire: int | None = None):
         return await self.redis.set(

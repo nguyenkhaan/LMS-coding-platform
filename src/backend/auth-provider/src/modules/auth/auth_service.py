@@ -7,13 +7,14 @@ from fastapi import HTTPException
 from fastapi.responses import RedirectResponse
 from jwt import InvalidTokenError
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from src.bases.constant.jwt_constant import ACCESS_LIVE_TIME, REFRESH_LIVE_TIME
 from src.bases.constant.redis_key import RedisKey
 from src.bases.enum.jwt_enum import TokenType
-from src.cores.settings import BACKEND_URL
+from src.cores.settings import BACKEND_URL, EMAIL_CHANGE_CONFIRM_URL, PASSWORD_CHANGE_CONFIRM_URL
 from src.helpers.pwd_hash import password_hash
 from src.helpers.random import random_string
 from src.models.base_model import AccountStatus, Role
@@ -22,6 +23,7 @@ from src.models.user_model import UserModel
 from src.modules.auth.auth_dto import (
     AuthCodeResponse,
     ChangeEmailResponse,
+    ConfirmEmailChangeResponse,
     ForgotPasswordResponse,
     LoginGoogleResponse,
     LoginResponse,
@@ -32,14 +34,15 @@ from src.modules.auth.auth_dto import (
     ResendOtpResponse,
     VerifyPasswordChangingResponse, 
     VerifyRegisterResponse,
-    VerifyResetEmailResponse,
 )
 from src.modules.auth.jwt.jwt_service import JwtService
 from src.modules.auth.session_service import SessionService
+from src.services.email_client import SMTPClient
 
 
 OTP_LIVE_TIME = 300
 RESET_PASSWORD_LIVE_TIME = 300 # seconds 
+EMAIL_CHANGE_LIVE_TIME = 600
 
 class AuthService:
     def __init__(
@@ -47,10 +50,12 @@ class AuthService:
         db_session: AsyncSession,
         session_service: SessionService,
         jwt_service: JwtService,
+        email_client: SMTPClient | None = None,
     ):
         self.db_session = db_session
         self.session_service = session_service
         self.jwt_service = jwt_service
+        self.email_client = email_client or SMTPClient()
 
     async def _create_registration_otp(self, user_id: int) -> str:
         latest_otp_key = RedisKey.save_verify_register(str(user_id))
@@ -258,14 +263,24 @@ class AuthService:
         stmt = select(UserModel.id, UserModel.email).where(UserModel.email == email) 
         result = (await self.db_session.execute(stmt)).first() 
         if result is None: 
-            raise HTTPException(
-                detail = "User not found", 
-                status_code = 404 
-            ) 
+            return ForgotPasswordResponse(
+                message = "Password reset link sent", 
+            )
         reset_code = await self._create_reset_password_code(result.id) 
-        # Tam thoi van su dung ham random(8) de co the sinh ra duoc 8 ki tu. Tien hanh tang len 16 sau 
+        
+        confirm_url = f"{PASSWORD_CHANGE_CONFIRM_URL}#code={reset_code}"
+        await self.email_client.send_email(
+            to=result.email, 
+            subject="Confirm your new password", 
+            body=(
+                "A request was made to reset the password for your account.\n\n"
+                "Use the link below to create a new password. It expires in 5 minutes:\n\n"
+                f"{confirm_url}\n\n"
+                "If you did not request a password reset, you can safely ignore this email."
+            )
+        )
         print("Reset password token will send to client: ", reset_code) 
-        return ForgotPasswordResponse(message="Password reset link sent", code=reset_code)
+        return ForgotPasswordResponse(message="Password reset link sent")
 
     # Verify lai reset link gui den cho user va tien hanh thay doi password cho user 
     # Nhan vao ma code -> Xac dinh user nay la ai -> Cap nhat password moi 
@@ -275,11 +290,24 @@ class AuthService:
         stmt = select(UserModel.id, UserModel.email).where(UserModel.id == int(user_id)) 
         result = (await self.db_session.execute(stmt)).first() 
         if result is None: 
-            return ForgotPasswordResponse(message = "Password resent link sent", code = "")
+            return ForgotPasswordResponse(message = "Password resent link sent")
         reset_code = await self._create_reset_password_code(result.id) 
-        # Tam thoi van su dung ham random(8) de co the sinh ra duoc 8 ki tu. Tien hanh tang len 16 sau 
+
+        
+        confirm_url = f"{PASSWORD_CHANGE_CONFIRM_URL}#code={reset_code}"
+        await self.email_client.send_email(
+            to=result.email, 
+            subject="Confirm your new password", 
+            body=(
+                "A request was made to reset the password for your account.\n\n"
+                "Use the link below to create a new password. It expires in 5 minutes:\n\n"
+                f"{confirm_url}\n\n"
+                "If you did not request a password reset, you can safely ignore this email."
+            )
+        )
+
         print("Reset password token will send to client: ", reset_code) 
-        return ForgotPasswordResponse(message="Password reset link sent", code=reset_code)
+        return ForgotPasswordResponse(message="Password reset link sent")
 
 
     async def verify_password_changing(self, code: str, new_password: str):
@@ -324,10 +352,120 @@ class AuthService:
 
         return ResendOtpResponse(message="OTP resent successfully")
 
-    async def change_email(self, new_email: str, password: str):
-        return ChangeEmailResponse(
-            message="Email change request submitted", token="demo-token"
+    async def request_email_change(
+        self, user_id: int, new_email: str, password: str
+    ) -> ChangeEmailResponse:
+        """Require a recent password proof before sending an email-change link."""
+        user = await self.db_session.scalar(
+            select(UserModel).where(UserModel.id == user_id)
+        )
+        if user is None or user.password is None:
+            raise HTTPException(status_code=401, detail="Invalid password")
+        self._require_active_account(user)
+        if not password_hash.verify(password, user.password):
+            raise HTTPException(status_code=401, detail="Invalid password")
+
+        if user.email == new_email:
+            raise HTTPException(status_code=400, detail="New email must be different")
+
+        existing_user = await self.db_session.scalar(
+            select(UserModel.id).where(UserModel.email == new_email)
+        )
+        if existing_user is not None:
+            raise HTTPException(status_code=409, detail="Email is already in use")
+
+        previous_token_id = await self.session_service.get_value(
+            RedisKey.save_email_change(str(user.id))
+        )
+        if previous_token_id is not None:
+            await self.session_service.delete_value(
+                RedisKey.email_change(str(previous_token_id))
+            )
+
+        token_id = secrets.token_urlsafe(32)
+        token = await self.jwt_service.create_token(
+            {"sub": str(user.id), "email": new_email, "jti": token_id},
+            TokenType.EMAIL_CHANGE_TOKEN,
+            timedelta(seconds=EMAIL_CHANGE_LIVE_TIME),
+        )
+        pending_change = json.dumps(
+            {"user_id": str(user.id), "email": new_email}
+        )
+        await self.session_service.set_value(
+            RedisKey.email_change(token_id), pending_change, EMAIL_CHANGE_LIVE_TIME
+        )
+        await self.session_service.set_value(
+            RedisKey.save_email_change(str(user.id)), token_id, EMAIL_CHANGE_LIVE_TIME
         )
 
-    async def verify_reset_email(self, token: str):
-        return VerifyResetEmailResponse(message="Email verified successfully")
+        confirmation_url = f"{EMAIL_CHANGE_CONFIRM_URL}#token={token}"
+        await self.email_client.send_email(
+            to=new_email,
+            subject="Confirm your new email address",
+            body=(
+                "A request was made to change the email address for your account. "
+                "Confirm the change using this link within 10 minutes:\n\n"
+                f"{confirmation_url}\n\n"
+                "If you did not request this change, you can ignore this email."
+            ),
+        )
+        return ChangeEmailResponse(message="Email change confirmation sent")
+
+    async def confirm_email_change(self, token: str) -> ConfirmEmailChangeResponse:
+        try:
+            payload = await self.jwt_service.verify_token(
+                token, TokenType.EMAIL_CHANGE_TOKEN
+            )
+            user_id = int(payload["sub"])
+            new_email = payload["email"]
+            token_id = payload["jti"]
+        except (InvalidTokenError, KeyError, TypeError, ValueError):
+            raise HTTPException(status_code=400, detail="Invalid or expired email change token")
+
+        if (
+            payload.get("token_type") != TokenType.EMAIL_CHANGE_TOKEN.value
+            or user_id <= 0
+            or not isinstance(new_email, str)
+            or not isinstance(token_id, str)
+            or not token_id
+        ):
+            raise HTTPException(status_code=400, detail="Invalid or expired email change token")
+
+        pending_change = await self.session_service.consume_value(
+            RedisKey.email_change(token_id)
+        )
+        if pending_change is None:
+            raise HTTPException(status_code=400, detail="Invalid or expired email change token")
+
+        try:
+            pending_data = json.loads(pending_change)
+        except (TypeError, ValueError, json.JSONDecodeError):
+            raise HTTPException(status_code=400, detail="Invalid or expired email change token")
+        if not isinstance(pending_data, dict) or (
+            pending_data.get("user_id") != str(user_id)
+            or pending_data.get("email") != new_email
+        ):
+            raise HTTPException(status_code=400, detail="Invalid or expired email change token")
+
+        user = await self.db_session.scalar(
+            select(UserModel).where(UserModel.id == user_id)
+        )
+        if user is None:
+            raise HTTPException(status_code=400, detail="Invalid or expired email change token")
+        self._require_active_account(user)
+
+        existing_user = await self.db_session.scalar(
+            select(UserModel.id).where(UserModel.email == new_email)
+        )
+        if existing_user is not None:
+            raise HTTPException(status_code=409, detail="Email is already in use")
+
+        user.email = new_email
+        user.refresh_token = None
+        try:
+            await self.db_session.commit()
+        except IntegrityError:
+            await self.db_session.rollback()
+            raise HTTPException(status_code=409, detail="Email is already in use")
+
+        return ConfirmEmailChangeResponse(message="Email changed successfully")

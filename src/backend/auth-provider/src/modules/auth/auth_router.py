@@ -7,6 +7,8 @@ from src.modules.auth.auth_dto import (
     AuthCodeResponse,
     ChangeEmailRequest,
     ChangeEmailResponse,
+    ConfirmEmailChangeRequest,
+    ConfirmEmailChangeResponse,
     ForgotPasswordRequest,
     ForgotPasswordResponse,
     LoginGoogleRequest,
@@ -20,7 +22,6 @@ from src.modules.auth.auth_dto import (
     ResendOtpResponse,
     VerifyPasswordChangingResponse,
     VerifyPasswordChangingRequest,
-    VerifyResetEmailResponse,
 )
 from src.modules.auth.auth_dependency import get_auth_service
 from src.modules.auth.auth_service import AuthService
@@ -67,7 +68,7 @@ async def verify(
     return response
 
 
-@router.post("/change-password")
+@router.post("/change-password", response_model=ForgotPasswordResponse)
 async def reset_password(
     auth_service: AuthService = Depends(get_auth_service),
     user: dict = Depends(get_current_user),
@@ -81,18 +82,9 @@ async def verify_password_changing(
     
 ): 
     return await auth_service.verify_password_changing(
-        data.code, 
+        data.code,
         data.new_password
     )
-
-@router.get("/verify-reset-email")
-async def verify_reset_email(
-    token: str,
-    auth_service: AuthService = Depends(get_auth_service),
-):
-    response = await auth_service.verify_reset_email(token)
-    return response
-
 
 @router.post("/login")
 async def login(
@@ -158,7 +150,7 @@ async def resend_otp(
     return await auth_service.resend_otp(data.email)
 
 
-@router.post("/forgot-password")
+@router.post("/forgot-password", response_model=ForgotPasswordResponse)
 async def forgot_password(
     data: ForgotPasswordRequest,
     auth_service: AuthService = Depends(get_auth_service),
@@ -166,9 +158,20 @@ async def forgot_password(
     return await auth_service.forgot_password(data.email)
 
 
-@router.post("/change-email")
+@router.post("/change-email", response_model=ChangeEmailResponse)
 async def change_email(
     data: ChangeEmailRequest,
     auth_service: AuthService = Depends(get_auth_service),
+    user: dict = Depends(get_current_user),
 ):
-    return await auth_service.change_email(data.new_email, data.password)
+    return await auth_service.request_email_change(
+        user["sub"], str(data.new_email), data.password
+    )
+
+
+@router.post("/confirm-email-change", response_model=ConfirmEmailChangeResponse)
+async def confirm_email_change(
+    data: ConfirmEmailChangeRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    return await auth_service.confirm_email_change(data.token)

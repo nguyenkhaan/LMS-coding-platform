@@ -26,8 +26,8 @@ class RedisKey:
         return f"lms:auth-provider:login-attempt:{email}"
 
     @staticmethod
-    def reset_password(code: str) -> str:
-        return f"lms:auth-provider:reset-password:{code}"
+    def reset_password(token: str) -> str:
+        return f"lms:auth-provider:reset-password:{token}"
     @staticmethod
     def save_reset_password(user_id : str) -> str: 
         return f"lms:auth-provider:reset-password:user:{user_id}"
@@ -38,6 +38,14 @@ class RedisKey:
     @staticmethod 
     def save_verify_register(user_id : str) -> str: 
         return f"lms:auth-provider:verify-register:user:{user_id}"
+
+    @staticmethod
+    def email_change(token_id: str) -> str:
+        return f"lms:auth-provider:email-change:{token_id}"
+
+    @staticmethod
+    def save_email_change(user_id: str) -> str:
+        return f"lms:auth-provider:email-change:user:{user_id}"
 """
 BAI THO DE THUONG 
 @classmethod: call it from class, pass the cls 
