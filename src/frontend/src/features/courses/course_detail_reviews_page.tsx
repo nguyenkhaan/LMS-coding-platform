@@ -59,6 +59,7 @@ export const CourseDetailReviewsPage: React.FC = () => {
 					lessons={42}
 					isEnrolled={isEnrolled}
 					onEnroll={handleEnroll}
+					courseSlug={slug}
 				/>
 			</div>
 		</div>

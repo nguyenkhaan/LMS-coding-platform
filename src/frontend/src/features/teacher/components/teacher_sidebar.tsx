@@ -30,7 +30,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ activePath }) =>
   const menuItems = [
     { to: '/teacher/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/teacher/profile', icon: User, label: 'My Profile' },
-    { to: '/teacher/course-builder', icon: BookOpen, label: 'My Courses' },
+    { to: '/teacher/courses', icon: BookOpen, label: 'My Courses' },
     { to: '/teacher/students', icon: Users, label: 'Students' },
     { to: '/teacher/earnings', icon: DollarSign, label: 'Earnings' },
     { to: '/teacher/wallet', icon: Wallet, label: 'Payout & Wallet' },
@@ -45,7 +45,8 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ activePath }) =>
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = activePath === item.to || 
-                (item.to === '/teacher/course-builder' && activePath.startsWith('/teacher/courses/'));
+                (item.to === '/teacher/courses' && activePath.startsWith('/teacher/courses')) ||
+                (item.to === '/teacher/courses' && activePath === '/teacher/course-builder');
               
               return (
                 <Link

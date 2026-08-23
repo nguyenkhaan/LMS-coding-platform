@@ -19,6 +19,7 @@ import {
   Layers
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { StudentHeroCard } from '../components/student_hero_card';
 
 interface FavoriteCourse {
   id: string;
@@ -144,52 +145,8 @@ export function StudentFavoritesPage() {
         </div>
       </div>
 
-      {/* 2. PROFILE HERO CARD (bg-linear-271 from-cyan-700 to-blue-700) */}
-      <div className="max-w-[1560px] w-full mx-auto px-6 lg:px-12 pt-8">
-        <div className="w-full rounded-2xl bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-900 text-white p-6 sm:p-8 shadow-md relative overflow-hidden flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-          
-          {/* Background Ambient Circles */}
-          <div className="absolute -right-20 -top-40 w-96 h-96 rounded-full border-[60px] border-white/5 pointer-events-none" />
-          <div className="absolute right-60 -bottom-20 w-80 h-80 rounded-full border-[40px] border-white/5 pointer-events-none" />
-
-          {/* Left: User Avatar & Info */}
-          <div className="flex items-center gap-5 relative z-10">
-            <div className="relative">
-              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-indigo-950 border-4 border-white shadow-md flex items-center justify-center text-white text-2xl font-bold font-mono">
-                RR
-              </div>
-              <div className="absolute bottom-1 right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white shadow-xs flex items-center justify-center" />
-            </div>
-
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <h2 className="text-white text-xl sm:text-2xl font-bold tracking-tight">
-                  {user?.fullName || 'Ronald Richard'}
-                </h2>
-                <CheckCircle2 className="w-5 h-5 text-sky-300" />
-              </div>
-              <span className="text-neutral-200 text-sm font-medium">Student</span>
-            </div>
-          </div>
-
-          {/* Right: Action Buttons */}
-          <div className="flex items-center gap-3.5 relative z-10 self-stretch sm:self-auto justify-end">
-            <button
-              onClick={() => navigate('/become-teacher')}
-              className="px-5 py-2.5 bg-white hover:bg-slate-100 text-zinc-900 rounded-[40px] text-sm font-semibold transition-colors cursor-pointer shadow-xs"
-            >
-              Become a Teacher
-            </button>
-            <button
-              onClick={() => navigate('/teacher/dashboard')}
-              className="px-5 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-[40px] text-sm font-semibold transition-colors cursor-pointer shadow-sm shadow-rose-500/20"
-            >
-              Teacher Dashboard
-            </button>
-          </div>
-
-        </div>
-      </div>
+      {/* 2. PROFILE HERO CARD */}
+      <StudentHeroCard displayName={user?.fullName} />
 
       {/* 3. MAIN WORKSPACE (2 Columns: Left Menu Sidebar + Right Favorites Content) */}
       <div className="max-w-[1560px] w-full mx-auto px-6 lg:px-12 py-8 flex flex-col lg:flex-row justify-start items-start gap-8">

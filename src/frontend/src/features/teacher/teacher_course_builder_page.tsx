@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { FigmaHeader } from '../courses/components/figma_header';
 import { FigmaFooter } from '../courses/components/figma_footer';
 import { TeacherSidebar } from './components/teacher_sidebar';
 import { toast } from 'sonner';
+import { Modal } from '@/components/ui/Modal';
+import { useCourseStore } from '@/stores/useCourseStore';
 import {
   LayoutDashboard,
   User,
@@ -38,11 +40,12 @@ import {
 // Data Interfaces
 interface CourseMetadata {
   title: string;
+  slug: string;
   field: string;
   description: string;
   price: number;
   thumbnail_url: string;
-  status: 'DRAFT' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED';
+  status: 'DRAFT' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED' | 'ARCHIVED';
 }
 
 interface LessonContent {
@@ -70,6 +73,7 @@ interface Section {
 // Default mock values representing existing course models
 const DEFAULT_METADATA: CourseMetadata = {
   title: 'Python Foundations for Problem Solving',
+  slug: 'python-foundations-for-problem-solving',
   field: 'Programming',
   description: 'Master the fundamental concepts of Python and solve algorithms/data structures problems.',
   price: 49.00,
@@ -155,14 +159,63 @@ const NavItem: React.FC<NavItemProps> = ({ to, icon, label, active }) => (
 export const CourseBuilderPage: React.FC = () => {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const { courseId } = useParams<{ courseId: string }>();
+  const { courses, updateCourse } = useCourseStore();
+
+  const activeCourse = courses.find(c => c.id === courseId) || courses[0];
 
   // State Management
   const [metadata, setMetadata] = useState<CourseMetadata>(DEFAULT_METADATA);
-  const [sections, setSections] = useState<Section[]>(DEFAULT_SECTIONS);
-  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-    'S-01': true,
-    'S-02': true
+  const [sections, setSections] = useState<Section[]>([]);
+  const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (activeCourse) {
+      setMetadata({
+        title: activeCourse.title,
+        slug: activeCourse.slug,
+        field: activeCourse.field,
+        description: activeCourse.description,
+        price: activeCourse.price,
+        thumbnail_url: activeCourse.thumbnail_url,
+        status: activeCourse.status
+      });
+      setSections(activeCourse.sections || []);
+      
+      const expand: Record<string, boolean> = {};
+      activeCourse.sections.forEach(s => {
+        expand[s.id] = true;
+      });
+      setExpandedSections(expand);
+    }
+  }, [activeCourse]);
+
+  useEffect(() => {
+    if (activeCourse && sections.length > 0 && sections !== activeCourse.sections) {
+      updateCourse(activeCourse.id, { sections });
+    }
+  }, [sections, activeCourse, updateCourse]);
+
+  // Problem creation modal & form states
+  const [isProblemModalOpen, setIsProblemModalOpen] = useState(false);
+  const [selectedSectionIdForProblem, setSelectedSectionIdForProblem] = useState<string | null>(null);
+  const [selectedLessonIdForProblem, setSelectedLessonIdForProblem] = useState<string | null>(null);
+  const [problemForm, setProblemForm] = useState({
+    title: '',
+    slug: '',
+    statement: '',
+    inputDescription: '',
+    outputDescription: '',
+    constraints: '',
+    difficulty: 'EASY' as 'EASY' | 'MEDIUM' | 'HARD',
+    passingScore: 100,
+    timeLimitMs: 1000,
+    memoryLimitKb: 256000,
+    sampleTestcases: [{ input: '', output: '', explanation: '' }],
+    tags: ''
   });
+  const [problemErrors, setProblemErrors] = useState<Record<string, string>>({});
+  const [isSavingProblem, setIsSavingProblem] = useState(false);
 
   const displayName = user?.fullName || 'Edythe Andrew';
   const avatarUrl = user?.avatarUrl || 'https://placehold.co/96x96';
@@ -290,27 +343,214 @@ export const CourseBuilderPage: React.FC = () => {
     toast.success('Lesson deleted.');
   };
 
+  // Problem form handlers and validation
+  const resetProblemForm = () => {
+    setProblemForm({
+      title: '',
+      slug: '',
+      statement: '',
+      inputDescription: '',
+      outputDescription: '',
+      constraints: '',
+      difficulty: 'EASY',
+      passingScore: 100,
+      timeLimitMs: 1000,
+      memoryLimitKb: 256000,
+      sampleTestcases: [{ input: '', output: '', explanation: '' }],
+      tags: ''
+    });
+    setProblemErrors({});
+    setIsSavingProblem(false);
+    setSelectedSectionIdForProblem(null);
+    setSelectedLessonIdForProblem(null);
+  };
+
+  const addSampleTestcase = () => {
+    setProblemForm(prev => ({
+      ...prev,
+      sampleTestcases: [...prev.sampleTestcases, { input: '', output: '', explanation: '' }]
+    }));
+  };
+
+  const removeSampleTestcase = (index: number) => {
+    if (problemForm.sampleTestcases.length <= 1) {
+      toast.error('At least one sample test case is required.');
+      return;
+    }
+    setProblemForm(prev => ({
+      ...prev,
+      sampleTestcases: prev.sampleTestcases.filter((_, idx) => idx !== index)
+    }));
+  };
+
+  const handleTestcaseChange = (index: number, field: 'input' | 'output' | 'explanation', value: string) => {
+    setProblemForm(prev => {
+      const newTestcases = [...prev.sampleTestcases];
+      newTestcases[index] = {
+        ...newTestcases[index],
+        [field]: value
+      };
+      return { ...prev, sampleTestcases: newTestcases };
+    });
+  };
+
+  const handleTitleChange = (val: string) => {
+    const generatedSlug = val
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+
+    setProblemForm(prev => ({
+      ...prev,
+      title: val,
+      slug: generatedSlug
+    }));
+  };
+
+  const validateProblemForm = () => {
+    const errors: Record<string, string> = {};
+
+    if (!problemForm.title.trim()) {
+      errors.title = 'Problem title is required.';
+    }
+
+    if (!problemForm.slug.trim()) {
+      errors.slug = 'Slug is required.';
+    } else if (!/^[a-z0-9-]+$/.test(problemForm.slug)) {
+      errors.slug = 'Slug must contain only lowercase letters, numbers, and hyphens.';
+    }
+
+    if (!problemForm.statement.trim()) {
+      errors.statement = 'Problem statement/description is required.';
+    }
+
+    if (!problemForm.inputDescription.trim()) {
+      errors.inputDescription = 'Input format description is required.';
+    }
+
+    if (!problemForm.outputDescription.trim()) {
+      errors.outputDescription = 'Output format description is required.';
+    }
+
+    if (!problemForm.constraints.trim()) {
+      errors.constraints = 'Constraints description is required.';
+    }
+
+    if (problemForm.passingScore <= 0) {
+      errors.passingScore = 'Passing score must be greater than 0.';
+    }
+
+    if (problemForm.timeLimitMs <= 0) {
+      errors.timeLimitMs = 'Time limit must be greater than 0.';
+    }
+
+    if (problemForm.memoryLimitKb <= 0) {
+      errors.memoryLimitKb = 'Memory limit must be greater than 0.';
+    }
+
+    if (problemForm.sampleTestcases.length === 0) {
+      errors.sampleTestcases = 'At least one sample test case is required.';
+    } else {
+      const hasEmptyCase = problemForm.sampleTestcases.some(tc => !tc.input.trim() || !tc.output.trim());
+      if (hasEmptyCase) {
+        errors.sampleTestcases = 'All sample test cases must have both input and output.';
+      }
+    }
+
+    setProblemErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSaveProblem = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateProblemForm()) {
+      toast.error('Please fix the validation errors in the form.');
+      return;
+    }
+
+    setIsSavingProblem(true);
+
+    try {
+      // Simulate backend API persistence delay
+      // ==========================================
+      // FUTURE API INTEGRATION POINT:
+      // Replace this timeout block with an actual post request:
+      // const response = await problemApi.create({ ...problemForm, courseId });
+      // ==========================================
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const updated = sections.map(sec => {
+        if (sec.id === selectedSectionIdForProblem) {
+          const updatedLessons = sec.lessons.map(les => {
+            if (les.id === selectedLessonIdForProblem) {
+              const newC: LessonContent = {
+                id: `C-${Date.now()}`,
+                content_type: 'Code Problem',
+                title: problemForm.title
+              };
+              return {
+                ...les,
+                contents: [...les.contents, newC]
+              };
+            }
+            return les;
+          });
+          return { ...sec, lessons: updatedLessons };
+        }
+        return sec;
+      });
+
+      setSections(updated);
+      toast.success('Problem created and curriculum updated successfully.');
+      setIsProblemModalOpen(false);
+      resetProblemForm();
+    } catch (err) {
+      toast.error('Failed to create the problem.');
+    } finally {
+      setIsSavingProblem(false);
+    }
+  };
+
   const addContent = (sectionId: string, lessonId: string) => {
     const typeChoice = prompt('Choose content type: 1 for Reading, 2 for Quiz, 3 for Code Problem');
-    let typeName: 'Reading' | 'Quiz' | 'Code Problem' = 'Reading';
-    if (typeChoice === '2') typeName = 'Quiz';
-    if (typeChoice === '3') typeName = 'Code Problem';
+    if (!typeChoice) return;
 
-    const title = prompt('Enter content title:');
-    if (!title) return;
+    if (typeChoice === '1') {
+      navigate(`/teacher/courses/${activeCourse.id}/reading-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
+      return;
+    }
+    if (typeChoice === '2') {
+      navigate(`/teacher/courses/${activeCourse.id}/quiz-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
+      return;
+    }
+    if (typeChoice === '3') {
+      navigate(`/teacher/courses/${activeCourse.id}/problem-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
+      return;
+    }
+  };
 
+  const handleEditActivity = (sectionId: string, lessonId: string, activityId: string, contentType: 'Reading' | 'Quiz' | 'Code Problem') => {
+    if (contentType === 'Reading') {
+      navigate(`/teacher/courses/${activeCourse.id}/reading-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
+    } else if (contentType === 'Quiz') {
+      navigate(`/teacher/courses/${activeCourse.id}/quiz-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
+    } else if (contentType === 'Code Problem') {
+      navigate(`/teacher/courses/${activeCourse.id}/problem-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
+    }
+  };
+
+  const handleDeleteActivity = (sectionId: string, lessonId: string, activityId: string) => {
+    if (!confirm('Are you sure you want to delete this activity?')) return;
     const updated = sections.map(sec => {
       if (sec.id === sectionId) {
         const updatedLessons = sec.lessons.map(les => {
           if (les.id === lessonId) {
-            const newC: LessonContent = {
-              id: `C-${Date.now()}`,
-              content_type: typeName,
-              title
-            };
             return {
               ...les,
-              contents: [...les.contents, newC]
+              contents: les.contents.filter(c => c.id !== activityId)
             };
           }
           return les;
@@ -320,7 +560,23 @@ export const CourseBuilderPage: React.FC = () => {
       return sec;
     });
     setSections(updated);
-    toast.success('Content attached to lesson.');
+    toast.success('Activity deleted.');
+  };
+
+  const handlePreviewClassroom = () => {
+    if (!activeCourse || !sections || sections.length === 0) {
+      toast.error('Cannot preview classroom: This course has no modules/sections yet. Please add one first.');
+      return;
+    }
+
+    const hasLessons = sections.some(sec => sec.lessons && sec.lessons.length > 0);
+    if (!hasLessons) {
+      toast.error('Cannot preview classroom: This course has no lessons yet. Please add a lesson first.');
+      return;
+    }
+
+    toast.success(`Opening preview mode for "${metadata.title}"`);
+    navigate(`/learn/${metadata.slug}`);
   };
 
   // Save / Publish Actions
@@ -331,6 +587,16 @@ export const CourseBuilderPage: React.FC = () => {
       return;
     }
     setMetadata(prev => ({ ...prev, status: 'DRAFT' }));
+    updateCourse(activeCourse.id, {
+      title: metadata.title,
+      slug: metadata.slug,
+      field: metadata.field,
+      description: metadata.description,
+      price: metadata.price,
+      thumbnail_url: metadata.thumbnail_url,
+      status: 'DRAFT',
+      sections
+    });
     toast.success('Course draft saved successfully.');
   };
 
@@ -341,6 +607,16 @@ export const CourseBuilderPage: React.FC = () => {
       return;
     }
     setMetadata(prev => ({ ...prev, status: 'PENDING_REVIEW' }));
+    updateCourse(activeCourse.id, {
+      title: metadata.title,
+      slug: metadata.slug,
+      field: metadata.field,
+      description: metadata.description,
+      price: metadata.price,
+      thumbnail_url: metadata.thumbnail_url,
+      status: 'PENDING_REVIEW',
+      sections
+    });
     toast.success('Course submitted for review! Admin approval is pending.');
   };
 
@@ -381,10 +657,16 @@ export const CourseBuilderPage: React.FC = () => {
             </div>
             <div className="flex gap-4 relative z-10">
               <button
-                onClick={() => navigate('/teacher/dashboard')}
-                className="px-5 py-2.5 bg-[#FF4667] text-white text-sm font-semibold rounded-full hover:bg-[#e03d5b] transition-all cursor-pointer"
+                onClick={handlePreviewClassroom}
+                className="px-5 py-2.5 bg-white text-indigo-900 text-sm font-semibold rounded-full hover:bg-slate-50 transition-all cursor-pointer shadow-sm"
               >
-                Teacher Dashboard
+                Preview Classroom
+              </button>
+              <button
+                onClick={() => navigate('/dashboard')}
+                className="px-5 py-2.5 bg-white text-indigo-900 text-sm font-semibold rounded-full hover:bg-slate-50 transition-all cursor-pointer shadow-sm"
+              >
+                Switch to Student
               </button>
             </div>
             <div className="absolute w-[400px] h-[400px] bg-white/5 rounded-full -right-24 -top-24 pointer-events-none" />
@@ -430,6 +712,18 @@ export const CourseBuilderPage: React.FC = () => {
                     id="course-title"
                     value={metadata.title}
                     onChange={(e) => setMetadata(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px]"
+                  />
+                </div>
+
+                {/* Slug */}
+                <div className="flex flex-col gap-1.5">
+                  <label htmlFor="course-slug" className="text-[13px] font-semibold text-[#374151]">Course Slug</label>
+                  <input
+                    type="text"
+                    id="course-slug"
+                    value={metadata.slug}
+                    onChange={(e) => setMetadata(prev => ({ ...prev, slug: e.target.value }))}
                     className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px]"
                   />
                 </div>
@@ -653,10 +947,28 @@ export const CourseBuilderPage: React.FC = () => {
                               {lesson.contents.length > 0 && (
                                 <div className="pl-6 flex flex-col gap-1.5">
                                   {lesson.contents.map(c => (
-                                    <div key={c.id} className="flex items-center gap-1.5 text-[11px] font-semibold text-[#374151] bg-slate-50 border border-gray-100 rounded-lg px-2 py-1">
-                                      {getContentIcon(c.content_type)}
-                                      <span className="text-[#6B7280] capitalize font-bold shrink-0">{c.content_type}:</span>
-                                      <span className="truncate">{c.title}</span>
+                                    <div key={c.id} className="flex items-center justify-between text-[11px] font-semibold text-[#374151] bg-slate-50 border border-gray-100 rounded-lg px-2 py-1">
+                                      <div className="flex items-center gap-1.5 truncate">
+                                        {getContentIcon(c.content_type)}
+                                        <span className="text-[#6B7280] capitalize font-bold shrink-0">{c.content_type}:</span>
+                                        <span className="truncate">{c.title}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <button
+                                          onClick={() => handleEditActivity(section.id, lesson.id, c.id, c.content_type)}
+                                          className="p-0.5 rounded text-indigo-600 hover:bg-indigo-50"
+                                          title="Edit Activity"
+                                        >
+                                          <Edit3 className="w-3 h-3" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteActivity(section.id, lesson.id, c.id)}
+                                          className="p-0.5 rounded text-rose-600 hover:bg-rose-50"
+                                          title="Delete Activity"
+                                        >
+                                          <Trash2 className="w-3 h-3" />
+                                        </button>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
@@ -683,6 +995,280 @@ export const CourseBuilderPage: React.FC = () => {
             </div>
 
           </div>
+
+      <Modal
+        isOpen={isProblemModalOpen}
+        onClose={() => {
+          resetProblemForm();
+          setIsProblemModalOpen(false);
+        }}
+        title="Create Problem"
+        description="Define a new coding problem activity for this lesson."
+        maxWidth="2xl"
+        footer={
+          <div className="flex gap-3 justify-end w-full">
+            <button
+              type="button"
+              onClick={() => {
+                resetProblemForm();
+                setIsProblemModalOpen(false);
+              }}
+              className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-[#374151] hover:bg-slate-50 transition-all cursor-pointer"
+              disabled={isSavingProblem}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              onClick={handleSaveProblem}
+              className="px-4 py-2 rounded-xl bg-[#FF4667] text-white text-sm font-semibold hover:bg-[#e03d5b] transition-all shadow-sm cursor-pointer flex items-center gap-2 disabled:opacity-50"
+              disabled={isSavingProblem}
+            >
+              {isSavingProblem ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  Saving...
+                </>
+              ) : (
+                'Save/Create Problem'
+              )}
+            </button>
+          </div>
+        }
+      >
+        <div className="max-h-[60vh] overflow-y-auto px-1 pr-2 space-y-4">
+          {/* Row 1: Title & Slug */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-[13px] font-semibold text-[#374151]">Problem Title</label>
+              <input
+                type="text"
+                placeholder="e.g., Reverse a Linked List"
+                value={problemForm.title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                  problemErrors.title ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                }`}
+              />
+              {problemErrors.title && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.title}</p>}
+            </div>
+            
+            <div className="space-y-1">
+              <label className="text-[13px] font-semibold text-[#374151]">Problem Slug</label>
+              <input
+                type="text"
+                placeholder="e.g., reverse-linked-list"
+                value={problemForm.slug}
+                onChange={(e) => setProblemForm(prev => ({ ...prev, slug: e.target.value }))}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                  problemErrors.slug ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                }`}
+              />
+              {problemErrors.slug && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.slug}</p>}
+            </div>
+          </div>
+
+          {/* Row 2: Problem Statement */}
+          <div className="space-y-1">
+            <label className="text-[13px] font-semibold text-[#374151]">Problem Statement / Description</label>
+            <textarea
+              rows={4}
+              placeholder="Describe the problem, input format requirements, examples, etc. Supports Markdown."
+              value={problemForm.statement}
+              onChange={(e) => setProblemForm(prev => ({ ...prev, statement: e.target.value }))}
+              className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none ${
+                problemErrors.statement ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+              }`}
+            />
+            {problemErrors.statement && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.statement}</p>}
+          </div>
+
+          {/* Row 3: Input & Output Formats */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-1">
+              <label className="text-[13px] font-semibold text-[#374151]">Input Format Description</label>
+              <textarea
+                rows={3}
+                placeholder="Describe the shape/constraints of the input data."
+                value={problemForm.inputDescription}
+                onChange={(e) => setProblemForm(prev => ({ ...prev, inputDescription: e.target.value }))}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none ${
+                  problemErrors.inputDescription ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                }`}
+              />
+              {problemErrors.inputDescription && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.inputDescription}</p>}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[13px] font-semibold text-[#374151]">Output Format Description</label>
+              <textarea
+                rows={3}
+                placeholder="Describe the expected returned value or stdout format."
+                value={problemForm.outputDescription}
+                onChange={(e) => setProblemForm(prev => ({ ...prev, outputDescription: e.target.value }))}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none ${
+                  problemErrors.outputDescription ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                }`}
+              />
+              {problemErrors.outputDescription && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.outputDescription}</p>}
+            </div>
+          </div>
+
+          {/* Row 4: Constraints */}
+          <div className="space-y-1">
+            <label className="text-[13px] font-semibold text-[#374151]">Constraints</label>
+            <textarea
+              rows={2}
+              placeholder="e.g., 1 <= N <= 10^5, Array elements are integers."
+              value={problemForm.constraints}
+              onChange={(e) => setProblemForm(prev => ({ ...prev, constraints: e.target.value }))}
+              className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none ${
+                problemErrors.constraints ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+              }`}
+            />
+            {problemErrors.constraints && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.constraints}</p>}
+          </div>
+
+          {/* Row 5: Metadata Grid (Difficulty, Passing Score, limits, tags) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-1">
+              <label className="text-[13px] font-semibold text-[#374151]">Difficulty</label>
+              <select
+                value={problemForm.difficulty}
+                onChange={(e) => setProblemForm(prev => ({ ...prev, difficulty: e.target.value as any }))}
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white cursor-pointer"
+              >
+                <option value="EASY">Easy</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="HARD">Hard</option>
+              </select>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[13px] font-semibold text-[#374151]">Passing Score</label>
+              <input
+                type="number"
+                value={problemForm.passingScore}
+                onChange={(e) => setProblemForm(prev => ({ ...prev, passingScore: parseInt(e.target.value) || 0 }))}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                  problemErrors.passingScore ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                }`}
+              />
+              {problemErrors.passingScore && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.passingScore}</p>}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[13px] font-semibold text-[#374151]">Time Limit (ms)</label>
+              <input
+                type="number"
+                value={problemForm.timeLimitMs}
+                onChange={(e) => setProblemForm(prev => ({ ...prev, timeLimitMs: parseInt(e.target.value) || 0 }))}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                  problemErrors.timeLimitMs ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                }`}
+              />
+              {problemErrors.timeLimitMs && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.timeLimitMs}</p>}
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[13px] font-semibold text-[#374151]">Memory Limit (KB)</label>
+              <input
+                type="number"
+                value={problemForm.memoryLimitKb}
+                onChange={(e) => setProblemForm(prev => ({ ...prev, memoryLimitKb: parseInt(e.target.value) || 0 }))}
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                  problemErrors.memoryLimitKb ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                }`}
+              />
+              {problemErrors.memoryLimitKb && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.memoryLimitKb}</p>}
+            </div>
+          </div>
+
+          {/* Row 6: Tags */}
+          <div className="space-y-1">
+            <label className="text-[13px] font-semibold text-[#374151]">Tags (comma separated)</label>
+            <input
+              type="text"
+              placeholder="e.g., Array, Two Pointers, Dynamic Programming"
+              value={problemForm.tags}
+              onChange={(e) => setProblemForm(prev => ({ ...prev, tags: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px]"
+            />
+          </div>
+
+          {/* Row 7: Sample Test cases */}
+          <div className="space-y-3 border-t border-gray-100 pt-4">
+            <div className="flex justify-between items-center">
+              <h4 className="text-[14px] font-bold text-[#111827]">Sample Test Cases</h4>
+              <button
+                type="button"
+                onClick={addSampleTestcase}
+                className="px-3 py-1 bg-indigo-50 border border-indigo-100 text-[#392C7D] hover:bg-indigo-100 transition-all rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Test Case
+              </button>
+            </div>
+            
+            {problemErrors.sampleTestcases && (
+              <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.sampleTestcases}</p>
+            )}
+
+            <div className="space-y-4">
+              {problemForm.sampleTestcases.map((testcase, index) => (
+                <div key={index} className="p-4 bg-slate-50 border border-gray-100 rounded-xl space-y-3 relative">
+                  <button
+                    type="button"
+                    onClick={() => removeSampleTestcase(index)}
+                    className="absolute top-3 right-3 text-rose-500 hover:bg-rose-50 p-1 rounded-lg transition-colors cursor-pointer"
+                    title="Delete Test Case"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                  
+                  <span className="text-[11px] font-extrabold text-[#392C7D] bg-indigo-50 px-2.5 py-0.5 rounded-full">
+                    Test Case #{index + 1}
+                  </span>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-[#6B7280]">Input</label>
+                      <textarea
+                        rows={2}
+                        placeholder="e.g., nums = [2,7,11,15], target = 9"
+                        value={testcase.input}
+                        onChange={(e) => handleTestcaseChange(index, 'input', e.target.value)}
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white resize-none font-mono"
+                      />
+                    </div>
+                    
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-semibold text-[#6B7280]">Output</label>
+                      <textarea
+                        rows={2}
+                        placeholder="e.g., [0,1]"
+                        value={testcase.output}
+                        onChange={(e) => handleTestcaseChange(index, 'output', e.target.value)}
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white resize-none font-mono"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-[#6B7280]">Explanation (Optional)</label>
+                    <textarea
+                      rows={1.5}
+                      placeholder="Explain why this output is expected."
+                      value={testcase.explanation}
+                      onChange={(e) => handleTestcaseChange(index, 'explanation', e.target.value)}
+                      className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white resize-none"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Modal>
 
         </div>
 

@@ -90,15 +90,22 @@ export const EnrolledCoursesPage: React.FC = () => {
             </div>
             
             <div className="flex gap-4 relative z-10">
-              <button className="px-5 py-2.5 bg-white text-zinc-900 text-sm font-semibold rounded-full hover:bg-slate-100 transition-all cursor-pointer">
-                Become a Teacher
-              </button>
-              <button 
-                onClick={() => navigate('/teacher/dashboard')}
-                className="px-5 py-2.5 bg-[#FF4667] text-white text-sm font-semibold rounded-full hover:bg-[#e03d5b] transition-all cursor-pointer"
-              >
-                Teacher Dashboard
-              </button>
+              {!user?.roles.includes('TEACHER') && (
+                <button
+                  onClick={() => navigate('/become-teacher')}
+                  className="px-5 py-2.5 bg-white text-zinc-900 text-sm font-semibold rounded-full hover:bg-slate-100 transition-all cursor-pointer"
+                >
+                  Become a Teacher
+                </button>
+              )}
+              {user?.roles.includes('TEACHER') && (
+                <button 
+                  onClick={() => navigate('/teacher/dashboard')}
+                  className="px-5 py-2.5 bg-[#FF4667] text-white text-sm font-semibold rounded-full hover:bg-[#e03d5b] transition-all cursor-pointer"
+                >
+                  Teacher Dashboard
+                </button>
+              )}
             </div>
 
             {/* Background design accents */}

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   CheckCircle2,
   Circle,
@@ -16,17 +16,22 @@ import {
   HelpCircle,
   MessageSquare,
   Clock,
-  ThumbsUp
+  ThumbsUp,
+  FileQuestion,
+  Bookmark,
+  Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useCourseStore } from '@/stores/useCourseStore';
 
 interface LessonItem {
-  id: number;
+  id: string;
   title: string;
   type: 'Reading' | 'Quiz' | 'Problem';
   path: string;
   isCompleted: boolean;
   isActive: boolean;
+  rawContent?: any;
 }
 
 interface CommentMessage {
@@ -79,13 +84,87 @@ const INITIAL_COMMENTS: CommentMessage[] = [
 
 export function ClassroomPage() {
   const navigate = useNavigate();
-  const [lessons, setLessons] = useState<LessonItem[]>(INITIAL_LESSONS);
+  const { courseSlug } = useParams<{ courseSlug?: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { courses } = useCourseStore();
+  const currentCourse = courses.find(c => c.slug === courseSlug || c.id === courseSlug);
+  const activeLessonId = searchParams.get('lessonId');
+
+  const getInitialLessons = (): LessonItem[] => {
+    if (!currentCourse) return INITIAL_LESSONS.map(l => ({ ...l, id: String(l.id) }));
+
+    const dynamicLessons: LessonItem[] = [];
+    let idx = 1;
+    currentCourse.sections.forEach(sec => {
+      sec.lessons.forEach(les => {
+        if (les.contents.length > 0) {
+          les.contents.forEach(content => {
+            const isFirst = dynamicLessons.length === 0;
+            const isTarget = activeLessonId ? (content.id === activeLessonId || les.id === activeLessonId) : isFirst;
+            dynamicLessons.push({
+              id: content.id || String(idx++),
+              title: content.title,
+              type: content.content_type === 'Reading' ? 'Reading' : content.content_type === 'Quiz' ? 'Quiz' : 'Problem',
+              path: content.content_type === 'Reading' ? `/learn/${courseSlug}` : content.content_type === 'Quiz' ? `/quiz/${content.id}/preview` : `/classroom/lesson/problem-preview`,
+              isCompleted: false,
+              isActive: isTarget,
+              rawContent: content
+            });
+          });
+        } else {
+          const isFirst = dynamicLessons.length === 0;
+          const isTarget = activeLessonId ? (les.id === activeLessonId) : isFirst;
+          dynamicLessons.push({
+            id: les.id,
+            title: les.title,
+            type: 'Reading',
+            path: `/learn/${courseSlug}`,
+            isCompleted: false,
+            isActive: isTarget,
+            rawContent: les
+          });
+        }
+      });
+    });
+
+    return dynamicLessons.length > 0 ? dynamicLessons : INITIAL_LESSONS.map(l => ({ ...l, id: String(l.id) }));
+  };
+
+  const [lessons, setLessons] = useState<LessonItem[]>(getInitialLessons);
   const [isLessonCompleted, setIsLessonCompleted] = useState<boolean>(false);
   const [comments, setComments] = useState<CommentMessage[]>(INITIAL_COMMENTS);
   const [inputMsg, setInputMsg] = useState<string>('');
   const [courseSearch, setCourseSearch] = useState<string>('');
 
-  const activeLesson = lessons.find((l) => l.isActive) || lessons[2];
+  useEffect(() => {
+    if (activeLessonId) {
+      setLessons((prev) =>
+        prev.map((l) => ({ ...l, isActive: l.id === activeLessonId }))
+      );
+    }
+  }, [activeLessonId]);
+
+  const activeLesson = lessons.find((l) => l.isActive) || lessons[0];
+  const courseTitle = currentCourse ? currentCourse.title : "Data Structures & Algorithms";
+  const subtitleInfo = currentCourse 
+    ? `${currentCourse.field} · ${activeLesson.title}`
+    : "Module 2 · Lesson 3 — Two-pointer patterns";
+
+  const activeIndex = lessons.findIndex((l) => l.id === activeLesson.id);
+  const prevLesson = activeIndex > 0 ? lessons[activeIndex - 1] : null;
+  const nextLesson = activeIndex < lessons.length - 1 ? lessons[activeIndex + 1] : null;
+
+  const handlePrevClick = () => {
+    if (prevLesson) {
+      handleSelectLesson(prevLesson);
+    }
+  };
+
+  const handleNextClick = () => {
+    if (nextLesson) {
+      handleSelectLesson(nextLesson);
+    }
+  };
 
   const handleToggleComplete = () => {
     setIsLessonCompleted(!isLessonCompleted);
@@ -115,14 +194,7 @@ export function ClassroomPage() {
   };
 
   const handleSelectLesson = (lesson: LessonItem) => {
-    if (lesson.type === 'Problem') {
-      navigate('/classroom/lesson/problem-preview');
-      return;
-    }
-    if (lesson.type === 'Quiz') {
-      navigate('/quiz/quiz-control-flow-01/preview');
-      return;
-    }
+    setSearchParams({ lessonId: lesson.id });
     setLessons((prev) =>
       prev.map((l) => ({ ...l, isActive: l.id === lesson.id }))
     );
@@ -142,7 +214,7 @@ export function ClassroomPage() {
           <span>&gt;</span>
           <Link to="/courses" className="hover:underline">Courses</Link>
           <span>&gt;</span>
-          <span className="text-zinc-900 font-semibold">Data Structures &amp; Algorithms</span>
+          <span className="text-zinc-900 font-semibold">{courseTitle}</span>
         </div>
       </div>
 
@@ -178,8 +250,8 @@ export function ClassroomPage() {
       {/* 3. LESSON TITLE & ACTION BAR */}
       <div className="max-w-[1608px] w-full mx-auto px-6 py-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 font-['Inter']">
         <div className="flex flex-col gap-1">
-          <h2 className="text-zinc-900 text-2xl font-bold tracking-tight">Data Structures &amp; Algorithms</h2>
-          <p className="text-neutral-500 text-sm font-normal">Module 2 · Lesson 3 — Two-pointer patterns</p>
+          <h2 className="text-zinc-900 text-2xl font-bold tracking-tight">{courseTitle}</h2>
+          <p className="text-neutral-500 text-sm font-normal">{subtitleInfo}</p>
         </div>
 
         {/* Complete Lesson Button */}
@@ -202,96 +274,248 @@ export function ClassroomPage() {
         {/* LEFT COLUMN: Markdown Course Reading Article (No Video) */}
         <article className="flex-1 w-full bg-white rounded-2xl border border-neutral-200 p-6 lg:p-8 shadow-sm space-y-8 font-['Inter']">
           
-          {/* Reading Lesson Header Banner */}
-          <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl bg-indigo-900 text-white flex items-center justify-center shrink-0">
-                <BookOpen className="w-6 h-6" />
+          {activeLesson.type === 'Reading' && (
+            <>
+              {/* Reading Lesson Header Banner */}
+              <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-indigo-900 text-white flex items-center justify-center shrink-0">
+                    <BookOpen className="w-6 h-6" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-bold text-indigo-900 uppercase tracking-wider">
+                      {activeLesson.type} Lesson · Theory &amp; Concepts
+                    </span>
+                    <h3 className="text-lg font-bold text-zinc-900">
+                      {activeLesson.title}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-neutral-500 font-mono">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>15 min read</span>
+                </div>
               </div>
-              <div className="flex flex-col gap-0.5">
-                <span className="text-xs font-bold text-indigo-900 uppercase tracking-wider">
-                  Reading Lesson · Theory &amp; Concepts
-                </span>
-                <h3 className="text-lg font-bold text-zinc-900">
-                  Two-Pointer Patterns &amp; Array Traversal
-                </h3>
+
+              {/* Section 1: Overview */}
+              <section className="space-y-4 pt-2">
+                <h3 className="text-zinc-900 text-2xl font-bold tracking-tight">1. Theoretical Foundation</h3>
+                <p className="text-neutral-600 text-base leading-relaxed">
+                  The <strong>Two-Pointer Technique</strong> is an essential algorithmic optimization strategy commonly applied to linear data structures such as <em>Arrays</em>, <em>Strings</em>, and <em>Linked Lists</em>. By orchestrating two index pointers that iterate through the collection in a synchronized or opposing manner, we eliminate the need for nested quadratic loops, reducing asymptotic time complexity from <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-sm text-indigo-900 font-semibold">O(N²)</code> down to <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-sm text-green-700 font-semibold">O(N)</code>.
+                </p>
+              </section>
+
+              {/* Section 2: Opposing Pointers Pattern */}
+              <section className="space-y-3">
+                <h3 className="text-zinc-900 text-xl font-bold">2. Opposing Direction Strategy</h3>
+                <p className="text-neutral-600 text-sm leading-relaxed">
+                  In sorted arrays, two pointers approach each other from opposing ends. This allows us to make monotonic decisions on whether to increment or decrement based on comparing the current element evaluation against the target metric:
+                </p>
+                <div className="p-4 bg-slate-50 rounded-xl border border-neutral-200 text-sm text-neutral-700 space-y-2">
+                  <p className="font-semibold text-zinc-900">Standard Initialization:</p>
+                  <ul className="list-disc list-inside space-y-1 font-mono text-xs text-indigo-950">
+                    <li><code className="text-rose-600 font-bold">left = 0</code> (Points to the beginning index)</li>
+                    <li><code className="text-rose-600 font-bold">right = len(arr) - 1</code> (Points to the terminating index)</li>
+                    <li>Loop condition: <code className="text-indigo-600 font-bold">while left &lt; right:</code></li>
+                  </ul>
+                </div>
+              </section>
+
+              {/* Section 3: Step-by-Step Decision Logic */}
+              <section className="space-y-3">
+                <h3 className="text-zinc-900 text-xl font-bold">3. Step-by-Step Traversal Logic</h3>
+                <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 text-sm text-neutral-700 space-y-2">
+                  <ul className="list-disc list-inside space-y-2 text-xs text-neutral-800">
+                    <li className="pl-4">If <code className="font-mono text-indigo-900 font-bold">current_sum == target</code>: Match found! Return the indices immediately.</li>
+                    <li className="pl-4">If <code className="font-mono text-indigo-900 font-bold">current_sum &lt; target</code>: The sum is too small; increment <code className="font-mono text-indigo-900 font-bold">left += 1</code> to inspect a larger number.</li>
+                    <li className="pl-4">If <code className="font-mono text-indigo-900 font-bold">current_sum &gt; target</code>: The sum is too large; decrement <code className="font-mono text-indigo-900 font-bold">right -= 1</code> to inspect a smaller number.</li>
+                  </ul>
+                </div>
+              </section>
+
+              {/* Section 4: Complexity Analysis */}
+              <section className="space-y-2 pt-2 border-t border-neutral-100">
+                <h3 className="text-zinc-900 text-lg font-bold">4. Complexity &amp; Resource Evaluation</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                  <div className="p-3.5 bg-emerald-50/60 rounded-xl border border-emerald-200">
+                    <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide">Time Complexity</span>
+                    <p className="text-emerald-950 font-bold text-lg font-mono mt-1">O(N)</p>
+                    <p className="text-neutral-600 text-xs mt-0.5">Each element in the array is evaluated at most once as pointers converge.</p>
+                  </div>
+                  <div className="p-3.5 bg-sky-50/60 rounded-xl border border-sky-200">
+                    <span className="text-xs font-bold text-sky-800 uppercase tracking-wide">Space Complexity</span>
+                    <p className="text-sky-950 font-bold text-lg font-mono mt-1">O(1)</p>
+                    <p className="text-neutral-600 text-xs mt-0.5">Operates in-place utilizing only two constant auxiliary pointer variables.</p>
+                  </div>
+                </div>
+              </section>
+            </>
+          )}
+
+          {activeLesson.type === 'Quiz' && (
+            <>
+              {/* Quiz Lesson Header Banner */}
+              <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                    <FileQuestion className="w-6 h-6" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">
+                      {activeLesson.type} checkpoint
+                    </span>
+                    <h3 className="text-lg font-bold text-zinc-900">
+                      {activeLesson.title}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-neutral-500 font-mono">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>20 min limit</span>
+                </div>
               </div>
-            </div>
 
-            <div className="flex items-center gap-2 text-xs text-neutral-500 font-mono">
-              <Clock className="w-3.5 h-3.5" />
-              <span>15 min read</span>
-            </div>
-          </div>
+              {/* Quiz details & parameters card */}
+              <div className="bg-slate-50 border border-neutral-200 rounded-xl p-5 flex flex-col gap-5">
+                <p className="text-neutral-600 text-sm leading-relaxed">
+                  {activeLesson.rawContent?.quizDescription || 'Checkpoint test to evaluate your understanding of the material.'}
+                </p>
 
-          {/* Section 1: Overview */}
-          <section className="space-y-4 pt-2">
-            <h3 className="text-zinc-900 text-2xl font-bold tracking-tight">1. Theoretical Foundation</h3>
-            <p className="text-neutral-600 text-base leading-relaxed">
-              The <strong>Two-Pointer Technique</strong> is an essential algorithmic optimization strategy commonly applied to linear data structures such as <em>Arrays</em>, <em>Strings</em>, and <em>Linked Lists</em>. By orchestrating two index pointers that iterate through the collection in a synchronized or opposing manner, we eliminate the need for nested quadratic loops, reducing asymptotic time complexity from <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-sm text-indigo-900 font-semibold">O(N²)</code> down to <code className="bg-slate-100 px-1.5 py-0.5 rounded font-mono text-sm text-green-700 font-semibold">O(N)</code>.
-            </p>
-          </section>
-
-          {/* Section 2: Opposing Pointers Pattern */}
-          <section className="space-y-3">
-            <h3 className="text-zinc-900 text-xl font-bold">2. Opposing Direction Strategy</h3>
-            <p className="text-neutral-600 text-sm leading-relaxed">
-              In sorted arrays, two pointers approach each other from opposing ends. This allows us to make monotonic decisions on whether to increment or decrement based on comparing the current element evaluation against the target metric:
-            </p>
-            <div className="p-4 bg-slate-50 rounded-xl border border-neutral-200 text-sm text-neutral-700 space-y-2">
-              <p className="font-semibold text-zinc-900">Standard Initialization:</p>
-              <ul className="list-disc list-inside space-y-1 font-mono text-xs text-indigo-950">
-                <li><code className="text-rose-600 font-bold">left = 0</code> (Points to the beginning index)</li>
-                <li><code className="text-rose-600 font-bold">right = len(arr) - 1</code> (Points to the terminating index)</li>
-                <li>Loop condition: <code className="text-indigo-600 font-bold">while left &lt; right:</code></li>
-              </ul>
-            </div>
-          </section>
-
-          {/* Section 3: Step-by-Step Decision Logic */}
-          <section className="space-y-3">
-            <h3 className="text-zinc-900 text-xl font-bold">3. Step-by-Step Traversal Logic</h3>
-            <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 text-sm text-neutral-700 space-y-2">
-              <ul className="list-disc list-inside space-y-2 text-xs text-neutral-800">
-                <li className="pl-4">If <code className="font-mono text-indigo-900 font-bold">current_sum == target</code>: Match found! Return the indices immediately.</li>
-                <li className="pl-4">If <code className="font-mono text-indigo-900 font-bold">current_sum &lt; target</code>: The sum is too small; increment <code className="font-mono text-indigo-900 font-bold">left += 1</code> to inspect a larger number.</li>
-                <li className="pl-4">If <code className="font-mono text-indigo-900 font-bold">current_sum &gt; target</code>: The sum is too large; decrement <code className="font-mono text-indigo-900 font-bold">right -= 1</code> to inspect a smaller number.</li>
-              </ul>
-            </div>
-          </section>
-
-          {/* Section 4: Complexity Analysis */}
-          <section className="space-y-2 pt-2 border-t border-neutral-100">
-            <h3 className="text-zinc-900 text-lg font-bold">4. Complexity &amp; Resource Evaluation</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-              <div className="p-3.5 bg-emerald-50/60 rounded-xl border border-emerald-200">
-                <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide">Time Complexity</span>
-                <p className="text-emerald-950 font-bold text-lg font-mono mt-1">O(N)</p>
-                <p className="text-neutral-600 text-xs mt-0.5">Each element in the array is evaluated at most once as pointers converge.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+                  <div className="p-3.5 bg-white rounded-xl border border-neutral-200 shadow-2xs">
+                    <span className="text-xs font-bold text-[#392C7D] uppercase tracking-wide">Total Questions</span>
+                    <p className="text-zinc-900 font-extrabold text-lg font-mono mt-1">
+                      {activeLesson.rawContent?.quizQuestions?.length || 10}
+                    </p>
+                  </div>
+                  <div className="p-3.5 bg-white rounded-xl border border-neutral-200 shadow-2xs">
+                    <span className="text-xs font-bold text-[#392C7D] uppercase tracking-wide">Total Points</span>
+                    <p className="text-zinc-900 font-extrabold text-lg font-mono mt-1">
+                      {activeLesson.rawContent?.quizQuestions?.reduce((acc: number, q: any) => acc + (q.points || 0), 0) || 100}
+                    </p>
+                  </div>
+                  <div className="p-3.5 bg-white rounded-xl border border-neutral-200 shadow-2xs">
+                    <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide">Passing Score</span>
+                    <p className="text-emerald-700 font-extrabold text-lg font-mono mt-1">70%</p>
+                  </div>
+                </div>
               </div>
-              <div className="p-3.5 bg-sky-50/60 rounded-xl border border-sky-200">
-                <span className="text-xs font-bold text-sky-800 uppercase tracking-wide">Space Complexity</span>
-                <p className="text-sky-950 font-bold text-lg font-mono mt-1">O(1)</p>
-                <p className="text-neutral-600 text-xs mt-0.5">Operates in-place utilizing only two constant auxiliary pointer variables.</p>
-              </div>
-            </div>
-          </section>
 
-          {/* Navigation to Practice Problem */}
+              {/* Instructions */}
+              <div className="flex flex-col gap-2">
+                <h3 className="text-zinc-900 text-lg font-bold">Quiz Instructions</h3>
+                <p className="text-neutral-600 text-sm leading-relaxed">
+                  Read each question carefully and select the best answer. You must answer every question before submitting. Once you submit, you cannot change your answers. Only click "Start Quiz" when you are fully ready to begin the countdown timer.
+                </p>
+              </div>
+
+              {/* Start Quiz Action */}
+              <div className="pt-4 flex justify-center">
+                <button
+                  onClick={() => {
+                    navigate(`/quiz/${activeLesson.id}/attempt`, {
+                      state: {
+                        courseSlug,
+                        lessonId: activeLesson.id
+                      }
+                    });
+                  }}
+                  className="px-8 py-3 bg-[#FF4667] hover:bg-[#e03d5b] text-white rounded-xl text-sm font-bold shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+                >
+                  <FileQuestion className="w-4 h-4" />
+                  <span>Start Quiz</span>
+                </button>
+              </div>
+            </>
+          )}
+
+          {activeLesson.type === 'Problem' && (
+            <>
+              {/* Problem Lesson Header Banner */}
+              <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0">
+                    <Terminal className="w-6 h-6" />
+                  </div>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="text-xs font-bold text-rose-600 uppercase tracking-wider">
+                      Practice challenge
+                    </span>
+                    <h3 className="text-lg font-bold text-zinc-900">
+                      {activeLesson.title}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs text-neutral-500 font-mono">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>Interactive workspace</span>
+                </div>
+              </div>
+
+              {/* Badges & Statement */}
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="px-3 py-1 rounded-full bg-rose-50 text-rose-600 font-bold text-xs uppercase tracking-wider border border-rose-200">
+                    Problem
+                  </span>
+                  <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-xs border border-emerald-200">
+                    {activeLesson.rawContent?.problemDifficulty || 'Easy'}
+                  </span>
+                  {(activeLesson.rawContent?.problemTags || ['Math', 'Two Pointers']).map((tag: string) => (
+                    <span key={tag} className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-medium">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                <p className="text-neutral-600 text-sm leading-relaxed">
+                  {activeLesson.rawContent?.problemStatement || 'Given two integers a and b, read them from standard input and print their sum.'}
+                </p>
+              </div>
+
+              {/* Constraints */}
+              {activeLesson.rawContent?.problemConstraints && (
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-2">
+                  <span className="text-xs font-bold text-zinc-900 uppercase tracking-wide">Constraints</span>
+                  <p className="text-xs font-mono text-neutral-600 leading-normal">
+                    {activeLesson.rawContent?.problemConstraints}
+                  </p>
+                </div>
+              )}
+
+              {/* Action Trigger */}
+              <div className="pt-4 flex justify-center">
+                <button
+                  onClick={() => navigate(`/practice/${activeLesson.rawContent?.problemSlug || 'two-sum'}`)}
+                  className="px-8 py-3 bg-indigo-900 hover:bg-indigo-950 text-white rounded-xl text-sm font-bold shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+                >
+                  <Terminal className="w-4 h-4" />
+                  <span>Open Coding Workspace</span>
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Navigation controls footer */}
           <div className="pt-6 border-t border-neutral-200 flex flex-col sm:flex-row justify-between items-center gap-4">
             <button
-              onClick={() => toast.info('Already at the first theoretical topic of this module.')}
-              className="text-neutral-500 hover:text-zinc-900 text-sm font-medium flex items-center gap-2 cursor-pointer transition-colors"
+              onClick={handlePrevClick}
+              disabled={!prevLesson}
+              className="text-neutral-500 hover:text-zinc-900 disabled:opacity-40 text-sm font-medium flex items-center gap-2 cursor-pointer transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Previous: Collision strategies</span>
+              <span>Previous: {prevLesson ? prevLesson.title : 'None'}</span>
             </button>
 
             <button
-              onClick={() => navigate('/classroom/lesson/problem-preview')}
-              className="px-5 py-2.5 bg-indigo-900 hover:bg-indigo-950 text-white rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
+              onClick={handleNextClick}
+              disabled={!nextLesson}
+              className="px-5 py-2.5 bg-indigo-900 hover:bg-indigo-950 disabled:opacity-40 text-white rounded-xl text-sm font-semibold flex items-center gap-2 shadow-sm transition-colors cursor-pointer"
             >
-              <span>Practice Problem: Sum of Two Numbers</span>
+              <span>Next: {nextLesson ? nextLesson.title : 'None'}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

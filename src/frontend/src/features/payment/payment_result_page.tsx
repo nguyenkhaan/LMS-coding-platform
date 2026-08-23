@@ -1,15 +1,36 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Clock, XCircle, ArrowRight } from 'lucide-react';
 import { CheckoutHeader } from './components/checkout_header';
 import { Button } from '@/components/ui/button';
+import { useCourseStore } from '@/stores/useCourseStore';
+import { toast } from 'sonner';
 
 export const PaymentResultPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const { courses } = useCourseStore();
   
-  // Status can be success, pending, failed/cancelled
   const status = searchParams.get('status') || 'success';
+  const courseId = searchParams.get('courseId') || 'dsa-interview-prep';
+  const activeCourse = courses.find((c) => c.id === courseId || c.slug === courseId);
+
+  useEffect(() => {
+    if (status === 'success' && activeCourse) {
+      const localEnrolled = JSON.parse(localStorage.getItem('local_enrolled_courses') || '[]');
+      if (!localEnrolled.some((c: any) => c.id === activeCourse.id || c.slug === activeCourse.slug)) {
+        localEnrolled.push({
+          id: activeCourse.id,
+          slug: activeCourse.slug,
+          title: activeCourse.title,
+          thumbnail_url: activeCourse.thumbnail_url || 'https://placehold.co/360x200',
+          progress_percent: 0
+        });
+        localStorage.setItem('local_enrolled_courses', JSON.stringify(localEnrolled));
+        toast.success(`You are now enrolled in "${activeCourse.title}"!`);
+      }
+    }
+  }, [status, activeCourse]);
 
   return (
     <div className="w-full min-h-screen bg-slate-50 flex flex-col items-center">
@@ -69,11 +90,11 @@ export const PaymentResultPage: React.FC = () => {
             <div className="flex flex-col gap-3">
               <div className="flex justify-between py-2 border-b border-gray-50 text-sm">
                 <span className="text-[#374151] font-medium">Course</span>
-                <span className="font-semibold text-[#111827] text-right max-w-[65%]">Data Structures &amp; Algorithms Interview Prep</span>
+                <span className="font-semibold text-[#111827] text-right max-w-[65%]">{activeCourse ? activeCourse.title : "Data Structures & Algorithms Interview Prep"}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-gray-50 text-sm">
                 <span className="text-[#374151] font-medium">Amount paid</span>
-                <span className="font-semibold text-[#111827]">$119.44 USD</span>
+                <span className="font-semibold text-[#111827]">{activeCourse ? `$${activeCourse.price} USD` : "$119.44 USD"}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-gray-50 text-sm">
                 <span className="text-[#374151] font-medium">Transaction code</span>
@@ -102,7 +123,7 @@ export const PaymentResultPage: React.FC = () => {
               <Button
                 size="lg"
                 variant="primary"
-                onClick={() => navigate('/learn/data-structures-algorithms')}
+                onClick={() => navigate(activeCourse ? `/learn/${activeCourse.slug}` : '/learn/data-structures-algorithms')}
                 className="flex-1 bg-[#FF4667] hover:bg-[#e03d5b] text-white h-12 rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 Start learning
@@ -123,7 +144,7 @@ export const PaymentResultPage: React.FC = () => {
               <Button
                 size="lg"
                 variant="primary"
-                onClick={() => navigate('/checkout/1')}
+                onClick={() => navigate(activeCourse ? `/checkout/${activeCourse.id}` : '/checkout/1')}
                 className="flex-1 bg-[#392C7D] hover:bg-[#2d2263] text-white h-12 rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer"
               >
                 Try checkout again
@@ -132,7 +153,7 @@ export const PaymentResultPage: React.FC = () => {
             <Button
               size="lg"
               variant="outline"
-              onClick={() => navigate('/student/dashboard')}
+              onClick={() => navigate('/student/courses')}
               className="flex-1 h-12 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-[#374151] font-bold text-sm transition-all cursor-pointer"
             >
               Go to my courses
