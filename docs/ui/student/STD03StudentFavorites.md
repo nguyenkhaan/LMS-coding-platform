@@ -89,10 +89,10 @@ MOBILE 390x844
 | Vùng | Component | Chi tiết | Hành vi |
 | --- | --- | --- | --- |
 | Header/hero | Shell | Utility bar, nav, gradient hero, title/breadcrumb | Mobile dùng hamburger |
-| Profile banner | Student identity | Avatar, name/role, edit, two teacher CTAs | Giữ card riêng trên mobile |
+| Profile banner | Student identity | avatar_url, full_name, role, edit, two teacher CTAs | Giữ card riêng trên mobile |
 | Sidebar | Main Menu | Favorites active; Dashboard, My Profile, Enrolled Courses, AI Interview | Navigate dashboard subsections |
 | Sidebar | Account Settings | Settings, Logout | Logout cần confirm |
-| Content | Favorites list | Search, course thumbnail/play, heart, title, instructor/category, rating, View | Heart toggle/remove favorite |
+| Content | Favorites list | Search, course thumbnail/play, heart, title, instructor/category, rating (tổng hợp từ courses/teacher_profile — join qua course_id), created_at (ngày lưu), View | Heart toggle/remove favorite |
 | Footer | Footer | 4 information areas và copyright bar | Xếp dọc mobile |
 
 ## States

@@ -58,13 +58,16 @@ MOBILE 390x844
 
 | Vùng | Component | Chi tiết | Hành vi |
 | --- | --- | --- | --- |
-| Hero | Instructor identity | Image, name, role, rating, Follow, Message | Follow/message action |
-| Profile | About/experience | Bio, professional experience, metrics | Read-only details |
+| Hero | Instructor identity | avatar_url, display_name, headline, rating (tổng hợp), Follow, Message | Follow/message action |
+| Profile | About/experience | bio, experience_entries, education_entries, expertise_tags, years_of_experience, metrics (tổng hợp: courses/students/rating) | Read-only details |
 | Courses | Course cards | Instructor-owned course grid and search | Opens course detail |
-| Credentials | Certificates | Credential chips/cards | Optional links |
+| Contact | Social/contact links | email, phone, github_url, linkedin_url, website_url | Optional external links |
 
 ## States
 
 - Follow toggle changes label to Following.
 - No courses: retain section heading and empty message.
 - Missing raster/SVG geometry: verify exact hero dimensions before UI implementation.
+
+- Certificates section đã được loại bỏ khỏi Figma (quyết định 17/08/2026) — 
+  ASCII wireframe phía trên chưa cập nhật, không dùng làm tham chiếu cho phần này.

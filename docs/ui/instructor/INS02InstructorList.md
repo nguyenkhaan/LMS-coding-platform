@@ -58,7 +58,7 @@ MOBILE 390x844
 | Vùng | Component | Chi tiết | Hành vi |
 | --- | --- | --- | --- |
 | Toolbar | Search/filter/view toggle | Search, expertise/rating filters, grid/list controls | Changes presentation |
-| List | Instructor row | Photo, name, expertise, rating, course count, View profile | Opens detail |
+| List | Instructor row | avatar_url, display_name, headline, rating (tổng hợp), course count (tổng hợp), View profile | Opens detail |
 | Pagination | Page controls | Pages and next | Preserve view/filter |
 
 ## States

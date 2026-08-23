@@ -65,7 +65,7 @@ MOBILE 390x844
 | Vùng | Component | Chi tiết | Hành vi |
 | --- | --- | --- | --- |
 | Toolbar | Search/filter | Instructor search, expertise, rating | Filters grid |
-| Grid | Instructor card | Photo, name, expertise, rating, View | Opens detail |
+| Grid | Instructor card | avatar_url, display_name, headline, rating (tổng hợp), View | Opens detail |
 | Pagination | Page controls | Page numbers and next | Preserve filters |
 
 ## States
