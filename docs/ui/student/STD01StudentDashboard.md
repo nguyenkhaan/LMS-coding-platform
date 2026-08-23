@@ -81,7 +81,7 @@ DESKTOP 1561x2795
 | Utility header | Contact, locale, currency, social links | Address, phone, language, currency | Chọn locale/currency; mở liên kết ngoài |
 | Main navigation | Public navigation and account actions | Menu, theme action, cart count, sign-in/register | Điều hướng; cart badge phản ánh số item |
 | Page banner | Dashboard title and breadcrumb | `Dashboard`, `Home - Dashboard` | Breadcrumb quay lại trang chủ |
-| Profile banner | Current user summary | Avatar, full name, role `Student` | Edit profile; mở luồng Become a Teacher hoặc Teacher Dashboard theo quyền |
+| Profile banner | Current user summary | avatar_url, full_name, role `Student` (thuộc bảng user, không phải student_profile) | Edit profile; mở luồng Become a Teacher hoặc Teacher Dashboard theo quyền |
 | Sidebar | Student account navigation | Dashboard, Profile, Enrolled Courses, Favorites, AI Interview, Settings, Logout | Đổi trang; Dashboard active ở màn này |
 | Recently | Four learning KPI cards | Courses in progress, problems solved, current streak, study time | Card là summary read-only; period ghi rõ trên từng card |
 | Contribution chart | Learning activity heatmap | Total contribution, day cells, month labels, percentile badge | Hiển thị hoạt động theo ngày và color scale; không phải input editable |
