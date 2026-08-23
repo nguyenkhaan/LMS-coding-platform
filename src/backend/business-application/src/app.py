@@ -16,6 +16,7 @@ from src.modules.student_course_directory.student_router import router as studen
 from src.grpc.client import AuthGrpcClient
 from src.modules.health.health_router import router as health_router
 from src.modules.lesson_comment.lesson_comment_router import router as lesson_comment_router
+from src.modules.teacher_quiz.teacher_quiz_router import teacher_lesson_quizzes_router, teacher_quizzes_router
 from src.modules.teacher_course.teacher_course_router import (
     teacher_course_router,
     teacher_sections_router,
@@ -95,6 +96,8 @@ v1_router.include_router(teacher_course_router)
 v1_router.include_router(teacher_sections_router)
 v1_router.include_router(teacher_lessons_router)
 v1_router.include_router(teacher_lesson_contents_router)
+v1_router.include_router(teacher_lesson_quizzes_router)
+v1_router.include_router(teacher_quizzes_router)
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc: RequestValidationError):
     errors = []
