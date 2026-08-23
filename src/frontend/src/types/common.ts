@@ -1,9 +1,9 @@
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
 	success?: boolean;
 	data?: T;
 	message?: string;
 	error_code?: string;
-	details?: any[];
+	details?: unknown[];
 }
 
 export interface PaginationParams {

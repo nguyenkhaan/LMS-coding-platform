@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useThemeStore } from '@/stores/useThemeStore';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import {
 	Code2,
 	Sun,
@@ -41,7 +41,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ role }) => {
 	];
 
 	const studentNav = [
-		{ to: '/student/dashboard', label: 'Khóa học của tôi', icon: BookOpen },
+		{ to: '/student/courses', label: 'Khóa học của tôi', icon: BookOpen },
 		{ to: '/student/favorites', label: 'Yêu thích', icon: LayoutDashboard },
 		{ to: '/student/history', label: 'Lịch sử nộp bài', icon: Code2 }
 	];
