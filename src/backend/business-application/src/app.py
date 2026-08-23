@@ -15,7 +15,8 @@ from src.modules.student_course_directory.course_router import router as course_
 from src.modules.student_course_directory.student_router import router as student_router
 from src.grpc.client import AuthGrpcClient
 from src.modules.health.health_router import router as health_router
-from src.modules.lesson_comment.lesson_comment_router import router as lesson_comment_router
+# TODO: lesson_comment model bị lỗi sau rebase, cần fix riêng
+# from src.modules.lesson_comment.lesson_comment_router import router as lesson_comment_router
 from src.modules.teacher_course.teacher_course_router import (
     teacher_course_router,
     teacher_sections_router,
@@ -89,7 +90,8 @@ v1_router = APIRouter(prefix="/api/v1")
 v1_router.include_router(health_router)
 v1_router.include_router(student_router)
 v1_router.include_router(submission_router)
-v1_router.include_router(lesson_comment_router)
+# TODO: lesson_comment model bị lỗi sau rebase, cần fix riêng
+# v1_router.include_router(lesson_comment_router)
 v1_router.include_router(course_router)
 v1_router.include_router(teacher_course_router)
 v1_router.include_router(teacher_sections_router)

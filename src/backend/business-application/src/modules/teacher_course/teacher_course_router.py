@@ -5,7 +5,7 @@ from src.modules.teacher_course.teacher_course_dto import (
     TeacherCourseCreateRequest, TeacherCourseUpdateRequest, TeacherCourseResponse,
     TeacherCourseSectionCreateRequest, TeacherCourseSectionUpdateRequest, TeacherCourseSectionResponse,
     TeacherCourseLessonCreateRequest, TeacherCourseLessonUpdateRequest, TeacherCourseLessonResponse,
-    TeacherCourseLessonContentCreateRequest, TeacherCourseLessonContentUpdateRequest, TeacherCourseLessonContentResponse,
+    TeacherCourseLessonContentCreateRequest, TeacherCourseLessonContentUpdateRequest, TeacherCourseReadingCreateRequest, TeacherCourseReadingCreateResponse, TeacherCourseReadingUpdateRequest, TeacherCourseReadingResponse, TeacherCourseLessonContentResponse,
     TeacherCourseReorderRequest, TeacherCourseReorderResponse, TeacherCourseDeleteResponse
 )
 from src.modules.teacher_course.teacher_course_dependency import get_teacher_course_service
@@ -45,6 +45,14 @@ async def get_teacher_courses(
 ):
     return await service.get_teacher_courses(teacher_id)
 
+@teacher_course_router.get("/{course_id}", response_model=TeacherCourseResponse)
+async def get_course_detail(
+    course_id: int = Path(..., title="The ID of the course"),
+    teacher_id: int = Depends(get_current_teacher_id),
+    service: TeacherCourseService = Depends(get_teacher_course_service)
+):
+    return await service.get_course_detail(teacher_id, course_id)
+
 @teacher_course_router.post("", response_model=TeacherCourseResponse, status_code=201)
 async def create_course(
     data: TeacherCourseCreateRequest,
@@ -61,6 +69,14 @@ async def update_course(
     service: TeacherCourseService = Depends(get_teacher_course_service)
 ):
     return await service.update_course(teacher_id, course_id, data)
+
+@teacher_course_router.post("/{course_id}/submit-review", response_model=TeacherCourseResponse)
+async def submit_course_review(
+    course_id: int = Path(..., title="The ID of the course"),
+    teacher_id: int = Depends(get_current_teacher_id),
+    service: TeacherCourseService = Depends(get_teacher_course_service)
+):
+    return await service.submit_course_review(teacher_id, course_id)
 
 @teacher_course_router.post("/{course_id}/sections", response_model=TeacherCourseSectionResponse, status_code=201)
 async def create_section(
@@ -106,6 +122,23 @@ async def update_lesson(
 ):
     return await service.update_lesson(teacher_id, lesson_id, data)
 
+@teacher_lessons_router.delete("/{lesson_id}", response_model=TeacherCourseDeleteResponse)
+async def delete_lesson(
+    lesson_id: int = Path(..., title="The ID of the lesson"),
+    teacher_id: int = Depends(get_current_teacher_id),
+    service: TeacherCourseService = Depends(get_teacher_course_service)
+):
+    return await service.delete_lesson(teacher_id, lesson_id)
+
+@teacher_lessons_router.post("/{lesson_id}/readings", response_model=TeacherCourseReadingCreateResponse, status_code=201)
+async def create_reading_content(
+    data: TeacherCourseReadingCreateRequest,
+    lesson_id: int = Path(..., title="The ID of the lesson"),
+    teacher_id: int = Depends(get_current_teacher_id),
+    service: TeacherCourseService = Depends(get_teacher_course_service)
+):
+    return await service.create_reading_content(teacher_id, lesson_id, data)
+
 @teacher_lessons_router.post("/{lesson_id}/contents", response_model=TeacherCourseLessonContentResponse, status_code=201)
 async def create_lesson_content(
     data: TeacherCourseLessonContentCreateRequest,
@@ -118,11 +151,28 @@ async def create_lesson_content(
 @teacher_lesson_contents_router.put("/{content_id}", response_model=TeacherCourseLessonContentResponse)
 async def update_lesson_content(
     data: TeacherCourseLessonContentUpdateRequest,
-    content_id: int = Path(..., title="The ID of the content"),
+    content_id: int = Path(..., title="The ID of the lesson content"),
     teacher_id: int = Depends(get_current_teacher_id),
     service: TeacherCourseService = Depends(get_teacher_course_service)
 ):
     return await service.update_lesson_content(teacher_id, content_id, data)
+
+@teacher_lesson_contents_router.put("/{content_id}/reading", response_model=TeacherCourseReadingResponse)
+async def update_reading_content(
+    data: TeacherCourseReadingUpdateRequest,
+    content_id: int = Path(..., title="The ID of the lesson content"),
+    teacher_id: int = Depends(get_current_teacher_id),
+    service: TeacherCourseService = Depends(get_teacher_course_service)
+):
+    return await service.update_reading_content(teacher_id, content_id, data)
+
+@teacher_lesson_contents_router.delete("/{content_id}", response_model=TeacherCourseDeleteResponse)
+async def delete_lesson_content(
+    content_id: int = Path(..., title="The ID of the lesson content"),
+    teacher_id: int = Depends(get_current_teacher_id),
+    service: TeacherCourseService = Depends(get_teacher_course_service)
+):
+    return await service.delete_lesson_content(teacher_id, content_id)
 
 @teacher_course_router.put("/{course_id}/curriculum/reorder", response_model=TeacherCourseReorderResponse)
 async def reorder_curriculum(
@@ -132,3 +182,6 @@ async def reorder_curriculum(
     service: TeacherCourseService = Depends(get_teacher_course_service)
 ):
     return await service.reorder_curriculum(teacher_id, course_id, data)
+
+
+

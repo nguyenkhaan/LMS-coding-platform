@@ -16,8 +16,14 @@ class TeacherCourseBase(BaseModel):
     tags: List[str]
     status: CourseStatus
 
-class TeacherCourseCreateRequest(TeacherCourseBase):
-    pass
+class TeacherCourseCreateRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    title: str
+    description: str
+    price: int
+    thumbnail_url: Optional[str] = None
+    category: str = Field(alias="field")
+    tags: List[str]
 
 
 class TeacherCourseUpdateRequest(TeacherCourseBase):
@@ -34,6 +40,7 @@ class TeacherCourseResponse(TeacherCourseBase):
     id: int
     status: CourseStatus
     teacher_id: int
+    submitted_at: Optional[str] = None
 
 
 class TeacherCourseSectionCreateRequest(BaseModel):
@@ -84,31 +91,35 @@ class TeacherCourseLessonResponse(BaseModel):
 
 class TeacherCourseLessonContentCreateRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-
     content_type: str
-    content_payload: dict = Field(alias="content_data")
+    content_id: int
+    media_url: str | None = None
+    order: int = Field(alias="position")
 
 
 class TeacherCourseLessonContentUpdateRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-
     content_type: str | None = None
-    content_payload: dict | None = Field(default=None, alias="content_data")
+    content_id: int | None = None
+    media_url: str | None = None
+    order: int | None = Field(default=None, alias="position")
 
 
 class TeacherCourseLessonContentResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-
     id: int
     lesson_id: int
     content_type: str
-    content_payload: dict = Field(alias="content_data")
+    content_id: int
+    media_url: str | None = None
+    order: int = Field(alias="position")
+    created_at: str | None = None
 
 
 class TeacherCourseReorderItem(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    item_kind: Literal["section", "lesson"] = Field(alias="item_type")
+    item_kind: Literal["section", "lesson", "lesson_content"] = Field(alias="item_type")
     id: int
     order: int = Field(alias="position")
     section_id: int | None = Field(default=None, alias="parent_id")
@@ -130,3 +141,28 @@ class TeacherCourseDeleteResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     message: str
+
+class TeacherCourseReadingCreateRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    title: str
+    content: str
+    order: int = Field(alias="position")
+
+class TeacherCourseReadingUpdateRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    title: str | None = None
+    content: str | None = None
+
+class TeacherCourseReadingResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    id: int
+    title: str
+    content: str
+    created_at: str | None = None
+    updated_at: str | None = None
+
+class TeacherCourseReadingCreateResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+    reading_content: TeacherCourseReadingResponse
+    lesson_content: TeacherCourseLessonContentResponse
+
