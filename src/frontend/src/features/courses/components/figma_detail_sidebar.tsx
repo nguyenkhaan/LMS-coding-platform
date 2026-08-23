@@ -27,12 +27,7 @@ export const FigmaDetailSidebar: React.FC<SidebarProps> = ({
 				{isPaid ? (
 					<div className="flex flex-col gap-2">
 						<span className="text-zinc-900 text-base font-bold leading-snug">You have paid for this course</span>
-						<button 
-							onClick={() => alert("Redirecting to classroom... (Mock)")}
-							className="w-full py-3 bg-[#392C7D] hover:bg-[#392C7D]/90 text-white text-sm font-semibold rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
-						>
-							Continue studying
-						</button>
+						<Link to="/learn/dsa-module-2" className="w-full py-3 bg-[#392C7D] hover:bg-[#392C7D]/90 text-white text-sm font-semibold rounded-xl transition-all shadow-md active:scale-95 cursor-pointer text-center block">Continue studying</Link>
 					</div>
 				) : (
 					<>
@@ -51,10 +46,7 @@ export const FigmaDetailSidebar: React.FC<SidebarProps> = ({
 				)}
 
 				{!isPaid && (
-					<button className="w-full py-2.5 bg-neutral-50 hover:bg-neutral-100 text-zinc-900 text-sm font-semibold rounded-xl transition-all border border-neutral-200 cursor-pointer flex items-center justify-center gap-2">
-						<Play className="w-3.5 h-3.5 fill-[#392C7D] text-[#392C7D]" />
-						Preview classroom
-					</button>
+					<Link to="/learn/dsa-module-2" className="w-full py-2.5 bg-neutral-50 hover:bg-neutral-100 text-zinc-900 text-sm font-semibold rounded-xl transition-all border border-neutral-200 cursor-pointer flex items-center justify-center gap-2"><Play className="w-3.5 h-3.5 fill-[#392C7D] text-[#392C7D]" />Preview classroom</Link>
 				)}
 
 				<div className="h-px bg-slate-100 my-1" />

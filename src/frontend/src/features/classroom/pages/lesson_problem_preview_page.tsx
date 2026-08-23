@@ -38,6 +38,41 @@ export const LessonProblemPreviewPage: React.FC = () => {
 	const [upvotes, setUpvotes] = useState<Record<string, number>>({ 'c1': 24, 'c2': 11 });
 	const [hasUpvoted, setHasUpvoted] = useState<Record<string, boolean>>({});
 	const [courseSearch, setCourseSearch] = useState('');
+	const [newDiscussion, setNewDiscussion] = useState('');
+	const [commentsList, setCommentsList] = useState([
+		{
+			id: 'c1',
+			author: 'Priya R.',
+			initials: 'PR',
+			timeAgo: '3 days ago',
+			text: 'Use long long for the sum calculation in C++ — standard int overflows on edge boundary testcases.',
+			upvotes: 24
+		},
+		{
+			id: 'c2',
+			author: 'David O.',
+			initials: 'DO',
+			timeAgo: '1 week ago',
+			text: 'Watch out for reading input with cin when the line has trailing whitespace.',
+			upvotes: 11
+		}
+	]);
+
+	const handleAddDiscussion = (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!newDiscussion.trim()) return;
+		const item = {
+			id: `c-${Date.now()}`,
+			author: 'Minh Tran',
+			initials: 'MT',
+			timeAgo: 'Just now',
+			text: newDiscussion.trim(),
+			upvotes: 1
+		};
+		setCommentsList([item, ...commentsList]);
+		setNewDiscussion('');
+		toast.success('Discussion posted successfully!');
+	};
 
 	const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
 		'sec-1': false,
@@ -262,69 +297,59 @@ export const LessonProblemPreviewPage: React.FC = () => {
 						<div className="flex justify-between items-center">
 							<div className="flex items-center gap-2">
 								<MessageSquare className="w-4 h-4 text-indigo-900" />
-								<h3 className="font-bold text-base text-zinc-900">Discussion (2)</h3>
+								<h3 className="font-bold text-base text-zinc-900">Discussion ({commentsList.length})</h3>
 							</div>
-							<button className="text-xs font-bold text-indigo-900 hover:underline cursor-pointer">
-								View all comments
-							</button>
+							<span className="text-xs text-neutral-400">Community answers &amp; hints</span>
 						</div>
 
-						<div className="flex flex-col gap-3">
-							<div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-2">
-								<div className="flex items-center justify-between">
-									<div className="flex items-center gap-2.5">
-										<div className="w-7 h-7 rounded-full bg-indigo-900 text-white font-bold text-xs flex items-center justify-center">
-											PR
-										</div>
-										<div className="flex flex-col">
-											<span className="text-xs font-bold text-zinc-900">Priya R.</span>
-											<span className="text-[10px] text-neutral-400 font-mono">3 days ago</span>
-										</div>
-									</div>
-									<button
-										onClick={() => toggleUpvote('c1')}
-										className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition-colors ${
-											hasUpvoted['c1']
-												? 'bg-indigo-900 text-white border-indigo-900'
-												: 'bg-white text-zinc-700 border-slate-200 hover:bg-slate-100'
-										}`}
-									>
-										<ThumbsUp className="w-3 h-3" />
-										<span>{upvotes['c1']}</span>
-									</button>
-								</div>
-								<p className="text-xs text-neutral-700 leading-relaxed">
-									Use <code className="bg-slate-200 px-1 py-0.5 rounded font-mono">long long</code> for the sum calculation in C++ — standard <code className="bg-slate-200 px-1 py-0.5 rounded font-mono">int</code> overflows on edge boundary testcases.
-								</p>
+						{/* Add discussion form */}
+						<form onSubmit={handleAddDiscussion} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-3">
+							<textarea
+								rows={2}
+								value={newDiscussion}
+								onChange={(e) => setNewDiscussion(e.target.value)}
+								placeholder="Have a question or insight? Write here..."
+								className="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 resize-none"
+							/>
+							<div className="flex justify-end">
+								<button
+									type="submit"
+									disabled={!newDiscussion.trim()}
+									className="px-4 py-1.5 bg-indigo-900 hover:bg-indigo-950 disabled:opacity-40 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+								>
+									Post Comment
+								</button>
 							</div>
+						</form>
 
-							<div className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-2">
-								<div className="flex items-center justify-between">
-									<div className="flex items-center gap-2.5">
-										<div className="w-7 h-7 rounded-full bg-rose-500 text-white font-bold text-xs flex items-center justify-center">
-											DO
+						<div className="flex flex-col gap-3">
+							{commentsList.map((c) => (
+								<div key={c.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-2">
+									<div className="flex items-center justify-between">
+										<div className="flex items-center gap-2.5">
+											<div className="w-7 h-7 rounded-full bg-indigo-900 text-white font-bold text-xs flex items-center justify-center">
+												{c.initials}
+											</div>
+											<div className="flex flex-col">
+												<span className="text-xs font-bold text-zinc-900">{c.author}</span>
+												<span className="text-[10px] text-neutral-400 font-mono">{c.timeAgo}</span>
+											</div>
 										</div>
-										<div className="flex flex-col">
-											<span className="text-xs font-bold text-zinc-900">David O.</span>
-											<span className="text-[10px] text-neutral-400 font-mono">1 week ago</span>
-										</div>
+										<button
+											onClick={() => toggleUpvote(c.id)}
+											className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition-colors ${
+												hasUpvoted[c.id]
+													? 'bg-indigo-900 text-white border-indigo-900'
+													: 'bg-white text-zinc-700 border-slate-200 hover:bg-slate-100'
+											}`}
+										>
+											<ThumbsUp className="w-3 h-3" />
+											<span>{upvotes[c.id] ?? c.upvotes}</span>
+										</button>
 									</div>
-									<button
-										onClick={() => toggleUpvote('c2')}
-										className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition-colors ${
-											hasUpvoted['c2']
-												? 'bg-indigo-900 text-white border-indigo-900'
-												: 'bg-white text-zinc-700 border-slate-200 hover:bg-slate-100'
-										}`}
-									>
-										<ThumbsUp className="w-3 h-3" />
-										<span>{upvotes['c2']}</span>
-									</button>
+									<p className="text-xs text-neutral-700 leading-relaxed">{c.text}</p>
 								</div>
-								<p className="text-xs text-neutral-700 leading-relaxed">
-									Watch out for reading input with <code className="bg-slate-200 px-1 py-0.5 rounded font-mono">cin</code> when the line has trailing whitespace.
-								</p>
-							</div>
+							))}
 						</div>
 					</div>
 

@@ -1,3 +1,5 @@
+import { useThemeStore } from '@/stores/useThemeStore';
+import { Sun, Moon } from 'lucide-react';
 import React, { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/stores/useAuthStore';
@@ -189,6 +191,19 @@ export const MainLayout: React.FC = () => {
                 <Search className="w-3.5 h-3.5 text-neutral-400" />
               </button>
             </form>
+
+            {/* Theme Toggle Button (Light/Dark) */}
+            <button
+              onClick={() => useThemeStore.getState().toggleTheme()}
+              className="p-2.5 rounded-[40px] border border-neutral-200 hover:bg-slate-50 transition-colors cursor-pointer text-zinc-700"
+              title="Toggle Light/Dark Theme"
+            >
+              {useThemeStore.getState().theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-amber-500" />
+              ) : (
+                <Moon className="w-4 h-4 text-slate-700" />
+              )}
+            </button>
 
             {/* Notification Center */}
             <NotificationDropdown />

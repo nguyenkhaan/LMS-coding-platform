@@ -43,37 +43,37 @@ const FAVORITE_COURSES: FavoriteCourse[] = [
   {
     id: 'fav-1',
     title: 'Python Foundations for Problem Solving',
-    instructor: 'Lê Quang Huy',
+    instructor: 'Alex Johnson',
     slug: 'python-foundations',
     rating: 4.8,
-    price: '890.000 ₫',
+    price: '$79.00',
     category: 'Programming'
   },
   {
     id: 'fav-2',
     title: 'Data Structures & Algorithms Interview Prep',
-    instructor: 'Nguyễn Thu Hà',
+    instructor: 'Edythe Andrew',
     slug: 'dsa-interview-prep',
     rating: 4.9,
-    price: '1.490.000 ₫',
+    price: '$129.00',
     category: 'Algorithms'
   },
   {
     id: 'fav-3',
     title: 'Production React & TypeScript Masterclass',
-    instructor: 'Trần Minh Đức',
+    instructor: 'Ronald Richard',
     slug: 'react-typescript',
     rating: 4.8,
-    price: '890.000 ₫',
+    price: '$79.00',
     category: 'Frontend'
   },
   {
     id: 'fav-4',
     title: 'System Design for High-Throughput Services',
-    instructor: 'Hoàng Nam',
+    instructor: 'David Miller',
     slug: 'system-design-mastery',
     rating: 4.9,
-    price: '1.290.000 ₫',
+    price: '$99.00',
     category: 'Architecture'
   }
 ];

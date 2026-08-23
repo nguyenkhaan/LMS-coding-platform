@@ -200,6 +200,68 @@ export function OJWorkspacePage() {
   // Custom case inputs
   const [caseInputs, setCaseInputs] = useState<TestCase[]>(currentProblem.testCases);
   const [customConsoleInput, setCustomConsoleInput] = useState('nums = [2,7,11,15]\ntarget = 9');
+  
+  // Interactive Discussion State
+  interface DiscussionPost {
+    id: string;
+    author: string;
+    initials: string;
+    timeAgo: string;
+    text: string;
+    upvotes: number;
+    hasUpvoted?: boolean;
+    tags?: string[];
+  }
+  
+  const [discussions, setDiscussions] = useState<DiscussionPost[]>([
+    {
+      id: 'd-1',
+      author: 'Alex Johnson',
+      initials: 'AJ',
+      timeAgo: '2 hours ago',
+      text: 'For optimal time complexity, using a Hash Map enables one-pass O(N) lookup instead of brute-force O(N^2) nested loops.',
+      upvotes: 14,
+      tags: ['Algorithm', 'Hash Table']
+    },
+    {
+      id: 'd-2',
+      author: 'Edythe Andrew',
+      initials: 'EA',
+      timeAgo: '1 day ago',
+      text: 'Remember that indices are 0-based in standard judge testcases. Double check edge cases where complement is the same number.',
+      upvotes: 9,
+      tags: ['Tips']
+    }
+  ]);
+  const [newDiscussionText, setNewDiscussionText] = useState('');
+  
+  const handlePostDiscussion = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDiscussionText.trim()) return;
+    const newPost: DiscussionPost = {
+      id: `d-${Date.now()}`,
+      author: user?.fullName || 'Anonymous Coder',
+      initials: (user?.fullName || 'AC').split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase(),
+      timeAgo: 'Just now',
+      text: newDiscussionText.trim(),
+      upvotes: 1,
+      hasUpvoted: true,
+      tags: ['General']
+    };
+    setDiscussions([newPost, ...discussions]);
+    setNewDiscussionText('');
+    toast.success('Discussion posted successfully!');
+  };
+  
+  const handleUpvoteDiscussion = (id: string) => {
+    setDiscussions(prev => prev.map(d => {
+      if (d.id === id) {
+        const up = d.hasUpvoted ? d.upvotes - 1 : d.upvotes + 1;
+        return { ...d, upvotes: up, hasUpvoted: !d.hasUpvoted };
+      }
+      return d;
+    }));
+  };
 
   // When problem or language changes, update code and testcases
   useEffect(() => {
@@ -224,21 +286,7 @@ export function OJWorkspacePage() {
   } | null>(null);
 
   // Timer: 15 mins 32 secs = 932s
-  const [timeLeft, setTimeLeft] = useState<number>(932);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatTimer = (seconds: number) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-  };
+  
 
   const handleLanguageChange = (lang: string) => {
     setSelectedLang(lang);
@@ -551,12 +599,10 @@ export function OJWorkspacePage() {
         </div>
 
         <div className="flex items-center gap-6">
-          {/* Timer */}
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-rose-500" />
-            <span className="text-rose-500 text-base font-bold font-mono tracking-wide">
-              {formatTimer(timeLeft)}
-            </span>
+          {/* Online Judge Status Badge */}
+          <div className="flex items-center gap-2 px-3 py-1 bg-indigo-50 border border-indigo-200 rounded-lg">
+            <Sparkles className="w-3.5 h-3.5 text-indigo-900" />
+            <span className="text-indigo-950 text-xs font-bold">Standard Sandbox Active</span>
           </div>
 
           {/* Difficulty Tag */}
@@ -665,8 +711,65 @@ export function OJWorkspacePage() {
             )}
 
             {leftTab === 'Discussion' && (
-              <div className="text-neutral-500 text-sm italic">
-                No discussion threads yet. Be the first to start a discussion!
+              <div className="space-y-6 w-full">
+                <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                  <h3 className="text-zinc-900 text-base font-bold">Community Discussion ({discussions.length})</h3>
+                  <span className="text-xs text-neutral-400">Share hints &amp; solutions</span>
+                </div>
+
+                {/* Create Discussion Form */}
+                <form onSubmit={handlePostDiscussion} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-3">
+                  <textarea
+                    rows={3}
+                    value={newDiscussionText}
+                    onChange={(e) => setNewDiscussionText(e.target.value)}
+                    placeholder="Ask a question, share an insight, or suggest an alternative approach..."
+                    className="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs sm:text-sm text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-indigo-900/20 resize-none"
+                  />
+                  <div className="flex justify-between items-center">
+                    <span className="text-[11px] text-neutral-400">Markdown supported</span>
+                    <button
+                      type="submit"
+                      disabled={!newDiscussionText.trim()}
+                      className="px-4 py-2 bg-indigo-900 hover:bg-indigo-950 disabled:opacity-40 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-xs"
+                    >
+                      Post Discussion
+                    </button>
+                  </div>
+                </form>
+
+                {/* Discussion List */}
+                <div className="flex flex-col gap-4">
+                  {discussions.map((d) => (
+                    <div key={d.id} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-indigo-900 text-white font-bold text-xs flex items-center justify-center">
+                            {d.initials}
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-zinc-900">{d.author}</span>
+                            <span className="text-[10px] text-neutral-400 font-mono">{d.timeAgo}</span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleUpvoteDiscussion(d.id)}
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold cursor-pointer border transition-colors ${
+                            d.hasUpvoted
+                              ? 'bg-indigo-900 text-white border-indigo-900'
+                              : 'bg-white text-zinc-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          <span>{d.upvotes}</span>
+                        </button>
+                      </div>
+
+                      <p className="text-xs text-neutral-700 leading-relaxed">{d.text}</p>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -833,7 +936,24 @@ export function OJWorkspacePage() {
         </div>
 
       </div>
-
+      
+      {/* Platform Standard Footer */}
+      <footer className="w-full py-8 bg-blue-950 text-white border-t border-blue-900 mt-auto">
+        <div className="max-w-[1340px] w-full mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-rose-500 text-white flex items-center justify-center font-bold">
+              <Code2 className="w-4 h-4" />
+            </div>
+            <span className="font-bold text-sm">Skill<span className="text-rose-400">Boost</span> Online Judge</span>
+          </div>
+          <span className="text-slate-400">© 2025 LMS Coding Platform. All rights reserved.</span>
+          <div className="flex items-center gap-4 text-slate-400">
+            <Link to="/courses" className="hover:text-white transition-colors">Courses</Link>
+            <Link to="/practice" className="hover:text-white transition-colors">Practice</Link>
+            <Link to="/interview" className="hover:text-white transition-colors">AI Interview</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

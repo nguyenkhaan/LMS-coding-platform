@@ -1,3 +1,4 @@
+import { LoginPage } from '@/features/auth/login_page';
 import { ScrollToTop } from '@/components/scroll_to_top';
 import React from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
@@ -61,12 +62,7 @@ import { InterviewReportPage } from '@/features/interview/pages/interview_report
 
 import { Clock } from 'lucide-react';
 
-const LoginPage = () => (
-	<div className="p-6 rounded-2xl border border-[hsl(var(--border-color))] bg-[hsl(var(--bg-card))] text-center max-w-md mx-auto my-12">
-		<h2 className="text-xl font-bold mb-4">Sign In</h2>
-		<p className="text-xs text-[hsl(var(--text-secondary))]">Student & Instructor Sign In</p>
-	</div>
-);
+
 
 const RegisterPage = () => (
 	<div className="p-6 rounded-2xl border border-[hsl(var(--border-color))] bg-[hsl(var(--bg-card))] text-center max-w-md mx-auto my-12">
