@@ -290,7 +290,8 @@ Table lesson_content_progress {
 }
 
 // Lesson Content Comment
-// A reply is a comment whose parent_id points to another comment in the same LessonContent.
+// A reply is a comment whose parent_id points to the comment being replied to in the same LessonContent.
+// Reply chains remain relationally intact; the API groups every descendant under its root for a two-level UI.
 Table comment {
   id integer PK
   lesson_content_id integer // NOT NULL; FK lesson_content.id

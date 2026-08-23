@@ -158,7 +158,7 @@ Các mô tả rút gọn trong bảng route như `CourseView`, `PaymentTransacti
 | `InterviewSessionWrite/View` | `interview_session` | `topic`, `level` | `id`, `student_id`, `topic`, `level`, `status`, `max_questions`, `question_count`, `started_at`, `ended_at`, `report_generated_at` | `can_answer` là projection `status == ACTIVE`; Student không gửi count/status/timestamps |
 | `InterviewMessageWrite/View` | `interview_message` | Answer command nhận `answer_text`, được map sang `content` | `id`, `session_id`, `sender`, `content`, `created_at` | `sender` do server xác định; `answer_text` là text từ speech-to-text hoặc typed fallback, không phải media payload |
 | `InterviewReportView` | `interview_reports` | Không nhận từ client | `id`, `session_id`, `overall_score`, `strengths`, `weaknesses`, `suggestions`, `generated_at` | Một aggregate report/session; không có skill score hoặc feedback theo từng câu |
-| `CommentWrite/View` | `comment` | `content`, `parent_id?` | `id`, `lesson_content_id`, `user_id`, `parent_id`, `content`, `created_at`, `updated_at` | LessonContent/user lấy từ path/current user; `deleted_at` không trả; comment đã soft-delete chỉ trả tombstone projection, không trả nội dung cũ |
+| `CommentWrite/View` | `comment` | `content`, `parent_id?` | `id`, `lesson_content_id`, `user_id`, `parent_id`, `content`, `created_at`, `updated_at` | LessonContent/user lấy từ path/current user; `deleted_at` không trả; `is_deleted` là projection từ `deleted_at`; comment đã soft-delete chỉ trả tombstone, không trả nội dung cũ |
 | `NotificationView` | `notification` | Mark-read không có body | `id`, `sender_id`, `user_id`, `type`, `target_type`, `target_id`, `content`, `is_read`, `created_at` | Recipient/type/target do service tạo |
 | `AuditLogView` | `audit_log` | Không có client write trực tiếp | `id`, `user_id`, `action`, `target_type`, `target_id`, `note`, `correlation_id`, `do_at` | `user_id` là actor; payload phải được redact |
 | `StudentDailyActivityView` | `student_daily_activity` | Không có client write trực tiếp | `id`, `student_id`, `activity_date`, `contribution_count`, `study_seconds`, `solved_problem_count`, `created_at`, `updated_at` | Streak/KPI/heatmap buckets là projection |
@@ -170,9 +170,10 @@ Các mô tả rút gọn trong bảng route như `CourseView`, `PaymentTransacti
 `DATABASE.txt` đã có bảng canonical `comment` cho comment và reply theo LessonContent:
 
 - Request chỉ nhận `content` và `parent_id?`; `lesson_content_id` lấy từ path và `user_id` lấy từ current user.
+- `parent_id` luôn là comment được reply trực tiếp. Database có thể tạo chuỗi reply, nhưng API chỉ biểu diễn hai cấp trên giao diện: root và toàn bộ descendant cùng cấp reply.
 - Reply phải trỏ tới parent chưa bị xóa và thuộc cùng `lesson_content_id`.
 - Xóa root comment là hard-delete toàn bộ reply tree; xóa non-root có reply là soft-delete để giữ cấu trúc và list không trả nội dung cũ.
-- List theo `lesson_content_id` dùng pagination ổn định theo `created_at`, `id` và không được bỏ qua kiểm tra course access.
+- List theo `lesson_content_id` phân trang ổn định theo root comment (`created_at`, `id`) và trả đầy đủ descendant của các root trong trang để FE không bị thiếu reply target; không được bỏ qua kiểm tra course access.
 
 #### External identity và role audit
 
@@ -387,7 +388,7 @@ Report worker phải idempotent và dùng unique `session_id`. Thành công chuy
 
 | Method | Route | Actor | Request | Response chính | Quy tắc |
 |---|---|---|---|---|---|
-| `GET` | `/lesson-contents/{lesson_content_id}/comments` | User có course access | `page`, `size` | `CommentView[]` | Chỉ user có quyền học/quản lý course; pagination ổn định; comment đã xóa trả tombstone và giữ reply thread |
+| `GET` | `/lesson-contents/{lesson_content_id}/comments` | User có course access | `page`, `size` | `CommentView[]` | Chỉ user có quyền học/quản lý course; `page`/`size` tính theo root comment và mỗi root trả trọn thread dạng flat để FE hiển thị tối đa hai cấp; comment đã xóa trả tombstone |
 | `POST` | `/lesson-contents/{lesson_content_id}/comments` | User có course access | `CommentWrite` (`content`, `parent_id?`) | `CommentView` | Trim/sanitize và giới hạn content; parent phải tồn tại, chưa bị xóa và cùng LessonContent; user/path fields do server đặt |
 | `DELETE` | `/comments/{comment_id}` | Comment owner/Moderator | - | `message` | Idempotent; root comment hard-delete cả reply tree; non-root có reply soft-delete thành tombstone; non-root không có reply được hard-delete; chỉ owner hoặc moderator đúng policy |
 | `GET` | `/notifications` | User đăng nhập | `unread_only?`, `type?`, `page`, `size` | `NotificationView[]` | Recipient only |

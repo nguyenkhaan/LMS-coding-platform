@@ -1,59 +1,87 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Path
-from src.middlewares.auth_middleware import get_current_user
-from src.modules.lesson_comment.lesson_comment_dependency import get_lesson_content_comment_service
-from src.modules.lesson_comment.lesson_comment_service import LessonContentCommentService
+from fastapi import APIRouter, Path, Query, status
+
+from src.modules.lesson_comment.lesson_comment_dependency import (
+    CurrentUserId,
+    LessonCommentServiceDependency,
+)
 from src.modules.lesson_comment.lesson_comment_dto import (
-    CreateLessonContentCommentRequest, 
+    CommentListResponse,
+    CommentMutationResponse,
+    CommentWrite,
+    DeleteCommentResponse,
+    TeacherCommentListResponse,
 )
-router = APIRouter(
-    prefix = '/lesson-contents', 
-    tags = ['Lesson Comment']
-)
-@router.get('/{lesson_content_id}/comments') 
-async def getLessonContentComments(
-    lesson_content_id : int, 
-    limit : Annotated[int , Query(ge=1 , le=100)] = 20, 
-    offset: Annotated[int , Query(ge = 0, le = 100)] = 0, 
-    route_service : LessonContentCommentService = Depends(
-        get_lesson_content_comment_service
-    )
-): 
-    response = await route_service.getLessonContentComments(
-        lesson_content_id, limit, offset 
-    )
-    return response 
 
-@router.post('/{lesson_content_id}/comment')
-async def createLessonContentComment(
-    lesson_content_id : Annotated[int , Path()], 
-    data : CreateLessonContentCommentRequest, 
-    user = Depends(get_current_user), 
-    route_service : LessonContentCommentService = Depends(
-        get_lesson_content_comment_service
-    ), 
-    
-): 
-    user_id = user.get('sub', None) 
-    if not user_id: 
-        raise HTTPException(
-            status_code=401, 
-            detail = "Invalid user id in authorization token"
-        )
-    return (
-        await route_service.createLessonContentComment(user_id , int(lesson_content_id) , data)
+router = APIRouter(tags=["Lesson Comment"])
+
+
+@router.get(
+    "/lesson-contents/{lesson_content_id}/comments",
+    response_model=CommentListResponse,
+)
+async def list_lesson_content_comments(
+    lesson_content_id: Annotated[int, Path(ge=1)],
+    user_id: CurrentUserId,
+    service: LessonCommentServiceDependency,
+    page: Annotated[int, Query(ge=1)] = 1,
+    size: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> CommentListResponse:
+    return await service.list_lesson_content_comments(
+        lesson_content_id=lesson_content_id,
+        user_id=user_id,
+        page=page,
+        size=size,
     )
 
-@router.delete('/comment/{comment_id}') 
-async def deleteComment(
-    comment_id : Annotated[int , Path()], 
-    user = Depends(get_current_user), 
-    route_service : LessonContentCommentService = Depends(
-        get_lesson_content_comment_service
-    ), 
-): 
-    user_id = user.get('sub', None) 
-    return (
-        await route_service.deleteLessonContentComment(user_id ,int(comment_id))
+
+@router.post(
+    "/lesson-contents/{lesson_content_id}/comments",
+    response_model=CommentMutationResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_lesson_content_comment(
+    lesson_content_id: Annotated[int, Path(ge=1)],
+    payload: CommentWrite,
+    user_id: CurrentUserId,
+    service: LessonCommentServiceDependency,
+) -> CommentMutationResponse:
+    return await service.create_comment(
+        lesson_content_id=lesson_content_id,
+        user_id=user_id,
+        payload=payload,
+    )
+
+
+@router.delete(
+    "/comments/{comment_id}",
+    response_model=DeleteCommentResponse,
+)
+async def delete_comment(
+    comment_id: Annotated[int, Path(ge=1)],
+    user_id: CurrentUserId,
+    service: LessonCommentServiceDependency,
+) -> DeleteCommentResponse:
+    return await service.delete_comment(comment_id=comment_id, user_id=user_id)
+
+
+@router.get(
+    "/teacher/courses/{course_id}/comments",
+    response_model=TeacherCommentListResponse,
+)
+async def list_teacher_course_comments(
+    course_id: Annotated[int, Path(ge=1)],
+    user_id: CurrentUserId,
+    service: LessonCommentServiceDependency,
+    unanswered_only: Annotated[bool, Query()] = False,
+    page: Annotated[int, Query(ge=1)] = 1,
+    size: Annotated[int, Query(ge=1, le=100)] = 20,
+) -> TeacherCommentListResponse:
+    return await service.list_teacher_course_comments(
+        course_id=course_id,
+        user_id=user_id,
+        unanswered_only=unanswered_only,
+        page=page,
+        size=size,
     )
