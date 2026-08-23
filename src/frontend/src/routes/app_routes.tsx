@@ -112,121 +112,106 @@ export const AppRoutes: React.FC = () => {
 		<>
 			<ScrollToTop />
 			<Routes>
-			{/* Public / Main Layout */}
-			<Route element={<MainLayout />}>
-				<Route path="/" element={<Navigate to="/dashboard" replace />} />
+				{/* Public & Main Protected Layout (Unified Header & Footer) */}
+				<Route element={<MainLayout />}>
+					<Route path="/" element={<Navigate to="/dashboard" replace />} />
 
-				{/* Course Catalog & Details */}
-				<Route path="/courses" element={<CourseCatalogGridPage />} />
-				<Route path="/courses/:courseSlug" element={<CourseDetailOverviewPage />} />
-				<Route path="/courses-overview/:courseSlug" element={<CourseDetailCurriculumPage />} />
-				<Route path="/courses-instructor/:courseSlug" element={<CourseDetailInstructorPage />} />
-				<Route path="/courses-reviews/:courseSlug" element={<CourseDetailReviewsPage />} />
-				<Route path="/courses-reviews/write/:courseSlug" element={<CourseWriteReviewPage />} />
-				<Route path="/courses-catalog" element={<CourseCatalogPage />} />
-				<Route path="/courses-detail/:courseSlug" element={<CourseDetailPage />} />
+					{/* Course Catalog & Details */}
+					<Route path="/courses" element={<CourseCatalogGridPage />} />
+					<Route path="/courses/:courseSlug" element={<CourseDetailOverviewPage />} />
+					<Route path="/courses-overview/:courseSlug" element={<CourseDetailCurriculumPage />} />
+					<Route path="/courses-instructor/:courseSlug" element={<CourseDetailInstructorPage />} />
+					<Route path="/courses-reviews/:courseSlug" element={<CourseDetailReviewsPage />} />
+					<Route path="/courses-reviews/write/:courseSlug" element={<CourseWriteReviewPage />} />
+					<Route path="/courses-catalog" element={<CourseCatalogPage />} />
+					<Route path="/courses-detail/:courseSlug" element={<CourseDetailPage />} />
 
-				{/* Enrolled Courses & Student Hub */}
-				<Route path="/courses/enrolled" element={<EnrolledCoursesPage />} />
-				<Route path="/student/courses" element={<EnrolledCoursesPage />} />
-				<Route path="/enrolled-courses" element={<EnrolledCoursesPage />} />
-				<Route path="/dashboard" element={<StudentDashboardPage />} />
-				<Route path="/student/profile" element={<StudentProfilePage />} />
-				<Route path="/profile" element={<StudentProfilePage />} />
-				<Route path="/student/favorites" element={<StudentFavoritesPage />} />
-				<Route path="/favorites" element={<StudentFavoritesPage />} />
-				<Route path="/student/settings" element={<StudentSettingsPage />} />
-
-				{/* Instructor Directory */}
-				<Route path="/instructors" element={<InstructorListPage />} />
-				<Route path="/instructors/:instructorId" element={<InstructorDetailPage />} />
-				<Route path="/instructor/detail" element={<InstructorDetailPage />} />
-
-				{/* Become a Teacher */}
-				<Route path="/become-teacher" element={<BecomeTeacherPage />} />
-				<Route path="/teacher/apply" element={<BecomeTeacherPage />} />
-
-				{/* Practice & Submissions */}
-				<Route path="/practice" element={<ProblemListPage />} />
-				<Route path="/submissions" element={<StudentHistoryPage />} />
-				<Route path="/practice/history" element={<StudentHistoryPage />} />
-
-				{/* AI Mock Interview */}
-				<Route path="/interview" element={<InterviewSetupPage />} />
-				<Route path="/interview/:sessionId" element={<InterviewWorkspacePage />} />
-				<Route path="/interview/report" element={<InterviewReportPage />} />
-				<Route path="/interview/report/:sessionId" element={<InterviewReportPage />} />
-
-				{/* Classroom Workspace */}
-				<Route path="/learn/:courseSlug" element={<ClassroomPage />} />
-				<Route path="/classroom/workspace" element={<ClassroomPage />} />
-				<Route path="/classroom/lesson/problem-preview" element={<LessonProblemPreviewPage />} />
-				<Route path="/classroom/problem-preview" element={<LessonProblemPreviewPage />} />
-				<Route path="/prog01" element={<LessonProblemPreviewPage />} />
-
-				{/* Payment */}
-				<Route path="/checkout/:courseId" element={<CheckoutPage />} />
-				<Route path="/payment-result" element={<PaymentResultPage />} />
-
-				<Route path="/unauthorized" element={<UnauthorizedPage />} />
-			</Route>
-
-			{/* Standalone Workspaces (OJ02 & Quiz Runners) */}
-			<Route path="/practice/:problemSlug" element={<OJWorkspacePage />} />
-			<Route path="/quiz/:quizId/attempt" element={<QuizAttemptPage />} />
-			<Route path="/quiz/:quizId/preview" element={<QuizPreviewPage />} />
-			<Route path="/quiz/:quizId/result" element={<QuizResultPage />} />
-
-			{/* Auth Layout */}
-			<Route element={<AuthLayout />}>
-				<Route path="/login" element={<LoginPage />} />
-				<Route path="/register" element={<RegisterPage />} />
-			</Route>
-
-			{/* Student Protected Hub */}
-			<Route element={<RoleGuard allowedRoles={['STUDENT', 'TEACHER', 'ADMIN']} />}>
-				<Route element={<DashboardLayout role="STUDENT" />}>
-					<Route path="/student/dashboard" element={<StudentDashboardPage />} />
+					{/* Enrolled Courses & Student Hub */}
+					<Route path="/courses/enrolled" element={<EnrolledCoursesPage />} />
+					<Route path="/student/courses" element={<EnrolledCoursesPage />} />
+					<Route path="/enrolled-courses" element={<EnrolledCoursesPage />} />
+					<Route path="/dashboard" element={<StudentDashboardPage />} />
+					<Route path="/student/profile" element={<StudentProfilePage />} />
+					<Route path="/profile" element={<StudentProfilePage />} />
 					<Route path="/student/favorites" element={<StudentFavoritesPage />} />
-					<Route path="/student/history" element={<StudentHistoryPage />} />
+					<Route path="/favorites" element={<StudentFavoritesPage />} />
+					<Route path="/student/settings" element={<StudentSettingsPage />} />
+
+					{/* Instructor Directory */}
+					<Route path="/instructors" element={<InstructorListPage />} />
+					<Route path="/instructors/:instructorId" element={<InstructorDetailPage />} />
+					<Route path="/instructor/detail" element={<InstructorDetailPage />} />
+
+					{/* Become a Teacher */}
+					<Route path="/become-teacher" element={<BecomeTeacherPage />} />
+					<Route path="/teacher/apply" element={<BecomeTeacherPage />} />
+
+					{/* Practice & Submissions */}
+					<Route path="/practice" element={<ProblemListPage />} />
+					<Route path="/submissions" element={<StudentHistoryPage />} />
+					<Route path="/practice/history" element={<StudentHistoryPage />} />
+
+					{/* AI Mock Interview */}
+					<Route path="/interview" element={<InterviewSetupPage />} />
+					<Route path="/interview/:sessionId" element={<InterviewWorkspacePage />} />
+					<Route path="/interview/report" element={<InterviewReportPage />} />
+					<Route path="/interview/report/:sessionId" element={<InterviewReportPage />} />
+
+					{/* Classroom Workspace */}
+					<Route path="/learn/:courseSlug" element={<ClassroomPage />} />
+					<Route path="/classroom/workspace" element={<ClassroomPage />} />
+					<Route path="/classroom/lesson/problem-preview" element={<LessonProblemPreviewPage />} />
+					<Route path="/classroom/problem-preview" element={<LessonProblemPreviewPage />} />
+					<Route path="/prog01" element={<LessonProblemPreviewPage />} />
+
+					{/* Payment */}
+					<Route path="/checkout/:courseId" element={<CheckoutPage />} />
+					<Route path="/payment-result" element={<PaymentResultPage />} />
+
+					{/* Teacher Studio (Header + Footer Included) */}
+					<Route element={<RoleGuard allowedRoles={['TEACHER']} requireTeacherApproved={false} />}>
+						<Route path="/teacher/pending-approval" element={<TeacherPendingApprovalPage />} />
+					</Route>
+
+					<Route element={<RoleGuard allowedRoles={['TEACHER']} requireTeacherApproved={true} />}>
+						<Route path="/teacher/dashboard" element={<TeacherDashboardPage />} />
+						<Route path="/teacher/profile" element={<TeacherProfilePage />} />
+						<Route path="/teacher/course-builder" element={<CourseBuilderPage />} />
+						<Route path="/teacher/students" element={<TeacherStudentsPage />} />
+						<Route path="/teacher/earnings" element={<TeacherEarningsPage />} />
+						<Route path="/teacher/wallet" element={<TeacherWalletPage />} />
+						<Route path="/teacher/settings" element={<TeacherSettingsPage />} />
+						<Route path="/teacher/courses" element={<Navigate to="/teacher/course-builder" replace />} />
+						<Route path="/teacher/courses/:courseId/review-status" element={<CourseApprovalStatusPage />} />
+					</Route>
+
+					{/* Admin Panel (Header + Footer Included) */}
+					<Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
+						<Route path="/admin/courses" element={<CourseApprovalReviewPage />} />
+						<Route path="/admin/course-review/:courseId" element={<CourseApprovalReviewPage />} />
+						<Route path="/admin/verifications" element={<AdminVerificationsPage />} />
+						<Route path="/admin/teachers" element={<AdminVerificationsPage />} />
+						<Route path="/admin" element={<Navigate to="/admin/verifications" replace />} />
+						<Route path="/admin/dashboard" element={<Navigate to="/admin/verifications" replace />} />
+					</Route>
+
+					<Route path="/unauthorized" element={<UnauthorizedPage />} />
 				</Route>
-			</Route>
 
-			{/* Teacher Pending Studio (Unapproved) */}
-			<Route element={<RoleGuard allowedRoles={['TEACHER']} requireTeacherApproved={false} />}>
-				<Route path="/teacher/pending-approval" element={<TeacherPendingApprovalPage />} />
-			</Route>
+				{/* Standalone Fullscreen Workspaces */}
+				<Route path="/practice/:problemSlug" element={<OJWorkspacePage />} />
+				<Route path="/quiz/:quizId/attempt" element={<QuizAttemptPage />} />
+				<Route path="/quiz/:quizId/preview" element={<QuizPreviewPage />} />
+				<Route path="/quiz/:quizId/result" element={<QuizResultPage />} />
 
-			{/* Teacher Approved Protected Studio */}
-			<Route element={<RoleGuard allowedRoles={['TEACHER']} requireTeacherApproved={true} />}>
-				<Route path="/teacher/dashboard" element={<TeacherDashboardPage />} />
-				<Route path="/teacher/profile" element={<TeacherProfilePage />} />
-				<Route path="/teacher/course-builder" element={<CourseBuilderPage />} />
-				<Route path="/teacher/students" element={<TeacherStudentsPage />} />
-				<Route path="/teacher/earnings" element={<TeacherEarningsPage />} />
-				<Route path="/teacher/wallet" element={<TeacherWalletPage />} />
-				<Route path="/teacher/settings" element={<TeacherSettingsPage />} />
-				<Route path="/teacher/courses" element={<Navigate to="/teacher/course-builder" replace />} />
-				<Route path="/teacher/courses/:courseId/review-status" element={<CourseApprovalStatusPage />} />
-			</Route>
+				{/* Auth Layout */}
+				<Route element={<AuthLayout />}>
+					<Route path="/login" element={<LoginPage />} />
+					<Route path="/register" element={<RegisterPage />} />
+				</Route>
 
-			{/* Admin Protected Panel (2 Moderation Subpages) */}
-			<Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
-				{/* 1. Course Approval Review */}
-				<Route path="/admin/courses" element={<CourseApprovalReviewPage />} />
-				<Route path="/admin/course-review/:courseId" element={<CourseApprovalReviewPage />} />
-				
-				{/* 2. Teacher Registration Review */}
-				<Route path="/admin/verifications" element={<AdminVerificationsPage />} />
-				<Route path="/admin/teachers" element={<AdminVerificationsPage />} />
-				
-				{/* Admin Default Redirects */}
-				<Route path="/admin" element={<Navigate to="/admin/verifications" replace />} />
-				<Route path="/admin/dashboard" element={<Navigate to="/admin/verifications" replace />} />
-			</Route>
-
-			<Route path="*" element={<NotFoundPage />} />
-		</Routes>
+				<Route path="*" element={<NotFoundPage />} />
+			</Routes>
 		</>
 	);
 };
