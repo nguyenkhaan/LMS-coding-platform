@@ -2,10 +2,8 @@ import { ScrollToTop } from '@/components/scroll_to_top';
 import React from 'react';
 import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import { MainLayout } from '@/layouts/main_layout';
-import { DashboardLayout } from '@/layouts/dashboard_layout';
 import { AuthLayout } from '@/layouts/auth_layout';
 import { RoleGuard } from './role_guard';
-import { RootRedirect } from './root_redirect';
 
 // Auth Pages
 import { LoginPage } from '@/features/auth/auth_login';
@@ -123,9 +121,6 @@ export const AppRoutes: React.FC = () => {
 		<>
 			<ScrollToTop />
 			<Routes>
-				{/* ROOT — smart redirect based on auth state */}
-				<Route path="/" element={<RootRedirect />} />
-
 				{/* ── AUTH LAYOUT (unauthenticated entry) ── */}
 				<Route element={<AuthLayout />}>
 					<Route path="/login" element={<LoginPage />} />
@@ -136,6 +131,7 @@ export const AppRoutes: React.FC = () => {
 
 				{/* ── PUBLIC BROWSEABLE ROUTES (MainLayout with header + footer) ── */}
 				<Route element={<MainLayout />}>
+					<Route path="/" element={<CourseCatalogGridPage />} />
 					{/* Course Catalog & Details */}
 					<Route path="/courses" element={<CourseCatalogGridPage />} />
 					<Route path="/courses/:courseSlug" element={<CourseDetailOverviewPage />} />
@@ -156,22 +152,8 @@ export const AppRoutes: React.FC = () => {
 					<Route path="/submissions" element={<StudentHistoryPage />} />
 					<Route path="/practice/history" element={<StudentHistoryPage />} />
 
-					{/* AI Mock Interview */}
+					{/* AI Mock Interview Setup */}
 					<Route path="/interview" element={<InterviewSetupPage />} />
-					<Route path="/interview/:sessionId" element={<InterviewWorkspacePage />} />
-					<Route path="/interview/report" element={<InterviewReportPage />} />
-					<Route path="/interview/report/:sessionId" element={<InterviewReportPage />} />
-
-					{/* Classroom Workspace */}
-					<Route path="/learn/:courseSlug" element={<ClassroomPage />} />
-					<Route path="/classroom/workspace" element={<ClassroomPage />} />
-					<Route path="/classroom/lesson/problem-preview" element={<LessonProblemPreviewPage />} />
-					<Route path="/classroom/problem-preview" element={<LessonProblemPreviewPage />} />
-					<Route path="/prog01" element={<LessonProblemPreviewPage />} />
-
-					{/* Payment */}
-					<Route path="/checkout/:courseId" element={<CheckoutPage />} />
-					<Route path="/payment-result" element={<PaymentResultPage />} />
 
 					{/* Become a Teacher (accessible while logged in as student) */}
 					<Route path="/become-teacher" element={<BecomeTeacherPage />} />
@@ -182,9 +164,13 @@ export const AppRoutes: React.FC = () => {
 
 				{/* ── STANDALONE WORKSPACES (no shared layout) ── */}
 				<Route path="/practice/:problemSlug" element={<OJWorkspacePage />} />
-				<Route path="/quiz/:quizId/attempt" element={<QuizAttemptPage />} />
-				<Route path="/quiz/:quizId/preview" element={<QuizPreviewPage />} />
-				<Route path="/quiz/:quizId/result" element={<QuizResultPage />} />
+
+				{/* Protected standalone quiz attempt/result workspaces */}
+				<Route element={<RoleGuard allowedRoles={['STUDENT', 'TEACHER', 'ADMIN']} />}>
+					<Route path="/quiz/:quizId/attempt" element={<QuizAttemptPage />} />
+					<Route path="/quiz/:quizId/preview" element={<QuizPreviewPage />} />
+					<Route path="/quiz/:quizId/result" element={<QuizResultPage />} />
+				</Route>
 
 				{/* ── STUDENT PROTECTED ROUTES ── */}
 				{/*
@@ -204,6 +190,22 @@ export const AppRoutes: React.FC = () => {
 						<Route path="/favorites" element={<StudentFavoritesPage />} />
 						<Route path="/student/history" element={<StudentHistoryPage />} />
 						<Route path="/student/settings" element={<StudentSettingsPage />} />
+
+						{/* Classroom Workspace */}
+						<Route path="/learn/:courseSlug" element={<ClassroomPage />} />
+						<Route path="/classroom/workspace" element={<ClassroomPage />} />
+						<Route path="/classroom/lesson/problem-preview" element={<LessonProblemPreviewPage />} />
+						<Route path="/classroom/problem-preview" element={<LessonProblemPreviewPage />} />
+						<Route path="/prog01" element={<LessonProblemPreviewPage />} />
+
+						{/* Payment */}
+						<Route path="/checkout/:courseId" element={<CheckoutPage />} />
+						<Route path="/payment-result" element={<PaymentResultPage />} />
+
+						{/* AI Mock Interview Workspaces & Reports */}
+						<Route path="/interview/:sessionId" element={<InterviewWorkspacePage />} />
+						<Route path="/interview/report" element={<InterviewReportPage />} />
+						<Route path="/interview/report/:sessionId" element={<InterviewReportPage />} />
 
 						{/* Legacy /dashboard alias → redirect to canonical URL */}
 						<Route path="/dashboard" element={<Navigate to="/student/dashboard" replace />} />

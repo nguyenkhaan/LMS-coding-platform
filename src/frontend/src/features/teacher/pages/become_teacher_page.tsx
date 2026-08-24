@@ -1,31 +1,24 @@
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Modal } from '@/components/ui/Modal';
 import {
   FileText,
-  Upload,
   CheckCircle2,
   AlertCircle,
   Clock,
   ShieldCheck,
   Info,
-  ChevronRight,
-  Sparkles,
   Camera,
   GraduationCap,
   Lock,
   Edit3,
   XCircle,
   RefreshCw,
-  Eye,
   Trash2,
   Plus,
   X,
-  ExternalLink,
-  Briefcase,
   Globe,
   Code2,
-  Award,
-  BookOpen,
   Share2
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -44,13 +37,54 @@ export function BecomeTeacherPage() {
   const navigate = useNavigate();
   const { user, setUser } = useAuthStore();
 
+  // Confirmation modal states
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isConfirmingResubmit, setIsConfirmingResubmit] = useState(false);
+
+  // Track all created object URLs to clean up on unmount or file replacement
+  const objectUrlsRef = useRef<Set<string>>(new Set());
+
+  const createTrackedObjectURL = (file: File) => {
+    const url = URL.createObjectURL(file);
+    objectUrlsRef.current.add(url);
+    return url;
+  };
+
+  const revokeTrackedObjectURL = (url: string) => {
+    if (url && url.startsWith('blob:')) {
+      URL.revokeObjectURL(url);
+      objectUrlsRef.current.delete(url);
+    }
+  };
+
+  React.useEffect(() => {
+    const activeUrls = objectUrlsRef.current;
+    return () => {
+      // Revoke all created object URLs when component unmounts
+      activeUrls.forEach((url) => {
+        URL.revokeObjectURL(url);
+      });
+      activeUrls.clear();
+    };
+  }, []);
+
+  const handleConfirmSubmit = () => {
+    setIsConfirmModalOpen(false);
+    handleStateChange('PENDING');
+    if (isConfirmingResubmit) {
+      toast.success('Updated application resubmitted for verification!');
+    } else {
+      toast.success('Application submitted successfully for Admin Review!');
+    }
+  };
+
   // State Machine Status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED'
   const initialStatus: TeacherApplicationStatus = user?.teacherProfile?.status || 
     (user?.roles.includes('TEACHER') ? 'APPROVED' : 'DRAFT');
   const [status, setStatus] = useState<TeacherApplicationStatus>(initialStatus);
   
   // Admin review note (visible in REJECTED state)
-  const [reviewNote, setReviewNote] = useState<string>(
+  const [reviewNote] = useState<string>(
     'Ảnh chụp selfie cầm CCCD bị mờ, không nhìn rõ số định danh cá nhân. Vui lòng chụp lại ảnh rõ nét trong điều kiện đủ sáng.'
   );
 
@@ -66,7 +100,7 @@ export function BecomeTeacherPage() {
         roles: updatedRoles,
         teacherProfile: {
           verified: newStatus === 'APPROVED',
-          status: newStatus as any
+          status: newStatus as 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED'
         }
       });
     }
@@ -130,7 +164,7 @@ export function BecomeTeacherPage() {
   const cvRef = useRef<HTMLInputElement>(null);
 
   // Field change handler
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -166,25 +200,37 @@ export function BecomeTeacherPage() {
       return;
     }
 
-    const preview = URL.createObjectURL(selectedFile);
+    const preview = createTrackedObjectURL(selectedFile);
     const sizeStr = (selectedFile.size / (1024 * 1024)).toFixed(1) + ' MB';
 
-    setFiles((prev) => ({
-      ...prev,
-      [key]: {
-        file: selectedFile,
-        previewUrl: preview,
-        name: selectedFile.name,
-        size: sizeStr
+    setFiles((prev) => {
+      const prevFile = prev[key];
+      if (prevFile && prevFile.previewUrl) {
+        revokeTrackedObjectURL(prevFile.previewUrl);
       }
-    }));
+      return {
+        ...prev,
+        [key]: {
+          file: selectedFile,
+          previewUrl: preview,
+          name: selectedFile.name,
+          size: sizeStr
+        }
+      };
+    });
 
     toast.success(`Uploaded ${selectedFile.name}`);
   };
 
   const handleRemoveFile = (key: keyof typeof files, e: React.MouseEvent) => {
     e.stopPropagation();
-    setFiles((prev) => ({ ...prev, [key]: null }));
+    setFiles((prev) => {
+      const prevFile = prev[key];
+      if (prevFile && prevFile.previewUrl) {
+        revokeTrackedObjectURL(prevFile.previewUrl);
+      }
+      return { ...prev, [key]: null };
+    });
     toast.info('File removed.');
   };
 
@@ -266,8 +312,8 @@ export function BecomeTeacherPage() {
       toast.error('Please complete all required fields and documents before submitting.');
       return;
     }
-    handleStateChange('PENDING');
-    toast.success('Application submitted successfully for Admin Review!');
+    setIsConfirmingResubmit(false);
+    setIsConfirmModalOpen(true);
   };
 
   const handleSaveDraft = () => {
@@ -279,8 +325,8 @@ export function BecomeTeacherPage() {
       toast.error('Please resolve all missing/rejected items before resubmitting.');
       return;
     }
-    handleStateChange('PENDING');
-    toast.success('Updated application resubmitted for verification!');
+    setIsConfirmingResubmit(true);
+    setIsConfirmModalOpen(true);
   };
 
   return (
@@ -726,21 +772,24 @@ export function BecomeTeacherPage() {
             type="file"
             ref={idFrontRef}
             onChange={(e) => handleFileUpload('identityFront', e)}
-            accept="image/png, image/jpeg"
+            accept="image/png, image/jpeg, image/jpg, image/webp"
+            disabled={!isFieldEditable(true)}
             className="hidden"
           />
           <input
             type="file"
             ref={idBackRef}
             onChange={(e) => handleFileUpload('identityBack', e)}
-            accept="image/png, image/jpeg"
+            accept="image/png, image/jpeg, image/jpg, image/webp"
+            disabled={!isFieldEditable(true)}
             className="hidden"
           />
           <input
             type="file"
             ref={idSelfieRef}
             onChange={(e) => handleFileUpload('selfieWithId', e)}
-            accept="image/png, image/jpeg"
+            accept="image/png, image/jpeg, image/jpg, image/webp"
+            disabled={!isFieldEditable(true)}
             className="hidden"
           />
 
@@ -754,13 +803,23 @@ export function BecomeTeacherPage() {
                   : 'bg-slate-50 border-neutral-300 hover:border-indigo-500 hover:bg-indigo-50/20'
               } ${isFieldEditable(true) ? 'cursor-pointer' : 'cursor-default opacity-85'}`}
             >
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-900 flex items-center justify-center shadow-2xs">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
+              {files.identityFront && files.identityFront.previewUrl ? (
+                <div className="w-32 h-20 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center border border-neutral-200 shadow-2xs">
+                  <img
+                    src={files.identityFront.previewUrl}
+                    alt="ID Front Preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-900 flex items-center justify-center shadow-2xs">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+              )}
               <div className="flex flex-col gap-1">
                 <h4 className="text-zinc-900 text-sm font-bold">National ID - Front *</h4>
                 <span className="text-neutral-400 text-xs">
-                  {files.identityFront ? `${files.identityFront.name} (${files.identityFront.size})` : 'PNG or JPG · max 5 MB'}
+                  {files.identityFront ? `${files.identityFront.name} (${files.identityFront.size})` : 'PNG, JPG or WEBP · max 5 MB'}
                 </span>
               </div>
 
@@ -801,13 +860,23 @@ export function BecomeTeacherPage() {
                   : 'bg-slate-50 border-neutral-300 hover:border-indigo-500 hover:bg-indigo-50/20'
               } ${isFieldEditable(true) ? 'cursor-pointer' : 'cursor-default opacity-85'}`}
             >
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-900 flex items-center justify-center shadow-2xs">
-                <ShieldCheck className="w-6 h-6" />
-              </div>
+              {files.identityBack && files.identityBack.previewUrl ? (
+                <div className="w-32 h-20 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center border border-neutral-200 shadow-2xs">
+                  <img
+                    src={files.identityBack.previewUrl}
+                    alt="ID Back Preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-900 flex items-center justify-center shadow-2xs">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+              )}
               <div className="flex flex-col gap-1">
                 <h4 className="text-zinc-900 text-sm font-bold">National ID - Back *</h4>
                 <span className="text-neutral-400 text-xs">
-                  {files.identityBack ? `${files.identityBack.name} (${files.identityBack.size})` : 'PNG or JPG · max 5 MB'}
+                  {files.identityBack ? `${files.identityBack.name} (${files.identityBack.size})` : 'PNG, JPG or WEBP · max 5 MB'}
                 </span>
               </div>
 
@@ -848,9 +917,19 @@ export function BecomeTeacherPage() {
                   : 'bg-slate-50 border-neutral-300 hover:border-indigo-500 hover:bg-indigo-50/20'
               } ${isFieldEditable(true) ? 'cursor-pointer' : 'cursor-default opacity-85'}`}
             >
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-900 flex items-center justify-center shadow-2xs">
-                <Camera className="w-6 h-6" />
-              </div>
+              {files.selfieWithId && files.selfieWithId.previewUrl ? (
+                <div className="w-32 h-20 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center border border-neutral-200 shadow-2xs">
+                  <img
+                    src={files.selfieWithId.previewUrl}
+                    alt="Selfie Preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-900 flex items-center justify-center shadow-2xs">
+                  <Camera className="w-6 h-6" />
+                </div>
+              )}
               <div className="flex flex-col gap-1">
                 <h4 className="text-zinc-900 text-sm font-bold">Selfie Holding ID *</h4>
                 <span className="text-neutral-400 text-xs">
@@ -932,7 +1011,8 @@ export function BecomeTeacherPage() {
             type="file"
             ref={eduDocRef}
             onChange={(e) => handleFileUpload('educationEvidence', e)}
-            accept=".pdf, image/jpeg, image/png"
+            accept=".pdf, image/jpeg, image/jpg, image/png, image/webp"
+            disabled={!isFieldEditable(false)}
             className="hidden"
           />
           <input
@@ -940,6 +1020,7 @@ export function BecomeTeacherPage() {
             ref={cvRef}
             onChange={(e) => handleFileUpload('cv', e)}
             accept=".pdf, .docx, .doc"
+            disabled={!isFieldEditable(false)}
             className="hidden"
           />
 
@@ -1225,6 +1306,33 @@ export function BecomeTeacherPage() {
         </div>
 
       </div>
+
+      {/* Confirmation Modal */}
+      <Modal
+        isOpen={isConfirmModalOpen}
+        onClose={() => setIsConfirmModalOpen(false)}
+        title="Xác nhận gửi thông tin"
+        footer={
+          <>
+            <button
+              onClick={() => setIsConfirmModalOpen(false)}
+              className="px-5 py-2.5 rounded-xl border border-gray-250 text-sm font-semibold text-text-secondary hover:bg-slate-50 transition-all cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleConfirmSubmit}
+              className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-semibold transition-all shadow-sm cursor-pointer"
+            >
+              Yes, Submit
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm text-neutral-600 leading-relaxed font-medium">
+          Thông tin của bạn sẽ bị khóa cho đến khi Admin Review xong. Hãy kiểm tra kỹ thông tin trước khi gửi.
+        </p>
+      </Modal>
 
     </div>
   );

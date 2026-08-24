@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuthStore } from '@/stores/useAuthStore';
+import { Modal } from '@/components/ui/Modal';
 import {
   Mic,
   Video,
   Info,
-  CheckCircle2,
-  ChevronRight,
   Sparkles,
   Shield,
   Clock,
@@ -24,6 +24,7 @@ const LEVELS = ['Intern', 'Fresher', 'Junior', 'Senior', 'Lead'];
 
 export function InterviewSetupPage() {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuthStore();
   const [selectedTopic, setSelectedTopic] = useState('javascript');
   const [selectedLevel, setSelectedLevel] = useState('Junior');
   const [micEnabled, setMicEnabled] = useState(true);
@@ -190,6 +191,33 @@ export function InterviewSetupPage() {
 
         </div>
       </div>
+
+      {/* Guest Lock Modal */}
+      <Modal
+        isOpen={!isAuthenticated}
+        onClose={() => navigate('/')}
+        title="🔒 AI Interview Locked"
+        footer={
+          <>
+            <button
+              onClick={() => navigate('/')}
+              className="px-5 py-2.5 rounded-xl border border-gray-250 text-sm font-semibold text-text-secondary hover:bg-slate-50 transition-all cursor-pointer"
+            >
+              Back to Catalog
+            </button>
+            <button
+              onClick={() => navigate('/login')}
+              className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-sm font-semibold transition-all shadow-sm cursor-pointer"
+            >
+              Sign In
+            </button>
+          </>
+        }
+      >
+        <p className="text-sm text-neutral-600 leading-relaxed font-medium">
+          Vui lòng đăng nhập tài khoản để trải nghiệm tính năng Phỏng vấn thử với AI.
+        </p>
+      </Modal>
 
     </div>
   );

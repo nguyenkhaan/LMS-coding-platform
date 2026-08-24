@@ -16,13 +16,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 		return (
 			<div className="w-full space-y-1.5">
 				{label && (
-					<label htmlFor={inputId} className="block text-xs font-semibold text-[#111827]">
+					<label htmlFor={inputId} className="block text-xs font-semibold text-text-primary">
 						{label}
 					</label>
 				)}
 				<div className="relative flex items-center">
 					{iconPrefix && (
-						<span className="absolute left-3 text-[#6B7280] pointer-events-none">
+						<span className="absolute left-3 text-text-secondary pointer-events-none">
 							{iconPrefix}
 						</span>
 					)}

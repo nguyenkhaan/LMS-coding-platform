@@ -1,25 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useParams, useSearchParams, useLocation } from 'react-router-dom';
 import {
   CheckCircle2,
   Circle,
   Send,
   Search,
   Check,
-  Code2,
   BookOpen,
   ArrowRight,
   ArrowLeft,
-  Sparkles,
-  Layers,
   Terminal,
-  HelpCircle,
   MessageSquare,
   Clock,
-  ThumbsUp,
   FileQuestion,
-  Bookmark,
-  Copy,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCourseStore } from '@/stores/useCourseStore';
@@ -31,7 +24,7 @@ interface LessonItem {
   path: string;
   isCompleted: boolean;
   isActive: boolean;
-  rawContent?: any;
+  rawContent?: unknown;
 }
 
 interface CommentMessage {
@@ -84,8 +77,10 @@ const INITIAL_COMMENTS: CommentMessage[] = [
 
 export function ClassroomPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { courseSlug } = useParams<{ courseSlug?: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
+  const backRoute = location.state?.from || `/courses/${courseSlug}`;
   const { courses } = useCourseStore();
   const currentCourse = courses.find(c => c.slug === courseSlug || c.id === courseSlug);
   const activeLessonId = searchParams.get('lessonId');
@@ -216,6 +211,13 @@ export function ClassroomPage() {
           <span>&gt;</span>
           <span className="text-zinc-900 font-semibold">{courseTitle}</span>
         </div>
+        <button
+          onClick={() => navigate(backRoute)}
+          className="mt-2 flex items-center gap-2 px-4 py-2 text-xs font-bold text-indigo-900 hover:text-white bg-indigo-50 hover:bg-indigo-900 border border-indigo-200 rounded-xl transition-all cursor-pointer shadow-2xs"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Back to Course Details</span>
+        </button>
       </div>
 
       {/* 2. SUBHEADER: SEARCH & STUDENT PROFILE BAR */}
@@ -385,15 +387,15 @@ export function ClassroomPage() {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                   <div className="p-3.5 bg-white rounded-xl border border-neutral-200 shadow-2xs">
-                    <span className="text-xs font-bold text-[#392C7D] uppercase tracking-wide">Total Questions</span>
+                    <span className="text-xs font-bold text-primary uppercase tracking-wide">Total Questions</span>
                     <p className="text-zinc-900 font-extrabold text-lg font-mono mt-1">
                       {activeLesson.rawContent?.quizQuestions?.length || 10}
                     </p>
                   </div>
                   <div className="p-3.5 bg-white rounded-xl border border-neutral-200 shadow-2xs">
-                    <span className="text-xs font-bold text-[#392C7D] uppercase tracking-wide">Total Points</span>
+                    <span className="text-xs font-bold text-primary uppercase tracking-wide">Total Points</span>
                     <p className="text-zinc-900 font-extrabold text-lg font-mono mt-1">
-                      {activeLesson.rawContent?.quizQuestions?.reduce((acc: number, q: any) => acc + (q.points || 0), 0) || 100}
+                      {((activeLesson.rawContent as { quizQuestions?: Array<{ points?: number }> })?.quizQuestions || []).reduce((acc: number, q: { points?: number }) => acc + (q.points || 0), 0) || 100}
                     </p>
                   </div>
                   <div className="p-3.5 bg-white rounded-xl border border-neutral-200 shadow-2xs">
@@ -422,7 +424,7 @@ export function ClassroomPage() {
                       }
                     });
                   }}
-                  className="px-8 py-3 bg-[#FF4667] hover:bg-[#e03d5b] text-white rounded-xl text-sm font-bold shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-2"
+                  className="px-8 py-3 bg-accent hover:bg-accent/90 text-white rounded-xl text-sm font-bold shadow-md transition-all active:scale-95 cursor-pointer flex items-center gap-2"
                 >
                   <FileQuestion className="w-4 h-4" />
                   <span>Start Quiz</span>

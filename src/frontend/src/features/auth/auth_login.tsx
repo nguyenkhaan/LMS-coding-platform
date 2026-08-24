@@ -10,7 +10,7 @@ export const LoginPage: React.FC = () => {
   const location = useLocation();
   const { setAuth } = useAuthStore();
   // If RoleGuard redirected here with a destination, respect it after login
-  const intendedDestination = (location.state as any)?.from?.pathname || null;
+  const intendedDestination = (location.state as { from?: { pathname?: string } })?.from?.pathname || null;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -49,47 +49,63 @@ export const LoginPage: React.FC = () => {
       // Simulate API response delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
+      const MOCK_ACCOUNTS = {
+        'student@gmail.com': {
+          password: 'student123',
+          roles: ['STUDENT'] as Role[],
+          fullName: 'Student Learner',
+          dashboard: '/student/dashboard',
+          id: 3,
+          teacherProfile: undefined,
+        },
+        'teacher@gmail.com': {
+          password: 'teacher123',
+          roles: ['STUDENT', 'TEACHER'] as Role[],
+          fullName: 'Instructor Minh',
+          dashboard: '/teacher/dashboard',
+          id: 2,
+          teacherProfile: { verified: true, status: 'APPROVED' as const },
+        },
+        'admin@gmail.com': {
+          password: 'admin123',
+          roles: ['ADMIN'] as Role[],
+          fullName: 'System Administrator',
+          dashboard: '/admin/dashboard',
+          id: 1,
+          teacherProfile: undefined,
+        }
+      };
+
       const normalizedEmail = email.trim().toLowerCase();
-      let roles: Role[] = ['STUDENT'];
-      let fullName = 'Ronald Richard';
+      const mockAccount = MOCK_ACCOUNTS[normalizedEmail as keyof typeof MOCK_ACCOUNTS];
 
-      // Mock: detect admin/teacher based on email for demo purposes
-      // In production this comes from the API response
-      if (normalizedEmail.includes('admin')) {
-        roles = ['ADMIN'];
-        fullName = 'System Administrator';
-      } else if (normalizedEmail.includes('teacher')) {
-        roles = ['TEACHER'];
-        fullName = 'Instructor Minh';
-      }
-
-      // Simulate invalid credentials
-      if (password === 'wrongpassword') {
+      if (!mockAccount || mockAccount.password !== password) {
         throw new Error('Invalid email or password.');
       }
 
       // Update Auth Store
       const authenticatedUser = {
-        id: roles.includes('ADMIN') ? 1 : roles.includes('TEACHER') ? 2 : 3,
+        id: mockAccount.id,
         email: normalizedEmail,
-        fullName,
-        roles,
+        fullName: mockAccount.fullName,
+        roles: mockAccount.roles,
         accountStatus: 'ACTIVE' as const,
-        teacherProfile: roles.includes('TEACHER') ? { verified: true, status: 'APPROVED' as any } : undefined,
+        teacherProfile: mockAccount.teacherProfile,
       };
       setAuth(authenticatedUser, 'mock-jwt-access-token', 'mock-jwt-refresh-token');
 
       toast.success('Successfully signed in!');
 
       // Determine redirect destination from user roles, honouring any intended destination
-      let defaultRedirect = '/student/dashboard';
-      if (authenticatedUser.roles.includes('ADMIN')) {
+      let defaultRedirect = mockAccount.dashboard;
+      if (defaultRedirect === '/admin/dashboard') {
         defaultRedirect = '/admin/verifications';
       }
       navigate(intendedDestination || defaultRedirect);
-    } catch (err: any) {
-      setErrorMessage(err.message || 'An error occurred during sign in. Please try again.');
-      toast.error(err.message || 'Authentication failed.');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An error occurred during sign in. Please try again.';
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

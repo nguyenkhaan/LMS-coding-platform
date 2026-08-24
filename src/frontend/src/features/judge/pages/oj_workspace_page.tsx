@@ -1,19 +1,18 @@
 import { useAuthStore } from '@/stores/useAuthStore';
+import { mockJudgeEngine, SubmissionProgress } from '../services/mockJudgeEngine';
 import { NotificationDropdown } from '@/features/notification/components/notification_dropdown';
 import { GraduationCap, ShieldCheck, LogOut, FileText } from 'lucide-react';
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import Editor from '@monaco-editor/react';
 import {
   MapPin,
   Phone,
   ChevronDown,
   Search,
-  ShoppingCart,
   User,
   Play,
   CheckCircle2,
-  Clock,
   Zap,
   Code2,
   Terminal,
@@ -177,7 +176,6 @@ const PROBLEMS_DATABASE: Record<string, ProblemDetail> = {
 
 export function OJWorkspacePage() {
   const { user, isAuthenticated, logout } = useAuthStore();
-  const navigate = useNavigate();
   const { problemSlug } = useParams<{ problemSlug: string }>();
 
   // Determine problem detail from DB (fallback to two-sum or add-two-number)
@@ -276,6 +274,7 @@ export function OJWorkspacePage() {
   // Execution & Verdict State
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [submissionProgress, setSubmissionProgress] = useState<SubmissionProgress | null>(null);
   const [executionResult, setExecutionResult] = useState<{
     status: 'ACCEPTED' | 'WRONG_ANSWER' | null;
     output: string;
@@ -315,17 +314,27 @@ export function OJWorkspacePage() {
   const handleSubmitCode = () => {
     setIsSubmitting(true);
     setBottomTab('Output');
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setExecutionResult({
-        status: 'ACCEPTED',
-        output: currentProblem.testCases[0]?.expected || '[0, 1]',
-        runtime: '42 ms (faster than 88.4%)',
-        memory: '13.9 MB (less than 92.1%)',
-        passedCases: currentProblem.testCases.length,
-        totalCases: currentProblem.testCases.length
-      });
-    }, 1500);
+    setExecutionResult(null);
+    setSubmissionProgress(null);
+
+    mockJudgeEngine.submit(
+      currentProblem.testCases,
+      code,
+      (progress) => {
+        setSubmissionProgress(progress);
+        if (progress.status === 'Passed' || progress.status === 'Failed') {
+          setIsSubmitting(false);
+          setExecutionResult({
+            status: progress.status === 'Passed' ? 'ACCEPTED' : 'WRONG_ANSWER',
+            output: progress.testCases[0]?.actual || '[0, 1]',
+            runtime: progress.runtime || '42 ms',
+            memory: progress.memory || '13.9 MB',
+            passedCases: progress.passedCount,
+            totalCases: progress.totalCount
+          });
+        }
+      }
+    );
   };
 
   const currentTemplate =
@@ -890,7 +899,62 @@ export function OJWorkspacePage() {
               {/* TAB 2: Output */}
               {bottomTab === 'Output' && (
                 <div className="flex flex-col gap-3">
-                  {executionResult ? (
+                  {submissionProgress ? (
+                    <div className="flex flex-col gap-3">
+                      {/* Overall status */}
+                      <div className="flex items-center gap-3">
+                        <span className={`px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 ${
+                          submissionProgress.status === 'Passed'
+                            ? 'bg-green-100 text-green-700'
+                            : submissionProgress.status === 'Failed'
+                            ? 'bg-rose-100 text-rose-700'
+                            : 'bg-amber-100 text-amber-700'
+                        }`}>
+                          {submissionProgress.status === 'Running' ? (
+                            <div className="w-3.5 h-3.5 border-2 border-amber-700 border-t-transparent rounded-full animate-spin" />
+                          ) : submissionProgress.status === 'Failed' ? (
+                            <XCircle className="w-3.5 h-3.5" />
+                          ) : (
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          )}
+                          <span>{submissionProgress.status}</span>
+                        </span>
+                        {submissionProgress.runtime && (
+                          <span className="text-xs text-neutral-500">
+                            Runtime: <strong>{submissionProgress.runtime}</strong> | Memory: <strong>{submissionProgress.memory}</strong>
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Test case progress checklist */}
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                        {submissionProgress.testCases.map((tc) => (
+                          <div
+                            key={tc.id}
+                            className={`p-3 rounded-lg border text-xs font-medium flex items-center justify-between transition-all ${
+                              tc.status === 'Passed'
+                                ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+                                : tc.status === 'Failed'
+                                ? 'bg-rose-50 border-rose-200 text-rose-800'
+                                : tc.status === 'Running'
+                                ? 'bg-amber-50 border-amber-300 text-amber-800'
+                                : 'bg-slate-50 border-neutral-200 text-neutral-500'
+                            }`}
+                          >
+                            <span>Case {tc.id}</span>
+                            <span>{tc.status}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Extra output debug area for finalized failed runs */}
+                      {submissionProgress.status === 'Failed' && (
+                        <div className="p-3 bg-rose-50 border border-rose-200 rounded-md text-xs text-rose-800 font-mono">
+                          Một hoặc nhiều trường hợp thử nghiệm đã thất bại. Vui lòng kiểm tra lại logic giải pháp.
+                        </div>
+                      )}
+                    </div>
+                  ) : executionResult ? (
                     <>
                       <div className="flex items-center gap-3">
                         <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-md flex items-center gap-1.5">

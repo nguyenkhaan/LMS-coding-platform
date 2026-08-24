@@ -81,7 +81,7 @@ export const AuthLayout: React.FC = () => {
                 SkillBoost
               </span>
             </div>
-            <Link to="/courses" className="text-indigo-900 hover:underline text-sm font-semibold ml-auto transition-colors">
+            <Link to="/" className="text-indigo-900 hover:underline text-sm font-semibold ml-auto transition-colors">
               Back to Catalog
             </Link>
           </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
 	Star,
 	Users,
@@ -30,6 +30,7 @@ import { toast } from 'sonner';
 export const CourseDetailPage: React.FC = () => {
 	const { courseSlug } = useParams<{ courseSlug: string }>();
 	const navigate = useNavigate();
+	const location = useLocation();
 	const { isAuthenticated } = useAuthStore();
 	const { isEnrolled, refetch: refetchEnrollments } = useEnrolledCourses();
 
@@ -129,7 +130,7 @@ export const CourseDetailPage: React.FC = () => {
 		}
 
 		toast.success(`Đang mở chế độ xem trước cho "${course.title}"`);
-		navigate(`/learn/${course.slug}`);
+		navigate(`/learn/${course.slug}`, { state: { from: location.pathname } });
 	};
 
 	// Enroll CTA click handler

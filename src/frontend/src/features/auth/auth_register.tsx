@@ -2,11 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, User, Mail, Lock, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuthStore } from '@/stores/useAuthStore';
-
 export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
-  const { setAuth } = useAuthStore();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -58,24 +55,12 @@ export const RegisterPage: React.FC = () => {
       // Simulate API response delay
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
-      // Update Auth Store as a newly registered STUDENT
-      setAuth(
-        {
-          id: Date.now(),
-          email: email.trim().toLowerCase(),
-          fullName: fullName.trim(),
-          roles: ['STUDENT'],
-          accountStatus: 'ACTIVE',
-        },
-        'mock-jwt-access-token',
-        'mock-jwt-refresh-token'
-      );
-
-      toast.success('Account successfully registered!');
-      navigate('/student/dashboard');
-    } catch (err: any) {
-      setErrorMessage(err.message || 'An error occurred during registration. Please try again.');
-      toast.error(err.message || 'Registration failed.');
+      toast.success('Mã OTP xác minh tài khoản đã được gửi đến mail. Vui lòng kiểm tra hòm thư của bạn.');
+      navigate('/login');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'An error occurred during registration. Please try again.';
+      setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsLoading(false);
     }

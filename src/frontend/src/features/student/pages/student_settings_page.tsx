@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/stores/useAuthStore';
+import { useThemeStore } from '@/stores/useThemeStore';
 import { StudentSidebar } from '../components/student_sidebar';
 import { StudentHeroCard } from '../components/student_hero_card';
 import { toast } from 'sonner';
 import { 
   Settings, 
-  User, 
-  CheckCircle2, 
   Save, 
   RefreshCw,
   Eye,
@@ -41,10 +40,14 @@ const DEFAULT_PROFILE: StudentProfile = {
 };
 
 export const StudentSettingsPage: React.FC = () => {
-  const navigate = useNavigate();
   const { user } = useAuthStore();
+  const currentTheme = useThemeStore((state) => state.theme);
+  const setTheme = useThemeStore((state) => state.setTheme);
 
-  const [profile, setProfile] = useState<StudentProfile>(DEFAULT_PROFILE);
+  const [profile, setProfile] = useState<StudentProfile>({
+    ...DEFAULT_PROFILE,
+    theme: currentTheme
+  });
   const [loading, setLoading] = useState(false);
 
   // Load from localStorage on mount
@@ -52,15 +55,23 @@ export const StudentSettingsPage: React.FC = () => {
     const stored = localStorage.getItem('student_profile_settings');
     if (stored) {
       try {
-        setProfile(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        setProfile({ ...parsed, theme: currentTheme });
       } catch (e) {
         console.error('Failed to parse student profile settings', e);
       }
+    } else {
+      setProfile(prev => ({ ...prev, theme: currentTheme }));
     }
-  }, []);
+  }, [currentTheme]);
 
   const handleChange = (field: keyof StudentProfile, value: string | boolean) => {
     setProfile(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleThemeChange = (newTheme: 'light' | 'dark') => {
+    handleChange('theme', newTheme);
+    setTheme(newTheme);
   };
 
   const handleSave = (e: React.FormEvent) => {
@@ -68,6 +79,7 @@ export const StudentSettingsPage: React.FC = () => {
     setLoading(true);
     setTimeout(() => {
       localStorage.setItem('student_profile_settings', JSON.stringify(profile));
+      setTheme(profile.theme);
       setLoading(false);
       toast.success('Settings saved successfully!');
     }, 850);
@@ -83,7 +95,7 @@ export const StudentSettingsPage: React.FC = () => {
     toast.info('Changes discarded');
   };
 
-  const inputClass = 'w-full px-4 py-2.5 text-sm text-[#111827] border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] focus:ring-1 focus:ring-[#392C7D]/20 transition-all bg-white font-medium';
+  const inputClass = 'w-full px-4 py-2.5 text-sm text-text-primary border border-border rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all bg-white font-medium';
 
   return (
     <div className="w-full min-h-screen bg-slate-50 font-['Inter'] antialiased flex flex-col justify-start items-start">
@@ -109,19 +121,19 @@ export const StudentSettingsPage: React.FC = () => {
         <div className="flex-1 w-full bg-white rounded-2xl border border-neutral-200 p-6 sm:p-8 shadow-sm flex flex-col gap-6">
           <div className="border-b border-gray-150 pb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Settings className="w-5 h-5 text-[#392C7D]" />
-              <h3 className="text-base font-bold text-[#111827]">Edit Profile Settings</h3>
+              <Settings className="w-5 h-5 text-primary" />
+              <h3 className="text-base font-bold text-text-primary">Edit Profile Settings</h3>
             </div>
           </div>
 
           <form onSubmit={handleSave} className="flex flex-col gap-6">
             {/* Profile fields */}
             <div className="flex flex-col gap-4">
-              <h4 className="text-sm font-bold text-[#392C7D] uppercase tracking-wider">Personal Information</h4>
+              <h4 className="text-sm font-bold text-primary uppercase tracking-wider">Personal Information</h4>
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-[#374151]">First Name</label>
+                  <label className="text-xs font-bold text-text-secondary">First Name</label>
                   <input
                     type="text"
                     value={profile.firstName}
@@ -131,7 +143,7 @@ export const StudentSettingsPage: React.FC = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-[#374151]">Last Name</label>
+                  <label className="text-xs font-bold text-text-secondary">Last Name</label>
                   <input
                     type="text"
                     value={profile.lastName}
@@ -144,7 +156,7 @@ export const StudentSettingsPage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-[#374151]">Phone Contact</label>
+                  <label className="text-xs font-bold text-text-secondary">Phone Contact</label>
                   <input
                     type="text"
                     value={profile.phoneNumber}
@@ -153,7 +165,7 @@ export const StudentSettingsPage: React.FC = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-[#374151]">Date of Birth</label>
+                  <label className="text-xs font-bold text-text-secondary">Date of Birth</label>
                   <input
                     type="text"
                     value={profile.dob}
@@ -162,7 +174,7 @@ export const StudentSettingsPage: React.FC = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-[#374151]">Age</label>
+                  <label className="text-xs font-bold text-text-secondary">Age</label>
                   <input
                     type="text"
                     value={profile.age}
@@ -173,7 +185,7 @@ export const StudentSettingsPage: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-[#374151]">Bio / Summary</label>
+                <label className="text-xs font-bold text-text-secondary">Bio / Summary</label>
                 <textarea
                   rows={4}
                   value={profile.bio}
@@ -189,28 +201,28 @@ export const StudentSettingsPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Theme Preferences */}
               <div className="flex flex-col gap-4">
-                <h4 className="text-sm font-bold text-[#392C7D] uppercase tracking-wider flex items-center gap-1.5">
+                <h4 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
                   <Eye className="w-4 h-4" />
                   Display Preferences
                 </h4>
                 <div className="flex items-center gap-4">
-                  <label className="flex items-center gap-2 text-sm font-semibold text-[#374151] cursor-pointer">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-text-secondary cursor-pointer">
                     <input
                       type="radio"
                       name="theme"
                       checked={profile.theme === 'light'}
-                      onChange={() => handleChange('theme', 'light')}
-                      className="accent-[#392C7D]"
+                      onChange={() => handleThemeChange('light')}
+                      className="accent-primary"
                     />
                     Light Theme
                   </label>
-                  <label className="flex items-center gap-2 text-sm font-semibold text-[#374151] cursor-pointer">
+                  <label className="flex items-center gap-2 text-sm font-semibold text-text-secondary cursor-pointer">
                     <input
                       type="radio"
                       name="theme"
                       checked={profile.theme === 'dark'}
-                      onChange={() => handleChange('theme', 'dark')}
-                      className="accent-[#392C7D]"
+                      onChange={() => handleThemeChange('dark')}
+                      className="accent-primary"
                     />
                     Dark Theme
                   </label>
@@ -219,26 +231,26 @@ export const StudentSettingsPage: React.FC = () => {
 
               {/* Notification Settings */}
               <div className="flex flex-col gap-4">
-                <h4 className="text-sm font-bold text-[#392C7D] uppercase tracking-wider flex items-center gap-1.5">
+                <h4 className="text-sm font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
                   <Bell className="w-4 h-4" />
                   Notifications
                 </h4>
                 <div className="flex flex-col gap-2.5">
-                  <label className="flex items-center gap-2.5 text-sm font-semibold text-[#374151] cursor-pointer">
+                  <label className="flex items-center gap-2.5 text-sm font-semibold text-text-secondary cursor-pointer">
                     <input
                       type="checkbox"
                       checked={profile.emailNotifications}
                       onChange={(e) => handleChange('emailNotifications', e.target.checked)}
-                      className="rounded-sm accent-[#392C7D]"
+                      className="rounded-sm accent-primary"
                     />
                     Receive email progress reports
                   </label>
-                  <label className="flex items-center gap-2.5 text-sm font-semibold text-[#374151] cursor-pointer">
+                  <label className="flex items-center gap-2.5 text-sm font-semibold text-text-secondary cursor-pointer">
                     <input
                       type="checkbox"
                       checked={profile.smsNotifications}
                       onChange={(e) => handleChange('smsNotifications', e.target.checked)}
-                      className="rounded-sm accent-[#392C7D]"
+                      className="rounded-sm accent-primary"
                     />
                     Receive SMS alerts for deadlines
                   </label>
@@ -253,14 +265,14 @@ export const StudentSettingsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-5 py-2.5 rounded-xl border border-gray-250 text-sm font-semibold text-[#374151] hover:bg-slate-50 transition-all cursor-pointer"
+                className="px-5 py-2.5 rounded-xl border border-gray-250 text-sm font-semibold text-text-secondary hover:bg-slate-50 transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2.5 bg-[#392C7D] text-white rounded-xl text-sm font-semibold hover:bg-[#392C7D]/95 transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                className="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary-hover transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
               >
                 {loading ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />

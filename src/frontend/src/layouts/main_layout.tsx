@@ -22,6 +22,7 @@ import { NotificationDropdown } from '@/features/notification/components/notific
 
 export const MainLayout: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
+  const { theme, toggleTheme } = useThemeStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,16 +88,18 @@ export const MainLayout: React.FC = () => {
           <nav className="hidden lg:flex justify-start items-center gap-8">
             
             {/* Dashboard */}
-            <Link
-              to="/dashboard"
-              className={`text-sm font-medium transition-colors ${
-                location.pathname === '/' || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/student')
-                  ? 'text-indigo-900 font-semibold'
-                  : 'text-zinc-900 hover:text-indigo-900'
-              }`}
-            >
-              Dashboard
-            </Link>
+            {isAuthenticated && (
+              <Link
+                to="/dashboard"
+                className={`text-sm font-medium transition-colors ${
+                  location.pathname === '/' || location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/student')
+                    ? 'text-indigo-900 font-semibold'
+                    : 'text-zinc-900 hover:text-indigo-900'
+                }`}
+              >
+                Dashboard
+              </Link>
+            )}
 
             {/* Courses */}
             <Link
@@ -194,11 +197,11 @@ export const MainLayout: React.FC = () => {
 
             {/* Theme Toggle Button (Light/Dark) */}
             <button
-              onClick={() => useThemeStore.getState().toggleTheme()}
+              onClick={toggleTheme}
               className="p-2.5 rounded-[40px] border border-neutral-200 hover:bg-slate-50 transition-colors cursor-pointer text-zinc-700"
               title="Toggle Light/Dark Theme"
             >
-              {useThemeStore.getState().theme === 'dark' ? (
+              {theme === 'dark' ? (
                 <Sun className="w-4 h-4 text-amber-500" />
               ) : (
                 <Moon className="w-4 h-4 text-slate-700" />

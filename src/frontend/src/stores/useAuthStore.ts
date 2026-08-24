@@ -51,6 +51,9 @@ export const useAuthStore = create<AuthStore>((set, get) => {
 			localStorage.removeItem('refresh_token');
 			localStorage.removeItem('user');
 			set({ user: null, accessToken: null, isAuthenticated: false });
+			if (typeof window !== 'undefined') {
+				window.location.href = '/login';
+			}
 		},
 
 		hasRole: (role: Role) => {
