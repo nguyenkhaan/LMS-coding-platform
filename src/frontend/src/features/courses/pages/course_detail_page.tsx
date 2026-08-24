@@ -15,11 +15,11 @@ import {
 	BookOpen,
 	AlertCircle
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import axios from 'axios';
-import { Card } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { Card } from '@/components/ui/Card';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useEnrolledCourses } from '../hooks/useEnrolledCourses';
 import { courseApi } from '../services/courseApi';

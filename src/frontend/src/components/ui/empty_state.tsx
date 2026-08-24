@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '@/utils/cn';
 import { Inbox } from 'lucide-react';
-import { Button } from './button';
+import { Button } from './Button';
 
 export interface EmptyStateProps {
 	icon?: React.ReactNode;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, LogOut, Clock } from 'lucide-react';
+import { Code2, LogOut, Clock } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface QuizHeaderProps {
@@ -30,9 +30,12 @@ export const QuizHeader: React.FC<QuizHeaderProps> = ({
 			<div className="w-full max-w-[1296px] mx-auto px-4 py-3 flex items-center justify-between gap-4">
 				<div className="flex items-center gap-3 min-w-0">
 					<Link to="/" className="flex items-center gap-2 shrink-0">
-						<div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#392C7D] to-purple-600 flex items-center justify-center text-white shadow">
-							<BookOpen className="w-4 h-4" />
+						<div className="w-9 h-9 rounded-xl bg-indigo-900 flex items-center justify-center text-white shadow-sm">
+							<Code2 className="w-5 h-5" />
 						</div>
+						<span className="hidden sm:inline font-bold text-xl tracking-tight text-indigo-950">
+							Skill<span className="text-rose-500">Boost</span>
+						</span>
 					</Link>
 					<div className="hidden sm:flex flex-col leading-tight min-w-0">
 						<span className="text-[13px] font-medium text-[#6B7280] truncate">Quiz</span>

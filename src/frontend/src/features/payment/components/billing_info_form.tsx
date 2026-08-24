@@ -1,5 +1,5 @@
 import React from 'react';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/components/ui/Input';
 
 export const BillingInfoForm: React.FC = () => (
   <div className="self-stretch bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col">

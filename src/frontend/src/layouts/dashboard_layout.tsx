@@ -2,7 +2,7 @@ import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/stores/useAuthStore';
 import { useThemeStore } from '@/stores/useThemeStore';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 import {
 	Code2,
 	Sun,

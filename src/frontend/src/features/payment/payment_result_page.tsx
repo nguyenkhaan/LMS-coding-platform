@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { CheckCircle2, Clock, XCircle, ArrowRight } from 'lucide-react';
 import { CheckoutHeader } from './components/checkout_header';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/Button';
 import { useCourseStore } from '@/stores/useCourseStore';
 import { toast } from 'sonner';
 

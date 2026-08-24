@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, useNavigate, useParams, Link } from 'react-router-dom';
 import { 
-  BookOpen, 
+  Code2, 
   ChevronRight, 
   CheckCircle2, 
   XCircle, 
@@ -225,12 +225,12 @@ export const QuizResultPage: React.FC = () => {
       <header className="sticky top-0 z-40 w-full bg-white border-b border-gray-200 shadow-sm">
         <div className="w-full max-w-[1296px] mx-auto px-4 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <Link to="/dashboard" className="flex items-center gap-2 shrink-0">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-[#392C7D] to-purple-600 flex items-center justify-center text-white shadow">
-                <BookOpen className="w-4 h-4" />
-              </div>
-              <span className="hidden sm:inline font-extrabold text-[15px] tracking-tight text-[#392C7D]">
-                Dreams LMS
+            <Link to="/dashboard" className="flex items-center gap-2.5 shrink-0">
+						<div className="w-9 h-9 rounded-xl bg-indigo-900 flex items-center justify-center text-white shadow-sm">
+							<Code2 className="w-5 h-5" />
+						</div>
+              <span className="hidden sm:inline font-bold text-xl tracking-tight text-indigo-950">
+                Skill<span className="text-rose-500">Boost</span>
               </span>
             </Link>
             <nav aria-label="Breadcrumb" className="hidden md:flex items-center gap-1 text-[13px] text-[#6B7280]">
