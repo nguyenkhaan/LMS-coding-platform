@@ -34,7 +34,9 @@ async def lifespan(app : FastAPI):
 origins = [
     'http://localhost:5173', 
     'http://localhost:50051', 
-    'http://localhost:4000'
+    'http://localhost:4000', 
+    #gateway 
+    'http://localhost:4040'
 ]   
 app = FastAPI(
     lifespan=lifespan

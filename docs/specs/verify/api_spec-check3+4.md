@@ -1,9 +1,9 @@
 # Kiểm tra API route
-## 3. Teacher Course & Curriculum Creator (`/api/v1/teacher/courses`) 
+## 3. Teacher Course & Curriculum Creator (`/api/teacher/courses`) 
 ### 3.1 
 
 ```text
-   **`GET /api/v1/teacher/courses`**
+   **`GET /api/teacher/courses`**
     *   *Description*: List courses owned/created by the teacher.  
     *   *Response*: List of courses with status (`DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `ARCHIVED`).  
 ```
@@ -53,7 +53,7 @@
 **Đề xuất sửa:** (Giữ nguyên nhưng đảm bảo thông tin cho FE)
 
 ```text
-    **`GET /api/v1/teacher/courses`**
+    **`GET /api/teacher/courses`**
     *   *Description*: List courses owned/created by the teacher.  
     *   *Response*: List of courses with status (`DRAFT`, `PENDING_REVIEW`, `PUBLISHED`, `ARCHIVED`). 
 ```
@@ -63,7 +63,7 @@
 ### 3.2
 
 ```text
-    **`POST /api/v1/teacher/courses`**
+    **`POST /api/teacher/courses`**
     *   *Description*: Create a new course workspace.
     *   *Request Body*: `title`, `description`, `price`, `thumbnail_url`.
     *   *Response*: Course details with newly generated `id` and `slug`.
@@ -86,7 +86,7 @@
 **Đề xuất sửa:**
 
 ```text
-    **`POST /api/v1/teacher/courses`**
+    **`POST /api/teacher/courses`**
     *   *Description*: Create a new course workspace.
     *   *Request Body*: `title`, `description`, `price`, `thumbnail_url`, `field`, `tags`.
     *   *Response*: Course details with newly generated `id` and `slug`.
@@ -96,7 +96,7 @@
 ### 3.3
 
 ```text
-    **`PUT /api/v1/teacher/courses/{id}`**
+    **`PUT /api/teacher/courses/{id}`**
     *   *Description*: Edit metadata of a course.
     *   *Request Body*: `title`, `description`, `price`, `thumbnail_url`, `status`.
     *   *Response*: Updated course details.
@@ -108,7 +108,7 @@ Database còn các trường như *field* và *tags* cũng nên để vào để
 **Đề xuất sửa:**
 
 ```text
-    **`PUT /api/v1/teacher/courses/{id}`**
+    **`PUT /api/teacher/courses/{id}`**
     *   *Description*: Edit metadata of a course.
     *   *Request Body*: `title`, `description`, `price`, `thumbnail_url`, `status`, `field`, `tags`.
     *   *Response*: Updated course details.
@@ -118,7 +118,7 @@ Database còn các trường như *field* và *tags* cũng nên để vào để
 ### 3.4 
 
 ```text
-    **`POST /api/v1/teacher/courses/{courseId}/sections`**
+    **`POST /api/teacher/courses/{courseId}/sections`**
     *   *Description*: Add a new chapter section under a course.
     *   *Request Body*: `title`, `position`.
     *   *Response*: Section object details.
@@ -131,7 +131,7 @@ Database còn các trường như *field* và *tags* cũng nên để vào để
 ### 3.5 
 
 ```text
-    **`PUT /api/v1/teacher/sections/{sectionId}`**
+    **`PUT /api/teacher/sections/{sectionId}`**
     *   *Description*: Edit or delete (cascade) section title or position.
     *   *Request Body*: `title`, `position`.
     *   *Response*: Updated section details.
@@ -146,13 +146,13 @@ Do đó, một endpoint sử dụng phương thức PUT không nên đồng th�
 Nếu frontend muốn xóa section và đồng thời **cascade delete** toàn bộ dữ liệu phụ thuộc của section đó.
 
 Vì vậy, API nên được tách thành hai endpoint với trách nhiệm rõ ràng: 
-* PUT /api/v1/teacher/sections/{sectionId}: Cập nhật thông tin của section (title, position).
-* DELETE /api/v1/teacher/sections/{sectionId}: Xóa section và thực hiện cascade đối với các dữ liệu phụ thuộc.
+* PUT /api/teacher/sections/{sectionId}: Cập nhật thông tin của section (title, position).
+* DELETE /api/teacher/sections/{sectionId}: Xóa section và thực hiện cascade đối với các dữ liệu phụ thuộc.
 
 **Đề xuất sửa:** bổ sung API, cập nhật lại API cũ
 
 ```text
-**`DELETE /api/v1/teacher/sections/{sectionId}`**
+**`DELETE /api/teacher/sections/{sectionId}`**
 
 * *Description*: Delete a section from a course. All lessons and lesson contents belonging to the section are deleted automatically through cascade deletion.
 * *Path Parameter*:
@@ -174,7 +174,7 @@ Vì vậy, API nên được tách thành hai endpoint với trách nhiệm rõ 
 ### 3.6 
 
 ```text
-    **`POST /api/v1/teacher/sections/{sectionId}/lessons`**
+    **`POST /api/teacher/sections/{sectionId}/lessons`**
     *   *Description*: Create a new lesson unit under a section.
     *   *Request Body*: `title`, `summary`, `position`.
     *   *Response*: Lesson object details.
@@ -187,7 +187,7 @@ Vì vậy, API nên được tách thành hai endpoint với trách nhiệm rõ 
 ### 3.7
 
 ```text 
-    **`PUT /api/v1/teacher/lessons/{lessonId}`**
+    **`PUT /api/teacher/lessons/{lessonId}`**
     *   *Description*: Update lesson info.
     *   *Request Body*: `title`, `summary`, `position`.
     *   *Response*: Updated lesson details.
@@ -200,7 +200,7 @@ Vì vậy, API nên được tách thành hai endpoint với trách nhiệm rõ 
 ### 3.8 
 
 ```text
-    **`PUT /api/v1/teacher/courses/{courseId}/curriculum/reorder`**
+    **`PUT /api/teacher/courses/{courseId}/curriculum/reorder`**
     *   *Description*: Batch update positions of all chapters and lessons simultaneously.
     *   *Request Body*: `reorder_data` (List of `{ item_type: "section"|"lesson", id: int, position: int, parent_id: int }`).
     *   *Response*: `message` (Success).
@@ -212,7 +212,7 @@ Vì vậy, API nên được tách thành hai endpoint với trách nhiệm rõ 
 ### 3.9 
 
 ```text 
-    **`POST /api/v1/teacher/lessons/{lessonId}/contents`**
+    **`POST /api/teacher/lessons/{lessonId}/contents`**
     *   *Description*: Create and bind content item (Reading material, Quiz, or Coding problem) to a lesson.
     *   *Request Body*: `content_type` (`READING`, `QUIZ`, `PROBLEM`), `content_id`, `media_url` (optional), `position`.
     *   *Response*: Content metadata details.
@@ -224,7 +224,7 @@ Vì vậy, API nên được tách thành hai endpoint với trách nhiệm rõ 
 ### 3.10
 
 ```text 
-    **`PUT /api/v1/teacher/lesson-contents/{contentId}`**
+    **`PUT /api/teacher/lesson-contents/{contentId}`**
     *   *Description*: Modify or delete a content item binding.
     *   *Request Body*: `media_url`, `position`.
     *   *Response*: Updated content details.
@@ -236,11 +236,11 @@ Về mặt Database thì đã khớp nhưng nếu phần mô tả ghi "Modify or
 
 ---
 
-## 4. Online Judge (OJ) Problem & Run/Submit Engine (`/api/v1/problems`, `/api/v1/submissions`)
+## 4. Online Judge (OJ) Problem & Run/Submit Engine (`/api/problems`, `/api/submissions`)
 ### 4.1
 
 ```text
-    **`GET /api/v1/problems`**
+    **`GET /api/problems`**
     *   *Description*: Public list of coding problems (OJ catalog).
     *   *Response*: List of problems (title, slug, difficulty, public status).
 ```
@@ -253,7 +253,7 @@ Về mặt Database thì đã khớp nhưng nếu phần mô tả ghi "Modify or
 ### 4.2 
 
 ```text 
-    **`GET /api/v1/problems/{slug}`**
+    **`GET /api/problems/{slug}`**
     *   *Description*: Get detailed problem description statement and metadata.
     *   *Response*: `id`, `title`, `slug`, `statement`, `input_description`, `output_description`, `constraints`, `sample_input`, `sample_output`, `explanation`, `difficulty`.
 ```
@@ -265,7 +265,7 @@ Về mặt Database thì đã khớp nhưng nếu phần mô tả ghi "Modify or
 ### 4.3 
 
 ```text 
-    **`POST /api/v1/problems/{slug}/run`**
+    **`POST /api/problems/{slug}/run`**
     *   *Description*: Execute code in isolated sandbox against custom user input.
     *   *Request Body*: `source_code`, `language_id`, `stdin`.
     *   *Response*: `stdout`, `runtime_ms`, `memory_kb`, `compile_error`, `status` (`SUCCESS` or `ERROR`).
@@ -278,7 +278,7 @@ Về mặt Database thì đã khớp nhưng nếu phần mô tả ghi "Modify or
 ### 4.4 
 
 ```text
-    **`POST /api/v1/problems/{slug}/submit`**
+    **`POST /api/problems/{slug}/submit`**
     *   *Description*: Submit code for final grading. Queues execution task to RabbitMQ.
     *   *Request Body*: `source_code`, `language_id`.
     *   *Response*: `submission_id`, `status` (`PENDING`).
@@ -291,7 +291,7 @@ Về mặt Database thì đã khớp nhưng nếu phần mô tả ghi "Modify or
 ### 4.5 
 
 ```text
-    **`GET /api/v1/submissions/{submissionId}/status`**
+    **`GET /api/submissions/{submissionId}/status`**
     *   *Description*: Polling endpoint to check testcase execution progress and final results.
     *   *Response*: `status` (`PENDING`, `RUNNING`, `ACCEPTED`, `WRONG_ANSWER`, `TIME_LIMIT_EXCEEDED`, `MEMORY_LIMIT_EXCEEDED`, `RUNTIME_ERROR`, `COMPILE_ERROR`), `score`, `runtime_ms`, `memory_kb`, `details` (Array of testcase executions).
 ```
@@ -303,7 +303,7 @@ Về mặt Database thì đã khớp nhưng nếu phần mô tả ghi "Modify or
 ### 4.6 
 
 ```text 
-    **`POST /api/v1/teacher/problems`**
+    **`POST /api/teacher/problems`**
     *   *Description*: Teacher creates a new problem template in the bank.
     *   *Request Body*: `title`, `statement`, `input_description`, `output_description`, `constraints`, `difficulty`, `public`.
     *   *Response*: Created problem details.
@@ -314,7 +314,7 @@ Về mặt Database thì đã khớp nhưng nếu phần mô tả ghi "Modify or
 **Đề xuất sửa:** sửa *Request Body*
 
 ```text
-    **`POST /api/v1/teacher/problems`**
+    **`POST /api/teacher/problems`**
     *   *Description*: Teacher creates a new problem template in the bank.
     *   *Request Body*: `title`, `statement`, `input_description`, `output_description`, `constraints`, `sample_input`, `sample_output`, `explanation`, `difficulty`, `public`.
     *   *Response*: Created problem details.
@@ -325,7 +325,7 @@ Về mặt Database thì đã khớp nhưng nếu phần mô tả ghi "Modify or
 ### 4.7 
 
 ```text
-    **`POST /api/v1/teacher/problems/{problemId}/testcases/upload`**
+    **`POST /api/teacher/problems/{problemId}/testcases/upload`**
     *   *Description*: Upload testcase files in ZIP form (containing input/output pairs matching `input_xx.in` / `output_xx.out`).
     *   *Request Body*: Multipart Form Data with `.zip` file.
     *   *Response*: Count of uploaded testcases, confirmation message.

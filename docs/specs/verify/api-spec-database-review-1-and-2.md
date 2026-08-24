@@ -4,11 +4,11 @@
 
 ---
 
-## 1. Authentication & Profile Module (`/api/v1/auth`, `/api/v1/users`)
+## 1. Authentication & Profile Module (`/api/auth`, `/api/users`)
 
 ### 1.1
 ```text
-   POST /api/v1/auth/register
+   POST /api/auth/register
    Request: full_name, email, password, address
    Response: verify_code, message
 ```
@@ -20,7 +20,7 @@
 
 ### 1.2
 ```text
-   GET /api/v1/auth/verify?code={otp_code}
+   GET /api/auth/verify?code={otp_code}
    Response: message
 ```
 * Về mặt database: Phù hợp — route này cập nhật trạng thái tài khoản, tương ứng cột `user.account_status` (enum `AccountStatus`: UNVERIFIED → ACTIVE).
@@ -28,7 +28,7 @@
 
 **Đề xuất thêm mô tả (giữ nguyên field, chỉ bổ sung):**
 ```text
-   GET /api/v1/auth/verify?code={otp_code}
+   GET /api/auth/verify?code={otp_code}
    Description: Verify the email OTP. On success, updates 
    `user.account_status` from UNVERIFIED → ACTIVE.
    Response: message
@@ -38,7 +38,7 @@
 
 ### 1.3
 ```text
-   POST /api/v1/auth/token
+   POST /api/auth/token
    Request: code, redirect_uri
    Response: message, user_info (id, email, roles)
 ```
@@ -54,7 +54,7 @@
 
 ### 1.4
 ```text
-   POST /api/v1/auth/google
+   POST /api/auth/google
    Response: message, user_info (id, email, roles)
 ```
 * Về mặt database: Phù hợp, cùng lưu ý `roles` là field join như mục 1.3.
@@ -65,7 +65,7 @@
 
 ### 1.5
 ```text
-   POST /api/v1/auth/logout
+   POST /api/auth/logout
    Response: message
 ```
 * Về mặt database: Phù hợp — không động tới bảng nào, chỉ xoá cookie.
@@ -76,7 +76,7 @@
 
 ### 1.6
 ```text
-   GET /api/v1/users/me
+   GET /api/users/me
    Response: id, full_name, email, avatar_url, account_status, 
    roles, student_profile (optional), teacher_profile (optional)
 ```
@@ -88,7 +88,7 @@
 
 ### 1.7
 ```text
-   PUT /api/v1/users/me/profile
+   PUT /api/users/me/profile
    Request: bio, school, major, github_url, facebook_url, linkedin_url
    Response: message, profile
 ```
@@ -103,7 +103,7 @@
 
 **API spec sau khi sửa:**
 ```text
-   PUT /api/v1/users/me/profile
+   PUT /api/users/me/profile
    Description: Update student's specific profile info.
    Request Body: bio, school, major, github_url, facebook_url, 
    linkedin_url, avatar_url.
@@ -114,7 +114,7 @@
 
 ### 1.8
 ```text
-   PUT /api/v1/users/me/teacher-profile
+   PUT /api/users/me/teacher-profile
    Request: bio, school_address, cv_url
    Response: message, profile
 ```
@@ -126,9 +126,9 @@
 
 ### 1.9 — Route mới đề xuất thêm
 
-**`POST /api/v1/auth/refresh`**
+**`POST /api/auth/refresh`**
 ```text
-   POST /api/v1/auth/refresh
+   POST /api/auth/refresh
    Description: Exchange a valid refresh_token cookie for a new 
    access_token, without requiring the user to log in again.
    Request Body: (none — refresh_token read from HttpOnly cookie).
@@ -137,18 +137,18 @@
 * Cần thiết vì: bảng `user` đã có cột `refresh_token`, ngụ ý thiết kế theo cặp access/refresh token, nhưng spec chưa có route dùng refresh_token để cấp lại access_token khi hết hạn.
 * Mặt trái: cần thêm cơ chế kiểm tra refresh_token còn hợp lệ/chưa bị thu hồi (revoke) khi logout, nếu bỏ sót sẽ tạo lỗ hổng bảo mật.
 
-**`POST /api/v1/auth/forgot-password`**
+**`POST /api/auth/forgot-password`**
 ```text
-   POST /api/v1/auth/forgot-password
+   POST /api/auth/forgot-password
    Description: Request a password reset link/code sent to the 
    user's email.
    Request Body: email.
    Response: message.
 ```
 
-**`POST /api/v1/auth/reset-password`**
+**`POST /api/auth/reset-password`**
 ```text
-   POST /api/v1/auth/reset-password
+   POST /api/auth/reset-password
    Description: Reset password using the token from the forgot-
    password email.
    Request Body: token, new_password.
@@ -157,9 +157,9 @@
 * Cần thiết vì: user đăng ký bằng email/password thật (cột `user.password`), nhưng không có luồng nào để lấy lại mật khẩu khi quên.
 * Mặt trái: cần rate-limit gửi email để tránh bị lạm dụng spam.
 
-**`POST /api/v1/auth/resend-otp`**
+**`POST /api/auth/resend-otp`**
 ```text
-   POST /api/v1/auth/resend-otp
+   POST /api/auth/resend-otp
    Description: Resend the email OTP if the previous one expired 
    before verification.
    Request Body: email.
@@ -168,18 +168,18 @@
 * Cần thiết vì: OTP verify thường có hạn dùng ngắn, nếu hết hạn mà chưa verify thì user bị kẹt, không có cách xin gửi lại.
 * Mặt trái: cần rate-limit tương tự để tránh spam email.
 
-**`POST /api/v1/teacher-register`**
+**`POST /api/teacher-register`**
 ```text
-   POST /api/v1/teacher-register
+   POST /api/teacher-register
    Description: Submit an application to upgrade a student 
    account to teacher.
    Request Body: motivation, cccd, cccd_front_url, cccd_back_url.
    Response: id, status (PENDING), message.
 ```
 
-**`PUT /api/v1/admin/teacher-register/{id}`**
+**`PUT /api/admin/teacher-register/{id}`**
 ```text
-   PUT /api/v1/admin/teacher-register/{id}
+   PUT /api/admin/teacher-register/{id}
    Description: Admin reviews and approves/rejects a teacher 
    registration application.
    Request Body: status (AGREE, REJECT), reviewed_note.
@@ -190,11 +190,11 @@
 
 ---
 
-## 2. Student Course Directory & Study Mode (`/api/v1/courses`, `/api/v1/student`)
+## 2. Student Course Directory & Study Mode (`/api/courses`, `/api/student`)
 
 ### 2.1
 ```text
-   GET /api/v1/courses
+   GET /api/courses
    Query: page, size, q, difficulty (EASY/MEDIUM/HARD), 
    price_type (FREE/PAID)
    Response: total_items, total_pages, current_page, items
@@ -211,7 +211,7 @@
 
 **API spec sau khi sửa:**
 ```text
-   GET /api/v1/courses
+   GET /api/courses
    Description: Public catalog retrieval with filters and 
    pagination.
    Query Parameters: page (default 1), size (default 10), 
@@ -225,7 +225,7 @@
 
 ### 2.2
 ```text
-   GET /api/v1/courses/{slug}
+   GET /api/courses/{slug}
    Response: id, title, slug, description, price, rating, 
    teacher_name, sections
 ```
@@ -241,7 +241,7 @@
 
 ### 2.3
 ```text
-   POST /api/v1/courses/{slug}/enroll
+   POST /api/courses/{slug}/enroll
    Response: status (ENROLLED/PENDING_PAYMENT), checkout_url
 ```
 * Về mặt database: `enrollment.status` là cột string tự do (default "active"), không có ràng buộc enum ở tầng DB để đảm bảo chỉ nhận đúng các giá trị `ENROLLED`/`PENDING_PAYMENT`.
@@ -261,7 +261,7 @@
 
 ### 2.4
 ```text
-   GET /api/v1/student/courses
+   GET /api/student/courses
    Response: List of courses including progress percentages
 ```
 * Về mặt database: "progress percentage" không tồn tại như 1 cột nào trong DB — phải tính bằng cách đếm `lesson_content_progress.completed = true` (theo `enrollment_id`) chia cho tổng số `lesson_content` thuộc course đó (qua chuỗi join `sections → lesson → lesson_content`).
@@ -277,7 +277,7 @@
 
 ### 2.5
 ```text
-   GET /api/v1/student/courses/{slug}/study
+   GET /api/student/courses/{slug}/study
    Response: Sections, Lessons, Content list with lock/completion 
    ticks
 ```
@@ -294,7 +294,7 @@
 
 ### 2.6
 ```text
-   GET /api/v1/student/quizzes/{quizId}
+   GET /api/student/quizzes/{quizId}
    Response: id, title, questions (id, statement, points, options)
 ```
 * Về mặt database: `id, title` khớp bảng `quizzes`. Field `statement` trong spec không khớp tên cột `quiz_questions.content` (DB gọi là `content`, spec gọi là `statement`). Cột `quiz_questions.title` có trong DB nhưng không thấy nhắc trong response spec.
@@ -306,7 +306,7 @@
 
 **API spec sau khi sửa:**
 ```text
-   GET /api/v1/student/quizzes/{quizId}
+   GET /api/student/quizzes/{quizId}
    Description: Get quiz questions for SvelteKit test interface 
    (omits `is_correct` field).
    Response: id, title, attempts_left, questions (Array of 
@@ -317,7 +317,7 @@
 
 ### 2.7
 ```text
-   POST /api/v1/student/quizzes/{quizId}/submit
+   POST /api/student/quizzes/{quizId}/submit
    Request: answers (Map question_id -> option_id)
    Response: score, passed (requires >= 80%), passing_score, 
    attempts_left, correct_answers
@@ -334,7 +334,7 @@
 
 **API spec sau khi sửa:**
 ```text
-   POST /api/v1/student/quizzes/{quizId}/submit
+   POST /api/student/quizzes/{quizId}/submit
    Description: Submit quiz answers. Score is checked 
    automatically against DB. Passing is determined by 
    comparing score against this quiz's own `passing_score`.
@@ -348,9 +348,9 @@
 
 ### 2.8 — Route mới đề xuất thêm
 
-**`POST /api/v1/webhooks/payos`**
+**`POST /api/webhooks/payos`**
 ```text
-   POST /api/v1/webhooks/payos
+   POST /api/webhooks/payos
    Description: Callback endpoint for PayOS to notify payment 
    result. Verifies PayOS signature, then updates `transaction.
    status` to COMPLETE or FAILED and activates the related 
@@ -362,9 +362,9 @@
 * Cần thiết vì: route `enroll` tạo `transaction` với `status = PENDING`, nhưng không có route nào nhận callback từ PayOS để cập nhật `transaction.status → COMPLETE/FAILED` và kích hoạt `enrollment`. Thiếu route này thì mọi giao dịch PAID sẽ mãi mãi ở trạng thái PENDING dù user đã thanh toán xong.
 * Mặt trái: cần verify chữ ký webhook từ PayOS kỹ lưỡng, nếu không sẽ tạo lỗ hổng bảo mật (giả mạo callback đánh dấu thanh toán khống).
 
-**`POST /api/v1/courses/{slug}/unenroll`**
+**`POST /api/courses/{slug}/unenroll`**
 ```text
-   POST /api/v1/courses/{slug}/unenroll
+   POST /api/courses/{slug}/unenroll
    Description: Cancel a student's enrollment in a course.
    Response: message.
 ```

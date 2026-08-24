@@ -30,12 +30,12 @@ def test_comment_write_rejects_invalid_content(content: str) -> None:
 def test_lesson_comment_router_exposes_only_canonical_routes() -> None:
     paths = app.openapi()["paths"]
 
-    lesson_comments = paths["/api/v1/lesson-contents/{lesson_content_id}/comments"]
+    lesson_comments = paths["/api/lesson-contents/{lesson_content_id}/comments"]
     assert {"get", "post"} <= lesson_comments.keys()
-    assert "delete" in paths["/api/v1/comments/{comment_id}"]
-    assert "get" in paths["/api/v1/teacher/courses/{course_id}/comments"]
-    assert "/api/v1/lesson-contents/{lesson_content_id}/comment" not in paths
-    assert "/api/v1/lesson-contents/comment/{comment_id}" not in paths
+    assert "delete" in paths["/api/comments/{comment_id}"]
+    assert "get" in paths["/api/teacher/courses/{course_id}/comments"]
+    assert "/api/lesson-contents/{lesson_content_id}/comment" not in paths
+    assert "/api/lesson-contents/comment/{comment_id}" not in paths
 
 
 def test_soft_deleted_comment_view_does_not_leak_original_content() -> None:
