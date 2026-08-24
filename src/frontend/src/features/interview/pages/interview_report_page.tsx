@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useAuthStore } from '@/stores/useAuthStore';
 import {
 	Download,
 	RotateCcw,
@@ -149,7 +150,12 @@ function RadarChart() {
 		return `${x},${y}`;
 	}).join(' ');
 
-	const labelConfigs = [
+	const labelConfigs: Array<{
+		textAnchor: React.SVGAttributes<SVGTextElement>['textAnchor'];
+		dominantBaseline: React.SVGAttributes<SVGTextElement>['dominantBaseline'];
+		dx: number;
+		dy: number;
+	}> = [
 		{ textAnchor: 'middle', dominantBaseline: 'auto', dx: 0, dy: -13 }, // 0: Top (Communication)
 		{ textAnchor: 'start', dominantBaseline: 'middle', dx: 14, dy: -2 }, // 1: Top-Right (Problem Solving)
 		{ textAnchor: 'start', dominantBaseline: 'middle', dx: 14, dy: 6 }, // 2: Bottom-Right (System Design)
@@ -250,8 +256,8 @@ function RadarChart() {
 							<text
 								x={x + cfg.dx}
 								y={y + cfg.dy}
-								textAnchor={cfg.textAnchor as any}
-								dominantBaseline={cfg.dominantBaseline as any}
+								textAnchor={cfg.textAnchor}
+								dominantBaseline={cfg.dominantBaseline}
 								fontSize="11"
 								fontWeight="700"
 								fill="#1E293B"
@@ -262,8 +268,8 @@ function RadarChart() {
 							<text
 								x={x + cfg.dx}
 								y={y + cfg.dy + (i === 0 ? -12 : 12)}
-								textAnchor={cfg.textAnchor as any}
-								dominantBaseline={cfg.dominantBaseline as any}
+								textAnchor={cfg.textAnchor}
+								dominantBaseline={cfg.dominantBaseline}
 								fontSize="10"
 								fontWeight="700"
 								fill="#392C7D"
@@ -335,6 +341,7 @@ function VibrantBarChart() {
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 
 export function InterviewReportPage() {
+	const { user } = useAuthStore();
 	const navigate = useNavigate();
 	const { sessionId } = useParams<{ sessionId: string }>();
 
@@ -365,7 +372,7 @@ export function InterviewReportPage() {
 								Interview Evaluation Report
 							</h1>
 							<p className="mt-1 text-xs text-slate-400 sm:text-sm">
-								Candidate: <strong className="text-slate-200">Minh Trần</strong>{' '}
+								Candidate: <strong className="text-slate-200">{user?.fullName || 'Candidate'}</strong>{' '}
 								&nbsp;·&nbsp; Mid-level Backend &nbsp;·&nbsp; Completed Aug 22, 2026
 							</p>
 						</div>

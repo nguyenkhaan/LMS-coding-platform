@@ -241,7 +241,7 @@ export const ProblemBuilderPage: React.FC = () => {
                   placeholder="e.g., Two Sum"
                   value={problemForm.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
                     errors.title ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                   }`}
                 />
@@ -255,7 +255,7 @@ export const ProblemBuilderPage: React.FC = () => {
                   placeholder="e.g., two-sum"
                   value={problemForm.slug}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, slug: e.target.value }))}
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
                     errors.slug ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                   }`}
                 />
@@ -271,7 +271,7 @@ export const ProblemBuilderPage: React.FC = () => {
                 placeholder="Detail the algorithm problem description..."
                 value={problemForm.statement}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, statement: e.target.value }))}
-                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none ${
+                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
                   errors.statement ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                 }`}
               />
@@ -287,7 +287,7 @@ export const ProblemBuilderPage: React.FC = () => {
                   placeholder="Describe the function arguments or stdin shape..."
                   value={problemForm.inputDescription}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, inputDescription: e.target.value }))}
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none ${
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
                     errors.inputDescription ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                   }`}
                 />
@@ -301,7 +301,7 @@ export const ProblemBuilderPage: React.FC = () => {
                   placeholder="Describe the returned value or stdout shape..."
                   value={problemForm.outputDescription}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, outputDescription: e.target.value }))}
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none ${
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
                     errors.outputDescription ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                   }`}
                 />
@@ -317,7 +317,7 @@ export const ProblemBuilderPage: React.FC = () => {
                 placeholder="e.g., 2 <= nums.length <= 10^4"
                 value={problemForm.constraints}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, constraints: e.target.value }))}
-                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none ${
+                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
                   errors.constraints ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                 }`}
               />
@@ -331,7 +331,7 @@ export const ProblemBuilderPage: React.FC = () => {
                 <select
                   value={problemForm.difficulty}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, difficulty: e.target.value as any }))}
-                  className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white cursor-pointer"
+                  className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white cursor-pointer text-zinc-900"
                 >
                   <option value="EASY">Easy</option>
                   <option value="MEDIUM">Medium</option>
@@ -345,7 +345,7 @@ export const ProblemBuilderPage: React.FC = () => {
                   type="number"
                   value={problemForm.passingScore}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, passingScore: parseInt(e.target.value) || 0 }))}
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 ${
                     errors.passingScore ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                   }`}
                 />
@@ -358,7 +358,7 @@ export const ProblemBuilderPage: React.FC = () => {
                   type="number"
                   value={problemForm.timeLimitMs}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, timeLimitMs: parseInt(e.target.value) || 0 }))}
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 ${
                     errors.timeLimitMs ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                   }`}
                 />
@@ -371,7 +371,7 @@ export const ProblemBuilderPage: React.FC = () => {
                   type="number"
                   value={problemForm.memoryLimitKb}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, memoryLimitKb: parseInt(e.target.value) || 0 }))}
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 ${
                     errors.memoryLimitKb ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                   }`}
                 />
@@ -387,7 +387,7 @@ export const ProblemBuilderPage: React.FC = () => {
                 placeholder="Array, Hash Table, Two Pointers"
                 value={problemForm.tags}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, tags: e.target.value }))}
-                className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px]"
+                className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
               />
             </div>
 
@@ -431,7 +431,7 @@ export const ProblemBuilderPage: React.FC = () => {
                           value={tc.input}
                           placeholder="Standard Input values..."
                           onChange={(e) => handleTestcaseChange(idx, 'input', e.target.value)}
-                          className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white font-mono resize-none"
+                          className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 font-mono resize-none"
                         />
                       </div>
 
@@ -442,7 +442,7 @@ export const ProblemBuilderPage: React.FC = () => {
                           value={tc.output}
                           placeholder="Standard Output values..."
                           onChange={(e) => handleTestcaseChange(idx, 'output', e.target.value)}
-                          className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white font-mono resize-none"
+                          className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 font-mono resize-none"
                         />
                       </div>
                     </div>
@@ -454,7 +454,7 @@ export const ProblemBuilderPage: React.FC = () => {
                         value={tc.explanation}
                         placeholder="Why is this the expected output?"
                         onChange={(e) => handleTestcaseChange(idx, 'explanation', e.target.value)}
-                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white resize-none"
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 resize-none"
                       />
                     </div>
                   </div>

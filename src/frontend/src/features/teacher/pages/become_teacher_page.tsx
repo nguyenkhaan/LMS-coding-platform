@@ -108,9 +108,9 @@ export function BecomeTeacherPage() {
 
   // Core Form State (100% matched with teacher_registered table)
   const [formData, setFormData] = useState({
-    displayName: 'Minh Trần',
+    displayName: user?.fullName || 'Minh Trần',
     headline: 'Senior Software Engineer & Distributed Systems Instructor',
-    legalFullName: 'Trần Quang Minh',
+    legalFullName: user?.fullName || 'Trần Quang Minh',
     dateOfBirth: '1998-05-15',
     identityNumber: '001200014589',
     bio: 'Hơn 6 năm kinh nghiệm phát triển hệ thống backend phân tán và microservices với Go, Java và Python. Đam mê chia sẻ kiến thức thuật toán và kiến trúc hệ thống.',

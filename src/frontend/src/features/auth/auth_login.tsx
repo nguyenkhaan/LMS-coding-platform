@@ -165,7 +165,7 @@ export const LoginPage: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-neutral-200 rounded-xl text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 focus:border-indigo-900 disabled:opacity-50 transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-neutral-200 rounded-xl text-sm text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 focus:border-indigo-900 disabled:opacity-50 transition-colors"
             />
           </div>
         </div>
@@ -186,7 +186,7 @@ export const LoginPage: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
-              className="w-full pl-9 pr-10 py-2 bg-white border border-neutral-200 rounded-xl text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 focus:border-indigo-900 disabled:opacity-50 transition-colors"
+              className="w-full pl-9 pr-10 py-2 bg-white border border-neutral-200 rounded-xl text-sm text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 focus:border-indigo-900 disabled:opacity-50 transition-colors"
             />
             <button
               type="button"

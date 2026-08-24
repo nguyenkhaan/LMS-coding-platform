@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useAuthStore } from '@/stores/useAuthStore';
 import {
   Mic,
   MicOff,
@@ -10,14 +11,7 @@ import {
   Send,
   Sparkles,
   Bot,
-  User,
-  Volume2,
-  Radio,
-  Maximize2,
   Activity,
-  ShieldCheck,
-  AlertCircle,
-  CheckCircle2,
   X
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -51,6 +45,7 @@ const INITIAL_MESSAGES: ChatMessage[] = [
 ];
 
 export function InterviewWorkspacePage() {
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const { sessionId } = useParams<{ sessionId: string }>();
 
@@ -108,6 +103,7 @@ export function InterviewWorkspacePage() {
         stream.getTracks().forEach((track) => track.stop());
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCamOn]);
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -117,8 +113,8 @@ export function InterviewWorkspacePage() {
     const userMsg: ChatMessage = {
       id: Date.now(),
       sender: 'user',
-      senderName: 'Minh Tran',
-      avatarInitials: 'MT',
+      senderName: user?.fullName || 'Candidate',
+      avatarInitials: user?.fullName ? user.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'C',
       text: inputText.trim(),
       time: formatTimer(secondsRemaining)
     };
@@ -194,10 +190,10 @@ export function InterviewWorkspacePage() {
               /* Fallback Candidate Avatar when Camera is Off */
               <div className="flex flex-col items-center justify-center gap-4 text-center p-8">
                 <div className="w-24 h-24 lg:w-28 lg:h-28 rounded-full bg-indigo-900/60 border-2 border-indigo-500/40 flex items-center justify-center text-white text-3xl font-bold font-mono shadow-inner">
-                  MT
+                  {user?.fullName ? user.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'U'}
                 </div>
                 <div className="flex flex-col gap-1">
-                  <span className="text-zinc-200 text-base lg:text-lg font-bold">Minh Tran</span>
+                  <span className="text-zinc-200 text-base lg:text-lg font-bold">{user?.fullName || 'Candidate'}</span>
                   <span className="text-zinc-500 text-xs font-medium">Camera preview inactive · Audio channel ready</span>
                 </div>
               </div>
@@ -206,7 +202,7 @@ export function InterviewWorkspacePage() {
             {/* Candidate Tag & Resolution Overlay (Top Left) */}
             <div className="absolute top-4 left-4 px-3.5 py-1.5 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 flex items-center gap-2.5 text-xs text-white shadow-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="font-semibold">Minh Tran (Candidate)</span>
+              <span className="font-semibold">{user?.fullName || 'Candidate'} (Candidate)</span>
               <span className="text-white/30">•</span>
               <span className="text-white/70 font-mono text-[11px]">1080p HD</span>
             </div>

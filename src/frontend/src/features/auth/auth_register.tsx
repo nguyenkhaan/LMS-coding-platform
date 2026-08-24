@@ -57,10 +57,6 @@ export const RegisterPage: React.FC = () => {
 
       toast.success('Mã OTP xác minh tài khoản đã được gửi đến mail. Vui lòng kiểm tra hòm thư của bạn.');
       navigate('/login');
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'An error occurred during registration. Please try again.';
-      setErrorMessage(message);
-      toast.error(message);
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +66,7 @@ export const RegisterPage: React.FC = () => {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-2xl font-extrabold text-neutral-900 tracking-tight">
-          Create an Account
+          Create Your Account
         </h1>
         <p className="text-sm text-neutral-500">
           Sign up to begin your learning journey on SkillBoost.
@@ -99,7 +95,7 @@ export const RegisterPage: React.FC = () => {
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               disabled={isLoading}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-neutral-200 rounded-xl text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 focus:border-indigo-900 disabled:opacity-50 transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-neutral-200 rounded-xl text-sm text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 focus:border-indigo-900 disabled:opacity-50 transition-colors"
             />
           </div>
         </div>
@@ -118,7 +114,7 @@ export const RegisterPage: React.FC = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-neutral-200 rounded-xl text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 focus:border-indigo-900 disabled:opacity-50 transition-colors"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-neutral-200 rounded-xl text-sm text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 focus:border-indigo-900 disabled:opacity-50 transition-colors"
             />
           </div>
         </div>
@@ -137,7 +133,7 @@ export const RegisterPage: React.FC = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
-              className="w-full pl-9 pr-10 py-2 bg-white border border-neutral-200 rounded-xl text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 focus:border-indigo-900 disabled:opacity-50 transition-colors"
+              className="w-full pl-9 pr-10 py-2 bg-white border border-neutral-200 rounded-xl text-sm text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 focus:border-indigo-900 disabled:opacity-50 transition-colors"
             />
             <button
               type="button"
@@ -164,7 +160,7 @@ export const RegisterPage: React.FC = () => {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isLoading}
-              className="w-full pl-9 pr-10 py-2 bg-white border border-neutral-200 rounded-xl text-sm placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 focus:border-indigo-900 disabled:opacity-50 transition-colors"
+              className="w-full pl-9 pr-10 py-2 bg-white border border-neutral-200 rounded-xl text-sm text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 focus:border-indigo-900 disabled:opacity-50 transition-colors"
             />
           </div>
         </div>

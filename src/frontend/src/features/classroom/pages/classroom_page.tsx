@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCourseStore } from '@/stores/useCourseStore';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 interface LessonItem {
   id: string;
@@ -76,6 +77,7 @@ const INITIAL_COMMENTS: CommentMessage[] = [
 ];
 
 export function ClassroomPage() {
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
   const { courseSlug } = useParams<{ courseSlug?: string }>();
@@ -175,9 +177,9 @@ export function ClassroomPage() {
 
     const newComment: CommentMessage = {
       id: Date.now(),
-      sender: 'Minh Tran',
-      role: 'Student',
-      avatarInitials: 'MT',
+      sender: user?.fullName || 'Student Learner',
+      role: user?.roles.includes('TEACHER') ? 'Instructor' : 'Student',
+      avatarInitials: user?.fullName ? user.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'SL',
       text: inputMsg.trim(),
       timeAgo: 'Just now',
       likes: 0
@@ -237,15 +239,19 @@ export function ClassroomPage() {
           </div>
 
           {/* Student Profile Info */}
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-900 text-xs font-bold font-['Inter']">
-              MT
+          {user && (
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-900 text-xs font-bold font-['Inter']">
+                {user.fullName ? user.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'U'}
+              </div>
+              <div className="flex flex-col text-left">
+                <span className="text-zinc-900 text-sm font-semibold leading-tight">{user.fullName}</span>
+                <span className="text-neutral-400 text-xs font-normal">
+                  {user.roles.includes('TEACHER') ? 'Instructor' : user.roles.includes('ADMIN') ? 'Admin' : 'Student'}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col text-left">
-              <span className="text-zinc-900 text-sm font-semibold leading-tight">Minh Tran</span>
-              <span className="text-neutral-400 text-xs font-normal">Student</span>
-            </div>
-          </div>
+          )}
         </div>
       </div>
 

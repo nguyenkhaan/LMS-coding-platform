@@ -224,7 +224,7 @@ export const QuizBuilderPage: React.FC = () => {
                   setTitle(e.target.value);
                   if (errors.title) setErrors(prev => ({ ...prev, title: '' }));
                 }}
-                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
                   errors.title ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                 }`}
               />
@@ -242,7 +242,7 @@ export const QuizBuilderPage: React.FC = () => {
                   setQuizDescription(e.target.value);
                   if (errors.description) setErrors(prev => ({ ...prev, description: '' }));
                 }}
-                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none ${
+                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
                   errors.description ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                 }`}
               />
@@ -288,7 +288,7 @@ export const QuizBuilderPage: React.FC = () => {
                           type="number"
                           value={q.points}
                           onChange={(e) => handlePointsChange(qIdx, parseInt(e.target.value) || 0)}
-                          className="w-16 px-2 py-1 border border-gray-200 rounded-lg text-xs font-bold text-center"
+                          className="w-16 px-2 py-1 border border-gray-200 rounded-lg text-xs font-bold text-center bg-white text-zinc-900"
                         />
                       </div>
                     </div>
@@ -301,7 +301,7 @@ export const QuizBuilderPage: React.FC = () => {
                         placeholder="e.g., What is the output of print(2 ** 3)?"
                         value={q.questionText}
                         onChange={(e) => handleQuestionTextChange(qIdx, e.target.value)}
-                        className="w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[13px] bg-white"
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400"
                       />
                     </div>
 
@@ -329,7 +329,7 @@ export const QuizBuilderPage: React.FC = () => {
                                 placeholder={`Option ${String.fromCharCode(65 + cIdx)}`}
                                 value={choice}
                                 onChange={(e) => handleChoiceChange(qIdx, cIdx, e.target.value)}
-                                className={`flex-1 px-3 py-1.5 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[13px] bg-white ${
+                                className={`flex-1 px-3 py-1.5 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
                                   isCorrect ? 'border-emerald-200 ring-2 ring-emerald-500/10' : 'border-gray-200'
                                 }`}
                               />

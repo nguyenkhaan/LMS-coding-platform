@@ -1,27 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '@/stores/useAuthStore';
-import { FigmaHeader } from '../courses/components/figma_header';
-import { FigmaFooter } from '../courses/components/figma_footer';
 import { TeacherSidebar } from './components/teacher_sidebar';
 import { toast } from 'sonner';
 import { Modal } from '@/components/ui/Modal';
 import { useCourseStore } from '@/stores/useCourseStore';
 import {
-  LayoutDashboard,
-  User,
-  BookOpen,
-  DollarSign,
-  Users,
-  MessageSquare,
-  Settings,
-  LogOut,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  ArrowUpRight,
-  TrendingUp,
-  Wallet,
   ArrowUp,
   ArrowDown,
   Plus,
@@ -30,9 +14,7 @@ import {
   FileText,
   HelpCircle,
   Code2,
-  FileImage,
   Upload,
-  Layers,
   ChevronDown,
   ChevronUp
 } from 'lucide-react';
@@ -81,83 +63,10 @@ const DEFAULT_METADATA: CourseMetadata = {
   status: 'DRAFT'
 };
 
-const DEFAULT_SECTIONS: Section[] = [
-  {
-    id: 'S-01',
-    title: 'Foundations & Basics',
-    position: 1,
-    lessons: [
-      {
-        id: 'L-01',
-        title: 'Introduction & Python Installation',
-        summary: 'Setting up local Python IDEs and basic syntax rules.',
-        position: 1,
-        contents: [
-          { id: 'C-01', content_type: 'Reading', title: 'IDE Setup Guide' }
-        ]
-      },
-      {
-        id: 'L-02',
-        title: 'Variables and Simple Data Types',
-        summary: 'Learn about integers, decimals, booleans, and strings.',
-        position: 2,
-        contents: [
-          { id: 'C-02', content_type: 'Quiz', title: 'Data Types Checkpoint Quiz' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'S-02',
-    title: 'Control Flow structures',
-    position: 2,
-    lessons: [
-      {
-        id: 'L-03',
-        title: 'If-Else Conditional Decisions',
-        summary: 'Understanding branch executions based on condition results.',
-        position: 1,
-        contents: [
-          { id: 'C-03', content_type: 'Code Problem', title: 'Find Maximum of Two Numbers' }
-        ]
-      },
-      {
-        id: 'L-04',
-        title: 'Loops (While & For loops)',
-        summary: 'Loop iteration rules and break/continue instructions.',
-        position: 2,
-        contents: [
-          { id: 'C-04', content_type: 'Reading', title: 'Loop Execution Analysis' }
-        ]
-      }
-    ]
-  }
-];
 
-// Sidebar NavItem
-interface NavItemProps {
-  to: string;
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
-}
-
-const NavItem: React.FC<NavItemProps> = ({ to, icon, label, active }) => (
-  <Link
-    to={to}
-    className={
-      active
-        ? 'flex items-center gap-3 px-3 py-2 rounded-xl text-[#FF4667] font-semibold bg-rose-50/60 text-sm'
-        : 'flex items-center gap-3 py-1.5 px-2 rounded-lg text-[#6B7280] hover:text-[#FF4667] hover:bg-slate-50 transition-all text-sm'
-    }
-  >
-    {icon}
-    <span>{label}</span>
-  </Link>
-);
 
 export const CourseBuilderPage: React.FC = () => {
-  const { user, logout } = useAuthStore();
+  const { user } = useAuthStore();
   const navigate = useNavigate();
   const { courseId } = useParams<{ courseId: string }>();
   const { courses, updateCourse } = useCourseStore();
@@ -168,6 +77,48 @@ export const CourseBuilderPage: React.FC = () => {
   const [metadata, setMetadata] = useState<CourseMetadata>(DEFAULT_METADATA);
   const [sections, setSections] = useState<Section[]>([]);
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+
+  const thumbnailPreviewUrlRef = useRef<string | null>(null);
+
+  const revokeThumbnailUrl = () => {
+    if (thumbnailPreviewUrlRef.current) {
+      URL.revokeObjectURL(thumbnailPreviewUrlRef.current);
+      thumbnailPreviewUrlRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      revokeThumbnailUrl();
+    };
+  }, []);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('File size must be under 2MB.');
+      return;
+    }
+
+    if (!['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(file.type)) {
+      toast.error('Unsupported file format. Please upload PNG, JPG, JPEG, or WEBP.');
+      return;
+    }
+
+    revokeThumbnailUrl();
+    const objectUrl = URL.createObjectURL(file);
+    thumbnailPreviewUrlRef.current = objectUrl;
+    setMetadata(prev => ({ ...prev, thumbnail_url: objectUrl }));
+    toast.success('Image selected successfully.');
+  };
+
+  const handleRemoveImage = () => {
+    revokeThumbnailUrl();
+    setMetadata(prev => ({ ...prev, thumbnail_url: '' }));
+    toast.success('Image removed.');
+  };
 
   useEffect(() => {
     if (activeCourse) {
@@ -219,11 +170,6 @@ export const CourseBuilderPage: React.FC = () => {
 
   const displayName = user?.fullName || 'Edythe Andrew';
   const avatarUrl = user?.avatarUrl || 'https://placehold.co/96x96';
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   const toggleSection = (sectionId: string) => {
     setExpandedSections(prev => ({
@@ -507,7 +453,7 @@ export const CourseBuilderPage: React.FC = () => {
       toast.success('Problem created and curriculum updated successfully.');
       setIsProblemModalOpen(false);
       resetProblemForm();
-    } catch (err) {
+    } catch {
       toast.error('Failed to create the problem.');
     } finally {
       setIsSavingProblem(false);
@@ -712,7 +658,7 @@ export const CourseBuilderPage: React.FC = () => {
                     id="course-title"
                     value={metadata.title}
                     onChange={(e) => setMetadata(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px]"
+                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
                   />
                 </div>
 
@@ -724,7 +670,7 @@ export const CourseBuilderPage: React.FC = () => {
                     id="course-slug"
                     value={metadata.slug}
                     onChange={(e) => setMetadata(prev => ({ ...prev, slug: e.target.value }))}
-                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px]"
+                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
                   />
                 </div>
 
@@ -735,7 +681,7 @@ export const CourseBuilderPage: React.FC = () => {
                     id="course-category"
                     value={metadata.field}
                     onChange={(e) => setMetadata(prev => ({ ...prev, field: e.target.value }))}
-                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white cursor-pointer"
+                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white cursor-pointer text-zinc-900"
                   >
                     <option value="Programming">Programming</option>
                     <option value="Algorithms">Algorithms & DS</option>
@@ -752,7 +698,7 @@ export const CourseBuilderPage: React.FC = () => {
                     rows={4}
                     value={metadata.description}
                     onChange={(e) => setMetadata(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none"
+                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400"
                   />
                 </div>
 
@@ -766,7 +712,7 @@ export const CourseBuilderPage: React.FC = () => {
                       id="course-price"
                       value={metadata.price}
                       onChange={(e) => setMetadata(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                      className="w-full pl-7 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px]"
+                      className="w-full pl-7 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
                     />
                   </div>
                 </div>
@@ -774,26 +720,41 @@ export const CourseBuilderPage: React.FC = () => {
                 {/* Thumbnail upload simulation */}
                 <div className="flex flex-col gap-1.5">
                   <span className="text-[13px] font-semibold text-[#374151]">Course Cover Image</span>
+                  <input
+                    type="file"
+                    id="cover-image-upload"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
                   <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 flex flex-col items-center gap-2 bg-slate-50/50">
                     {metadata.thumbnail_url ? (
                       <div className="flex flex-col items-center gap-3">
                         <img src={metadata.thumbnail_url} alt="Cover preview" className="w-48 rounded-xl shadow-sm border border-gray-100" />
-                        <button
-                          type="button"
-                          onClick={() => setMetadata(prev => ({ ...prev, thumbnail_url: '' }))}
-                          className="text-[12px] font-bold text-[#FF4667] hover:underline"
-                        >
-                          Remove image
-                        </button>
+                        <div className="flex gap-4">
+                          <label
+                            htmlFor="cover-image-upload"
+                            className="text-[12px] font-bold text-[#392C7D] hover:underline cursor-pointer"
+                          >
+                            Replace image
+                          </label>
+                          <button
+                            type="button"
+                            onClick={handleRemoveImage}
+                            className="text-[12px] font-bold text-[#FF4667] hover:underline cursor-pointer"
+                          >
+                            Remove image
+                          </button>
+                        </div>
                       </div>
                     ) : (
-                      <div className="flex flex-col items-center gap-2">
+                      <label htmlFor="cover-image-upload" className="flex flex-col items-center gap-2 cursor-pointer w-full hover:bg-slate-100/50 rounded-xl py-4 transition-colors">
                         <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
                           <Upload className="w-5 h-5 text-[#392C7D]" />
                         </div>
                         <p className="text-[13px] text-[#374151] font-semibold">Click to upload cover image</p>
-                        <p className="text-[11px] text-[#6B7280]">Supports PNG, JPG, JPEG (Max 2MB)</p>
-                      </div>
+                        <p className="text-[11px] text-[#6B7280]">Supports PNG, JPG, JPEG, WEBP (Max 2MB)</p>
+                      </label>
                     )}
                   </div>
                 </div>
@@ -1046,7 +1007,7 @@ export const CourseBuilderPage: React.FC = () => {
                 placeholder="e.g., Reverse a Linked List"
                 value={problemForm.title}
                 onChange={(e) => handleTitleChange(e.target.value)}
-                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
                   problemErrors.title ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                 }`}
               />
@@ -1060,7 +1021,7 @@ export const CourseBuilderPage: React.FC = () => {
                 placeholder="e.g., reverse-linked-list"
                 value={problemForm.slug}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, slug: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
                   problemErrors.slug ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                 }`}
               />
@@ -1076,7 +1037,7 @@ export const CourseBuilderPage: React.FC = () => {
               placeholder="Describe the problem, input format requirements, examples, etc. Supports Markdown."
               value={problemForm.statement}
               onChange={(e) => setProblemForm(prev => ({ ...prev, statement: e.target.value }))}
-              className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none ${
+              className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
                 problemErrors.statement ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
               }`}
             />
@@ -1092,7 +1053,7 @@ export const CourseBuilderPage: React.FC = () => {
                 placeholder="Describe the shape/constraints of the input data."
                 value={problemForm.inputDescription}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, inputDescription: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none ${
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
                   problemErrors.inputDescription ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                 }`}
               />
@@ -1106,7 +1067,7 @@ export const CourseBuilderPage: React.FC = () => {
                 placeholder="Describe the expected returned value or stdout format."
                 value={problemForm.outputDescription}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, outputDescription: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none ${
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
                   problemErrors.outputDescription ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                 }`}
               />
@@ -1122,7 +1083,7 @@ export const CourseBuilderPage: React.FC = () => {
               placeholder="e.g., 1 <= N <= 10^5, Array elements are integers."
               value={problemForm.constraints}
               onChange={(e) => setProblemForm(prev => ({ ...prev, constraints: e.target.value }))}
-              className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none ${
+              className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
                 problemErrors.constraints ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
               }`}
             />
@@ -1135,8 +1096,8 @@ export const CourseBuilderPage: React.FC = () => {
               <label className="text-[13px] font-semibold text-[#374151]">Difficulty</label>
               <select
                 value={problemForm.difficulty}
-                onChange={(e) => setProblemForm(prev => ({ ...prev, difficulty: e.target.value as any }))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white cursor-pointer"
+                onChange={(e) => setProblemForm(prev => ({ ...prev, difficulty: e.target.value as 'EASY' | 'MEDIUM' | 'HARD' }))}
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white cursor-pointer text-zinc-900"
               >
                 <option value="EASY">Easy</option>
                 <option value="MEDIUM">Medium</option>
@@ -1150,7 +1111,7 @@ export const CourseBuilderPage: React.FC = () => {
                 type="number"
                 value={problemForm.passingScore}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, passingScore: parseInt(e.target.value) || 0 }))}
-                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 ${
                   problemErrors.passingScore ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                 }`}
               />
@@ -1163,7 +1124,7 @@ export const CourseBuilderPage: React.FC = () => {
                 type="number"
                 value={problemForm.timeLimitMs}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, timeLimitMs: parseInt(e.target.value) || 0 }))}
-                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 ${
                   problemErrors.timeLimitMs ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                 }`}
               />
@@ -1176,7 +1137,7 @@ export const CourseBuilderPage: React.FC = () => {
                 type="number"
                 value={problemForm.memoryLimitKb}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, memoryLimitKb: parseInt(e.target.value) || 0 }))}
-                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 ${
                   problemErrors.memoryLimitKb ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                 }`}
               />
@@ -1192,7 +1153,7 @@ export const CourseBuilderPage: React.FC = () => {
               placeholder="e.g., Array, Two Pointers, Dynamic Programming"
               value={problemForm.tags}
               onChange={(e) => setProblemForm(prev => ({ ...prev, tags: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px]"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
             />
           </div>
 
@@ -1237,7 +1198,7 @@ export const CourseBuilderPage: React.FC = () => {
                         placeholder="e.g., nums = [2,7,11,15], target = 9"
                         value={testcase.input}
                         onChange={(e) => handleTestcaseChange(index, 'input', e.target.value)}
-                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white resize-none font-mono"
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 resize-none font-mono"
                       />
                     </div>
                     
@@ -1248,7 +1209,7 @@ export const CourseBuilderPage: React.FC = () => {
                         placeholder="e.g., [0,1]"
                         value={testcase.output}
                         onChange={(e) => handleTestcaseChange(index, 'output', e.target.value)}
-                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white resize-none font-mono"
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 resize-none font-mono"
                       />
                     </div>
                   </div>
@@ -1260,7 +1221,7 @@ export const CourseBuilderPage: React.FC = () => {
                       placeholder="Explain why this output is expected."
                       value={testcase.explanation}
                       onChange={(e) => handleTestcaseChange(index, 'explanation', e.target.value)}
-                      className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white resize-none"
+                      className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 resize-none"
                     />
                   </div>
                 </div>

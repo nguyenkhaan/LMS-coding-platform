@@ -1,16 +1,6 @@
 import React, { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
-	ChevronRight,
-	ChevronLeft,
-	ChevronDown,
-	ChevronUp,
-	CheckCircle2,
-	Circle,
-	PlayCircle,
-	FileText,
-	HelpCircle,
-	Code2,
 	Clock,
 	Copy,
 	Check,
@@ -19,25 +9,22 @@ import {
 	Terminal,
 	Bookmark,
 	Sparkles,
-	BookOpen,
-	ArrowLeft,
-	ArrowRight,
-	Search
+	ArrowLeft
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/stores/useAuthStore';
 
 export const LessonProblemPreviewPage: React.FC = () => {
 	const navigate = useNavigate();
+	const { user } = useAuthStore();
 
 	const [copiedInput1, setCopiedInput1] = useState(false);
 	const [copiedOutput1, setCopiedOutput1] = useState(false);
 	const [copiedInput2, setCopiedInput2] = useState(false);
 	const [copiedOutput2, setCopiedOutput2] = useState(false);
-	const [isCompleted, setIsCompleted] = useState(false);
 	const [isSaved, setIsSaved] = useState(false);
 	const [upvotes, setUpvotes] = useState<Record<string, number>>({ 'c1': 24, 'c2': 11 });
 	const [hasUpvoted, setHasUpvoted] = useState<Record<string, boolean>>({});
-	const [courseSearch, setCourseSearch] = useState('');
 	const [newDiscussion, setNewDiscussion] = useState('');
 	const [commentsList, setCommentsList] = useState([
 		{
@@ -63,8 +50,8 @@ export const LessonProblemPreviewPage: React.FC = () => {
 		if (!newDiscussion.trim()) return;
 		const item = {
 			id: `c-${Date.now()}`,
-			author: 'Minh Tran',
-			initials: 'MT',
+			author: user?.fullName || 'Student Learner',
+			initials: user?.fullName ? user.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase() : 'SL',
 			timeAgo: 'Just now',
 			text: newDiscussion.trim(),
 			upvotes: 1
@@ -74,21 +61,11 @@ export const LessonProblemPreviewPage: React.FC = () => {
 		toast.success('Discussion posted successfully!');
 	};
 
-	const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
-		'sec-1': false,
-		'sec-2': true,
-		'sec-3': false
-	});
-
 	const copyToClipboard = (text: string, setter: (val: boolean) => void) => {
 		navigator.clipboard.writeText(text);
 		setter(true);
 		toast.success('Copied testcase to clipboard!');
 		setTimeout(() => setter(false), 2000);
-	};
-
-	const toggleSection = (id: string) => {
-		setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
 	};
 
 	const toggleUpvote = (id: string) => {

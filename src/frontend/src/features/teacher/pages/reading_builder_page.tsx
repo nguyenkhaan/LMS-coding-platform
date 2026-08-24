@@ -129,7 +129,7 @@ export const ReadingBuilderPage: React.FC = () => {
                   setTitle(e.target.value);
                   if (errors.title) setErrors(prev => ({ ...prev, title: '' }));
                 }}
-                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] ${
+                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
                   errors.title ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                 }`}
               />
@@ -147,7 +147,7 @@ export const ReadingBuilderPage: React.FC = () => {
                   setReadingContent(e.target.value);
                   if (errors.content) setErrors(prev => ({ ...prev, content: '' }));
                 }}
-                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] font-mono ${
+                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] font-mono bg-white text-zinc-900 placeholder:text-neutral-400 ${
                   errors.content ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
                 }`}
               />
