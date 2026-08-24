@@ -379,7 +379,7 @@ export const MainLayout: React.FC = () => {
 
         {/* Copyright Bottom Bar */}
         <div className="max-w-[1810px] w-full mx-auto pt-6 border-t border-indigo-900/60 flex flex-col sm:flex-row justify-between items-center gap-4 text-white/60 text-sm">
-          <span>© 2025 DreamsLMS. All Rights Reserved.</span>
+          <span>© 2026 SkillBoost. All Rights Reserved.</span>
           <div className="flex items-center gap-6">
             <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
             <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
