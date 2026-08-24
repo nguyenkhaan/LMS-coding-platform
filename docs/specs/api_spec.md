@@ -21,7 +21,7 @@ Các ký hiệu:
 | Thành phần | Base URL local | Trách nhiệm |
 |---|---|---|
 | Auth Provider | `http://localhost:4001/api/auth` | Registration, identity, session, token, OTP và password recovery |
-| Business Application | `http://localhost:4000/api/v1` | Toàn bộ nghiệp vụ LMS, commerce, learning, Judge orchestration và Interview |
+| Business Application | `http://localhost:4000/api` | Toàn bộ nghiệp vụ LMS, commerce, learning, Judge orchestration và Interview |
 
 ## 2. Quy ước chung
 

@@ -37,7 +37,7 @@ STUDY_SLUG = "nhap-mon-lap-trinh-python"
 class TestGetEnrolledCourses:
 
     def test_get_enrolled_courses_returns_200_with_items(self, client):
-        response = client.get("/api/v1/student/courses")
+        response = client.get("/api/student/courses")
 
         assert response.status_code == 200
         body = response.json()
@@ -46,7 +46,7 @@ class TestGetEnrolledCourses:
         assert len(body["items"]) > 0
 
     def test_get_enrolled_courses_items_have_required_fields(self, client):
-        response = client.get("/api/v1/student/courses")
+        response = client.get("/api/student/courses")
 
         assert response.status_code == 200
         items = response.json()["items"]
@@ -55,7 +55,7 @@ class TestGetEnrolledCourses:
                 assert field in item, f"Missing field: {field}"
 
     def test_get_enrolled_courses_progress_percent_is_float(self, client):
-        response = client.get("/api/v1/student/courses")
+        response = client.get("/api/student/courses")
 
         assert response.status_code == 200
         items = response.json()["items"]
@@ -64,7 +64,7 @@ class TestGetEnrolledCourses:
             assert 0.0 <= item["progress_percent"] <= 100.0
 
     def test_get_enrolled_courses_returns_401_without_auth(self, unauth_client):
-        response = unauth_client.get("/api/v1/student/courses")
+        response = unauth_client.get("/api/student/courses")
 
         assert response.status_code == 401
 
@@ -76,7 +76,7 @@ class TestGetEnrolledCourses:
 class TestGetStudyContent:
 
     def test_get_study_content_returns_200_for_valid_slug(self, client):
-        response = client.get(f"/api/v1/student/courses/{STUDY_SLUG}/study")
+        response = client.get(f"/api/student/courses/{STUDY_SLUG}/study")
 
         assert response.status_code == 200
         body = response.json()
@@ -86,7 +86,7 @@ class TestGetStudyContent:
         assert len(body["sections"]) > 0
 
     def test_get_study_content_sections_have_required_fields(self, client):
-        response = client.get(f"/api/v1/student/courses/{STUDY_SLUG}/study")
+        response = client.get(f"/api/student/courses/{STUDY_SLUG}/study")
 
         assert response.status_code == 200
         sections = response.json()["sections"]
@@ -95,7 +95,7 @@ class TestGetStudyContent:
                 assert field in section, f"Section missing field: {field}"
 
     def test_get_study_content_lessons_have_required_fields(self, client):
-        response = client.get(f"/api/v1/student/courses/{STUDY_SLUG}/study")
+        response = client.get(f"/api/student/courses/{STUDY_SLUG}/study")
 
         assert response.status_code == 200
         sections = response.json()["sections"]
@@ -110,7 +110,7 @@ class TestGetStudyContent:
         #   Section 0: lesson[0]=locked:False, lesson[1]=locked:False,
         #              lesson[2]=locked:True,  lesson[3]=locked:True
         # Q3 decision: fixed mock values, no sequential business logic.
-        response = client.get(f"/api/v1/student/courses/{STUDY_SLUG}/study")
+        response = client.get(f"/api/student/courses/{STUDY_SLUG}/study")
 
         assert response.status_code == 200
         lessons = response.json()["sections"][0]["lessons"]
@@ -124,7 +124,7 @@ class TestGetStudyContent:
         assert lessons[3]["locked"] is True,  "Lesson 3 should be locked"
 
     def test_get_study_content_contents_have_required_fields(self, client):
-        response = client.get(f"/api/v1/student/courses/{STUDY_SLUG}/study")
+        response = client.get(f"/api/student/courses/{STUDY_SLUG}/study")
 
         assert response.status_code == 200
         first_lesson = response.json()["sections"][0]["lessons"][0]
@@ -134,7 +134,7 @@ class TestGetStudyContent:
                 assert field in content, f"Content missing field: {field}"
 
     def test_get_study_content_returns_404_for_unknown_slug(self, client):
-        response = client.get(f"/api/v1/student/courses/{UNKNOWN_SLUG}/study")
+        response = client.get(f"/api/student/courses/{UNKNOWN_SLUG}/study")
 
         assert response.status_code == 404
         body = response.json()
@@ -143,6 +143,6 @@ class TestGetStudyContent:
         assert body["code"] == 404
 
     def test_get_study_content_returns_401_without_auth(self, unauth_client):
-        response = unauth_client.get(f"/api/v1/student/courses/{STUDY_SLUG}/study")
+        response = unauth_client.get(f"/api/student/courses/{STUDY_SLUG}/study")
 
         assert response.status_code == 401

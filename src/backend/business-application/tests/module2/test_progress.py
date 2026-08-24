@@ -39,7 +39,7 @@ class TestCompleteLessonContent:
 
     def test_complete_lesson_content_returns_200_for_valid_id(self, client):
         response = client.post(
-            f"/api/v1/student/progress/lesson-content/{VALID_LESSON_CONTENT_ID}/complete"
+            f"/api/student/progress/lesson-content/{VALID_LESSON_CONTENT_ID}/complete"
         )
 
         assert response.status_code == 200
@@ -49,7 +49,7 @@ class TestCompleteLessonContent:
 
     def test_complete_lesson_content_message_is_non_empty_string(self, client):
         response = client.post(
-            f"/api/v1/student/progress/lesson-content/{VALID_LESSON_CONTENT_ID}/complete"
+            f"/api/student/progress/lesson-content/{VALID_LESSON_CONTENT_ID}/complete"
         )
 
         assert response.status_code == 200
@@ -59,7 +59,7 @@ class TestCompleteLessonContent:
 
     def test_complete_lesson_content_completed_at_is_valid_datetime(self, client):
         response = client.post(
-            f"/api/v1/student/progress/lesson-content/{VALID_LESSON_CONTENT_ID}/complete"
+            f"/api/student/progress/lesson-content/{VALID_LESSON_CONTENT_ID}/complete"
         )
 
         assert response.status_code == 200
@@ -70,7 +70,7 @@ class TestCompleteLessonContent:
 
     def test_complete_lesson_content_returns_404_for_unknown_id(self, client):
         response = client.post(
-            f"/api/v1/student/progress/lesson-content/{UNKNOWN_ID}/complete"
+            f"/api/student/progress/lesson-content/{UNKNOWN_ID}/complete"
         )
 
         assert response.status_code == 404
@@ -81,7 +81,7 @@ class TestCompleteLessonContent:
 
     def test_complete_lesson_content_returns_401_without_auth(self, unauth_client):
         response = unauth_client.post(
-            f"/api/v1/student/progress/lesson-content/{VALID_LESSON_CONTENT_ID}/complete"
+            f"/api/student/progress/lesson-content/{VALID_LESSON_CONTENT_ID}/complete"
         )
 
         assert response.status_code == 401
@@ -89,7 +89,7 @@ class TestCompleteLessonContent:
     def test_complete_lesson_content_returns_200_for_newly_added_lesson(self, client):
         # ID 23 was added during the mock data expansion for Python Section 2
         response = client.post(
-            "/api/v1/student/progress/lesson-content/23/complete"
+            "/api/student/progress/lesson-content/23/complete"
         )
 
         assert response.status_code == 200

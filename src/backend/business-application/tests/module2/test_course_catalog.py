@@ -24,7 +24,7 @@ from tests.module2.conftest import UNKNOWN_SLUG
 class TestGetCourseCatalog:
 
     def test_get_course_catalog_returns_200_with_pagination_fields(self, client):
-        response = client.get("/api/v1/courses")
+        response = client.get("/api/courses")
 
         assert response.status_code == 200
         body = response.json()
@@ -35,7 +35,7 @@ class TestGetCourseCatalog:
         assert isinstance(body["items"], list)
 
     def test_get_course_catalog_items_have_required_fields(self, client):
-        response = client.get("/api/v1/courses")
+        response = client.get("/api/courses")
 
         assert response.status_code == 200
         items = response.json()["items"]
@@ -46,7 +46,7 @@ class TestGetCourseCatalog:
             assert field in first, f"Missing field: {field}"
 
     def test_get_course_catalog_with_page_and_size_params(self, client):
-        response = client.get("/api/v1/courses", params={"page": 1, "size": 5})
+        response = client.get("/api/courses", params={"page": 1, "size": 5})
 
         assert response.status_code == 200
         body = response.json()
@@ -54,7 +54,7 @@ class TestGetCourseCatalog:
         assert len(body["items"]) <= 5
 
     def test_get_course_catalog_filter_by_price_type_free(self, client):
-        response = client.get("/api/v1/courses", params={"price_type": "free"})
+        response = client.get("/api/courses", params={"price_type": "free"})
 
         assert response.status_code == 200
         items = response.json()["items"]
@@ -62,7 +62,7 @@ class TestGetCourseCatalog:
             assert item["price_type"] == "free"
 
     def test_get_course_catalog_filter_by_query_string(self, client):
-        response = client.get("/api/v1/courses", params={"q": "Python"})
+        response = client.get("/api/courses", params={"q": "Python"})
 
         assert response.status_code == 200
         items = response.json()["items"]
@@ -71,7 +71,7 @@ class TestGetCourseCatalog:
             assert "python" in item["title"].lower()
 
     def test_get_course_catalog_unknown_query_returns_empty_items(self, client):
-        response = client.get("/api/v1/courses", params={"q": "xyzkhongtontai999"})
+        response = client.get("/api/courses", params={"q": "xyzkhongtontai999"})
 
         assert response.status_code == 200
         body = response.json()
@@ -86,7 +86,7 @@ class TestGetCourseCatalog:
 class TestGetCourseDetail:
 
     def test_get_course_detail_returns_200_for_existing_slug(self, client):
-        response = client.get("/api/v1/courses/nhap-mon-lap-trinh-python")
+        response = client.get("/api/courses/nhap-mon-lap-trinh-python")
 
         assert response.status_code == 200
         body = response.json()
@@ -95,7 +95,7 @@ class TestGetCourseDetail:
         assert isinstance(body["sections"], list)
 
     def test_get_course_detail_response_has_all_required_fields(self, client):
-        response = client.get("/api/v1/courses/nhap-mon-lap-trinh-python")
+        response = client.get("/api/courses/nhap-mon-lap-trinh-python")
 
         assert response.status_code == 200
         body = response.json()
@@ -105,7 +105,7 @@ class TestGetCourseDetail:
             assert field in body, f"Missing field: {field}"
 
     def test_get_course_detail_sections_have_required_fields(self, client):
-        response = client.get("/api/v1/courses/nhap-mon-lap-trinh-python")
+        response = client.get("/api/courses/nhap-mon-lap-trinh-python")
 
         assert response.status_code == 200
         sections = response.json()["sections"]
@@ -115,7 +115,7 @@ class TestGetCourseDetail:
                 assert field in section, f"Section missing field: {field}"
 
     def test_get_course_detail_returns_404_for_unknown_slug(self, client):
-        response = client.get(f"/api/v1/courses/{UNKNOWN_SLUG}")
+        response = client.get(f"/api/courses/{UNKNOWN_SLUG}")
 
         assert response.status_code == 404
         body = response.json()

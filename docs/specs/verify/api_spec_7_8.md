@@ -1,11 +1,11 @@
 # Rà soát API Spec vs Database — Module 7 & Module 8
 
 
-## 7. Lesson Interactions & Comments (`/api/v1/lessons`, `/api/v1/comments`)
+## 7. Lesson Interactions & Comments (`/api/lessons`, `/api/comments`)
 
 ### 7.1
 ```text
-GET /api/v1/lessons/{lessonId}/comments
+GET /api/lessons/{lessonId}/comments
 Response: List of comments, each containing parent_id, profile avatar, full name, post time, and child replies list.
 ```
 
@@ -15,7 +15,7 @@ Response: List of comments, each containing parent_id, profile avatar, full name
 
 ### 7.2
 ```text
-POST /api/v1/lessons/{lessonId}/comments
+POST /api/lessons/{lessonId}/comments
 Request: content, parent_id (optional)
 Response: Created comment details.
 ```
@@ -25,7 +25,7 @@ Response: Created comment details.
 
 ### 7.3
 ```text
-DELETE /api/v1/comments/{commentId}
+DELETE /api/comments/{commentId}
 ```
 
 - Về mặt database: phù hợp với bảng `comment` vì có `id` làm khóa chính.
@@ -33,11 +33,11 @@ DELETE /api/v1/comments/{commentId}
 
 ---
 
-## 8. Admin Moderation & CCCD Verification (`/api/v1/admin`, `/api/v1/teacher-register`)
+## 8. Admin Moderation & CCCD Verification (`/api/admin`, `/api/teacher-register`)
 
 ### 8.1
 ```text
-POST /api/v1/teacher-register
+POST /api/teacher-register
 Request: motivation, cccd, cccd_front_url, cccd_back_url
 Response: id, status (PENDING), message
 ```
@@ -47,7 +47,7 @@ Response: id, status (PENDING), message
 
 ### 8.2
 ```text
-GET /api/v1/admin/teacher-registers
+GET /api/admin/teacher-registers
 Response: List of requests (motivation, cccd_number, cccd_front_url, cccd_back_url, cv_pdf_url, user details)
 ```
 
@@ -56,18 +56,18 @@ Response: List of requests (motivation, cccd_number, cccd_front_url, cccd_back_u
 
 ### 8.3
 ```text
-POST /api/v1/admin/teacher-registers/{id}/verify
+POST /api/admin/teacher-registers/{id}/verify
 Request: status (AGREE, REJECT), reviewed_note
 Response: message, register_id, new_status
 ```
 
 - Về mặt database: phù hợp, vì bảng `teacher_register` có `status`, `reviewed_note`, `reviewed_by`, `reviewed_at`.
-- Đề xuất: đổi path từ `/verify` sang `/teacher-registers/{id}` hoặc giữ `/verify` nhưng thống nhất với route `PUT /api/v1/admin/teacher-register/{id}` trong review trước.
-- Khuyến nghị: dùng `PUT /api/v1/admin/teacher-registers/{id}` để phù hợp với thao tác cập nhật trạng thái.
+- Đề xuất: đổi path từ `/verify` sang `/teacher-registers/{id}` hoặc giữ `/verify` nhưng thống nhất với route `PUT /api/admin/teacher-register/{id}` trong review trước.
+- Khuyến nghị: dùng `PUT /api/admin/teacher-registers/{id}` để phù hợp với thao tác cập nhật trạng thái.
 
 ### 8.4
 ```text
-GET /api/v1/admin/reports
+GET /api/admin/reports
 Response: List of flags (course_id, reporter_name, content_reason, status)
 ```
 
@@ -76,7 +76,7 @@ Response: List of flags (course_id, reporter_name, content_reason, status)
 
 ### 8.5
 ```text
-POST /api/v1/admin/courses/{id}/status
+POST /api/admin/courses/{id}/status
 Request: status (PUBLISHED, ARCHIVED, DRAFT)
 ```
 
@@ -85,7 +85,7 @@ Request: status (PUBLISHED, ARCHIVED, DRAFT)
 
 ### 8.6
 ```text
-PUT /api/v1/admin/users/{userId}/status
+PUT /api/admin/users/{userId}/status
 Request: account_status (ACTIVE, BANNED)
 ```
 

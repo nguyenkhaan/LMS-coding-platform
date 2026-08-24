@@ -56,7 +56,7 @@ def _has_field_recursive(obj: object, field: str) -> bool:
 class TestGetQuiz:
 
     def test_get_quiz_returns_200_for_valid_id(self, client):
-        response = client.get(f"/api/v1/student/quizzes/{VALID_QUIZ_ID}")
+        response = client.get(f"/api/student/quizzes/{VALID_QUIZ_ID}")
 
         assert response.status_code == 200
         body = response.json()
@@ -67,7 +67,7 @@ class TestGetQuiz:
         assert len(body["questions"]) > 0
 
     def test_get_quiz_questions_have_options(self, client):
-        response = client.get(f"/api/v1/student/quizzes/{VALID_QUIZ_ID}")
+        response = client.get(f"/api/student/quizzes/{VALID_QUIZ_ID}")
 
         assert response.status_code == 200
         questions = response.json()["questions"]
@@ -85,7 +85,7 @@ class TestGetQuiz:
         # Recursively walk the entire response JSON tree.
         # If "is_correct" appears at ANY nesting level, this test fails.
         # This guards against accidental field leakage from the internal answer key.
-        response = client.get(f"/api/v1/student/quizzes/{VALID_QUIZ_ID}")
+        response = client.get(f"/api/student/quizzes/{VALID_QUIZ_ID}")
 
         assert response.status_code == 200
         body = response.json()
@@ -95,7 +95,7 @@ class TestGetQuiz:
         )
 
     def test_get_quiz_returns_404_for_unknown_id(self, client):
-        response = client.get(f"/api/v1/student/quizzes/{UNKNOWN_ID}")
+        response = client.get(f"/api/student/quizzes/{UNKNOWN_ID}")
 
         assert response.status_code == 404
         body = response.json()
@@ -104,7 +104,7 @@ class TestGetQuiz:
         assert body["code"] == 404
 
     def test_get_quiz_returns_401_without_auth(self, unauth_client):
-        response = unauth_client.get(f"/api/v1/student/quizzes/{VALID_QUIZ_ID}")
+        response = unauth_client.get(f"/api/student/quizzes/{VALID_QUIZ_ID}")
 
         assert response.status_code == 401
 
@@ -119,7 +119,7 @@ class TestSubmitQuiz:
         # Answer key: {Q1→opt2, Q2→opt3, Q3→opt1} — all correct
         payload = {"answers": {"1": 2, "2": 3, "3": 1}}
         response = client.post(
-            f"/api/v1/student/quizzes/{VALID_QUIZ_ID}/submit",
+            f"/api/student/quizzes/{VALID_QUIZ_ID}/submit",
             json=payload,
         )
 
@@ -134,7 +134,7 @@ class TestSubmitQuiz:
         # All wrong answers (none match the answer key)
         payload = {"answers": {"1": 1, "2": 1, "3": 2}}
         response = client.post(
-            f"/api/v1/student/quizzes/{VALID_QUIZ_ID}/submit",
+            f"/api/student/quizzes/{VALID_QUIZ_ID}/submit",
             json=payload,
         )
 
@@ -150,7 +150,7 @@ class TestSubmitQuiz:
         # correct=2, total=3 → score = round((2/3)*10, 2) = 6.67
         payload = {"answers": {"1": 2, "2": 3, "3": 2}}
         response = client.post(
-            f"/api/v1/student/quizzes/{VALID_QUIZ_ID}/submit",
+            f"/api/student/quizzes/{VALID_QUIZ_ID}/submit",
             json=payload,
         )
 
@@ -164,7 +164,7 @@ class TestSubmitQuiz:
     def test_submit_quiz_response_has_required_fields(self, client):
         payload = {"answers": {"1": 2, "2": 3, "3": 1}}
         response = client.post(
-            f"/api/v1/student/quizzes/{VALID_QUIZ_ID}/submit",
+            f"/api/student/quizzes/{VALID_QUIZ_ID}/submit",
             json=payload,
         )
 
@@ -177,7 +177,7 @@ class TestSubmitQuiz:
     def test_submit_quiz_empty_answers_returns_400(self, client):
         payload = {"answers": {}}
         response = client.post(
-            f"/api/v1/student/quizzes/{VALID_QUIZ_ID}/submit",
+            f"/api/student/quizzes/{VALID_QUIZ_ID}/submit",
             json=payload,
         )
 
@@ -186,7 +186,7 @@ class TestSubmitQuiz:
     def test_submit_quiz_returns_404_for_unknown_quiz_id(self, client):
         payload = {"answers": {"1": 2}}
         response = client.post(
-            f"/api/v1/student/quizzes/{UNKNOWN_ID}/submit",
+            f"/api/student/quizzes/{UNKNOWN_ID}/submit",
             json=payload,
         )
 
@@ -199,7 +199,7 @@ class TestSubmitQuiz:
     def test_submit_quiz_returns_401_without_auth(self, unauth_client):
         payload = {"answers": {"1": 2, "2": 3, "3": 1}}
         response = unauth_client.post(
-            f"/api/v1/student/quizzes/{VALID_QUIZ_ID}/submit",
+            f"/api/student/quizzes/{VALID_QUIZ_ID}/submit",
             json=payload,
         )
 
