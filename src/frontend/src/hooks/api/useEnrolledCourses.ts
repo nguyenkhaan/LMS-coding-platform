@@ -1,0 +1,59 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useAuthStore } from '@/features/auth/model/useAuthStore';
+import { courseApi } from '../../features/courses/api/courseApi.ts';
+import { EnrolledCourseItem } from '@/features/courses/model/course';
+
+export const useEnrolledCourses = () => {
+	const { isAuthenticated } = useAuthStore();
+	const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourseItem[]>([]);
+	const [isLoading, setIsLoading] = useState<boolean>(false);
+	const [error, setError] = useState<string | null>(null);
+
+	const fetchCourses = useCallback(async () => {
+		if (!isAuthenticated) {
+			setEnrolledCourses([]);
+			return;
+		}
+
+		setIsLoading(true);
+		setError(null);
+		try {
+			const data = await courseApi.fetchEnrolledCourses();
+			const localEnrolled = JSON.parse(localStorage.getItem('local_enrolled_courses') || '[]');
+			const merged = [...data.items];
+
+			localEnrolled.forEach((localCourse: any) => {
+				if (!merged.some(c => c.slug === localCourse.slug || String(c.id) === String(localCourse.id))) {
+					merged.push(localCourse);
+				}
+			});
+
+			setEnrolledCourses(merged);
+		} catch (err) {
+			console.error('Lỗi khi tải danh sách khóa học đã đăng ký:', err);
+			const localEnrolled = JSON.parse(localStorage.getItem('local_enrolled_courses') || '[]');
+			setEnrolledCourses(localEnrolled);
+		} finally {
+			setIsLoading(false);
+		}
+	}, [isAuthenticated]);
+
+	useEffect(() => {
+		fetchCourses();
+	}, [fetchCourses]);
+
+	const isEnrolled = useCallback(
+		(slug: string): boolean => {
+			return enrolledCourses.some((course) => course.slug === slug || String(course.id) === String(slug));
+		},
+		[enrolledCourses]
+	);
+
+	return {
+		enrolledCourses,
+		isLoading,
+		error,
+		refetch: fetchCourses,
+		isEnrolled
+	};
+};

@@ -14,25 +14,88 @@ The React frontend user interface for the LMS Online Coding Platform. It provide
 
 ---
 
-## Folder Structure
+## Target Folder Structure
 
-Following clean architectural patterns for React:
+The frontend follows this feature-based target architecture. Each feature owns
+its API functions, state/types, reusable components, and route-level pages.
 
 ```text
-src/
-├── assets/         # Project images, icons, and static assets
-├── components/     # Reusable presentation and UI components
-│   ├── common/     # Global layout components (Header, Footer, etc.)
-│   └── ui/         # Base design system primitives (Buttons, Inputs, etc.)
-├── hooks/          # Custom reusable React hooks
-├── pages/          # Page components mapping to application views
-├── services/       # Client API fetch calls and service helpers
-├── utils/          # Formatting tools and helper constants
-├── App.tsx         # Main entry component
-├── index.css       # Global styles (Tailwind CSS imports)
-├── main.tsx        # React client bootstrap entry point
-└── vite-env.d.ts   # Vite environment variables declarations
+frontend/
+├── public/
+│   ├── favicon.ico
+│   └── robots.txt
+├── src/
+│   ├── app/                          # Application bootstrap and global setup
+│   │   ├── App.tsx
+│   │   ├── router/
+│   │   │   ├── appRoutes.tsx
+│   │   │   ├── roleGuard.tsx
+│   │   │   └── routePaths.ts
+│   │   ├── layouts/
+│   │   └── styles/
+│   │       ├── globals.css
+│   │       └── tokens.css
+│   ├── assets/
+│   │   ├── images/
+│   │   ├── fonts/
+│   │   └── icons/
+│   ├── components/
+│   │   ├── ui/                       # shadcn/ui primitives
+│   │   └── common/                   # Shared UI across multiple features
+│   │       ├── siteHeader.tsx
+│   │       ├── siteFooter.tsx
+│   │       └── scrollToTop.tsx
+│   ├── features/
+│   │   ├── auth/
+│   │   ├── courses/
+│   │   ├── student/
+│   │   ├── teacher/
+│   │   ├── admin/
+│   │   ├── classroom/
+│   │   ├── quiz/
+│   │   ├── judge/
+│   │   ├── payment/
+│   │   ├── interview/
+│   │   ├── instructor/
+│   │   └── notification/
+│   │       ├── api/                  # Feature endpoint functions
+│   │       ├── model/                # Types, validation, and state
+│   │       ├── components/            # Feature-specific UI
+│   │       ├── pages/                 # Route-level feature screens
+│   │       └── index.ts               # Feature public exports
+│   ├── hooks/
+│   │   ├── api/                       # React hooks that connect FE to BE APIs
+│   │   ├── context/                   # React contexts when required
+│   │   ├── useDebounce.ts
+│   │   └── useDisclosure.ts
+│   ├── services/
+│   │   └── api/
+│   │       ├── client.ts              # Axios instances and interceptors
+│   │       └── httpError.ts
+│   ├── lib/
+│   │   ├── cn.ts
+│   │   ├── format.ts
+│   │   └── validators.ts
+│   ├── types/
+│   │   ├── api.ts                     # Shared API/pagination types
+│   │   └── common.ts
+│   ├── main.tsx
+│   └── viteEnv.d.ts
+├── tests/
+│   ├── setup.ts
+│   ├── factories/
+│   └── integration/
+├── .env
+├── .env.example
+├── index.html                         # Vite entry point
+├── package.json
+├── vite.config.ts
+└── README.md
 ```
+
+Use `import.meta.env.VITE_*` to read Vite environment variables. Keep domain
+types and API calls inside their feature; `src/types` and `src/services/api`
+are reserved for shared types and HTTP infrastructure.
 
 ---
 

@@ -1,4 +1,4 @@
-import { ProblemDifficulty, SubmissionStatus } from '@/types/problem';
+import { SubmissionStatus } from '@/features/judge/model/problem';
 
 export interface CodeLanguage {
 	id: number;
