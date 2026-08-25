@@ -18,6 +18,7 @@ from src.modules.lesson_comment.lesson_comment_router import (
 from src.modules.student_course_directory.course_router import router as course_router
 from src.modules.student_course_directory.student_router import router as student_router
 from src.modules.submission.submission_route import router as submission_router
+from src.modules.teacher.teacher_router import router as teacher_router 
 from src.services.rabbitmq.rabbitmq_manager import RabbitMQManager
 from src.services.rabbitmq.submission_execution_result_consumer import (
     handle_submission_execution_result,
@@ -83,7 +84,7 @@ v1_router.include_router(course_router)
 v1_router.include_router(student_router)
 v1_router.include_router(submission_router)
 v1_router.include_router(lesson_comment_router)
-
+v1_router.include_router(teacher_router)
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc: RequestValidationError):
