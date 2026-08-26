@@ -152,4 +152,6 @@ async def http_exception_handler(request, exc: StarletteHTTPException):
     )
 
 
+from src.modules.teacher_problem.teacher_problem_router import teacher_problem_router
+v1_router.include_router(teacher_problem_router)
 app.include_router(v1_router)

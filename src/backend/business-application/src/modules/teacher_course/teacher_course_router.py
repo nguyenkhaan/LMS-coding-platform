@@ -1,16 +1,35 @@
-from fastapi import APIRouter, Depends, HTTPException, Path
-from typing import List
-from src.models.base_model import Role
-from src.modules.teacher_course.teacher_course_dto import (
-    TeacherCourseCreateRequest, TeacherCourseUpdateRequest, TeacherCourseResponse,
-    TeacherCourseSectionCreateRequest, TeacherCourseSectionUpdateRequest, TeacherCourseSectionResponse,
-    TeacherCourseLessonCreateRequest, TeacherCourseLessonUpdateRequest, TeacherCourseLessonResponse,
-    TeacherCourseLessonContentCreateRequest, TeacherCourseLessonContentUpdateRequest, TeacherCourseReadingCreateRequest, TeacherCourseReadingCreateResponse, TeacherCourseReadingUpdateRequest, TeacherCourseReadingResponse, TeacherCourseLessonContentResponse,
-    TeacherCourseReorderRequest, TeacherCourseReorderResponse, TeacherCourseDeleteResponse
-)
-from src.modules.teacher_course.teacher_course_dependency import get_teacher_course_service
-from src.modules.teacher_course.teacher_course_service import TeacherCourseService
+
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
+
 from src.middlewares.role_middleware import require_role
+from src.models.base_model import ProblemSubmissionStatus, Role
+from src.modules.teacher_course.teacher_course_dependency import (
+    get_teacher_course_service,
+)
+from src.modules.teacher_course.teacher_course_dto import (
+    SubmissionListResponse,
+    TeacherCourseCreateRequest,
+    TeacherCourseDeleteResponse,
+    TeacherCourseLessonContentCreateRequest,
+    TeacherCourseLessonContentResponse,
+    TeacherCourseLessonContentUpdateRequest,
+    TeacherCourseLessonCreateRequest,
+    TeacherCourseLessonResponse,
+    TeacherCourseLessonUpdateRequest,
+    TeacherCourseReadingCreateRequest,
+    TeacherCourseReadingCreateResponse,
+    TeacherCourseReadingResponse,
+    TeacherCourseReadingUpdateRequest,
+    TeacherCourseReorderRequest,
+    TeacherCourseReorderResponse,
+    TeacherCourseResponse,
+    TeacherCourseSectionCreateRequest,
+    TeacherCourseSectionResponse,
+    TeacherCourseSectionUpdateRequest,
+    TeacherCourseUpdateRequest,
+)
+from src.modules.teacher_course.teacher_course_service import TeacherCourseService
+
 teacher_course_router = APIRouter(
     prefix="/teacher/courses",
     tags=["Teacher Course"]
@@ -38,7 +57,7 @@ def get_current_teacher_id(user: dict = Depends(require_role(Role.TEACHER))) -> 
 
     return int(user_id)
 
-@teacher_course_router.get("", response_model=List[TeacherCourseResponse])
+@teacher_course_router.get("", response_model=list[TeacherCourseResponse])
 async def get_teacher_courses(
     teacher_id: int = Depends(get_current_teacher_id),
     service: TeacherCourseService = Depends(get_teacher_course_service)
@@ -185,3 +204,25 @@ async def reorder_curriculum(
 
 
 
+
+@teacher_course_router.get("/{course_id}/submissions", response_model=SubmissionListResponse)
+async def get_course_submissions(
+    course_id: int,
+    problem_id: int | None = Query(None),
+    student_id: int | None = Query(None),
+    status: ProblemSubmissionStatus | None = Query(None),
+    page: int = Query(1, ge=1),
+    size: int = Query(10, ge=1, le=100),
+    user: dict = Depends(require_role(Role.TEACHER)),
+    service: TeacherCourseService = Depends(get_teacher_course_service)
+):
+    teacher_id = int(user.get("sub"))
+    return await service.get_course_submissions(
+        teacher_id=teacher_id,
+        course_id=course_id,
+        page=page,
+        size=size,
+        problem_id=problem_id,
+        student_id=student_id,
+        status=status
+    )

@@ -1,10 +1,19 @@
 ﻿from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.models.quiz_model import QuizModel
-from src.models.lesson_content_model import LessonContentModel
+
 from src.models.base_model import LessonContentType
+from src.models.lesson_content_model import LessonContentModel
+from src.models.quiz_model import QuizModel
+from src.modules.teacher_course.teacher_course_dto import (
+    TeacherCourseLessonContentResponse,
+    TeacherCourseQuizCreateRequest,
+    TeacherCourseQuizCreateResponse,
+    TeacherCourseQuizQuestionsUpdateRequest,
+    TeacherCourseQuizResponse,
+    TeacherCourseQuizUpdateRequest,
+)
 from src.modules.teacher_course.teacher_course_service import TeacherCourseService
-from src.modules.teacher_course.teacher_course_dto import TeacherCourseLessonContentResponse, TeacherCourseQuizCreateRequest, TeacherCourseQuizCreateResponse, TeacherCourseQuizResponse, TeacherCourseQuizUpdateRequest, TeacherCourseQuizQuestionsUpdateRequest
+
 
 class TeacherQuizService:
     def __init__(self, db: AsyncSession):
@@ -13,7 +22,7 @@ class TeacherQuizService:
 
     async def create_quiz(self, teacher_id: int, lesson_id: int, data: TeacherCourseQuizCreateRequest) -> TeacherCourseQuizCreateResponse:
         # Verify ownership using Task 1 pattern
-        # Quiz creation/editing is intentionally NOT restricted by course status (unlike sections/lessons) — confirmed with team lead, since teachers may need to fix quiz content even after course is published.
+        # Quiz creation/editing is intentionally NOT restricted by course status (unlike sections/lessons) - confirmed with team lead, since teachers may need to fix quiz content even after course is published.
         self.course_service._get_lesson_or_404(lesson_id, teacher_id)
         
         # Atomic creation
@@ -85,11 +94,12 @@ class TeacherQuizService:
         
         return TeacherCourseQuizResponse.model_validate(quiz)
     async def update_quiz_questions(self, teacher_id: int, quiz_id: int, data: TeacherCourseQuizQuestionsUpdateRequest) -> TeacherCourseQuizResponse:
-        from sqlalchemy import select, delete
-        from src.models.quiz_attempt_model import QuizAttemptModel
+        from sqlalchemy import delete, select
+
         from src.models.base_model import QuizAttemptStatus
-        from src.models.quiz_question_model import QuizQuestionModel
+        from src.models.quiz_attempt_model import QuizAttemptModel
         from src.models.quiz_option_model import QuizOptionModel
+        from src.models.quiz_question_model import QuizQuestionModel
         
         # Verify ownership by finding the lesson_content
         stmt = select(LessonContentModel).where(

@@ -1,9 +1,16 @@
-﻿from fastapi import APIRouter, Depends, Path, HTTPException
-from src.modules.teacher_course.teacher_course_dto import TeacherCourseQuizCreateRequest, TeacherCourseQuizCreateResponse, TeacherCourseQuizUpdateRequest, TeacherCourseQuizQuestionsUpdateRequest, TeacherCourseQuizResponse
-from src.modules.teacher_quiz.teacher_quiz_dependency import get_teacher_quiz_service
-from src.modules.teacher_quiz.teacher_quiz_service import TeacherQuizService
+﻿from fastapi import APIRouter, Depends, HTTPException, Path
+
 from src.middlewares.role_middleware import require_role
 from src.models.base_model import Role
+from src.modules.teacher_course.teacher_course_dto import (
+    TeacherCourseQuizCreateRequest,
+    TeacherCourseQuizCreateResponse,
+    TeacherCourseQuizQuestionsUpdateRequest,
+    TeacherCourseQuizResponse,
+    TeacherCourseQuizUpdateRequest,
+)
+from src.modules.teacher_quiz.teacher_quiz_dependency import get_teacher_quiz_service
+from src.modules.teacher_quiz.teacher_quiz_service import TeacherQuizService
 
 teacher_lesson_quizzes_router = APIRouter(
     prefix="/teacher/lessons",

@@ -1,30 +1,59 @@
-from typing import List, Dict, Any
+from datetime import UTC
+
 from fastapi import HTTPException
-from src.models.base_model import CourseStatus
+from sqlalchemy import func, select
+
+from src.models.base_model import (
+    CourseStatus,
+    LessonContentType,
+    ProblemSubmissionStatus,
+)
+from src.models.course_model import CourseModel
+from src.models.lesson_content_model import LessonContentModel
+from src.models.lesson_model import LessonModel
+from src.models.section_model import SectionModel
+from src.models.submission_model import SubmissionModel
 from src.modules.teacher_course.teacher_course_dto import (
-    TeacherCourseCreateRequest, TeacherCourseUpdateRequest, TeacherCourseResponse,
-    TeacherCourseSectionCreateRequest, TeacherCourseSectionUpdateRequest, TeacherCourseSectionResponse,
-    TeacherCourseLessonCreateRequest, TeacherCourseLessonUpdateRequest, TeacherCourseLessonResponse,
-    TeacherCourseLessonContentCreateRequest, TeacherCourseLessonContentUpdateRequest, TeacherCourseReadingCreateRequest, TeacherCourseReadingCreateResponse, TeacherCourseReadingUpdateRequest, TeacherCourseReadingResponse, TeacherCourseLessonContentResponse,
-    TeacherCourseReorderRequest, TeacherCourseReorderResponse, TeacherCourseDeleteResponse
+    SubmissionListResponse,
+    SubmissionView,
+    TeacherCourseCreateRequest,
+    TeacherCourseDeleteResponse,
+    TeacherCourseLessonContentCreateRequest,
+    TeacherCourseLessonContentResponse,
+    TeacherCourseLessonContentUpdateRequest,
+    TeacherCourseLessonCreateRequest,
+    TeacherCourseLessonResponse,
+    TeacherCourseLessonUpdateRequest,
+    TeacherCourseReadingCreateRequest,
+    TeacherCourseReadingCreateResponse,
+    TeacherCourseReadingResponse,
+    TeacherCourseReadingUpdateRequest,
+    TeacherCourseReorderRequest,
+    TeacherCourseReorderResponse,
+    TeacherCourseResponse,
+    TeacherCourseSectionCreateRequest,
+    TeacherCourseSectionResponse,
+    TeacherCourseSectionUpdateRequest,
+    TeacherCourseUpdateRequest,
 )
 
-_courses: Dict[int, Dict[str, Any]] = {}
-_sections: Dict[int, Dict[str, Any]] = {}
-_readings: Dict[int, dict] = {}
+_courses: dict[int, dict[str, object]] = {}
+_sections: dict[int, dict[str, object]] = {}
+_readings: dict[int, dict[str, object]] = {}
 _reading_id_counter = 1
-_lessons: Dict[int, Dict[str, Any]] = {}
-_contents: Dict[int, Dict[str, Any]] = {}
+_lessons: dict[int, dict[str, object]] = {}
+_contents: dict[int, dict[str, object]] = {}
 _course_id_counter = 1
 _section_id_counter = 1
 _lesson_id_counter = 1
 _content_id_counter = 1
 
 class TeacherCourseService:
-    def __init__(self):
-        pass
+    def __init__(self, db=None):
+        self.db = db
 
-    def _partial_update(self, record: dict, data: Any) -> dict:
+    from pydantic import BaseModel
+    def _partial_update(self, record: dict, data: BaseModel) -> dict:
         updates = data.model_dump(exclude_unset=True, exclude_none=True)
         record.update(updates)
         return record
@@ -58,11 +87,11 @@ class TeacherCourseService:
         self._get_lesson_or_404(content["lesson_id"], teacher_id)
         return content
 
-    async def get_teacher_courses(self, teacher_id: int) -> List[TeacherCourseResponse]:
+    async def get_teacher_courses(self, teacher_id: int) -> list[TeacherCourseResponse]:
         return [TeacherCourseResponse(**c) for c in _courses.values() if c["teacher_id"] == teacher_id]
 
     async def create_course(self, teacher_id: int, data: TeacherCourseCreateRequest) -> TeacherCourseResponse:
-        from datetime import datetime, timezone
+        from datetime import datetime
         global _course_id_counter
         course_id = _course_id_counter
         _course_id_counter += 1
@@ -72,7 +101,7 @@ class TeacherCourseService:
         course_data["teacher_id"] = teacher_id
         course_data["status"] = getattr(data, "status", CourseStatus.DRAFT) or CourseStatus.DRAFT
         
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         course_data["created_at"] = now
         course_data["updated_at"] = now
         course_data["slug"] = f"course-{course_id}"
@@ -83,10 +112,10 @@ class TeacherCourseService:
         return TeacherCourseResponse(**course_data)
 
     async def update_course(self, teacher_id: int, course_id: int, data: TeacherCourseUpdateRequest) -> TeacherCourseResponse:
-        from datetime import datetime, timezone
+        from datetime import datetime
         course = self._get_course_or_404(course_id, teacher_id)
         self._partial_update(course, data)
-        course["updated_at"] = datetime.now(timezone.utc).isoformat()
+        course["updated_at"] = datetime.now(UTC).isoformat()
         _courses[course_id] = course
         return TeacherCourseResponse(**course)
 
@@ -95,13 +124,13 @@ class TeacherCourseService:
         return TeacherCourseResponse(**course)
 
     async def submit_course_review(self, teacher_id: int, course_id: int) -> TeacherCourseResponse:
-        from datetime import datetime, timezone
+        from datetime import datetime
         course = self._get_course_or_404(course_id, teacher_id)
         
         if course["status"] not in (CourseStatus.DRAFT, CourseStatus.REJECTED):
             raise HTTPException(status_code=409, detail="INVALID_STATE")
             
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         course["status"] = CourseStatus.PENDING_REVIEW
         course["submitted_at"] = now
         course["updated_at"] = now
@@ -199,7 +228,7 @@ class TeacherCourseService:
         if course["status"] not in (CourseStatus.DRAFT, CourseStatus.REJECTED):
             raise HTTPException(status_code=409, detail="INVALID_STATE")
 
-        from datetime import datetime, timezone
+        from datetime import datetime
         
         global _reading_id_counter, _content_id_counter
         reading_id = _reading_id_counter
@@ -208,7 +237,7 @@ class TeacherCourseService:
         content_id = _content_id_counter
         _content_id_counter += 1
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         
         reading_data = {
             "id": reading_id,
@@ -251,12 +280,12 @@ class TeacherCourseService:
         if not reading:
             raise HTTPException(status_code=404, detail="CONTENT_NOT_FOUND")
             
-        from datetime import datetime, timezone
+        from datetime import datetime
         if data.title is not None:
             reading["title"] = data.title
         if data.content is not None:
             reading["content"] = data.content
-        reading["updated_at"] = datetime.now(timezone.utc).isoformat()
+        reading["updated_at"] = datetime.now(UTC).isoformat()
         
         _readings[content["content_id"]] = reading
         return TeacherCourseReadingResponse(**reading)
@@ -295,8 +324,7 @@ class TeacherCourseService:
         # Also clean up the reading content if it exists
         if content["content_type"] == "READING":
             reading_id = content.get("content_id")
-            if reading_id in _readings:
-                del _readings[reading_id]
+            _readings.pop(reading_id, None)
                 
         return TeacherCourseDeleteResponse(message="Deleted successfully")
 
@@ -369,3 +397,68 @@ class TeacherCourseService:
 
 
 
+
+    async def get_course_submissions(self, teacher_id: int, course_id: int, page: int, size: int, problem_id: int | None, student_id: int | None, status: ProblemSubmissionStatus | None) -> SubmissionListResponse:
+
+        
+        # 1. Check ownership
+        stmt_course = select(CourseModel).where(CourseModel.id == course_id)
+        course_res = await self.db.execute(stmt_course)
+        course = course_res.scalar_one_or_none()
+        
+        if not course:
+            raise HTTPException(status_code=404, detail="Course not found")
+        if course.teacher_id != teacher_id:
+            raise HTTPException(status_code=403, detail="Not authorized")
+            
+        # 2. Get all problem_ids for this course
+        stmt_probs = select(LessonContentModel.content_id).join(
+            LessonModel, LessonContentModel.lesson_id == LessonModel.id
+        ).join(
+            SectionModel, LessonModel.section_id == SectionModel.id
+        ).where(
+            SectionModel.course_id == course_id,
+            LessonContentModel.content_type == LessonContentType.PROBLEM
+        )
+        probs_res = await self.db.execute(stmt_probs)
+        course_problem_ids = [p for p in probs_res.scalars().all()]
+        
+        if not course_problem_ids:
+            # Course has no problems -> no submissions
+            return SubmissionListResponse(total_items=0, total_pages=0, current_page=page, items=[])
+            
+        # 3. If problem_id is provided, it must be in course_problem_ids, else return empty
+        if problem_id is not None:
+            if problem_id not in course_problem_ids:
+                return SubmissionListResponse(total_items=0, total_pages=0, current_page=page, items=[])
+            filter_probs = [problem_id]
+        else:
+            filter_probs = course_problem_ids
+            
+        # 4. Query submissions
+        stmt = select(SubmissionModel).where(SubmissionModel.problem_id.in_(filter_probs))
+        
+        if student_id is not None:
+            stmt = stmt.where(SubmissionModel.student_id == student_id)
+        if status is not None:
+            stmt = stmt.where(SubmissionModel.status == status)
+            
+        # Get total count
+        stmt_count = select(func.count()).select_from(stmt.subquery())
+        count_res = await self.db.execute(stmt_count)
+        total_items = count_res.scalar_one_or_none() or 0
+        
+        # Pagination
+        import math
+        total_pages = math.ceil(total_items / size) if total_items > 0 else 0
+        
+        stmt = stmt.offset((page - 1) * size).limit(size).order_by(SubmissionModel.submitted_at.desc())
+        items_res = await self.db.execute(stmt)
+        items = items_res.scalars().all()
+        
+        return SubmissionListResponse(
+            total_items=total_items,
+            total_pages=total_pages,
+            current_page=page,
+            items=[SubmissionView.model_validate(i) for i in items]
+        )

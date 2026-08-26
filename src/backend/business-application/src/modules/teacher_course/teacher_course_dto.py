@@ -1,4 +1,4 @@
-from typing import List, Optional, Literal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -11,9 +11,9 @@ class TeacherCourseBase(BaseModel):
     title: str
     description: str
     price: int
-    thumbnail_url: Optional[str] = None
+    thumbnail_url: str | None = None
     category: str = Field(alias="field")
-    tags: List[str]
+    tags: list[str]
     status: CourseStatus
 
 class TeacherCourseCreateRequest(BaseModel):
@@ -21,9 +21,9 @@ class TeacherCourseCreateRequest(BaseModel):
     title: str
     description: str
     price: int
-    thumbnail_url: Optional[str] = None
+    thumbnail_url: str | None = None
     category: str = Field(alias="field")
-    tags: List[str]
+    tags: list[str]
 
 
 class TeacherCourseUpdateRequest(TeacherCourseBase):
@@ -31,24 +31,24 @@ class TeacherCourseUpdateRequest(TeacherCourseBase):
     title: str | None = None
     description: str | None = None
     price: int | None = None
-    thumbnail_url: Optional[str] = None
+    thumbnail_url: str | None = None
     category: str | None = Field(default=None, alias="field")
-    tags: Optional[List[str]] = None
+    tags: list[str] | None = None
     status: CourseStatus | None = None
 
 class TeacherCourseResponse(TeacherCourseBase):
     id: int
     status: CourseStatus
     teacher_id: int
-    submitted_at: Optional[str] = None
-    slug: Optional[str] = None
+    submitted_at: str | None = None
+    slug: str | None = None
     rating: float = 0.0
     currency: str = "USD"
-    reviewed_by: Optional[int] = None
-    reviewed_note: Optional[str] = None
-    reviewed_at: Optional[str] = None
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
+    reviewed_by: int | None = None
+    reviewed_note: str | None = None
+    reviewed_at: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
 
 
 class TeacherCourseSectionCreateRequest(BaseModel):
@@ -136,15 +136,15 @@ class TeacherCourseReorderItem(BaseModel):
 class TeacherCourseReorderRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    items: List[TeacherCourseReorderItem]
+    items: list[TeacherCourseReorderItem]
 
 
 class TeacherCourseReorderResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
-    sections: List[TeacherCourseSectionResponse]
-    lessons: List[TeacherCourseLessonResponse]
-    lesson_contents: List[TeacherCourseLessonContentResponse]
+    sections: list[TeacherCourseSectionResponse]
+    lessons: list[TeacherCourseLessonResponse]
+    lesson_contents: list[TeacherCourseLessonContentResponse]
 
 
 class TeacherCourseDeleteResponse(BaseModel):
@@ -177,6 +177,7 @@ class TeacherCourseReadingCreateResponse(BaseModel):
     lesson_content: TeacherCourseLessonContentResponse
 
 from datetime import datetime
+
 
 class TeacherCourseQuizCreateRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
@@ -220,8 +221,30 @@ class QuizQuestionWrite(BaseModel):
     content: str
     question_type: str
     points: float = 0
-    options: List[QuizOptionAuthorWrite]
+    options: list[QuizOptionAuthorWrite]
 
 class TeacherCourseQuizQuestionsUpdateRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-    questions: List[QuizQuestionWrite]
+    questions: list[QuizQuestionWrite]
+
+from pydantic import BaseModel, ConfigDict
+
+
+class SubmissionView(BaseModel):
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True)
+    id: int
+    problem_id: int
+    student_id: int
+    language_id: int
+    source_code: str
+    status: str
+    score: float
+    runtime_ms: int
+    memory_kb: int
+    submitted_at: datetime
+
+class SubmissionListResponse(BaseModel):
+    total_items: int
+    total_pages: int
+    current_page: int
+    items: list[SubmissionView]
