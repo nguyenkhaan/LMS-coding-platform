@@ -4,8 +4,16 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy.exc import SQLAlchemyError
 
+from src.models.base_model import TeacherRegisterStatus
+from src.models.student_profile_model import StudentProfileModel
+from src.models.teacher_profile_model import TeacherProfileModel
+from src.models.teacher_register_model import TeacherRegisterModel
 from src.models.user_model import UserModel
-from src.modules.user.user_dto import UpdateUserPersonal
+from src.modules.user.user_dto import (
+    UpdateStudentProfile,
+    UpdateTeacherProfile,
+    UpdateUserPersonal,
+)
 from src.modules.user.user_service import UserService
 
 
@@ -106,4 +114,122 @@ async def test_update_personal_information_maps_database_errors_to_service_unava
 
     assert error.value.status_code == 503
     assert error.value.detail == "Unable to update personal information right now"
+    session.rollback.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_student_profile_updates_only_allowed_fields() -> None:
+    profile = StudentProfileModel(
+        user_id=1,
+        bio="Old bio",
+        learning_preferences="Videos",
+        social_links=None,
+    )
+    query_result = Mock()
+    query_result.scalar_one_or_none.return_value = profile
+    session = Mock()
+    session.execute = AsyncMock(return_value=query_result)
+    session.flush = AsyncMock()
+    session.commit = AsyncMock()
+    session.refresh = AsyncMock()
+    session.rollback = AsyncMock()
+    service = UserService(session)
+
+    response = await service.update_student_profile(
+        user_id=1,
+        data=UpdateStudentProfile(bio="New bio", social_links="https://example.com"),
+    )
+
+    assert profile.bio == "New bio"
+    assert profile.learning_preferences == "Videos"
+    assert profile.social_links == "https://example.com"
+    assert response["data"] == {
+        "bio": "New bio",
+        "learning_preferences": "Videos",
+        "social_links": "https://example.com",
+    }
+    session.commit.assert_awaited_once()
+    session.rollback.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_update_student_profile_maps_database_errors_to_service_unavailable() -> None:
+    session = Mock()
+    session.execute = AsyncMock(side_effect=SQLAlchemyError())
+    session.rollback = AsyncMock()
+    service = UserService(session)
+
+    with pytest.raises(HTTPException) as error:
+        await service.update_student_profile(
+            user_id=1,
+            data=UpdateStudentProfile(bio="New bio"),
+        )
+
+    assert error.value.status_code == 503
+    assert error.value.detail == "Unable to update student profile right now"
+    session.rollback.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_update_teacher_profile_updates_only_allowed_fields() -> None:
+    profile = TeacherProfileModel(
+        user_id=1,
+        headline="Old headline",
+        expertise_tags="Python",
+        years_of_experience=2,
+        email="teacher@example.com",
+    )
+    query_result = Mock()
+    query_result.scalar_one_or_none.return_value = profile
+    session = Mock()
+    session.execute = AsyncMock(return_value=query_result)
+    session.flush = AsyncMock()
+    session.commit = AsyncMock()
+    session.refresh = AsyncMock()
+    session.rollback = AsyncMock()
+    service = UserService(session)
+
+    response = await service.update_teacher_profile(
+        user_id=1,
+        data=UpdateTeacherProfile(
+            headline="New headline",
+            years_of_experience=3,
+        ),
+    )
+
+    assert profile.headline == "New headline"
+    assert profile.expertise_tags == "Python"
+    assert profile.years_of_experience == 3
+    assert response["data"]["headline"] == "New headline"
+    assert response["data"]["years_of_experience"] == 3
+    session.commit.assert_awaited_once()
+    session.rollback.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_update_teacher_profile_rejects_pending_registration() -> None:
+    profile = TeacherProfileModel(user_id=1, headline="Old headline")
+    profile.registration = TeacherRegisterModel(
+        id=1,
+        teacher_profile_id=1,
+        identity_number="123456789",
+        status=TeacherRegisterStatus.PENDING,
+    )
+    query_result = Mock()
+    query_result.scalar_one_or_none.return_value = profile
+    session = Mock()
+    session.execute = AsyncMock(return_value=query_result)
+    session.commit = AsyncMock()
+    session.rollback = AsyncMock()
+    service = UserService(session)
+
+    with pytest.raises(HTTPException) as error:
+        await service.update_teacher_profile(
+            user_id=1,
+            data=UpdateTeacherProfile(headline="New headline"),
+        )
+
+    assert error.value.status_code == 409
+    assert profile.headline == "Old headline"
+    session.commit.assert_not_awaited()
     session.rollback.assert_awaited_once()

@@ -1,6 +1,10 @@
 from fastapi import APIRouter, Depends
 
-from src.modules.user.user_dto import UpdateUserPersonal
+from src.modules.user.user_dto import (
+    UpdateStudentProfile,
+    UpdateTeacherProfile,
+    UpdateUserPersonal,
+)
 from src.modules.user.user_dependency import get_user_service
 from src.modules.user.user_service import UserService
 from src.middlewares.auth_middleware import get_current_user 
@@ -34,3 +38,21 @@ async def update_personal_information(
 ): 
     id = user.get('sub')
     return await user_service.update_personal_information(id, data)
+
+@router.put('/me/student-profile')
+async def update_student_profile(
+    data : UpdateStudentProfile,
+    user = Depends(get_current_user),
+    user_service : UserService = Depends(get_user_service)
+): 
+    id = user.get('sub')
+    return await user_service.update_student_profile(id, data)
+
+@router.put('/me/teacher-profile') 
+async def update_teacher_profile(
+    data : UpdateTeacherProfile,
+    user = Depends(get_current_user),
+    user_service : UserService = Depends(get_user_service)
+): 
+    id = user.get('sub')
+    return await user_service.update_teacher_profile(id, data)
