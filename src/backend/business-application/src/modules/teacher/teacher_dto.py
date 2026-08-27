@@ -43,14 +43,13 @@ class CourseView(BaseModel):
 
 class SectionWriteRequest(BaseModel):
     title: str
-    position: int
 
     model_config = ConfigDict(extra="forbid")
 
 
 class SectionUpdateRequest(BaseModel):
     title: str | None = None
-    position: int | None = None
+    position: int | None = Field(ge = 0, default=None)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -59,7 +58,7 @@ class SectionView(BaseModel):
     id: int
     course_id: int
     title: str
-    position: int
+    position: int = Field(ge=0)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -68,7 +67,6 @@ class LessonWriteRequest(BaseModel):
     title: str
     summary: str | None = None
     score: float = 0
-    position: int
 
     model_config = ConfigDict(extra="forbid")
 
@@ -77,7 +75,7 @@ class LessonUpdateRequest(BaseModel):
     title: str | None = None
     summary: str | None = None
     score: float | None = None
-    position: int | None = None
+    position: int | None = Field(ge=0, default=None)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -88,7 +86,7 @@ class LessonView(BaseModel):
     title: str
     summary: str | None
     score: float
-    position: int
+    position: int = Field(ge = 0)
     created_at: datetime
     updated_at: datetime
 
@@ -99,7 +97,6 @@ class LessonContentBindRequest(BaseModel):
     content_type: LessonContentType
     content_id: int
     media_url: str | None = None
-    position: int
 
     model_config = ConfigDict(extra="forbid")
 
@@ -107,7 +104,7 @@ class LessonContentBindRequest(BaseModel):
 class LessonContentUpdateRequest(BaseModel):
     content_id: int | None = None
     media_url: str | None = None
-    position: int | None = None
+    position: int | None = Field(ge=0, default=None)
 
     model_config = ConfigDict(extra="forbid")
 
@@ -118,7 +115,7 @@ class LessonContentView(BaseModel):
     content_type: LessonContentType
     content_id: int
     media_url: str | None
-    position: int
+    position: int = Field(ge = 0, default = 0)
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -132,7 +129,7 @@ class ReadingContentWriteRequest(BaseModel):
 
 
 class ReadingContentCreateRequest(ReadingContentWriteRequest):
-    position: int
+    pass
 
 
 class ReadingContentUpdateRequest(BaseModel):
@@ -167,7 +164,7 @@ class CurriculumReorderItemRequest(BaseModel):
     item_type: CurriculumItemType
     id: int
     parent_id: int | None = None
-    position: int
+    position: int = Field(ge = 0)
 
     model_config = ConfigDict(extra="forbid")
 
