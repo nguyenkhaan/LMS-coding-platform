@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { TeacherSidebar } from '../components/teacherSidebar.tsx';
 import { toast } from 'sonner';
@@ -347,14 +347,13 @@ export const CourseApprovalStatusPage: React.FC = () => {
                   )}
 
                   {status === 'APPROVED' && (
-                    <a
-                      href="#"
-                      onClick={(e) => { e.preventDefault(); toast.success('Redirecting to public course detail catalog.'); }}
-                      className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-[14px] font-semibold hover:bg-emerald-700 flex items-center justify-center gap-1.5 cursor-pointer"
+                    <Link
+                      to="/courses/python-foundations"
+                      className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-[14px] font-semibold hover:bg-emerald-700 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <ExternalLink className="w-4 h-4" />
                       View Public Page
-                    </a>
+                    </Link>
                   )}
 
                   {status === 'ARCHIVED' && (

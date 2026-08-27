@@ -86,6 +86,7 @@ export const CourseReviews: React.FC<CourseReviewsProps> = ({ slug = "python-fou
 		}
 	];
 	const [reviews, setReviews] = useState<ReviewItem[]>([]);
+	const [helpfulVotes, setHelpfulVotes] = useState<Record<number, boolean>>({});
 
 	useEffect(() => {
 		const storedReviews = localStorage.getItem(`course_reviews_${slug}`);
@@ -95,7 +96,27 @@ export const CourseReviews: React.FC<CourseReviewsProps> = ({ slug = "python-fou
 			localStorage.setItem(`course_reviews_${slug}`, JSON.stringify(defaultReviews));
 			setReviews(defaultReviews);
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [slug]);
+
+	const handleHelpfulClick = (reviewId: number) => {
+		const isCurrentlyHelpful = !!helpfulVotes[reviewId];
+		const updatedVotes = { ...helpfulVotes, [reviewId]: !isCurrentlyHelpful };
+		setHelpfulVotes(updatedVotes);
+
+		const updatedReviews = reviews.map((r) => {
+			if (r.id === reviewId) {
+				return {
+					...r,
+					helpfulCount: isCurrentlyHelpful ? Math.max(0, r.helpfulCount - 1) : r.helpfulCount + 1
+				};
+			}
+			return r;
+		});
+		setReviews(updatedReviews);
+		localStorage.setItem(`course_reviews_${slug}`, JSON.stringify(updatedReviews));
+		toast.success(isCurrentlyHelpful ? 'Helpful vote removed' : 'Marked as helpful!');
+	};
 
 	const myReview = reviews.find(r => r.isCurrentUser || (user && r.name === (user.fullName || user.email)));
 	const hasExistingReview = !!myReview;
@@ -228,8 +249,15 @@ export const CourseReviews: React.FC<CourseReviewsProps> = ({ slug = "python-fou
 						</p>
 
 						{/* Helpful button CTA */}
-						<button className="w-fit px-4 py-1.5 bg-white border border-slate-200 rounded-full flex items-center gap-1.5 text-xs font-semibold text-neutral-500 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer">
-							<ThumbsUp className="w-3.5 h-3.5 text-neutral-400" />
+						<button
+							onClick={() => handleHelpfulClick(rev.id)}
+							className={`w-fit px-4 py-1.5 rounded-full flex items-center gap-1.5 text-xs font-semibold transition-all shadow-2xs cursor-pointer ${
+								helpfulVotes[rev.id]
+									? 'bg-indigo-50 border border-indigo-300 text-indigo-900'
+									: 'bg-white border border-slate-200 text-neutral-500 hover:bg-slate-50'
+							}`}
+						>
+							<ThumbsUp className={`w-3.5 h-3.5 ${helpfulVotes[rev.id] ? 'text-indigo-900 fill-indigo-900' : 'text-neutral-400'}`} />
 							Helpful ({rev.helpfulCount})
 						</button>
 					</div>

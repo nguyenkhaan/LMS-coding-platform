@@ -477,9 +477,13 @@ export function OJWorkspacePage() {
 
           {/* Actions (Search + Notifications + User Profile) */}
           <div className="flex justify-start items-center gap-3">
-            <button className="p-2.5 rounded-[40px] border border-neutral-200 hover:bg-slate-50 transition-colors cursor-pointer" title="Search">
+            <Link
+              to="/practice"
+              className="p-2.5 rounded-[40px] border border-neutral-200 hover:bg-slate-50 transition-colors flex items-center justify-center cursor-pointer"
+              title="Search Problems"
+            >
               <Search className="w-4 h-4 text-gray-700" />
-            </button>
+            </Link>
 
             {/* Notification Center */}
             <NotificationDropdown />

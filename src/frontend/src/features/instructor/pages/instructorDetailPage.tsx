@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star, Heart, BookOpen, Users, Mail, Phone, MapPin, Globe, ChevronLeft, ChevronRight, Briefcase, Share2, Send } from 'lucide-react';
+import { Star, BookOpen, Users, Mail, Globe, ChevronLeft, ChevronRight, Briefcase, Share2, Send } from 'lucide-react';
 import { toast } from 'sonner';
+import { useAuthStore } from '@/features/auth/model/useAuthStore';
 
 export const InstructorDetailPage: React.FC = () => {
 	const { instructorId } = useParams<{ instructorId: string }>();
-	const [isFavorite, setIsFavorite] = useState(false);
+	void instructorId;
+	const { isAuthenticated } = useAuthStore();
 	const [isReadMore, setIsReadMore] = useState(false);
 	const [messageText, setMessageText] = useState('');
 	const [courseSlideIndex, setCourseSlideIndex] = useState(0);
@@ -52,9 +54,26 @@ export const InstructorDetailPage: React.FC = () => {
 
 	const handleSendMessage = (e: React.FormEvent) => {
 		e.preventDefault();
+		if (!isAuthenticated) {
+			toast.error('Please log in to send a direct message to this instructor.');
+			return;
+		}
 		if (!messageText.trim()) return;
 		toast.success('Message sent to instructor successfully!');
 		setMessageText('');
+	};
+
+	const handleOpenWebsite = () => {
+		window.open('https://github.com', '_blank', 'noopener,noreferrer');
+	};
+
+	const handleShareProfile = () => {
+		if (navigator.clipboard) {
+			navigator.clipboard.writeText(window.location.href);
+			toast.success('Instructor profile link copied to clipboard!');
+		} else {
+			toast.success('Profile URL: ' + window.location.href);
+		}
 	};
 
 	return (
@@ -86,23 +105,13 @@ export const InstructorDetailPage: React.FC = () => {
 					
 					{/* Header Profile Card */}
 					<div className="w-full p-6 bg-slate-100/80 rounded-2xl border border-slate-200 flex flex-col md:flex-row items-start md:items-center gap-6 relative shadow-xs">
-						{/* Avatar image container with heart badge */}
+						{/* Avatar image container */}
 						<div className="w-full md:w-52 h-44 rounded-xl overflow-hidden shrink-0 relative bg-slate-200">
 							<img
 								src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=600&auto=format&fit=crop&q=80"
 								alt="Rolands Granger"
 								className="w-full h-full object-cover"
 							/>
-							<button
-								onClick={() => {
-									setIsFavorite(!isFavorite);
-									toast.success(isFavorite ? 'Removed from favorites' : 'Added to favorites');
-								}}
-								className="absolute top-3 left-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs flex items-center justify-center text-rose-500 hover:scale-110 transition-transform shadow-xs cursor-pointer"
-								title="Add to favorites"
-							>
-								<Heart className={`w-4 h-4 ${isFavorite ? 'fill-rose-500 text-rose-500' : 'text-neutral-400'}`} />
-							</button>
 						</div>
 
 						{/* Profile Details */}
@@ -143,10 +152,18 @@ export const InstructorDetailPage: React.FC = () => {
 								</div>
 
 								<div className="flex items-center gap-2 text-indigo-900">
-									<button className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center hover:bg-indigo-50 transition-colors cursor-pointer" title="Website">
+									<button
+										onClick={handleOpenWebsite}
+										className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center hover:bg-indigo-50 transition-colors cursor-pointer"
+										title="Website"
+									>
 										<Globe className="w-3.5 h-3.5" />
 									</button>
-									<button className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center hover:bg-indigo-50 transition-colors cursor-pointer" title="Share profile">
+									<button
+										onClick={handleShareProfile}
+										className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center hover:bg-indigo-50 transition-colors cursor-pointer"
+										title="Share profile"
+									>
 										<Share2 className="w-3.5 h-3.5" />
 									</button>
 								</div>
@@ -268,23 +285,27 @@ export const InstructorDetailPage: React.FC = () => {
 							</h3>
 							<div className="flex items-center gap-1">
 								<button
-									onClick={() => setCourseSlideIndex(Math.max(0, courseSlideIndex - 1))}
-									className="w-8 h-8 rounded-full border border-neutral-200 bg-white flex items-center justify-center text-neutral-600 hover:bg-slate-50 transition-colors cursor-pointer"
+									onClick={() => setCourseSlideIndex((prev) => Math.max(0, prev - 1))}
+									disabled={courseSlideIndex === 0}
+									className="w-8 h-8 rounded-full border border-neutral-200 bg-white flex items-center justify-center text-neutral-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+									title="Previous courses"
 								>
 									<ChevronLeft className="w-4 h-4" />
 								</button>
 								<button
-									onClick={() => setCourseSlideIndex(Math.min(instructorCourses.length - 1, courseSlideIndex + 1))}
-									className="w-8 h-8 rounded-full border border-neutral-200 bg-white flex items-center justify-center text-neutral-600 hover:bg-slate-50 transition-colors cursor-pointer"
+									onClick={() => setCourseSlideIndex((prev) => Math.min(instructorCourses.length - 2, prev + 1))}
+									disabled={courseSlideIndex >= Math.max(0, instructorCourses.length - 2)}
+									className="w-8 h-8 rounded-full border border-neutral-200 bg-white flex items-center justify-center text-neutral-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+									title="Next courses"
 								>
 									<ChevronRight className="w-4 h-4" />
 								</button>
 							</div>
 						</div>
 
-						{/* Course Cards Grid */}
-						<div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-							{instructorCourses.map((course) => (
+						{/* Course Cards Grid (Render sliced courses based on courseSlideIndex) */}
+						<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+							{instructorCourses.slice(courseSlideIndex, courseSlideIndex + 2).map((course) => (
 								<div
 									key={course.id}
 									className="bg-white rounded-xl border border-neutral-200 overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between group"
@@ -320,8 +341,8 @@ export const InstructorDetailPage: React.FC = () => {
 												${course.price}
 											</span>
 											<Link
-												to="/courses/python-foundations"
-												className="px-3 py-1 bg-zinc-900 hover:bg-indigo-950 text-white rounded-lg text-xs font-semibold transition-colors"
+												to={`/courses/${course.slug}`}
+												className="px-3 py-1 bg-zinc-900 hover:bg-indigo-950 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer"
 											>
 												View Course
 											</Link>
@@ -337,10 +358,10 @@ export const InstructorDetailPage: React.FC = () => {
 				{/* Right Column (Sidebar ~380px) */}
 				<div className="w-full lg:w-96 shrink-0 flex flex-col gap-6">
 					
-					{/* Contact Details Card */}
+					{/* Contact Details Card (PII removed: no personal phone/address) */}
 					<div className="w-full p-6 bg-slate-100/90 rounded-2xl border border-slate-200 shadow-xs flex flex-col gap-5">
 						<h3 className="text-lg font-bold text-zinc-900 border-b border-slate-200/80 pb-3">
-							Contact Details
+							Contact Information
 						</h3>
 
 						<div className="flex flex-col gap-4">
@@ -352,43 +373,39 @@ export const InstructorDetailPage: React.FC = () => {
 								<div className="flex flex-col">
 									<span className="text-xs text-neutral-400 font-medium">Email</span>
 									<span className="text-xs sm:text-sm font-semibold text-zinc-900 break-all">
-										jennywilson@example.com
+										instructor@example.com
 									</span>
 								</div>
 							</div>
 
-							{/* Phone */}
+							{/* Website */}
 							<div className="flex items-center gap-3.5">
 								<div className="w-10 h-10 rounded-full bg-indigo-900 text-white flex items-center justify-center shrink-0 shadow-xs">
-									<Phone className="w-4 h-4" />
+									<Globe className="w-4 h-4" />
 								</div>
 								<div className="flex flex-col">
-									<span className="text-xs text-neutral-400 font-medium">Phone</span>
-									<span className="text-xs sm:text-sm font-semibold text-zinc-900">
-										+1(452) 125-6789
-									</span>
-								</div>
-							</div>
-
-							{/* Location */}
-							<div className="flex items-center gap-3.5">
-								<div className="w-10 h-10 rounded-full bg-indigo-900 text-white flex items-center justify-center shrink-0 shadow-xs">
-									<MapPin className="w-4 h-4" />
-								</div>
-								<div className="flex flex-col">
-									<span className="text-xs text-neutral-400 font-medium">Location</span>
-									<span className="text-xs sm:text-sm font-semibold text-zinc-900">
-										San Francisco, California, CA
-									</span>
+									<span className="text-xs text-neutral-400 font-medium">Website</span>
+									<a
+										href="https://github.com"
+										target="_blank"
+										rel="noopener noreferrer"
+										className="text-xs sm:text-sm font-semibold text-indigo-900 hover:underline break-all"
+									>
+										instructor.dev
+									</a>
 								</div>
 							</div>
 						</div>
 
 						{/* Direct Message Box */}
 						<form onSubmit={handleSendMessage} className="pt-4 border-t border-slate-200/80 flex flex-col gap-3">
-							<span className="text-xs font-bold text-zinc-800">Send Direct Message</span>
+							<div className="flex items-center justify-between">
+								<span className="text-xs font-bold text-zinc-800">Send Direct Message</span>
+								<span className="text-[11px] text-neutral-400">{messageText.length}/500</span>
+							</div>
 							<textarea
 								rows={3}
+								maxLength={500}
 								value={messageText}
 								onChange={(e) => setMessageText(e.target.value)}
 								placeholder="Write your question or request here..."

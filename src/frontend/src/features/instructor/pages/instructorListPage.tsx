@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Star, SlidersHorizontal, LayoutGrid, List as ListIcon, ChevronDown, ChevronLeft, ChevronRight, Heart, BookOpen, Clock, Users } from 'lucide-react';
+import { Search, Star, SlidersHorizontal, LayoutGrid, List as ListIcon, ChevronDown, ChevronLeft, ChevronRight, BookOpen, Clock, Users } from 'lucide-react';
 
 export interface Instructor {
 	id: number;
@@ -19,7 +19,6 @@ export interface Instructor {
 	level: 'Beginner' | 'Intermediate' | 'Advanced' | 'Expert';
 	priceType: 'Free' | 'Paid';
 	price: number;
-	isFavorite?: boolean;
 }
 
 const MOCK_INSTRUCTORS: Instructor[] = [
@@ -149,11 +148,6 @@ export const InstructorListPage: React.FC = () => {
 	const [priceRange, setPriceRange] = useState<number>(100);
 	const [sortBy, setSortBy] = useState('Highest Rated');
 	const [currentPage, setCurrentPage] = useState(1);
-	const [favorites, setFavorites] = useState<Record<number, boolean>>({ 2: true, 5: true });
-
-	const toggleFavorite = (id: number) => {
-		setFavorites((prev) => ({ ...prev, [id]: !prev[id] }));
-	};
 
 	const handleClearFilters = () => {
 		setSearchTerm('');
@@ -471,18 +465,6 @@ export const InstructorListPage: React.FC = () => {
 												alt={inst.name}
 												className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
 											/>
-											{/* Favorite Heart Button */}
-											<button
-												onClick={() => toggleFavorite(inst.id)}
-												className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-xs flex items-center justify-center text-rose-500 hover:scale-110 transition-transform shadow-sm cursor-pointer"
-												title={favorites[inst.id] ? 'Remove from favorites' : 'Add to favorites'}
-											>
-												<Heart
-													className={`w-4 h-4 ${
-														favorites[inst.id] ? 'fill-rose-500 text-rose-500' : 'text-neutral-400'
-													}`}
-												/>
-											</button>
 											{/* Level Badge */}
 											<div className="absolute bottom-3 left-3 px-2.5 py-1 rounded-md bg-zinc-900/80 backdrop-blur-xs text-white text-[10px] font-semibold tracking-wide uppercase">
 												{inst.level}
@@ -574,16 +556,6 @@ export const InstructorListPage: React.FC = () => {
 											<span className="font-bold text-base text-indigo-950">
 												{inst.price === 0 ? 'Free' : `$${inst.price}`}
 											</span>
-											<button
-												onClick={() => toggleFavorite(inst.id)}
-												className="p-2 rounded-full border border-neutral-200 hover:bg-slate-50 text-rose-500 cursor-pointer"
-											>
-												<Heart
-													className={`w-4 h-4 ${
-														favorites[inst.id] ? 'fill-rose-500 text-rose-500' : 'text-neutral-400'
-													}`}
-												/>
-											</button>
 										</div>
 									</div>
 								))}
