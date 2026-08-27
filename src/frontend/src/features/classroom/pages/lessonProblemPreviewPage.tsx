@@ -282,18 +282,22 @@ export const LessonProblemPreviewPage: React.FC = () => {
 						</div>
 
 						{/* Add discussion form */}
-						<form onSubmit={handleAddDiscussion} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-3">
+						<form onSubmit={handleAddDiscussion} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-2.5">
 							<textarea
 								rows={2}
+								maxLength={500}
 								value={newDiscussion}
 								onChange={(e) => setNewDiscussion(e.target.value)}
-								placeholder="Have a question or insight? Write here..."
+								placeholder="Have a question or insight? Write here (max 500 chars)..."
 								className="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 resize-none"
 							/>
-							<div className="flex justify-end">
+							<div className="flex justify-between items-center">
+								<span className="text-[11px] text-neutral-400">
+									{newDiscussion.length}/500
+								</span>
 								<button
 									type="submit"
-									disabled={!newDiscussion.trim()}
+									disabled={!newDiscussion.trim() || newDiscussion.length > 500}
 									className="px-4 py-1.5 bg-indigo-900 hover:bg-indigo-950 disabled:opacity-40 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-xs"
 								>
 									Post Comment

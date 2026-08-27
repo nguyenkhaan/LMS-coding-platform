@@ -344,22 +344,30 @@ export function InterviewWorkspacePage() {
           </div>
 
           {/* Chat Composer */}
-          <form onSubmit={handleSendMessage} className="p-4 border-t border-neutral-200 bg-white flex items-center gap-3">
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              placeholder="Type your technical answer here…"
-              className="flex-1 px-4 py-2.5 bg-slate-50 rounded-xl border border-neutral-200 text-xs sm:text-sm text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900"
-            />
-            <button
-              type="submit"
-              disabled={!inputText.trim() || isAiResponding}
-              className="px-4 py-2.5 bg-indigo-900 hover:bg-indigo-950 disabled:opacity-40 text-white rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
-            >
-              <span>Send</span>
-              <Send className="w-3.5 h-3.5" />
-            </button>
+          <form onSubmit={handleSendMessage} className="p-4 border-t border-neutral-200 bg-white flex flex-col gap-1.5">
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                maxLength={1000}
+                value={inputText}
+                onChange={(e) => setInputText(e.target.value)}
+                placeholder="Type your technical answer here (max 1000 chars)…"
+                className="flex-1 px-4 py-2.5 bg-slate-50 rounded-xl border border-neutral-200 text-xs sm:text-sm text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900"
+              />
+              <button
+                type="submit"
+                disabled={!inputText.trim() || isAiResponding || inputText.length > 1000}
+                className="px-4 py-2.5 bg-indigo-900 hover:bg-indigo-950 disabled:opacity-40 text-white rounded-xl text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+              >
+                <span>Send</span>
+                <Send className="w-3.5 h-3.5" />
+              </button>
+            </div>
+            {inputText.length > 500 && (
+              <span className="text-[10px] text-neutral-400 text-right">
+                {inputText.length}/1000
+              </span>
+            )}
           </form>
 
         </div>

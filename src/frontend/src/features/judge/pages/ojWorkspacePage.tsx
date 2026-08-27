@@ -761,19 +761,22 @@ export function OJWorkspacePage() {
                 </div>
 
                 {/* Create Discussion Form */}
-                <form onSubmit={handlePostDiscussion} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-3">
+                <form onSubmit={handlePostDiscussion} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-2.5">
                   <textarea
                     rows={3}
+                    maxLength={1000}
                     value={newDiscussionText}
                     onChange={(e) => setNewDiscussionText(e.target.value)}
-                    placeholder="Ask a question, share an insight, or suggest an alternative approach..."
+                    placeholder="Ask a question, share an insight, or suggest an alternative approach (max 1000 chars)..."
                     className="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs sm:text-sm text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-indigo-900/20 resize-none"
                   />
                   <div className="flex justify-between items-center">
-                    <span className="text-[11px] text-neutral-400">Markdown supported</span>
+                    <span className="text-[11px] text-neutral-400">
+                      {newDiscussionText.length}/1000 · Markdown supported
+                    </span>
                     <button
                       type="submit"
-                      disabled={!newDiscussionText.trim()}
+                      disabled={!newDiscussionText.trim() || newDiscussionText.length > 1000}
                       className="px-4 py-2 bg-indigo-900 hover:bg-indigo-950 disabled:opacity-40 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-xs"
                     >
                       Post Discussion

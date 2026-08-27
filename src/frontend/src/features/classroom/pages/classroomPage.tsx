@@ -643,21 +643,29 @@ export function ClassroomPage() {
               })}
             </div>
 
-            <form onSubmit={handleSendComment} className="p-3 border-t border-neutral-200 flex items-center gap-2 bg-white font-['Inter']">
-              <input
-                type="text"
-                value={inputMsg}
-                onChange={(e) => setInputMsg(e.target.value)}
-                placeholder="Write a comment or question…"
-                className="flex-1 px-3 py-2 bg-slate-50 rounded-[10px] border border-neutral-200 text-xs text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900"
-              />
-              <button
-                type="submit"
-                disabled={!inputMsg.trim()}
-                className="w-8 h-8 bg-indigo-900 hover:bg-indigo-950 disabled:opacity-40 text-white rounded-[10px] flex items-center justify-center transition-colors cursor-pointer shrink-0"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
+            <form onSubmit={handleSendComment} className="p-3 border-t border-neutral-200 flex flex-col gap-1.5 bg-white font-['Inter']">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  maxLength={300}
+                  value={inputMsg}
+                  onChange={(e) => setInputMsg(e.target.value)}
+                  placeholder="Write a comment or question (max 300 chars)…"
+                  className="flex-1 px-3 py-2 bg-slate-50 rounded-[10px] border border-neutral-200 text-xs text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900"
+                />
+                <button
+                  type="submit"
+                  disabled={!inputMsg.trim() || inputMsg.length > 300}
+                  className="w-8 h-8 bg-indigo-900 hover:bg-indigo-950 disabled:opacity-40 text-white rounded-[10px] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              {inputMsg.length > 200 && (
+                <span className="text-[10px] text-neutral-400 text-right">
+                  {inputMsg.length}/300
+                </span>
+              )}
             </form>
           </div>
 
