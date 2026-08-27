@@ -102,6 +102,7 @@ Các mô tả rút gọn trong bảng route như `CourseView`, `PaymentTransacti
 
 | DTO | Bảng nguồn | Request fields được phép | Stored fields trong response | Field không trả hoặc projection |
 |---|---|---|---|---|
+| `UserIdentityMe`  | `user` | Give Jwt Token in header | `roles,email,account_status` | `id, email, password. more personal information` |
 | `RegisterRequest` / `UserView` | `user` | `full_name`, `address`, `email`, `password` | `id`, `full_name`, `address`, `email`, `avatar_url`, `active`, `account_status`, `created_at`, `updated_at` | Hash `password` trước khi ghi; không trả `password`, `refresh_token`; `status` là legacy và không dùng làm account contract |
 | `UserRoleView` | `user_role` | Admin command nhận `roles[]`; service tạo/xóa row | `id`, `user_id`, `role` | `capabilities` là projection từ role + application |
 | `UserIdentityInternal` | `user_identity` | Google callback nhận transient `credential_code`; provider identity do server lấy từ token đã xác minh | `id`, `user_id`, `provider`, `provider_id`, `created_at`, `updated_at` | Chỉ dùng nội bộ Auth Provider; không trả `provider_id` trong token response và không lưu provider access/ID token |
@@ -205,7 +206,8 @@ Các route trong mục này dùng base URL `http://localhost:4001/api/auth`.
 
 | Method | Route | Actor | Request | Response chính | Quy tắc |
 |---|---|---|---|---|---|
-| `GET` | `/users/me` | User đăng nhập | - | `UserView`, `UserRoleView[]`, `StudentProfileView?`, `TeacherProfileView?`, application status và `capabilities` projection | Chỉ current user; `can_teach=true` chỉ khi application `APPROVED` |
+| `GET` | `/users/me` | User đăng nhập | - | `UserIdentityMe` | Chỉ trả về một số thông tin cơ bản của user, sử dụng cho việc xác thực |
+| `GET` | `/users/me/profile` | User profile | - | `StudentProfileView` | Trả về thông tin tài khoản student |
 | `PUT` | `/users/me/profile` | User đăng nhập | `StudentProfileWrite` | `StudentProfileView` | Không sửa role/account status/user khác |
 | `PUT` | `/users/me/teacher-profile` | User đăng nhập | `TeacherProfileWrite` | `TeacherProfileView` | `PENDING` khóa profile; `DRAFT`/`REJECTED`/`APPROVED` được sửa các field profile đã liệt kê. `APPROVED` không mở khóa các identity/document field của application; profile không tự cấp Teacher capability |
 | `GET` | `/admin/users` | Admin | `q`, `role`, `account_status`, `page`, `size` | `UserView[]`, `UserRoleView[]` và capability projections | Không trả password/token/CCCD |
