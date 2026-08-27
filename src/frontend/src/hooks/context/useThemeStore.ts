@@ -9,7 +9,7 @@ interface ThemeStore {
 }
 
 export const useThemeStore = create<ThemeStore>((set) => {
-	const savedTheme = ((typeof window !== 'undefined' ? localStorage.getItem('app-theme') : null) as Theme) || 'dark';
+	const savedTheme = ((typeof window !== 'undefined' ? localStorage.getItem('app-theme') : null) as Theme) || 'light';
 
 	if (typeof document !== 'undefined') {
 		if (savedTheme === 'dark') {
