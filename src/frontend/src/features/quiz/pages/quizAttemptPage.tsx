@@ -232,9 +232,9 @@ export const QuizAttemptPage: React.FC = () => {
 							const isCurrent = qNum === currentQuestionIndex + 1;
 							const isAnswered = answeredSet.has(q.id);
 							let cls = 'w-full aspect-square rounded-lg text-[12px] font-semibold flex items-center justify-center border transition-all cursor-pointer ';
-							if (isCurrent) cls += 'bg-[#392C7D] text-white border-[#392C7D]';
+							if (isCurrent) cls += 'bg-primary text-white border-primary';
 							else if (isAnswered) cls += 'bg-emerald-50 text-emerald-700 border-emerald-200';
-							else cls += 'bg-slate-50 text-[#374151] border-gray-200';
+							else cls += 'bg-slate-50 text-zinc-700 border-gray-200';
 							return (
 								<button
 									key={qNum}
@@ -285,13 +285,13 @@ export const QuizAttemptPage: React.FC = () => {
 				<div className="flex gap-3">
 					<button
 						onClick={handleSaveAndExit}
-						className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-[14px] font-semibold text-[#374151] hover:bg-slate-50 transition-all cursor-pointer"
+						className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-[14px] font-semibold text-zinc-700 hover:bg-slate-50 transition-all cursor-pointer"
 					>
 						Save and exit
 					</button>
 					<button
 						onClick={handleSubmitRequest}
-						className="flex-1 py-3 rounded-xl bg-[#FF4667] text-white text-[14px] font-semibold hover:bg-[#e03d5b] transition-all cursor-pointer"
+						className="flex-1 py-3 rounded-xl bg-accent text-white text-[14px] font-semibold hover:bg-accent-hover transition-all cursor-pointer"
 					>
 						Submit quiz
 					</button>

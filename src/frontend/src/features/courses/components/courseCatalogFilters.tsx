@@ -25,7 +25,7 @@ export const CourseCatalogFilters: React.FC<SidebarFiltersProps> = ({
 
 	return (
 		<div className="w-52 p-4 bg-white rounded-xl border border-slate-100 shadow-sm flex flex-col gap-4">
-			<div className="text-[#392C7D] text-sm font-bold pb-2 border-b border-neutral-100">Filters</div>
+			<div className="text-primary text-sm font-bold pb-2 border-b border-neutral-100">Filters</div>
 			
 			{/* Text Search inside sidebar */}
 			<div className="flex flex-col gap-1.5">
@@ -36,7 +36,7 @@ export const CourseCatalogFilters: React.FC<SidebarFiltersProps> = ({
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}
 						placeholder="Course name..."
-						className="w-full pl-8 pr-2 py-1 text-xs border border-neutral-200 rounded-lg focus:outline-[#392C7D]"
+						className="w-full pl-8 pr-2 py-1 text-xs border border-neutral-200 rounded-lg focus:outline-primary"
 					/>
 					<Search className="w-3.5 h-3.5 text-neutral-400 absolute left-2.5 top-2" />
 				</div>
@@ -51,7 +51,7 @@ export const CourseCatalogFilters: React.FC<SidebarFiltersProps> = ({
 							type="checkbox"
 							checked={selectedCats.includes(cat)}
 							onChange={() => toggleCat(cat)}
-							className="rounded border-neutral-300 text-[#392C7D] focus:ring-[#392C7D] cursor-pointer"
+							className="rounded border-neutral-300 text-primary focus:ring-primary cursor-pointer"
 						/>
 						<span>{cat}</span>
 					</label>
@@ -67,7 +67,7 @@ export const CourseCatalogFilters: React.FC<SidebarFiltersProps> = ({
 							type="checkbox"
 							checked={selectedLevels.includes(lvl)}
 							onChange={() => toggleLevel(lvl)}
-							className="rounded border-neutral-300 text-[#392C7D] focus:ring-[#392C7D] cursor-pointer"
+							className="rounded border-neutral-300 text-primary focus:ring-primary cursor-pointer"
 						/>
 						<span>{lvl}</span>
 					</label>
@@ -77,7 +77,7 @@ export const CourseCatalogFilters: React.FC<SidebarFiltersProps> = ({
 			{/* Reset Filters button */}
 			<button
 				onClick={resetFilters}
-				className="w-full mt-2 py-1.5 bg-[#392C7D] text-white hover:bg-[#2b215c] text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+				className="w-full mt-2 py-1.5 bg-primary text-white hover:bg-primary-hover text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer"
 			>
 				<RotateCcw className="w-3.5 h-3.5" />
 				Reset filters

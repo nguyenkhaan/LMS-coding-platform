@@ -97,7 +97,7 @@ export const TeacherSettingsPage: React.FC = () => {
     toast.info('Changes discarded');
   };
 
-  const inputClass = 'w-full px-4 py-2.5 text-sm text-[#111827] border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] focus:ring-1 focus:ring-[#392C7D]/20 transition-all bg-white font-medium';
+  const inputClass = 'w-full px-4 py-2.5 text-sm text-zinc-900 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all bg-white font-medium';
 
   return (
     <div className="w-full min-h-screen bg-gray-50 flex flex-col font-['Inter'] antialiased">
@@ -105,7 +105,7 @@ export const TeacherSettingsPage: React.FC = () => {
       <SiteHeader />
 
       {/* 2. PAGE TITLE BANNER */}
-      <div className="w-full bg-gradient-to-r from-[#392C7D] to-purple-600 py-8 flex flex-col items-center justify-center gap-1 shrink-0">
+      <div className="w-full bg-gradient-to-r from-primary to-purple-600 py-8 flex flex-col items-center justify-center gap-1 shrink-0">
         <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight font-extrabold">Teacher Settings</h1>
         <p className="text-[13px] font-medium text-white/70">Dashboard &rsaquo; Settings</p>
       </div>
@@ -146,18 +146,18 @@ export const TeacherSettingsPage: React.FC = () => {
         <div className="flex-1 w-full bg-white rounded-2xl border border-gray-200 p-6 sm:p-8 shadow-sm flex flex-col gap-6">
           <div className="border-b border-gray-150 pb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Settings className="w-5 h-5 text-[#392C7D]" />
-              <h3 className="text-base font-bold text-[#111827]">Edit Teacher Profile Details</h3>
+              <Settings className="w-5 h-5 text-primary" />
+              <h3 className="text-base font-bold text-zinc-900">Edit Teacher Profile Details</h3>
             </div>
           </div>
 
           <form onSubmit={handleSave} className="flex flex-col gap-6">
             {/* Primary Details Section */}
             <div className="flex flex-col gap-4">
-              <h4 className="text-sm font-bold text-[#392C7D] uppercase tracking-wider">Professional Info</h4>
+              <h4 className="text-sm font-bold text-primary uppercase tracking-wider">Professional Info</h4>
               
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-[#374151]">Headline / Short Bio</label>
+                <label className="text-xs font-bold text-zinc-700">Headline / Short Bio</label>
                 <input
                   type="text"
                   value={profile.headline}
@@ -169,7 +169,7 @@ export const TeacherSettingsPage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-[#374151]">Email (Public Address)</label>
+                  <label className="text-xs font-bold text-zinc-700">Email (Public Address)</label>
                   <input
                     type="email"
                     value={profile.email}
@@ -179,7 +179,7 @@ export const TeacherSettingsPage: React.FC = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-[#374151]">Phone Contact</label>
+                  <label className="text-xs font-bold text-zinc-700">Phone Contact</label>
                   <input
                     type="text"
                     value={profile.phone}
@@ -191,7 +191,7 @@ export const TeacherSettingsPage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-[#374151]">Years of Teaching Experience</label>
+                  <label className="text-xs font-bold text-zinc-700">Years of Teaching Experience</label>
                   <input
                     type="number"
                     value={profile.yearsOfExperience}
@@ -203,7 +203,7 @@ export const TeacherSettingsPage: React.FC = () => {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-[#374151]">Expertise Tags (Press Enter to add)</label>
+                  <label className="text-xs font-bold text-zinc-700">Expertise Tags (Press Enter to add)</label>
                   <div className="flex flex-col gap-2">
                     <input
                       type="text"
@@ -217,7 +217,7 @@ export const TeacherSettingsPage: React.FC = () => {
                       {profile.expertiseTags.map((tag) => (
                         <span 
                           key={tag}
-                          className="px-2 py-0.5 rounded-md bg-rose-50 border border-rose-100 text-[#FF4667] text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                          className="px-2 py-0.5 rounded-md bg-rose-50 border border-rose-100 text-accent text-xs font-semibold flex items-center gap-1 cursor-pointer"
                           onClick={() => handleRemoveExpertise(tag)}
                         >
                           {tag}
@@ -234,11 +234,11 @@ export const TeacherSettingsPage: React.FC = () => {
 
             {/* Links Section */}
             <div className="flex flex-col gap-4">
-              <h4 className="text-sm font-bold text-[#392C7D] uppercase tracking-wider">Optional Social Links</h4>
+              <h4 className="text-sm font-bold text-primary uppercase tracking-wider">Optional Social Links</h4>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-[#374151]">GitHub Profile URL</label>
+                  <label className="text-xs font-bold text-zinc-700">GitHub Profile URL</label>
                   <input
                     type="url"
                     value={profile.githubUrl}
@@ -248,7 +248,7 @@ export const TeacherSettingsPage: React.FC = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-[#374151]">LinkedIn Profile URL</label>
+                  <label className="text-xs font-bold text-zinc-700">LinkedIn Profile URL</label>
                   <input
                     type="url"
                     value={profile.linkedinUrl}
@@ -258,7 +258,7 @@ export const TeacherSettingsPage: React.FC = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-bold text-[#374151]">Personal Website</label>
+                  <label className="text-xs font-bold text-zinc-700">Personal Website</label>
                   <input
                     type="url"
                     value={profile.websiteUrl}
@@ -277,14 +277,14 @@ export const TeacherSettingsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="px-5 py-2.5 rounded-xl border border-gray-250 text-sm font-semibold text-[#374151] hover:bg-slate-50 transition-all cursor-pointer"
+                className="px-5 py-2.5 rounded-xl border border-gray-250 text-sm font-semibold text-zinc-700 hover:bg-slate-50 transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2.5 bg-[#392C7D] text-white rounded-xl text-sm font-semibold hover:bg-[#392C7D]/95 transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/95 transition-all shadow-sm flex items-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />

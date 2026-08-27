@@ -188,9 +188,9 @@ export const MainLayout: React.FC = () => {
                 placeholder="Search courses..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3.5 py-1.5 border border-neutral-200 rounded-[40px] text-xs font-semibold focus:outline-none focus:border-[#392C7D] transition-all bg-white text-[#111827] w-40 sm:w-56 focus:w-60"
+                className="pl-9 pr-3.5 py-1.5 border border-neutral-200 rounded-[40px] text-xs font-semibold focus:outline-none focus:border-primary transition-all bg-white text-zinc-900 w-40 sm:w-56 focus:w-60"
               />
-              <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2 hover:text-[#392C7D] cursor-pointer" title="Search">
+              <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2 hover:text-primary cursor-pointer" title="Search">
                 <Search className="w-3.5 h-3.5 text-neutral-400" />
               </button>
             </form>

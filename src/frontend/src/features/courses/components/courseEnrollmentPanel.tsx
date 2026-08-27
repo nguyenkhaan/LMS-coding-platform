@@ -51,7 +51,7 @@ export const CourseEnrollmentPanel: React.FC<SidebarProps> = ({
 				{isPaid || isEnrolled ? (
 					<div className="flex flex-col gap-3">
 						<div className="flex flex-col">
-							<span className="text-[#10B981] text-lg font-bold flex items-center gap-1.5 leading-snug">
+							<span className="text-emerald-600 text-lg font-bold flex items-center gap-1.5 leading-snug">
 								<CheckCircle className="w-5 h-5 text-emerald-500" /> Enrolled
 							</span>
 							<span className="text-neutral-500 text-xs mt-1 leading-normal">
@@ -60,7 +60,7 @@ export const CourseEnrollmentPanel: React.FC<SidebarProps> = ({
 						</div>
 						<button 
 							onClick={() => navigate(`/learn/${courseSlug}`)}
-							className="w-full py-3 bg-[#392C7D] hover:bg-[#392C7D]/90 text-white text-sm font-semibold rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
+							className="w-full py-3 bg-primary hover:bg-primary-hover text-white text-sm font-semibold rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
 						>
 							Start Learning
 						</button>
@@ -68,13 +68,13 @@ export const CourseEnrollmentPanel: React.FC<SidebarProps> = ({
 				) : (
 					<>
 						<div className="flex flex-col">
-							<span className="text-[#392C7D] text-3xl font-bold">${price}</span>
+							<span className="text-primary text-3xl font-bold">${price}</span>
 							<span className="text-neutral-500 text-xs mt-1">One-time payment · lifetime access</span>
 						</div>
 						
 						<button 
 							onClick={onEnroll}
-							className="w-full py-3 bg-[#FF4667] hover:bg-[#e03d5b] text-white text-sm font-semibold rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
+							className="w-full py-3 bg-accent hover:bg-accent-hover text-white text-sm font-semibold rounded-xl transition-all shadow-md active:scale-95 cursor-pointer"
 						>
 							Enroll now
 						</button>
@@ -86,7 +86,7 @@ export const CourseEnrollmentPanel: React.FC<SidebarProps> = ({
 						onClick={handlePreviewClassroom}
 						className="w-full py-2.5 bg-neutral-50 hover:bg-neutral-100 text-zinc-900 text-sm font-semibold rounded-xl transition-all border border-neutral-200 cursor-pointer flex items-center justify-center gap-2"
 					>
-						<Play className="w-3.5 h-3.5 fill-[#392C7D] text-[#392C7D]" />
+						<Play className="w-3.5 h-3.5 fill-primary text-primary" />
 						Preview classroom
 					</button>
 				)}
@@ -95,19 +95,19 @@ export const CourseEnrollmentPanel: React.FC<SidebarProps> = ({
 
 				<div className="flex flex-col gap-3 text-xs text-neutral-600 font-medium">
 					<div className="flex items-center gap-2.5">
-						<CheckCircle className="w-4 h-4 text-[#FF4667]" />
+						<CheckCircle className="w-4 h-4 text-accent" />
 						<span>{lessons} on-demand lessons</span>
 					</div>
 					<div className="flex items-center gap-2.5">
-						<CheckCircle className="w-4 h-4 text-[#FF4667]" />
+						<CheckCircle className="w-4 h-4 text-accent" />
 						<span>Unlimited online judge submissions</span>
 					</div>
 					<div className="flex items-center gap-2.5">
-						<CheckCircle className="w-4 h-4 text-[#FF4667]" />
+						<CheckCircle className="w-4 h-4 text-accent" />
 						<span>AI mock interviews included</span>
 					</div>
 					<div className="flex items-center gap-2.5">
-						<CheckCircle className="w-4 h-4 text-[#FF4667]" />
+						<CheckCircle className="w-4 h-4 text-accent" />
 						<span>Mentor code reviews</span>
 					</div>
 				</div>
@@ -131,7 +131,7 @@ export const CourseEnrollmentPanel: React.FC<SidebarProps> = ({
 					</div>
 					<Link
 						to={`/courses-reviews/write/${courseSlug}`}
-						className="w-full py-2.5 bg-[#FF4667] hover:bg-[#FF4667]/90 text-white text-center text-xs font-semibold rounded-lg shadow-sm transition-all cursor-pointer block"
+						className="w-full py-2.5 bg-accent hover:bg-accent-hover text-white text-center text-xs font-semibold rounded-lg shadow-sm transition-all cursor-pointer block"
 					>
 						Write a Review
 					</Link>

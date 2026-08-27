@@ -1,0 +1,96 @@
+﻿/* ==========================================================================
+   STYLE.CSS - Centralized Color Palette & Theme Tokens
+   Foundation for Light and Dark Themes across LMS Platform
+   ========================================================================== */
+
+:root {
+  /* Brand Palette (Light Mode) */
+  --color-primary: #392C7D;
+  --color-primary-hover: #2E3490;
+  --color-secondary: #5625E8;
+  --color-secondary-hover: #471EC2;
+  --color-accent: #FF4667;
+  --color-accent-hover: #E03554;
+
+  /* Feedback & Status Colors */
+  --color-success: #0FA05C;
+  --color-success-bright: #03C95A;
+  --color-warning: #FE893E;
+  --color-warning-amber: #FFC107;
+  --color-error: #FB3748;
+
+  /* Surfaces & Backgrounds */
+  --color-background: #F4F6F9;
+  --color-surface: #FFFFFF;
+  --color-surface-soft: #F8FAFC;
+  --color-surface-subtle: #F4F6F9;
+  --color-card: #FFFFFF;
+
+  /* Typography Colors */
+  --color-text-primary: #191919;
+  --color-text-secondary: #6D6D6D;
+  --color-text-muted: #90A1B9;
+  --color-text-strong: #151E37;
+
+  /* Borders & Dividers */
+  --color-border: #E7E7E7;
+  --color-border-subtle: #E1E5EB;
+  --color-border-strong: #D1D5DB;
+
+  /* Legacy HSL Variables */
+  --bg-main: 220 27% 97%;
+  --bg-card: 0 0% 100%;
+  --bg-muted: 213 27% 96%;
+  --border-color: 0 0% 91%;
+  --text-primary: 0 0% 10%;
+  --text-secondary: 0 0% 43%;
+  --text-muted: 213 22% 66%;
+}
+
+/* ==========================================================================
+   Dark Theme Overrides ([data-theme="dark"] & .dark)
+   ========================================================================== */
+[data-theme="dark"],
+.dark {
+  /* Brand Palette (Dark Mode) */
+  --color-primary: #818CF8;
+  --color-primary-hover: #6366F1;
+  --color-secondary: #A78BFA;
+  --color-secondary-hover: #8B5CF6;
+  --color-accent: #FF4667;
+  --color-accent-hover: #F43F5E;
+
+  /* Feedback & Status Colors */
+  --color-success: #34D399;
+  --color-success-bright: #10B981;
+  --color-warning: #FBBF24;
+  --color-warning-amber: #F59E0B;
+  --color-error: #F87171;
+
+  /* Surfaces & Backgrounds */
+  --color-background: #0F172A;
+  --color-surface: #1E293B;
+  --color-surface-soft: #334155;
+  --color-surface-subtle: #0F172A;
+  --color-card: #1E293B;
+
+  /* Typography Colors */
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #CBD5E1;
+  --color-text-muted: #94A3B8;
+  --color-text-strong: #FFFFFF;
+
+  /* Borders & Dividers */
+  --color-border: #334155;
+  --color-border-subtle: #1E293B;
+  --color-border-strong: #475569;
+
+  /* Legacy HSL Variables */
+  --bg-main: 222 47% 11%;
+  --bg-card: 222 47% 6%;
+  --bg-muted: 223 47% 15%;
+  --border-color: 222 47% 20%;
+  --text-primary: 210 40% 98%;
+  --text-secondary: 215 20% 80%;
+  --text-muted: 215 15% 65%;
+}

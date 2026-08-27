@@ -39,7 +39,7 @@ export const TeacherDashboardPage: React.FC = () => {
       <SiteHeader />
 
       {/* 2. PAGE TITLE BANNER */}
-      <div className="w-full bg-gradient-to-r from-[#392C7D] to-purple-600 py-8 flex flex-col items-center justify-center gap-1 shrink-0">
+      <div className="w-full bg-gradient-to-r from-primary to-purple-600 py-8 flex flex-col items-center justify-center gap-1 shrink-0">
         <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight">Teacher Dashboard</h1>
         <p className="text-[13px] font-medium text-white/70">Dashboard &rsaquo; Overview</p>
       </div>
@@ -81,8 +81,8 @@ export const TeacherDashboardPage: React.FC = () => {
           {/* Welcome alert */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
             <div className="flex flex-col gap-1">
-              <h3 className="text-lg font-bold text-[#111827]">Welcome back, {user?.fullName || 'Instructor'}!</h3>
-              <p className="text-sm text-[#6B7280]">Here is what is happening with your courses and students today.</p>
+              <h3 className="text-lg font-bold text-zinc-900">Welcome back, {user?.fullName || 'Instructor'}!</h3>
+              <p className="text-sm text-neutral-500">Here is what is happening with your courses and students today.</p>
             </div>
           </div>
 
@@ -96,8 +96,8 @@ export const TeacherDashboardPage: React.FC = () => {
                     <Icon className="w-6 h-6" />
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[12px] font-semibold text-[#6B7280]">{stat.label}</span>
-                    <span className="text-2xl font-bold text-[#111827] mt-0.5">{stat.value}</span>
+                    <span className="text-[12px] font-semibold text-neutral-500">{stat.label}</span>
+                    <span className="text-2xl font-bold text-zinc-900 mt-0.5">{stat.value}</span>
                   </div>
                 </div>
               );
@@ -106,48 +106,48 @@ export const TeacherDashboardPage: React.FC = () => {
 
           {/* Quick Actions Panel */}
           <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col gap-4">
-            <h3 className="text-base font-bold text-[#111827]">Quick Actions</h3>
+            <h3 className="text-base font-bold text-zinc-900">Quick Actions</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <Link 
                 to="/teacher/course-builder"
-                className="flex items-center justify-between p-4 rounded-xl border border-dashed border-gray-250 bg-slate-50/50 hover:bg-slate-50 hover:border-[#392C7D] transition-all cursor-pointer group"
+                className="flex items-center justify-between p-4 rounded-xl border border-dashed border-gray-250 bg-slate-50/50 hover:bg-slate-50 hover:border-primary transition-all cursor-pointer group"
               >
                 <div className="flex items-center gap-3">
-                  <PlusCircle className="w-5 h-5 text-[#392C7D]" />
-                  <span className="text-sm font-semibold text-[#374151] group-hover:text-[#392C7D]">Create Course</span>
+                  <PlusCircle className="w-5 h-5 text-primary" />
+                  <span className="text-sm font-semibold text-zinc-700 group-hover:text-primary">Create Course</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:translate-x-0.5 transition-transform" />
               </Link>
 
               <Link 
                 to="/teacher/course-builder"
-                className="flex items-center justify-between p-4 rounded-xl border border-dashed border-gray-250 bg-slate-50/50 hover:bg-slate-50 hover:border-[#392C7D] transition-all cursor-pointer group"
+                className="flex items-center justify-between p-4 rounded-xl border border-dashed border-gray-250 bg-slate-50/50 hover:bg-slate-50 hover:border-primary transition-all cursor-pointer group"
               >
                 <div className="flex items-center gap-3">
                   <BookOpen className="w-5 h-5 text-indigo-600" />
-                  <span className="text-sm font-semibold text-[#374151] group-hover:text-[#392C7D]">Manage Courses</span>
+                  <span className="text-sm font-semibold text-zinc-700 group-hover:text-primary">Manage Courses</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:translate-x-0.5 transition-transform" />
               </Link>
 
               <Link 
                 to="/teacher/students"
-                className="flex items-center justify-between p-4 rounded-xl border border-dashed border-gray-250 bg-slate-50/50 hover:bg-slate-50 hover:border-[#392C7D] transition-all cursor-pointer group"
+                className="flex items-center justify-between p-4 rounded-xl border border-dashed border-gray-250 bg-slate-50/50 hover:bg-slate-50 hover:border-primary transition-all cursor-pointer group"
               >
                 <div className="flex items-center gap-3">
                   <Users className="w-5 h-5 text-rose-500" />
-                  <span className="text-sm font-semibold text-[#374151] group-hover:text-[#392C7D]">View Students</span>
+                  <span className="text-sm font-semibold text-zinc-700 group-hover:text-primary">View Students</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:translate-x-0.5 transition-transform" />
               </Link>
 
               <Link 
                 to="/teacher/earnings"
-                className="flex items-center justify-between p-4 rounded-xl border border-dashed border-gray-250 bg-slate-50/50 hover:bg-slate-50 hover:border-[#392C7D] transition-all cursor-pointer group"
+                className="flex items-center justify-between p-4 rounded-xl border border-dashed border-gray-250 bg-slate-50/50 hover:bg-slate-50 hover:border-primary transition-all cursor-pointer group"
               >
                 <div className="flex items-center gap-3">
                   <DollarSign className="w-5 h-5 text-amber-500" />
-                  <span className="text-sm font-semibold text-[#374151] group-hover:text-[#392C7D]">View Earnings</span>
+                  <span className="text-sm font-semibold text-zinc-700 group-hover:text-primary">View Earnings</span>
                 </div>
                 <ChevronRight className="w-4 h-4 text-neutral-400 group-hover:translate-x-0.5 transition-transform" />
               </Link>
@@ -158,8 +158,8 @@ export const TeacherDashboardPage: React.FC = () => {
             {/* Recent Enrollments activity */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col gap-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-base font-bold text-[#111827]">Recent Student Activity</h3>
-                <Link to="/teacher/students" className="text-xs font-semibold text-[#FF4667] hover:underline flex items-center gap-0.5">
+                <h3 className="text-base font-bold text-zinc-900">Recent Student Activity</h3>
+                <Link to="/teacher/students" className="text-xs font-semibold text-accent hover:underline flex items-center gap-0.5">
                   See all <ArrowUpRight className="w-3 h-3" />
                 </Link>
               </div>
@@ -168,16 +168,16 @@ export const TeacherDashboardPage: React.FC = () => {
                 {recentEnrollments.map((student) => (
                   <div key={student.id} className="flex items-center justify-between p-3.5 rounded-xl border border-slate-100 bg-slate-50/20 gap-4">
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-[#392C7D] font-bold text-sm shrink-0">
+                      <div className="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center text-primary font-bold text-sm shrink-0">
                         {student.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                       </div>
                       <div className="flex flex-col min-w-0">
-                        <span className="text-sm font-bold text-[#111827] truncate">{student.name}</span>
-                        <span className="text-[12px] text-[#6B7280] truncate">{student.course}</span>
+                        <span className="text-sm font-bold text-zinc-900 truncate">{student.name}</span>
+                        <span className="text-[12px] text-neutral-500 truncate">{student.course}</span>
                       </div>
                     </div>
                     <div className="flex flex-col items-end shrink-0">
-                      <span className="text-xs text-[#6B7280] font-medium">{student.date}</span>
+                      <span className="text-xs text-neutral-500 font-medium">{student.date}</span>
                       <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full mt-1 border border-emerald-100">
                         Progress: {student.progress}%
                       </span>
@@ -190,8 +190,8 @@ export const TeacherDashboardPage: React.FC = () => {
             {/* Courses summary performance */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col gap-4">
               <div className="flex justify-between items-center">
-                <h3 className="text-base font-bold text-[#111827]">Active Courses</h3>
-                <Link to="/teacher/course-builder" className="text-xs font-semibold text-[#FF4667] hover:underline flex items-center gap-0.5">
+                <h3 className="text-base font-bold text-zinc-900">Active Courses</h3>
+                <Link to="/teacher/course-builder" className="text-xs font-semibold text-accent hover:underline flex items-center gap-0.5">
                   View Builder <ArrowUpRight className="w-3 h-3" />
                 </Link>
               </div>
@@ -200,7 +200,7 @@ export const TeacherDashboardPage: React.FC = () => {
                 {activeCourses.map((course) => (
                   <div key={course.title} className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/20 flex flex-col gap-2.5">
                     <div className="flex justify-between items-start gap-4">
-                      <span className="text-sm font-bold text-[#111827] line-clamp-1">{course.title}</span>
+                      <span className="text-sm font-bold text-zinc-900 line-clamp-1">{course.title}</span>
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${
                         course.status === 'APPROVED' 
                           ? 'text-emerald-700 bg-emerald-50 border-emerald-100' 
@@ -210,12 +210,12 @@ export const TeacherDashboardPage: React.FC = () => {
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between text-xs text-[#6B7280] font-medium pt-1">
+                    <div className="flex items-center justify-between text-xs text-neutral-500 font-medium pt-1">
                       <span className="flex items-center gap-1">
                         <Users className="w-3.5 h-3.5 text-neutral-400" />
                         <strong>{course.students}</strong> Enrolled Students
                       </span>
-                      <span className="text-[#392C7D] font-extrabold text-sm">
+                      <span className="text-primary font-extrabold text-sm">
                         ${course.price}
                       </span>
                     </div>

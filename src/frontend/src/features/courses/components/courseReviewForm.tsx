@@ -129,7 +129,7 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({ slug = "pyth
 						onChange={(e) => setComment(e.target.value)}
 						placeholder="Write your review here..."
 						maxLength={2000}
-						className="w-full h-44 p-4 rounded-xl border border-slate-200 focus:border-[#392C7D] focus:outline-hidden text-sm leading-relaxed transition-colors resize-none"
+						className="w-full h-44 p-4 rounded-xl border border-slate-200 focus:border-primary focus:outline-hidden text-sm leading-relaxed transition-colors resize-none"
 					/>
 					<span className="text-right text-xs font-semibold text-neutral-400 self-end">
 						{comment.length} / 2000
@@ -139,7 +139,7 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({ slug = "pyth
 				{/* Submit Button */}
 				<button
 					type="submit"
-					className="w-full sm:w-fit px-8 py-3 bg-[#392C7D] text-white rounded-lg text-sm font-semibold hover:bg-[#392C7D]/90 shadow-sm transition-all cursor-pointer"
+					className="w-full sm:w-fit px-8 py-3 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-hover shadow-sm transition-all cursor-pointer"
 				>
 					Submit review
 				</button>

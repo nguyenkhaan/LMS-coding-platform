@@ -148,9 +148,9 @@ export const CourseReviews: React.FC<CourseReviewsProps> = ({ slug = "python-fou
 			<div className="bg-white rounded-2xl border border-slate-100 p-6 shadow-sm flex flex-col md:flex-row gap-8 items-center">
 				<div className="flex flex-col items-center justify-center p-4 bg-slate-50 rounded-xl border border-slate-100/50 w-full md:w-48">
 					<span className="text-4xl font-extrabold text-zinc-900">4.8</span>
-					<div className="flex items-center gap-1 mt-1 text-[#FF4667]">
+					<div className="flex items-center gap-1 mt-1 text-accent">
 						{Array.from({ length: 5 }).map((_, i) => (
-							<Star key={i} className="w-4.5 h-4.5 fill-[#FF4667] text-[#FF4667]" />
+							<Star key={i} className="w-4.5 h-4.5 fill-accent text-accent" />
 						))}
 					</div>
 					<span className="text-neutral-500 text-xs mt-2 font-medium">Course Rating</span>
@@ -168,7 +168,7 @@ export const CourseReviews: React.FC<CourseReviewsProps> = ({ slug = "python-fou
 						<div key={row.stars} className="flex items-center gap-3 text-xs font-semibold text-neutral-500">
 							<span className="w-6 text-right">{row.stars}★</span>
 							<div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
-								<div className="bg-[#392C7D] h-full rounded-full" style={{ width: `${row.pct}%` }} />
+								<div className="bg-primary h-full rounded-full" style={{ width: `${row.pct}%` }} />
 							</div>
 							<span className="w-8 text-right">{row.pct}%</span>
 						</div>
@@ -185,7 +185,7 @@ export const CourseReviews: React.FC<CourseReviewsProps> = ({ slug = "python-fou
 							onClick={() => setFilter(chip)}
 							className={`px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer ${
 								filter === chip
-									? 'bg-[#392C7D] text-white border-[#392C7D] shadow-xs'
+									? 'bg-primary text-white border-primary shadow-xs'
 									: 'bg-white text-neutral-500 border-slate-200 hover:bg-slate-50'
 							}`}
 						>
@@ -196,7 +196,7 @@ export const CourseReviews: React.FC<CourseReviewsProps> = ({ slug = "python-fou
 
 				<button
 					onClick={handleWriteReviewClick}
-					className="px-5 py-2 bg-[#FF4667] text-white text-xs font-semibold rounded-lg hover:bg-[#e03d5b] transition-all cursor-pointer shadow-xs flex items-center gap-1.5 shrink-0"
+					className="px-5 py-2 bg-accent text-white text-xs font-semibold rounded-lg hover:bg-accent-hover transition-all cursor-pointer shadow-xs flex items-center gap-1.5 shrink-0"
 				>
 					{hasExistingReview ? "Edit your Review" : "Write a Review"}
 				</button>
@@ -208,7 +208,7 @@ export const CourseReviews: React.FC<CourseReviewsProps> = ({ slug = "python-fou
 					<div key={rev.id} className="p-6 bg-white rounded-2xl border border-slate-100 shadow-xs flex flex-col gap-4">
 						{/* Top details */}
 						<div className="flex items-start gap-4">
-							<div className="size-10 rounded-full bg-[#392C7D]/10 flex items-center justify-center border border-[#392C7D]/20 text-[#392C7D] text-xs font-bold select-none">
+							<div className="size-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20 text-primary text-xs font-bold select-none">
 								{rev.initials}
 							</div>
 							<div className="flex-1 flex flex-col">

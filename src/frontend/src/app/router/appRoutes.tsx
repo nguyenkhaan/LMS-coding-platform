@@ -93,7 +93,7 @@ const TeacherPendingApprovalPage = () => (
 			<div className="flex gap-4 w-full mt-2">
 				<Link
 					to="/student/dashboard"
-					className="flex-1 py-2.5 bg-[#392C7D] text-white text-sm font-semibold rounded-xl hover:bg-[#2d2263] text-center transition-all cursor-pointer"
+					className="flex-1 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary-hover text-center transition-all cursor-pointer"
 				>
 					Return to Dashboard
 				</Link>

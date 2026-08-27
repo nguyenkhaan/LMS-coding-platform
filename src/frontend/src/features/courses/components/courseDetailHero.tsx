@@ -10,7 +10,7 @@ interface HeroProps {
 
 export const CourseDetailHero: React.FC<HeroProps> = ({ title, instructor, rating, reviewsCount }) => {
 	return (
-		<div className="w-full min-h-[260px] bg-[#392C7D] relative overflow-hidden flex items-center py-8">
+		<div className="w-full min-h-[260px] bg-primary relative overflow-hidden flex items-center py-8">
 			{/* Overlay Tint */}
 			<div className="absolute inset-0 bg-black/45" />
 			<div className="w-full max-w-[1340px] mx-auto px-4 flex flex-col gap-3 text-white relative z-10">

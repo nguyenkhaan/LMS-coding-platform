@@ -119,7 +119,7 @@ export const CourseCurriculum: React.FC = () => {
 		<div className="w-full flex flex-col gap-6">
 			<div className="bg-white rounded-2xl border border-neutral-200 p-6 shadow-xs">
 				<h2 className="text-zinc-900 text-xl font-bold border-b border-slate-100 pb-3 mb-4 flex items-center gap-2">
-					<BookOpen className="w-5 h-5 text-[#392C7D]" />
+					<BookOpen className="w-5 h-5 text-primary" />
 					Course Syllabus
 				</h2>
 				

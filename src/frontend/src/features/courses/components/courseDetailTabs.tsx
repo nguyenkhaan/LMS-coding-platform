@@ -26,7 +26,7 @@ export const CourseDetailTabs: React.FC<CourseDetailTabsProps> = ({ activeTab, c
 						to={tab.getPath(courseSlug)}
 						className={`px-4 py-1.5 rounded-lg transition-colors cursor-pointer select-none ${
 							isActive
-								? 'bg-white text-[#392C7D] font-bold shadow-xs'
+								? 'bg-white text-primary font-bold shadow-xs'
 								: 'hover:bg-white/50 text-neutral-500'
 						}`}
 					>

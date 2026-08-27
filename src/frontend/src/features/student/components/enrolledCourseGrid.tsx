@@ -122,7 +122,7 @@ export const EnrolledCoursesPage: React.FC = () => {
               {user?.roles.includes('TEACHER') && (
                 <button 
                   onClick={() => navigate('/teacher/dashboard')}
-                  className="px-5 py-2.5 bg-[#FF4667] text-white text-sm font-semibold rounded-full hover:bg-[#e03d5b] transition-all cursor-pointer"
+                  className="px-5 py-2.5 bg-accent text-white text-sm font-semibold rounded-full hover:bg-accent-hover transition-all cursor-pointer"
                 >
                   Teacher Dashboard
                 </button>
@@ -143,13 +143,13 @@ export const EnrolledCoursesPage: React.FC = () => {
             <div className="flex flex-col gap-6">
               
               <div className="flex flex-col gap-1">
-                <h3 className="text-xs font-bold text-[#111827] uppercase tracking-wider">Main Menu</h3>
+                <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Main Menu</h3>
                 <div className="flex flex-col gap-1 mt-2">
-                  <Link to="/student/dashboard" className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-[#6B7280] hover:bg-slate-50 transition-all">
+                  <Link to="/student/dashboard" className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-neutral-500 hover:bg-slate-50 transition-all">
                     <LayoutDashboard className="w-4 h-4" />
                     <span>Dashboard</span>
                   </Link>
-                  <Link to="/student/profile" className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-[#6B7280] hover:bg-slate-50 transition-all">
+                  <Link to="/student/profile" className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-neutral-500 hover:bg-slate-50 transition-all">
                     <User className="w-4 h-4" />
                     <span>My Profile</span>
                   </Link>
@@ -157,7 +157,7 @@ export const EnrolledCoursesPage: React.FC = () => {
                     <BookOpen className="w-4 h-4" />
                     <span>Enrolled Courses</span>
                   </Link>
-                  <Link to="/interview" className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-[#6B7280] hover:bg-slate-50 transition-all">
+                  <Link to="/interview" className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-neutral-500 hover:bg-slate-50 transition-all">
                     <Sparkles className="w-4 h-4" />
                     <span>AI Interview</span>
                   </Link>
@@ -165,15 +165,15 @@ export const EnrolledCoursesPage: React.FC = () => {
               </div>
 
               <div className="border-t border-gray-100 pt-6 flex flex-col gap-4">
-                <h3 className="text-xs font-bold text-[#111827] uppercase tracking-wider">Account Settings</h3>
+                <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Account Settings</h3>
                 <div className="flex flex-col gap-3 text-sm">
-                  <Link to="/student/settings" className="text-[#6B7280] hover:text-[#FF4667] transition-all flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-slate-50">
+                  <Link to="/student/settings" className="text-neutral-500 hover:text-accent transition-all flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-slate-50">
                     <User className="w-4 h-4" />
                     <span>Settings</span>
                   </Link>
                   <button 
                     onClick={handleLogout}
-                    className="text-[#6B7280] hover:text-rose-500 transition-all flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-rose-50/50 text-left w-full cursor-pointer"
+                    className="text-neutral-500 hover:text-rose-500 transition-all flex items-center gap-3 py-1.5 px-2 rounded-lg hover:bg-rose-50/50 text-left w-full cursor-pointer"
                   >
                     <LogOut className="w-4 h-4 text-rose-500" />
                     <span>Logout</span>
@@ -189,15 +189,15 @@ export const EnrolledCoursesPage: React.FC = () => {
             
             {/* Header & Filter tabs */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-gray-200">
-              <h2 className="text-[20px] font-bold text-[#392C7D]">Enrolled Courses</h2>
+              <h2 className="text-[20px] font-bold text-primary">Enrolled Courses</h2>
               
               <div className="flex gap-2 flex-wrap">
                 <button
                   onClick={() => { setActiveTab('all'); setCurrentPage(1); }}
                   className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
                     activeTab === 'all'
-                      ? 'bg-[#FF4667] text-white shadow-xs'
-                      : 'bg-slate-100 text-[#374151] hover:bg-slate-200'
+                      ? 'bg-accent text-white shadow-xs'
+                      : 'bg-slate-100 text-zinc-700 hover:bg-slate-200'
                   }`}
                 >
                   Enrolled ({String(allCourses.length).padStart(2, '0')})
@@ -206,8 +206,8 @@ export const EnrolledCoursesPage: React.FC = () => {
                   onClick={() => { setActiveTab('active'); setCurrentPage(1); }}
                   className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
                     activeTab === 'active'
-                      ? 'bg-[#FF4667] text-white shadow-xs'
-                      : 'bg-slate-100 text-[#374151] hover:bg-slate-200'
+                      ? 'bg-accent text-white shadow-xs'
+                      : 'bg-slate-100 text-zinc-700 hover:bg-slate-200'
                   }`}
                 >
                   Active ({String(activeCourses.length).padStart(2, '0')})
@@ -216,8 +216,8 @@ export const EnrolledCoursesPage: React.FC = () => {
                   onClick={() => { setActiveTab('completed'); setCurrentPage(1); }}
                   className={`px-4 py-1.5 text-xs font-semibold rounded-full transition-all cursor-pointer ${
                     activeTab === 'completed'
-                      ? 'bg-[#FF4667] text-white shadow-xs'
-                      : 'bg-slate-100 text-[#374151] hover:bg-slate-200'
+                      ? 'bg-accent text-white shadow-xs'
+                      : 'bg-slate-100 text-zinc-700 hover:bg-slate-200'
                   }`}
                 >
                   Completed ({String(completedCourses.length).padStart(2, '0')})
@@ -236,7 +236,7 @@ export const EnrolledCoursesPage: React.FC = () => {
                   <div key={course.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden flex flex-col hover:shadow-md transition-all">
                     
                     {/* Thumbnail header */}
-                    <div className="h-44 bg-[#392C7D] flex items-center justify-center text-white font-bold relative overflow-hidden">
+                    <div className="h-44 bg-primary flex items-center justify-center text-white font-bold relative overflow-hidden">
                       {course.thumbnail_url ? (
                         <img className="w-full h-full object-cover" src={course.thumbnail_url} alt={course.title} />
                       ) : (
@@ -247,34 +247,34 @@ export const EnrolledCoursesPage: React.FC = () => {
                     {/* Body Content */}
                     <div className="p-5 flex flex-col gap-4 flex-1 justify-between">
                       <div className="flex flex-col gap-1">
-                        <h3 className="font-bold text-[#111827] text-[16px] leading-snug line-clamp-2 min-h-[44px]">
+                        <h3 className="font-bold text-zinc-900 text-[16px] leading-snug line-clamp-2 min-h-[44px]">
                           {course.title}
                         </h3>
-                        <p className="text-xs text-[#374151] font-medium">{course.instructor}</p>
+                        <p className="text-xs text-zinc-700 font-medium">{course.instructor}</p>
                       </div>
                       
                       {/* Progress details */}
                       <div className="flex flex-col gap-1.5">
-                        <div className="flex justify-between items-center text-xs font-semibold text-[#374151]">
+                        <div className="flex justify-between items-center text-xs font-semibold text-zinc-700">
                           <span>Progress</span>
                           <span>{course.progress_percent}%</span>
                         </div>
                         <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-[#392C7D] rounded-full transition-all duration-300"
+                            className="h-full bg-primary rounded-full transition-all duration-300"
                             style={{ width: `${course.progress_percent}%` }}
                           />
                         </div>
                       </div>
                       
                       {/* Access Metadata */}
-                      <div className="flex flex-col gap-1 text-[11px] text-[#6B7280] bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <div className="flex flex-col gap-1 text-[11px] text-neutral-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
                         <div className="flex items-center gap-1.5">
-                          <span className="font-medium text-[#374151]">Last accessed:</span>
+                          <span className="font-medium text-zinc-700">Last accessed:</span>
                           <span>{course.last_accessed}</span>
                         </div>
                         <div className="flex items-center gap-1.5 truncate">
-                          <span className="font-medium text-[#374151]">Next:</span>
+                          <span className="font-medium text-zinc-700">Next:</span>
                           <span className="truncate">{course.next_lesson}</span>
                         </div>
                       </div>
@@ -282,7 +282,7 @@ export const EnrolledCoursesPage: React.FC = () => {
                       {/* Continue Button */}
                       <Link 
                         to={`/learn/${course.slug}`} 
-                        className="w-full py-3 bg-[#392C7D] hover:bg-[#2d2263] text-white text-center rounded-xl font-bold text-xs tracking-wide transition-all block cursor-pointer"
+                        className="w-full py-3 bg-primary hover:bg-primary-hover text-white text-center rounded-xl font-bold text-xs tracking-wide transition-all block cursor-pointer"
                       >
                         Continue Learning
                       </Link>
@@ -296,7 +296,7 @@ export const EnrolledCoursesPage: React.FC = () => {
             {/* Pagination Controls */}
             {totalPages > 1 && (
               <div className="w-full flex justify-between items-center mt-8 pt-6 border-t border-gray-200 gap-4">
-                <div className="text-xs text-[#6B7280]">
+                <div className="text-xs text-neutral-500">
                   Page {safePage} of {totalPages}
                 </div>
                 
@@ -304,7 +304,7 @@ export const EnrolledCoursesPage: React.FC = () => {
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                     disabled={safePage === 1}
-                    className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed text-[#374151] rounded-full text-xs font-bold transition-all cursor-pointer"
+                    className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-700 rounded-full text-xs font-bold transition-all cursor-pointer"
                     title="Previous page"
                   >
                     &lt;
@@ -315,8 +315,8 @@ export const EnrolledCoursesPage: React.FC = () => {
                       onClick={() => setCurrentPage(pageNum)}
                       className={`w-8 h-8 flex items-center justify-center rounded-full text-xs font-bold transition-all cursor-pointer ${
                         safePage === pageNum
-                          ? 'bg-[#FF4667] text-white shadow-xs'
-                          : 'bg-slate-100 hover:bg-slate-200 text-[#374151]'
+                          ? 'bg-accent text-white shadow-xs'
+                          : 'bg-slate-100 hover:bg-slate-200 text-zinc-700'
                       }`}
                     >
                       {pageNum}
@@ -325,7 +325,7 @@ export const EnrolledCoursesPage: React.FC = () => {
                   <button
                     onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                     disabled={safePage === totalPages}
-                    className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed text-[#374151] rounded-full text-xs font-bold transition-all cursor-pointer"
+                    className="w-8 h-8 flex items-center justify-center bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-700 rounded-full text-xs font-bold transition-all cursor-pointer"
                     title="Next page"
                   >
                     &gt;

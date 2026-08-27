@@ -70,7 +70,7 @@ export const CourseOverview: React.FC = () => {
 					<h2 className="text-zinc-900 text-xl font-bold border-b border-slate-100 pb-3 mb-4">Tech stack</h2>
 					<div className="flex flex-wrap gap-2.5">
 						{techStack.map((tech, idx) => (
-							<span key={idx} className="px-4 py-1.5 bg-[#392C7D]/5 text-[#392C7D] text-sm font-semibold rounded-full border border-[#392C7D]/10">
+							<span key={idx} className="px-4 py-1.5 bg-primary/5 text-primary text-sm font-semibold rounded-full border border-primary/10">
 								{tech}
 							</span>
 						))}
@@ -106,7 +106,7 @@ export const CourseOverview: React.FC = () => {
 				<h2 className="text-zinc-900 text-xl font-bold border-b border-slate-100 pb-3 mb-4">Skills you'll gain</h2>
 				<div className="flex flex-wrap gap-2">
 					{skills.map((skill, idx) => (
-						<span key={idx} className="px-3.5 py-1 bg-[#FF4667]/5 text-[#FF4667] text-xs font-semibold rounded-full border border-[#FF4667]/15">
+						<span key={idx} className="px-3.5 py-1 bg-accent/5 text-accent text-xs font-semibold rounded-full border border-accent/15">
 							{skill}
 						</span>
 					))}
@@ -122,8 +122,8 @@ export const CourseOverview: React.FC = () => {
 							{idx < roadmap.length - 1 && (
 								<div className="w-0.5 bg-slate-100 absolute bottom-0 top-8 left-5 -z-10" />
 							)}
-							<div className="w-10 h-10 rounded-full bg-[#392C7D]/10 flex items-center justify-center border border-[#392C7D]/20">
-								<span className="text-[#392C7D] font-bold text-sm">{road.step}</span>
+							<div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+								<span className="text-primary font-bold text-sm">{road.step}</span>
 							</div>
 							<div className="flex flex-col justify-center">
 								<span className="text-zinc-900 text-sm font-semibold">{road.title}</span>

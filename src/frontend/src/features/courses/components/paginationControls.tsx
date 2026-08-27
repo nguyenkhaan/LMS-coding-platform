@@ -17,7 +17,7 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({ currentP
 						onClick={() => setCurrentPage(i + 1)}
 						className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold transition-all cursor-pointer ${
 							currentPage === i + 1
-								? 'bg-[#FF4667] text-white shadow-md shadow-rose-500/20'
+								? 'bg-accent text-white shadow-md shadow-rose-500/20'
 								: 'bg-slate-100 hover:bg-slate-200 text-neutral-500'
 						}`}
 					>
