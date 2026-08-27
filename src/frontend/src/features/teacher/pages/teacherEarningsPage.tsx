@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { TeacherSidebar } from '../components/teacherSidebar.tsx';
-import { Clock, TrendingUp, Wallet } from 'lucide-react';
+import { Clock, TrendingUp, Wallet, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Types
 interface WalletData {

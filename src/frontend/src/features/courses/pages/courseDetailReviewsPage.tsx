@@ -4,6 +4,7 @@ import { CourseDetailHero } from '../components/courseDetailHero.tsx';
 import { CourseEnrollmentPanel } from '../components/courseEnrollmentPanel.tsx';
 import { CourseCatalogItemThumbnailCard } from '../components/coursePreviewCard.tsx';
 import { CourseReviews } from '../components/courseReviews.tsx';
+import { CourseDetailTabs } from '../components/courseDetailTabs.tsx';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { useEnrolledCourses } from '../../../hooks/api/useEnrolledCourses.ts';
 
@@ -42,12 +43,7 @@ export const CourseDetailReviewsPage: React.FC = () => {
 					<CourseCatalogItemThumbnailCard />
 
 					{/* Navigation tabs */}
-					<div className="w-fit p-1 bg-slate-100 rounded-xl inline-flex justify-center items-center gap-1.5 font-semibold text-sm text-neutral-500 shadow-xs border border-slate-200/50">
-						<Link to={`/courses/${slug}`} className={`px-4 py-1.5 rounded-lg transition-colors cursor-pointer select-none ${'Reviews' === 'Overview' ? 'bg-white text-[#392C7D] font-bold shadow-xs' : 'hover:bg-white/50'}`}>Overview</Link>
-						<Link to={`/courses-overview/${slug}`} className={`px-4 py-1.5 rounded-lg transition-colors cursor-pointer select-none ${'Reviews' === 'Curriculum' ? 'bg-white text-[#392C7D] font-bold shadow-xs' : 'hover:bg-white/50'}`}>Curriculum</Link>
-						<Link to={`/courses-instructor/${slug}`} className={`px-4 py-1.5 rounded-lg transition-colors cursor-pointer select-none ${'Reviews' === 'Instructor' ? 'bg-white text-[#392C7D] font-bold shadow-xs' : 'hover:bg-white/50'}`}>Instructor</Link>
-						<Link to={`/courses-reviews/${slug}`} className={`px-4 py-1.5 rounded-lg transition-colors cursor-pointer select-none ${'Reviews' === 'Reviews' ? 'bg-white text-[#392C7D] font-bold shadow-xs' : 'hover:bg-white/50'}`}>Reviews</Link>
-					</div>
+					<CourseDetailTabs activeTab="Reviews" courseSlug={slug} />
 
 					{/* Section body */}
 					<CourseReviews slug={slug} />

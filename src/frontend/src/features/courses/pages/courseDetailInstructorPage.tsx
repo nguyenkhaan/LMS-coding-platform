@@ -4,6 +4,7 @@ import { CourseDetailHero } from '../components/courseDetailHero.tsx';
 import { CourseEnrollmentPanel } from '../components/courseEnrollmentPanel.tsx';
 import { CourseCatalogItemThumbnailCard } from '../components/coursePreviewCard.tsx';
 import { CourseInstructorProfile } from '../components/courseInstructorProfile.tsx';
+import { CourseDetailTabs } from '../components/courseDetailTabs.tsx';
 import { useEnrolledCourses } from '@/hooks/api/useEnrolledCourses';
 
 export const CourseDetailInstructorPage: React.FC = () => {
@@ -24,7 +25,7 @@ export const CourseDetailInstructorPage: React.FC = () => {
 
 	return (
 		<div className="w-full min-h-screen bg-gray-50 flex flex-col font-['Inter'] antialiased">
-			{/* Hero Banner */}
+			{/* Breadcrumb hero */}
 			<CourseDetailHero
 				title="Python Foundations for Problem Solving"
 				instructor="Lê Quang Huy"
@@ -40,12 +41,7 @@ export const CourseDetailInstructorPage: React.FC = () => {
 					<CourseCatalogItemThumbnailCard />
 
 					{/* Navigation tabs */}
-					<div className="w-fit p-1 bg-slate-100 rounded-xl inline-flex justify-center items-center gap-1.5 font-semibold text-sm text-neutral-500 shadow-xs border border-slate-200/50">
-						<Link to={`/courses/${slug}`} className={`px-4 py-1.5 rounded-lg transition-colors cursor-pointer select-none ${'Instructor' === 'Overview' ? 'bg-white text-[#392C7D] font-bold shadow-xs' : 'hover:bg-white/50'}`}>Overview</Link>
-						<Link to={`/courses-overview/${slug}`} className={`px-4 py-1.5 rounded-lg transition-colors cursor-pointer select-none ${'Instructor' === 'Curriculum' ? 'bg-white text-[#392C7D] font-bold shadow-xs' : 'hover:bg-white/50'}`}>Curriculum</Link>
-						<Link to={`/courses-instructor/${slug}`} className={`px-4 py-1.5 rounded-lg transition-colors cursor-pointer select-none ${'Instructor' === 'Instructor' ? 'bg-white text-[#392C7D] font-bold shadow-xs' : 'hover:bg-white/50'}`}>Instructor</Link>
-						<Link to={`/courses-reviews/${slug}`} className={`px-4 py-1.5 rounded-lg transition-colors cursor-pointer select-none ${'Instructor' === 'Reviews' ? 'bg-white text-[#392C7D] font-bold shadow-xs' : 'hover:bg-white/50'}`}>Reviews</Link>
-					</div>
+					<CourseDetailTabs activeTab="Instructor" courseSlug={slug} />
 
 					{/* Section body */}
 					<CourseInstructorProfile />

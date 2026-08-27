@@ -70,10 +70,11 @@ export const CourseCatalogCard: React.FC<CourseCardProps> = ({ course, isFav, to
 				{/* Purchase Row */}
 				<div className="flex justify-between items-center border-t border-slate-100 pt-3 mt-auto">
 					<span className="text-[#392C7D] text-sm font-bold">${course.price}</span>
-					<Link to={`/courses/${course.id}`}>
-						<button className="px-3 py-1 bg-[#392C7D] hover:bg-[#2b215c] text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
-							View course
-						</button>
+					<Link
+						to={`/courses/${course.id}`}
+						className="px-3 py-1 bg-[#392C7D] hover:bg-[#2b215c] text-white text-xs font-semibold rounded-lg transition-all inline-block cursor-pointer"
+					>
+						View course
 					</Link>
 				</div>
 			</div>

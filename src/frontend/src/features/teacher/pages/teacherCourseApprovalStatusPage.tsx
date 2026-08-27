@@ -31,8 +31,8 @@ const MOCK_COURSE: CourseSummary = {
 
 export const CourseApprovalStatusPage: React.FC = () => {
   const { user } = useAuthStore();
-  const navigate = useNavigate();
-  const {  } = useParams<{ courseId: string }>();
+  const { courseId } = useParams<{ courseId: string }>();
+  void courseId;
 
   // Status simulation state to make testing easy
   const [status, setStatus] = useState<CourseStatus>('PENDING_REVIEW');

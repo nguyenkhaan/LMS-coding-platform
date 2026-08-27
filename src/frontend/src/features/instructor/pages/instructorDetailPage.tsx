@@ -4,7 +4,7 @@ import { Star, Heart, BookOpen, Users, Mail, Phone, MapPin, Globe, ChevronLeft, 
 import { toast } from 'sonner';
 
 export const InstructorDetailPage: React.FC = () => {
-	const {  } = useParams<{ instructorId: string }>();
+	const { instructorId } = useParams<{ instructorId: string }>();
 	const [isFavorite, setIsFavorite] = useState(false);
 	const [isReadMore, setIsReadMore] = useState(false);
 	const [messageText, setMessageText] = useState('');

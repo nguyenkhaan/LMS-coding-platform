@@ -9,7 +9,9 @@ import {
 	Terminal,
 	Bookmark,
 	Sparkles,
-	ArrowLeft
+	ArrowLeft,
+	CheckCircle2,
+	Circle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
