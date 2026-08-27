@@ -194,6 +194,24 @@ export function BecomeTeacherPage() {
     const selectedFile = event.target.files?.[0];
     if (!selectedFile) return;
 
+    // Check MIME type / file extension
+    const allowedMimes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/webp',
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    const hasValidMime = allowedMimes.includes(selectedFile.type);
+    const hasValidExt = /\.(pdf|docx?|jpe?g|png|webp)$/i.test(selectedFile.name);
+
+    if (!hasValidMime && !hasValidExt) {
+      toast.error('Invalid file format. Allowed formats: PDF, DOC/DOCX, PNG, JPG, WEBP.');
+      return;
+    }
+
     // Check size <= 5MB
     if (selectedFile.size > 5 * 1024 * 1024) {
       toast.error('File size exceeds 5MB limit.');
@@ -796,12 +814,21 @@ export function BecomeTeacherPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Card 1: ID Front */}
             <div
+              role="button"
+              tabIndex={isFieldEditable(true) ? 0 : -1}
+              aria-label="Upload National ID Front"
               onClick={() => isFieldEditable(true) && idFrontRef.current?.click()}
+              onKeyDown={(e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && isFieldEditable(true)) {
+                  e.preventDefault();
+                  idFrontRef.current?.click();
+                }
+              }}
               className={`p-6 rounded-2xl border-2 border-dashed flex flex-col items-center justify-between text-center gap-3 transition-all ${
                 files.identityFront
                   ? 'bg-emerald-50/50 border-emerald-300'
                   : 'bg-slate-50 border-neutral-300 hover:border-indigo-500 hover:bg-indigo-50/20'
-              } ${isFieldEditable(true) ? 'cursor-pointer' : 'cursor-default opacity-85'}`}
+              } ${isFieldEditable(true) ? 'cursor-pointer focus:ring-2 focus:ring-indigo-900/20 focus:outline-none' : 'cursor-default opacity-85'}`}
             >
               {files.identityFront && files.identityFront.previewUrl ? (
                 <div className="w-32 h-20 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center border border-neutral-200 shadow-2xs">
@@ -853,12 +880,21 @@ export function BecomeTeacherPage() {
 
             {/* Card 2: ID Back */}
             <div
+              role="button"
+              tabIndex={isFieldEditable(true) ? 0 : -1}
+              aria-label="Upload National ID Back"
               onClick={() => isFieldEditable(true) && idBackRef.current?.click()}
+              onKeyDown={(e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && isFieldEditable(true)) {
+                  e.preventDefault();
+                  idBackRef.current?.click();
+                }
+              }}
               className={`p-6 rounded-2xl border-2 border-dashed flex flex-col items-center justify-between text-center gap-3 transition-all ${
                 files.identityBack
                   ? 'bg-emerald-50/50 border-emerald-300'
                   : 'bg-slate-50 border-neutral-300 hover:border-indigo-500 hover:bg-indigo-50/20'
-              } ${isFieldEditable(true) ? 'cursor-pointer' : 'cursor-default opacity-85'}`}
+              } ${isFieldEditable(true) ? 'cursor-pointer focus:ring-2 focus:ring-indigo-900/20 focus:outline-none' : 'cursor-default opacity-85'}`}
             >
               {files.identityBack && files.identityBack.previewUrl ? (
                 <div className="w-32 h-20 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center border border-neutral-200 shadow-2xs">
@@ -910,12 +946,21 @@ export function BecomeTeacherPage() {
 
             {/* Card 3: Selfie holding ID */}
             <div
+              role="button"
+              tabIndex={isFieldEditable(true) ? 0 : -1}
+              aria-label="Upload Selfie Holding ID"
               onClick={() => isFieldEditable(true) && idSelfieRef.current?.click()}
+              onKeyDown={(e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && isFieldEditable(true)) {
+                  e.preventDefault();
+                  idSelfieRef.current?.click();
+                }
+              }}
               className={`p-6 rounded-2xl border-2 border-dashed flex flex-col items-center justify-between text-center gap-3 transition-all ${
                 files.selfieWithId
                   ? 'bg-emerald-50/50 border-emerald-300'
                   : 'bg-slate-50 border-neutral-300 hover:border-indigo-500 hover:bg-indigo-50/20'
-              } ${isFieldEditable(true) ? 'cursor-pointer' : 'cursor-default opacity-85'}`}
+              } ${isFieldEditable(true) ? 'cursor-pointer focus:ring-2 focus:ring-indigo-900/20 focus:outline-none' : 'cursor-default opacity-85'}`}
             >
               {files.selfieWithId && files.selfieWithId.previewUrl ? (
                 <div className="w-32 h-20 rounded-lg overflow-hidden bg-slate-100 flex items-center justify-center border border-neutral-200 shadow-2xs">
@@ -1027,12 +1072,21 @@ export function BecomeTeacherPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
             {/* Education Evidence File */}
             <div
+              role="button"
+              tabIndex={isFieldEditable(false) ? 0 : -1}
+              aria-label="Upload Education Evidence Document"
               onClick={() => isFieldEditable(false) && eduDocRef.current?.click()}
+              onKeyDown={(e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && isFieldEditable(false)) {
+                  e.preventDefault();
+                  eduDocRef.current?.click();
+                }
+              }}
               className={`p-6 rounded-2xl border-2 border-dashed flex flex-col items-center justify-between text-center gap-3 transition-all ${
                 files.educationEvidence
                   ? 'bg-emerald-50/50 border-emerald-300'
                   : 'bg-slate-50 border-neutral-300 hover:border-indigo-500 hover:bg-indigo-50/20'
-              } ${isFieldEditable(false) ? 'cursor-pointer' : 'cursor-default opacity-85'}`}
+              } ${isFieldEditable(false) ? 'cursor-pointer focus:ring-2 focus:ring-indigo-900/20 focus:outline-none' : 'cursor-default opacity-85'}`}
             >
               <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-900 flex items-center justify-center shadow-2xs">
                 <GraduationCap className="w-6 h-6" />
@@ -1055,6 +1109,7 @@ export function BecomeTeacherPage() {
                       type="button"
                       onClick={(e) => handleRemoveFile('educationEvidence', e)}
                       className="p-1 text-rose-500 hover:bg-rose-100 rounded-full cursor-pointer"
+                      title="Remove"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -1073,12 +1128,21 @@ export function BecomeTeacherPage() {
 
             {/* CV / Resume File */}
             <div
+              role="button"
+              tabIndex={isFieldEditable(false) ? 0 : -1}
+              aria-label="Upload Curriculum Vitae Resume"
               onClick={() => isFieldEditable(false) && cvRef.current?.click()}
+              onKeyDown={(e) => {
+                if ((e.key === 'Enter' || e.key === ' ') && isFieldEditable(false)) {
+                  e.preventDefault();
+                  cvRef.current?.click();
+                }
+              }}
               className={`p-6 rounded-2xl border-2 border-dashed flex flex-col items-center justify-between text-center gap-3 transition-all ${
                 files.cv
                   ? 'bg-emerald-50/50 border-emerald-300'
                   : 'bg-slate-50 border-neutral-300 hover:border-indigo-500 hover:bg-indigo-50/20'
-              } ${isFieldEditable(false) ? 'cursor-pointer' : 'cursor-default opacity-85'}`}
+              } ${isFieldEditable(false) ? 'cursor-pointer focus:ring-2 focus:ring-indigo-900/20 focus:outline-none' : 'cursor-default opacity-85'}`}
             >
               <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-900 flex items-center justify-center shadow-2xs">
                 <FileText className="w-6 h-6" />

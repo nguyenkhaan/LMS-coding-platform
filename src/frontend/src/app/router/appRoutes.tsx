@@ -155,10 +155,6 @@ export const AppRoutes: React.FC = () => {
 					{/* AI Mock Interview Setup */}
 					<Route path="/interview" element={<InterviewSetupPage />} />
 
-					{/* Become a Teacher (accessible while logged in as student) */}
-					<Route path="/become-teacher" element={<BecomeTeacherPage />} />
-					<Route path="/teacher/apply" element={<BecomeTeacherPage />} />
-
 					<Route path="/unauthorized" element={<UnauthorizedPage />} />
 				</Route>
 
@@ -206,6 +202,10 @@ export const AppRoutes: React.FC = () => {
 						<Route path="/interview/:sessionId" element={<InterviewWorkspacePage />} />
 						<Route path="/interview/report" element={<InterviewReportPage />} />
 						<Route path="/interview/report/:sessionId" element={<InterviewReportPage />} />
+
+						{/* Become a Teacher Application (Authenticated) */}
+						<Route path="/become-teacher" element={<BecomeTeacherPage />} />
+						<Route path="/teacher/apply" element={<BecomeTeacherPage />} />
 
 						{/* Legacy /dashboard alias → redirect to canonical URL */}
 						<Route path="/dashboard" element={<Navigate to="/student/dashboard" replace />} />
