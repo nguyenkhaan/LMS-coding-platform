@@ -20,7 +20,8 @@ import {
   Check,
   RotateCcw,
   Sparkles,
-  XCircle
+  XCircle,
+  Lock
 } from 'lucide-react';
 
 interface TestCase {
@@ -713,14 +714,42 @@ export function OJWorkspacePage() {
             )}
 
             {leftTab === 'Submissions' && (
-              <div className="space-y-3 w-full">
-                <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex justify-between items-center">
-                  <div>
-                    <span className="text-green-700 font-bold text-sm">Accepted</span>
-                    <p className="text-xs text-neutral-500">Python 3 · 42ms · 13.9MB</p>
+              <div className="space-y-4 w-full">
+                {user ? (
+                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex justify-between items-center">
+                    <div>
+                      <span className="text-green-700 font-bold text-sm">Accepted</span>
+                      <p className="text-xs text-neutral-500">Python 3 · 42ms · 13.9MB</p>
+                    </div>
+                    <span className="text-xs text-neutral-400">2 minutes ago</span>
                   </div>
-                  <span className="text-xs text-neutral-400">2 minutes ago</span>
-                </div>
+                ) : (
+                  <div className="p-6 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col items-center justify-center text-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-900 flex items-center justify-center">
+                      <Lock className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-zinc-900">Sign in to view submissions</h4>
+                      <p className="text-xs text-neutral-500 mt-1 max-w-xs">
+                        Log in or create an account to view and track your past submissions for this problem.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <Link
+                        to="/login"
+                        className="px-3.5 py-1.5 bg-indigo-900 hover:bg-indigo-950 text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
+                      >
+                        Log In
+                      </Link>
+                      <Link
+                        to="/register"
+                        className="px-3.5 py-1.5 bg-white border border-slate-200 hover:bg-slate-100 text-zinc-700 rounded-lg text-xs font-semibold transition-colors"
+                      >
+                        Register
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

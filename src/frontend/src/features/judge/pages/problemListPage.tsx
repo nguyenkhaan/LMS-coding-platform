@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import { useAuthStore } from '@/features/auth/model/useAuthStore';
 
 interface ProblemItem {
   id: number;
@@ -37,6 +38,7 @@ const MOCK_PROBLEMS: ProblemItem[] = [
 
 export function ProblemListPage() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,10 +54,11 @@ export function ProblemListPage() {
       const matchSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) || p.code.toLowerCase().includes(searchQuery.toLowerCase());
       const matchDiff = selectedDifficulty === 'All' || p.difficulty === selectedDifficulty;
       const matchTag = selectedTag === 'All' || p.tags.includes(selectedTag);
-      const matchStatus = selectedStatus === 'All' || p.status === selectedStatus;
+      const effectiveStatus = user ? p.status : 'Unsolved';
+      const matchStatus = selectedStatus === 'All' || effectiveStatus === selectedStatus;
       return matchSearch && matchDiff && matchTag && matchStatus;
     });
-  }, [searchQuery, selectedDifficulty, selectedTag, selectedStatus]);
+  }, [searchQuery, selectedDifficulty, selectedTag, selectedStatus, user]);
 
   const totalPages = Math.ceil(filteredProblems.length / itemsPerPage) || 1;
   const paginatedProblems = filteredProblems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -223,20 +226,26 @@ export function ProblemListPage() {
 
                   {/* Status */}
                   <div className="w-40 flex items-center">
-                    {prob.status === 'Solved' && (
-                      <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Solved</span>
-                      </div>
-                    )}
-                    {prob.status === 'Attempted' && (
-                      <div className="flex items-center gap-1.5 text-red-400 text-sm font-medium">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        <span>Attempted</span>
-                      </div>
-                    )}
-                    {prob.status === 'Unsolved' && (
+                    {!user ? (
                       <span className="text-neutral-400 text-sm font-medium">—</span>
+                    ) : (
+                      <>
+                        {prob.status === 'Solved' && (
+                          <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Solved</span>
+                          </div>
+                        )}
+                        {prob.status === 'Attempted' && (
+                          <div className="flex items-center gap-1.5 text-red-400 text-sm font-medium">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            <span>Attempted</span>
+                          </div>
+                        )}
+                        {prob.status === 'Unsolved' && (
+                          <span className="text-neutral-400 text-sm font-medium">—</span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
