@@ -1,10 +1,13 @@
-/* ==========================================================================
-   STYLE.CSS - Centralized Color Palette & Theme Tokens
-   Foundation for Light and Dark Themes across LMS Platform
+﻿/* ==========================================================================
+   STYLE.CSS - Centralized Design Tokens & Theme Engine
+   Bespoke, High-Contrast, Production Dark & Light System
    ========================================================================== */
 
+/* --------------------------------------------------------------------------
+   1. LIGHT THEME (Default)
+   -------------------------------------------------------------------------- */
 :root {
-  /* Brand Palette (Light Mode) */
+  /* Brand Identity */
   --color-primary: #392C7D;
   --color-primary-hover: #2E3490;
   --color-secondary: #5625E8;
@@ -12,21 +15,21 @@
   --color-accent: #FF4667;
   --color-accent-hover: #E03554;
 
-  /* Feedback & Status Colors */
+  /* Feedback & Semantic States */
   --color-success: #0FA05C;
   --color-success-bright: #03C95A;
   --color-warning: #FE893E;
   --color-warning-amber: #FFC107;
   --color-error: #FB3748;
 
-  /* Surfaces & Backgrounds */
+  /* Surfaces & Hierarchy */
   --color-background: #F4F6F9;
   --color-surface: #FFFFFF;
   --color-surface-soft: #F8FAFC;
   --color-surface-subtle: #F4F6F9;
   --color-card: #FFFFFF;
 
-  /* Typography Colors */
+  /* Typography */
   --color-text-primary: #191919;
   --color-text-secondary: #6D6D6D;
   --color-text-muted: #90A1B9;
@@ -47,51 +50,245 @@
   --text-muted: 213 22% 66%;
 }
 
-/* ==========================================================================
-   Dark Theme Overrides ([data-theme="dark"] & .dark)
-   Calibrated for deep, authentic dark theme without neon glare
-   ========================================================================== */
+/* --------------------------------------------------------------------------
+   2. DARK THEME OVERRIDES ([data-theme="dark"] & .dark)
+   Deep obsidian aesthetic with clear hierarchy and comfortable reading contrast
+   -------------------------------------------------------------------------- */
 [data-theme="dark"],
 .dark {
-  /* Brand Palette (Dark Mode: deep, rich tones) */
-  --color-primary: #3b2d82;
-  --color-primary-hover: #4c3ba6;
-  --color-secondary: #471ec2;
-  --color-secondary-hover: #5625e8;
-  --color-accent: #e11d48;
-  --color-accent-hover: #be123c;
+  /* Brand Identity (Deep, rich dark tones with high-contrast legibility) */
+  --color-primary: #4F46E5;
+  --color-primary-hover: #4338CA;
+  --color-secondary: #6D28D9;
+  --color-secondary-hover: #5B21B6;
+  --color-accent: #FF4667;
+  --color-accent-hover: #E03554;
 
-  /* Feedback & Status Colors */
-  --color-success: #059669;
-  --color-success-bright: #10b981;
-  --color-warning: #d97706;
-  --color-warning-amber: #b45309;
-  --color-error: #dc2626;
+  /* Feedback & Semantic States */
+  --color-success: #10B981;
+  --color-success-bright: #34D399;
+  --color-warning: #F59E0B;
+  --color-warning-amber: #D97706;
+  --color-error: #EF4444;
 
-  /* Surfaces & Backgrounds (Deep, authentic dark surfaces) */
-  --color-background: #090d16;
-  --color-surface: #0f172a;
-  --color-surface-soft: #172033;
-  --color-surface-subtle: #090d16;
-  --color-card: #0f172a;
+  /* Deep Surfaces & Hierarchy */
+  --color-background: #0B0F17;
+  --color-surface: #111827;
+  --color-surface-soft: #182234;
+  --color-surface-subtle: #0B0F17;
+  --color-card: #111827;
 
-  /* Typography Colors (Gentle off-white readability) */
-  --color-text-primary: #e2e8f0;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
-  --color-text-strong: #f8fafc;
+  /* Soft Light Typography */
+  --color-text-primary: #F3F4F6;
+  --color-text-secondary: #9CA3AF;
+  --color-text-muted: #6B7280;
+  --color-text-strong: #FFFFFF;
 
   /* Borders & Dividers */
-  --color-border: #1e293b;
-  --color-border-subtle: #162032;
-  --color-border-strong: #334155;
+  --color-border: #1F2937;
+  --color-border-subtle: #182234;
+  --color-border-strong: #374151;
 
   /* Legacy HSL Variables */
-  --bg-main: 222 47% 6%;
-  --bg-card: 222 47% 9%;
-  --bg-muted: 223 47% 12%;
+  --bg-main: 222 47% 7%;
+  --bg-card: 222 47% 10%;
+  --bg-muted: 223 47% 14%;
   --border-color: 222 47% 18%;
-  --text-primary: 210 40% 90%;
-  --text-secondary: 215 20% 65%;
-  --text-muted: 215 15% 45%;
+  --text-primary: 210 40% 95%;
+  --text-secondary: 215 20% 70%;
+  --text-muted: 215 15% 50%;
+}
+
+/* --------------------------------------------------------------------------
+   3. GLOBAL DARK THEME COMPONENT SURFACE & TYPOGRAPHY ADAPTATIONS
+   -------------------------------------------------------------------------- */
+.dark body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+}
+
+/* Surfaces */
+.dark .bg-white {
+  background-color: #111827 !important;
+}
+
+.dark .bg-slate-50,
+.dark .bg-gray-50 {
+  background-color: #162032 !important;
+}
+
+.dark .bg-slate-50\/50,
+.dark .bg-slate-50\/80 {
+  background-color: rgba(22, 32, 50, 0.8) !important;
+}
+
+.dark .bg-slate-100,
+.dark .bg-gray-100 {
+  background-color: #1E293B !important;
+}
+
+.dark .bg-slate-100\/80 {
+  background-color: rgba(30, 41, 59, 0.8) !important;
+}
+
+.dark .bg-slate-200 {
+  background-color: #334155 !important;
+}
+
+/* Soft Badges & Highlights */
+.dark .bg-indigo-50,
+.dark .bg-indigo-50\/70,
+.dark .bg-indigo-50\/50 {
+  background-color: rgba(79, 70, 229, 0.15) !important;
+}
+
+.dark .bg-emerald-50,
+.dark .bg-green-50 {
+  background-color: rgba(16, 185, 129, 0.15) !important;
+}
+
+.dark .bg-rose-50,
+.dark .bg-red-50 {
+  background-color: rgba(244, 63, 94, 0.15) !important;
+}
+
+.dark .bg-amber-50,
+.dark .bg-yellow-50 {
+  background-color: rgba(245, 158, 11, 0.15) !important;
+}
+
+.dark .bg-violet-50,
+.dark .bg-purple-50 {
+  background-color: rgba(139, 92, 246, 0.15) !important;
+}
+
+/* Typography in Dark Mode */
+.dark .text-zinc-900,
+.dark .text-gray-900,
+.dark .text-neutral-900,
+.dark .text-slate-900 {
+  color: #F9FAFB !important;
+}
+
+.dark .text-zinc-800,
+.dark .text-gray-800,
+.dark .text-neutral-800 {
+  color: #E5E7EB !important;
+}
+
+.dark .text-zinc-700,
+.dark .text-gray-700,
+.dark .text-neutral-700 {
+  color: #D1D5DB !important;
+}
+
+.dark .text-neutral-600,
+.dark .text-zinc-600,
+.dark .text-gray-600,
+.dark .text-slate-600 {
+  color: #9CA3AF !important;
+}
+
+.dark .text-neutral-500,
+.dark .text-zinc-500,
+.dark .text-gray-500,
+.dark .text-slate-500 {
+  color: #9CA3AF !important;
+}
+
+.dark .text-neutral-400,
+.dark .text-zinc-400,
+.dark .text-gray-400,
+.dark .text-slate-400 {
+  color: #6B7280 !important;
+}
+
+.dark .text-indigo-950,
+.dark .text-indigo-900 {
+  color: #818CF8 !important;
+}
+
+.dark .text-emerald-700,
+.dark .text-green-700 {
+  color: #34D399 !important;
+}
+
+.dark .text-rose-700,
+.dark .text-red-700 {
+  color: #F87171 !important;
+}
+
+.dark .text-amber-800,
+.dark .text-amber-700 {
+  color: #FBBF24 !important;
+}
+
+/* Borders in Dark Mode */
+.dark .border-neutral-200,
+.dark .border-slate-200,
+.dark .border-gray-200,
+.dark .border-gray-100,
+.dark .border-neutral-100,
+.dark .border-slate-100 {
+  border-color: #1F2937 !important;
+}
+
+.dark .border-neutral-300,
+.dark .border-slate-300,
+.dark .border-gray-300 {
+  border-color: #374151 !important;
+}
+
+.dark .border-indigo-100,
+.dark .border-indigo-200 {
+  border-color: rgba(99, 102, 241, 0.3) !important;
+}
+
+.dark .border-emerald-300,
+.dark .border-green-300 {
+  border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.dark .border-rose-300,
+.dark .border-red-300 {
+  border-color: rgba(244, 63, 94, 0.3) !important;
+}
+
+.dark .border-amber-300,
+.dark .border-yellow-300 {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+/* Input, Textarea & Select Controls */
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark textarea,
+.dark select {
+  background-color: #162032 !important;
+  color: #F9FAFB !important;
+  border-color: #374151 !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748B !important;
+}
+
+/* Hero / Header Dark Gradients */
+.dark .bg-gradient-to-r.from-red-50.via-sky-50.to-blue-100 {
+  background: linear-gradient(to right, #111827, #1E1B4B, #111827) !important;
+  border-color: #1F2937 !important;
+}
+
+.dark .bg-gradient-to-br.from-indigo-900.to-indigo-500 {
+  background: linear-gradient(135deg, #1E1B4B 0%, #0F172A 100%) !important;
+  border-color: #1F2937 !important;
+}
+
+/* Shadows in Dark Mode */
+.dark .shadow-sm,
+.dark .shadow-md,
+.dark .shadow-lg,
+.dark .shadow-xl,
+.dark .shadow-2xl {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5) !important;
 }
