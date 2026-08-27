@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, User, BookOpen, Heart, Bot, Settings, LogOut, Flame, Clock, Code2, ChevronRight, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';

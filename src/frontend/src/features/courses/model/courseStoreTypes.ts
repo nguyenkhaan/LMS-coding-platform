@@ -58,7 +58,7 @@ export interface Course {
   publishedDate?: string;
 }
 
-interface CourseStore {
+export interface CourseStore {
   courses: Course[];
   loadCourses: () => void;
   addCourse: (course: Partial<Course>) => string;

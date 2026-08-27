@@ -135,7 +135,7 @@ export const CourseApprovalReviewPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
 
   const [courses, setCourses] = useState<CourseReviewData[]>(INITIAL_COURSES);
-  const [selectedCourseId, setSelectedCourseId] = useState<string>(courseId || INITIAL_COURSES[0].id);
+  const [selectedCourseId, setSelectedCourseId] = useState<string>(courseId || INITIAL_COURSES[0]?.id || 'CS-001');
   const [reviewNote, setReviewNote] = useState<string>('');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     'S-1': true,
@@ -143,7 +143,7 @@ export const CourseApprovalReviewPage: React.FC = () => {
     'S-3': true
   });
 
-  const currentCourse = courses.find(c => c.id === selectedCourseId) || courses[0];
+  const currentCourse = courses.find(c => c.id === selectedCourseId) || courses[0] || INITIAL_COURSES[0]!;
 
   const toggleSection = (id: string) => {
     setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));

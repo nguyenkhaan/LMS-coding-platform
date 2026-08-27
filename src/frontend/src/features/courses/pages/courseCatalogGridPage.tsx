@@ -108,7 +108,7 @@ const MOCK_COURSES: Omit<CourseCatalogItem, 'id'>[] = [
 ];
 
 const ALL_COURSES: CourseCatalogItem[] = Array.from({ length: 20 }, (_, idx) => {
-	const template = MOCK_COURSES[idx % MOCK_COURSES.length];
+	const template = MOCK_COURSES[idx % MOCK_COURSES.length] || MOCK_COURSES[0]!;
 	return {
 		...template,
 		id: idx + 1,

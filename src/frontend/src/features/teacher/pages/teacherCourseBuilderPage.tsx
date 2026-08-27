@@ -186,9 +186,11 @@ export const CourseBuilderPage: React.FC = () => {
     if (targetIdx < 0 || targetIdx >= sections.length) return;
 
     const newSections = [...sections];
-    const temp = newSections[index];
-    newSections[index] = newSections[targetIdx];
-    newSections[targetIdx] = temp;
+    const tempA = newSections[index];
+    const tempB = newSections[targetIdx];
+    if (!tempA || !tempB) return;
+    newSections[index] = tempB;
+    newSections[targetIdx] = tempA;
 
     // Recalculate position indexes
     const updated = newSections.map((s, idx) => ({
@@ -209,9 +211,11 @@ export const CourseBuilderPage: React.FC = () => {
     const updatedSections = sections.map(sec => {
       if (sec.id === sectionId) {
         const newLessons = [...sec.lessons];
-        const temp = newLessons[lessonIndex];
-        newLessons[lessonIndex] = newLessons[targetIdx];
-        newLessons[targetIdx] = temp;
+        const tempA = newLessons[lessonIndex];
+        const tempB = newLessons[targetIdx];
+        if (!tempA || !tempB) return sec;
+        newLessons[lessonIndex] = tempB;
+        newLessons[targetIdx] = tempA;
 
         const updatedLessons = newLessons.map((l, idx) => ({
           ...l,
@@ -332,8 +336,11 @@ export const CourseBuilderPage: React.FC = () => {
   const handleTestcaseChange = (index: number, field: 'input' | 'output' | 'explanation', value: string) => {
     setProblemForm(prev => {
       const newTestcases = [...prev.sampleTestcases];
+      const currentTc = newTestcases[index] || { input: '', output: '', explanation: '' };
       newTestcases[index] = {
-        ...newTestcases[index],
+        input: currentTc.input,
+        output: currentTc.output,
+        explanation: currentTc.explanation,
         [field]: value
       };
       return { ...prev, sampleTestcases: newTestcases };
@@ -461,30 +468,32 @@ export const CourseBuilderPage: React.FC = () => {
   };
 
   const addContent = (sectionId: string, lessonId: string) => {
+    const targetCourseId = activeCourse?.id || courseId || 'dsa-foundations';
     const typeChoice = prompt('Choose content type: 1 for Reading, 2 for Quiz, 3 for Code Problem');
     if (!typeChoice) return;
 
     if (typeChoice === '1') {
-      navigate(`/teacher/courses/${activeCourse.id}/reading-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
+      navigate(`/teacher/courses/${targetCourseId}/reading-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
       return;
     }
     if (typeChoice === '2') {
-      navigate(`/teacher/courses/${activeCourse.id}/quiz-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
+      navigate(`/teacher/courses/${targetCourseId}/quiz-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
       return;
     }
     if (typeChoice === '3') {
-      navigate(`/teacher/courses/${activeCourse.id}/problem-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
+      navigate(`/teacher/courses/${targetCourseId}/problem-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
       return;
     }
   };
 
   const handleEditActivity = (sectionId: string, lessonId: string, activityId: string, contentType: 'Reading' | 'Quiz' | 'Code Problem') => {
+    const targetCourseId = activeCourse?.id || courseId || 'dsa-foundations';
     if (contentType === 'Reading') {
-      navigate(`/teacher/courses/${activeCourse.id}/reading-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
+      navigate(`/teacher/courses/${targetCourseId}/reading-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
     } else if (contentType === 'Quiz') {
-      navigate(`/teacher/courses/${activeCourse.id}/quiz-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
+      navigate(`/teacher/courses/${targetCourseId}/quiz-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
     } else if (contentType === 'Code Problem') {
-      navigate(`/teacher/courses/${activeCourse.id}/problem-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
+      navigate(`/teacher/courses/${targetCourseId}/problem-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
     }
   };
 
@@ -525,15 +534,18 @@ export const CourseBuilderPage: React.FC = () => {
     navigate(`/learn/${metadata.slug}`);
   };
 
-  // Save / Publish Actions
+  // ---------------------------------------------------------------------------
+  // Action Handlers
+  // ---------------------------------------------------------------------------
   const handleSaveDraft = (e: React.FormEvent) => {
     e.preventDefault();
     if (!metadata.title) {
       toast.error('Course title is required.');
       return;
     }
+    const targetCourseId = activeCourse?.id || courseId || 'dsa-foundations';
     setMetadata(prev => ({ ...prev, status: 'DRAFT' }));
-    updateCourse(activeCourse.id, {
+    updateCourse(targetCourseId, {
       title: metadata.title,
       slug: metadata.slug,
       field: metadata.field,
@@ -552,8 +564,9 @@ export const CourseBuilderPage: React.FC = () => {
       toast.error('Course title is required.');
       return;
     }
+    const targetCourseId = activeCourse?.id || courseId || 'dsa-foundations';
     setMetadata(prev => ({ ...prev, status: 'PENDING_REVIEW' }));
-    updateCourse(activeCourse.id, {
+    updateCourse(targetCourseId, {
       title: metadata.title,
       slug: metadata.slug,
       field: metadata.field,

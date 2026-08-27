@@ -87,11 +87,11 @@ const MOCK_APPLICANTS: TeacherApplicant[] = [
 
 export const AdminVerificationsPage: React.FC = () => {
 	const [applicants, setApplicants] = useState<TeacherApplicant[]>(MOCK_APPLICANTS);
-	const [selectedApplicantId, setSelectedApplicantId] = useState<string>(MOCK_APPLICANTS[0].id);
+	const [selectedApplicantId, setSelectedApplicantId] = useState<string>(MOCK_APPLICANTS[0]?.id || '1');
 	const [reviewerNote, setReviewerNote] = useState<string>('');
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-	const currentApplicant = applicants.find((a) => a.id === selectedApplicantId) || applicants[0];
+	const currentApplicant = applicants.find((a) => a.id === selectedApplicantId) || applicants[0] || MOCK_APPLICANTS[0]!;
 
 	const handleApprove = () => {
 		setApplicants((prev) =>

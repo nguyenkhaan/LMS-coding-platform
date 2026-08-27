@@ -18,6 +18,16 @@ import { toast } from 'sonner';
 import { useCourseStore } from '@/features/courses/model/useCourseStore';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 
+interface RawLessonContent {
+  quizDescription?: string;
+  quizQuestions?: Array<{ points?: number }>;
+  problemDifficulty?: string;
+  problemTags?: string[];
+  problemStatement?: string;
+  problemConstraints?: string;
+  problemSlug?: string;
+}
+
 interface LessonItem {
   id: string;
   title: string;
@@ -25,7 +35,7 @@ interface LessonItem {
   path: string;
   isCompleted: boolean;
   isActive: boolean;
-  rawContent?: unknown;
+  rawContent?: RawLessonContent;
 }
 
 interface CommentMessage {
@@ -39,11 +49,11 @@ interface CommentMessage {
 }
 
 const INITIAL_LESSONS: LessonItem[] = [
-  { id: 1, title: 'Hash tables from scratch', type: 'Reading', path: '/learn/dsa-module-2', isCompleted: true, isActive: false },
-  { id: 2, title: 'Collision strategies', type: 'Reading', path: '/learn/dsa-module-2', isCompleted: true, isActive: false },
-  { id: 3, title: 'Two-pointer patterns', type: 'Reading', path: '/learn/dsa-module-2', isCompleted: false, isActive: true },
-  { id: 4, title: 'Two-pointer practice problem', type: 'Problem', path: '/classroom/lesson/problem-preview', isCompleted: false, isActive: false },
-  { id: 5, title: 'Lesson review & quiz', type: 'Quiz', path: '/quiz/quiz-control-flow-01/preview', isCompleted: false, isActive: false }
+  { id: '1', title: 'Hash tables from scratch', type: 'Reading', path: '/learn/dsa-module-2', isCompleted: true, isActive: false },
+  { id: '2', title: 'Collision strategies', type: 'Reading', path: '/learn/dsa-module-2', isCompleted: true, isActive: false },
+  { id: '3', title: 'Two-pointer patterns', type: 'Reading', path: '/learn/dsa-module-2', isCompleted: false, isActive: true },
+  { id: '4', title: 'Two-pointer practice problem', type: 'Problem', path: '/classroom/lesson/problem-preview', isCompleted: false, isActive: false },
+  { id: '5', title: 'Lesson review & quiz', type: 'Quiz', path: '/quiz/quiz-control-flow-01/preview', isCompleted: false, isActive: false }
 ];
 
 const INITIAL_COMMENTS: CommentMessage[] = [
@@ -118,7 +128,7 @@ export function ClassroomPage() {
             path: `/learn/${courseSlug}`,
             isCompleted: false,
             isActive: isTarget,
-            rawContent: les
+            rawContent: les as unknown as RawLessonContent
           });
         }
       });
@@ -141,7 +151,7 @@ export function ClassroomPage() {
     }
   }, [activeLessonId]);
 
-  const activeLesson = lessons.find((l) => l.isActive) || lessons[0];
+  const activeLesson = lessons.find((l) => l.isActive) || lessons[0] || INITIAL_LESSONS[0]!;
   const courseTitle = currentCourse ? currentCourse.title : "Data Structures & Algorithms";
   const subtitleInfo = currentCourse 
     ? `${currentCourse.field} · ${activeLesson.title}`

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { CourseDetailHero } from '../components/courseDetailHero.tsx';
 import { CourseEnrollmentPanel } from '../components/courseEnrollmentPanel.tsx';
 import { CourseCatalogItemThumbnailCard } from '../components/coursePreviewCard.tsx';

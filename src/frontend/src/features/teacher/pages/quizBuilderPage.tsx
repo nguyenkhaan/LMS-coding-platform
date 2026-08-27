@@ -86,7 +86,9 @@ export const QuizBuilderPage: React.FC = () => {
   const handleQuestionTextChange = (idx: number, text: string) => {
     setQuestions(prev => {
       const updated = [...prev];
-      updated[idx].questionText = text;
+      if (updated[idx]) {
+        updated[idx] = { ...updated[idx], questionText: text };
+      }
       return updated;
     });
   };
@@ -94,7 +96,11 @@ export const QuizBuilderPage: React.FC = () => {
   const handleChoiceChange = (qIdx: number, cIdx: number, val: string) => {
     setQuestions(prev => {
       const updated = [...prev];
-      updated[qIdx].choices[cIdx] = val;
+      if (updated[qIdx] && updated[qIdx].choices) {
+        const newChoices = [...updated[qIdx].choices];
+        newChoices[cIdx] = val;
+        updated[qIdx] = { ...updated[qIdx], choices: newChoices };
+      }
       return updated;
     });
   };
@@ -102,7 +108,9 @@ export const QuizBuilderPage: React.FC = () => {
   const handleCorrectAnswerSelect = (qIdx: number, cIdx: number) => {
     setQuestions(prev => {
       const updated = [...prev];
-      updated[qIdx].correctAnswerIndex = cIdx;
+      if (updated[qIdx]) {
+        updated[qIdx] = { ...updated[qIdx], correctAnswerIndex: cIdx };
+      }
       return updated;
     });
   };
@@ -110,7 +118,9 @@ export const QuizBuilderPage: React.FC = () => {
   const handlePointsChange = (qIdx: number, val: number) => {
     setQuestions(prev => {
       const updated = [...prev];
-      updated[qIdx].points = val;
+      if (updated[qIdx]) {
+        updated[qIdx] = { ...updated[qIdx], points: val };
+      }
       return updated;
     });
   };

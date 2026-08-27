@@ -79,9 +79,11 @@ const LineChart: React.FC<LineChartProps> = ({ data, labels }) => {
     ''
   );
 
+  const firstPoint = points[0];
+  const lastPoint = points[points.length - 1];
   const areaD =
-    points.length > 0
-      ? `${pathD} L ${points[points.length - 1].x} ${height - paddingBottom} L ${points[0].x} ${height - paddingBottom} Z`
+    firstPoint && lastPoint
+      ? `${pathD} L ${lastPoint.x} ${height - paddingBottom} L ${firstPoint.x} ${height - paddingBottom} Z`
       : '';
 
   return (
@@ -231,7 +233,7 @@ export const TeacherEarningsPage: React.FC = () => {
   };
 
   const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setPeriod(e.target.value as any);
+    setPeriod(e.target.value as 'this_month' | 'last_3_months' | 'all_time');
     setCurrentPage(1);
   };
 

@@ -58,7 +58,11 @@ export const ProblemBuilderPage: React.FC = () => {
           passingScore: content.problemPassingScore || 100,
           timeLimitMs: content.problemTimeLimitMs || 1000,
           memoryLimitKb: content.problemMemoryLimitKb || 256000,
-          sampleTestcases: content.problemSampleTestcases || [{ input: '', output: '', explanation: '' }],
+          sampleTestcases: content.problemSampleTestcases?.map(tc => ({
+            input: tc.input || '',
+            output: tc.output || '',
+            explanation: tc.explanation || ''
+          })) || [{ input: '', output: '', explanation: '' }],
           tags: content.problemTags ? content.problemTags.join(', ') : ''
         });
       }
@@ -101,8 +105,11 @@ export const ProblemBuilderPage: React.FC = () => {
   const handleTestcaseChange = (index: number, field: 'input' | 'output' | 'explanation', value: string) => {
     setProblemForm(prev => {
       const newTestcases = [...prev.sampleTestcases];
+      const currentTc = newTestcases[index] || { input: '', output: '', explanation: '' };
       newTestcases[index] = {
-        ...newTestcases[index],
+        input: currentTc.input,
+        output: currentTc.output,
+        explanation: currentTc.explanation,
         [field]: value
       };
       return { ...prev, sampleTestcases: newTestcases };
@@ -328,7 +335,7 @@ export const ProblemBuilderPage: React.FC = () => {
                 <label className="text-[13px] font-semibold text-[#374151]">Difficulty</label>
                 <select
                   value={problemForm.difficulty}
-                  onChange={(e) => setProblemForm(prev => ({ ...prev, difficulty: e.target.value as any }))}
+                  onChange={(e) => setProblemForm(prev => ({ ...prev, difficulty: e.target.value as 'EASY' | 'MEDIUM' | 'HARD' }))}
                   className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white cursor-pointer text-zinc-900"
                 >
                   <option value="EASY">Easy</option>

@@ -6,6 +6,14 @@ import { Button } from '@/components/ui/button';
 import { useCourseStore } from '@/features/courses/model/useCourseStore';
 import { toast } from 'sonner';
 
+interface EnrolledRecord {
+  id: string;
+  slug: string;
+  title: string;
+  thumbnail_url: string;
+  progress_percent: number;
+}
+
 export const PaymentResultPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -17,8 +25,8 @@ export const PaymentResultPage: React.FC = () => {
 
   useEffect(() => {
     if (status === 'success' && activeCourse) {
-      const localEnrolled = JSON.parse(localStorage.getItem('local_enrolled_courses') || '[]');
-      if (!localEnrolled.some((c: any) => c.id === activeCourse.id || c.slug === activeCourse.slug)) {
+      const localEnrolled: EnrolledRecord[] = JSON.parse(localStorage.getItem('local_enrolled_courses') || '[]');
+      if (!localEnrolled.some((c: EnrolledRecord) => c.id === activeCourse.id || c.slug === activeCourse.slug)) {
         localEnrolled.push({
           id: activeCourse.id,
           slug: activeCourse.slug,

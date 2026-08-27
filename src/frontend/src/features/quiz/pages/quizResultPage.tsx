@@ -9,7 +9,14 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
-const MOCK_QUIZ_QUESTIONS = [
+interface QuizQuestionResultItem {
+	id: number;
+	text: string;
+	codeBlock?: string;
+	options: { id: string; text: string }[];
+}
+
+const MOCK_QUIZ_QUESTIONS: QuizQuestionResultItem[] = [
 	{
 		id: 1,
 		text: 'What does the following program print?',
@@ -135,7 +142,7 @@ const MOCK_QUIZ_CORRECT_ANSWERS: Record<number, string> = {
 	10: 'b',
 };
 
-const BACKEND_QUIZ_QUESTIONS = [
+const BACKEND_QUIZ_QUESTIONS: QuizQuestionResultItem[] = [
 	{
 		id: 1,
 		text: "Python là ngôn ngữ lập trình thuộc loại nào?",

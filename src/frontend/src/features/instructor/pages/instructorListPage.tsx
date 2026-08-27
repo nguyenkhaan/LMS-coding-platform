@@ -38,8 +38,7 @@ const MOCK_INSTRUCTORS: Instructor[] = [
 		category: 'Backend',
 		level: 'Advanced',
 		priceType: 'Paid',
-		price: 49,
-		isFavorite: false
+		price: 49
 	},
 	{
 		id: 2,
@@ -57,8 +56,7 @@ const MOCK_INSTRUCTORS: Instructor[] = [
 		category: 'General',
 		level: 'Intermediate',
 		priceType: 'Free',
-		price: 0,
-		isFavorite: true
+		price: 0
 	},
 	{
 		id: 3,
@@ -76,8 +74,7 @@ const MOCK_INSTRUCTORS: Instructor[] = [
 		category: 'IT & Software',
 		level: 'Advanced',
 		priceType: 'Paid',
-		price: 89,
-		isFavorite: false
+		price: 89
 	},
 	{
 		id: 4,
@@ -95,8 +92,7 @@ const MOCK_INSTRUCTORS: Instructor[] = [
 		category: 'Frontend',
 		level: 'Intermediate',
 		priceType: 'Paid',
-		price: 59,
-		isFavorite: false
+		price: 59
 	},
 	{
 		id: 5,
@@ -114,8 +110,7 @@ const MOCK_INSTRUCTORS: Instructor[] = [
 		category: 'Algorithms',
 		level: 'Expert',
 		priceType: 'Paid',
-		price: 79,
-		isFavorite: true
+		price: 79
 	},
 	{
 		id: 6,
@@ -133,8 +128,7 @@ const MOCK_INSTRUCTORS: Instructor[] = [
 		category: 'Backend',
 		level: 'Advanced',
 		priceType: 'Paid',
-		price: 69,
-		isFavorite: false
+		price: 69
 	}
 ];
 

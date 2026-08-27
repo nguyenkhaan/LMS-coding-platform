@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
+import { Role } from '@/features/auth/model/auth';
 
 export type TeacherApplicationStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
@@ -91,8 +92,8 @@ export function BecomeTeacherPage() {
   const handleStateChange = (newStatus: TeacherApplicationStatus) => {
     setStatus(newStatus);
     if (user) {
-      const updatedRoles = newStatus === 'APPROVED' 
-        ? (user.roles.includes('TEACHER') ? user.roles : [...user.roles, 'TEACHER'])
+      const updatedRoles: Role[] = newStatus === 'APPROVED' 
+        ? (user.roles.includes('TEACHER') ? user.roles : [...user.roles, 'TEACHER' as Role])
         : user.roles.filter(r => r !== 'TEACHER');
       
       setUser({
@@ -164,7 +165,7 @@ export function BecomeTeacherPage() {
   const cvRef = useRef<HTMLInputElement>(null);
 
   // Field change handler
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 

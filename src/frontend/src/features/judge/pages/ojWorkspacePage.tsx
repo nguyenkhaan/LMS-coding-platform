@@ -184,7 +184,7 @@ export function OJWorkspacePage() {
     if (problemSlug && PROBLEMS_DATABASE[problemSlug]) {
       return PROBLEMS_DATABASE[problemSlug];
     }
-    return PROBLEMS_DATABASE['add-two-number'] || PROBLEMS_DATABASE['two-sum'];
+    return PROBLEMS_DATABASE['add-two-number'] || PROBLEMS_DATABASE['two-sum'] || Object.values(PROBLEMS_DATABASE)[0]!;
   }, [problemSlug]);
 
   // State

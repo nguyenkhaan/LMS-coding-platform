@@ -72,10 +72,10 @@ export const LessonProblemPreviewPage: React.FC = () => {
 
 	const toggleUpvote = (id: string) => {
 		if (hasUpvoted[id]) {
-			setUpvotes(prev => ({ ...prev, [id]: prev[id] - 1 }));
+			setUpvotes(prev => ({ ...prev, [id]: (prev[id] ?? 0) - 1 }));
 			setHasUpvoted(prev => ({ ...prev, [id]: false }));
 		} else {
-			setUpvotes(prev => ({ ...prev, [id]: prev[id] + 1 }));
+			setUpvotes(prev => ({ ...prev, [id]: (prev[id] ?? 0) + 1 }));
 			setHasUpvoted(prev => ({ ...prev, [id]: true }));
 		}
 	};

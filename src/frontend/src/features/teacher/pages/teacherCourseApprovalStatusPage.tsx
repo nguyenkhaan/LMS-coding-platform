@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { TeacherSidebar } from '../components/teacherSidebar.tsx';
 import { toast } from 'sonner';
@@ -30,6 +30,7 @@ const MOCK_COURSE: CourseSummary = {
 };
 
 export const CourseApprovalStatusPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const { courseId } = useParams<{ courseId: string }>();
   void courseId;

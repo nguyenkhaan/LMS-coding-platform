@@ -34,8 +34,9 @@ export const Modal: React.FC<ModalProps> = ({
 		const focusableElements = modalRef.current?.querySelectorAll<HTMLElement>(
 			'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
 		);
-		if (focusableElements && focusableElements.length > 0) {
-			focusableElements[0].focus();
+		const firstFocusable = focusableElements?.[0];
+		if (firstFocusable) {
+			firstFocusable.focus();
 		} else {
 			modalRef.current?.focus();
 		}
@@ -55,15 +56,17 @@ export const Modal: React.FC<ModalProps> = ({
 				const first = focusables[0];
 				const last = focusables[focusables.length - 1];
 
-				if (e.shiftKey) {
-					if (document.activeElement === first) {
-						e.preventDefault();
-						last.focus();
-					}
-				} else {
-					if (document.activeElement === last) {
-						e.preventDefault();
-						first.focus();
+				if (first && last) {
+					if (e.shiftKey) {
+						if (document.activeElement === first) {
+							e.preventDefault();
+							last.focus();
+						}
+					} else {
+						if (document.activeElement === last) {
+							e.preventDefault();
+							first.focus();
+						}
 					}
 				}
 			}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { User, Edit3 } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';

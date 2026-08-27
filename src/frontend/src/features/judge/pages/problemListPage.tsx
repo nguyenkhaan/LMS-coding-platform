@@ -9,7 +9,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 
-export interface ProblemItem {
+interface ProblemItem {
   id: number;
   code: string;
   slug: string;
@@ -20,7 +20,7 @@ export interface ProblemItem {
   tags: string[];
 }
 
-export const MOCK_PROBLEMS: ProblemItem[] = [
+const MOCK_PROBLEMS: ProblemItem[] = [
   { id: 1, code: 'OJ-001', slug: 'two-sum', title: 'Two Sum', difficulty: 'Easy', acceptance: '49.2%', status: 'Solved', tags: ['Array', 'Hash Table'] },
   { id: 2, code: 'OJ-002', slug: 'add-two-numbers', title: 'Add Two Numbers', difficulty: 'Medium', acceptance: '39.7%', status: 'Solved', tags: ['Linked List', 'Math'] },
   { id: 3, code: 'OJ-003', slug: 'longest-substring-without-repeating-characters', title: 'Longest Substring Without Repeating Characters', difficulty: 'Medium', acceptance: '33.8%', status: 'Attempted', tags: ['Hash Table', 'String', 'Sliding Window'] },
@@ -106,7 +106,7 @@ export function ProblemListPage() {
               <select
                 value={selectedDifficulty}
                 onChange={(e) => {
-                  setSelectedDifficulty(e.target.value as any);
+                  setSelectedDifficulty(e.target.value as 'All' | 'Easy' | 'Medium' | 'Hard');
                   setCurrentPage(1);
                 }}
                 className="px-4 py-2.5 bg-white rounded-lg border border-neutral-200 text-zinc-600 text-sm font-medium appearance-none pr-9 cursor-pointer shadow-sm hover:border-neutral-300 focus:outline-none"
@@ -145,7 +145,7 @@ export function ProblemListPage() {
               <select
                 value={selectedStatus}
                 onChange={(e) => {
-                  setSelectedStatus(e.target.value as any);
+                  setSelectedStatus(e.target.value as 'All' | 'Solved' | 'Attempted' | 'Unsolved');
                   setCurrentPage(1);
                 }}
                 className="px-4 py-2.5 bg-white rounded-lg border border-neutral-200 text-zinc-600 text-sm font-medium appearance-none pr-9 cursor-pointer shadow-sm hover:border-neutral-300 focus:outline-none"

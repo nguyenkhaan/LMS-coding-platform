@@ -45,7 +45,7 @@ export const useCourseStore = create<CourseStore>((set, get) => {
         thumbnail_url: courseData.thumbnail_url || 'https://placehold.co/360x200',
         status: 'DRAFT',
         sections: [],
-        lastUpdated: new Date().toISOString().split('T')[0]
+        lastUpdated: new Date().toISOString().slice(0, 10)
       };
       
       const updated = [...get().courses, newCourse];
@@ -60,10 +60,10 @@ export const useCourseStore = create<CourseStore>((set, get) => {
           const updatedCourse = {
             ...c,
             ...updates,
-            lastUpdated: new Date().toISOString().split('T')[0]
+            lastUpdated: new Date().toISOString().slice(0, 10)
           };
           if (updates.status === 'APPROVED' && !c.publishedDate) {
-            updatedCourse.publishedDate = new Date().toISOString().split('T')[0];
+            updatedCourse.publishedDate = new Date().toISOString().slice(0, 10);
           }
           return updatedCourse;
         }
