@@ -84,21 +84,19 @@ export const LessonProblemPreviewPage: React.FC = () => {
 		<div className="w-full min-h-screen bg-gray-50 flex flex-col justify-start items-start font-['Inter'] antialiased">
 			
 			{/* 1. HERO BANNER (Synchronized with Classroom & Problem List) */}
-			<div className="self-stretch px-6 lg:px-20 py-14 bg-gradient-to-r from-red-100 via-sky-100 to-blue-100 flex flex-col justify-center items-center gap-3 text-center border-b border-neutral-200/60">
-				<h1 className="text-zinc-900 text-4xl font-extrabold tracking-tight">Lesson Preview</h1>
+			<div className="self-stretch px-6 lg:px-20 py-14 bg-gradient-to-r from-red-50 via-sky-50 to-blue-100 flex flex-col justify-center items-center gap-3 text-center border-b border-neutral-200/60">
+				<h1 className="text-zinc-900 text-4xl font-extrabold tracking-tight">Workspace</h1>
 				<div className="opacity-80 text-zinc-700 text-sm font-medium flex items-center gap-2">
 					<Link to="/dashboard" className="hover:underline">Dashboard</Link>
 					<span>&gt;</span>
 					<Link to="/courses" className="hover:underline">Courses</Link>
-					<span>&gt;</span>
-					<Link to="/learn/dsa-module-2" className="hover:underline">Data Structures &amp; Algorithms</Link>
 					<span>&gt;</span>
 					<span className="text-zinc-900 font-semibold">Problem: Sum of Two Numbers</span>
 				</div>
 			</div>
 
 			{/* 2. SUBHEADER: SEARCH & STUDENT PROFILE BAR */}
-			<div className="self-stretch bg-white/90 border-b border-neutral-200 backdrop-blur-xs px-6 lg:px-20 py-3.5 flex justify-between items-center shadow-xs sticky top-0 z-30">
+			<div className="self-stretch bg-oj-surface-alt/90 border-b border-neutral-200 backdrop-blur-xs px-6 lg:px-20 py-3.5 flex justify-between items-center shadow-xs sticky top-0 z-30">
 				<div className="max-w-[1608px] w-full mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
 					
 					{/* Breadcrumb path label */}

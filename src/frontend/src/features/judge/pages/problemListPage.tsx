@@ -9,6 +9,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
+import { Badge } from '@/components/ui/badge';
 
 interface ProblemItem {
   id: number;
@@ -168,7 +169,7 @@ export function ProblemListPage() {
         <div className="self-stretch bg-white rounded-xl border border-neutral-200 flex flex-col justify-start items-start overflow-hidden shadow-sm">
           
           {/* Table Header */}
-          <div className="self-stretch px-6 py-4 bg-gray-50 border-b border-neutral-200 flex items-center text-zinc-900 text-sm font-bold">
+          <div className="self-stretch px-6 py-4 bg-oj-surface-alt border-b border-neutral-200 flex items-center text-zinc-900 text-sm font-bold">
             <div className="w-20">#</div>
             <div className="flex-1">Title</div>
             <div className="w-40">Difficulty</div>
@@ -184,8 +185,8 @@ export function ProblemListPage() {
                 <div
                   key={prob.id}
                   onClick={() => navigate(`/practice/${prob.slug}`)}
-                  className={`self-stretch px-6 py-4 border-b border-neutral-100 flex items-center cursor-pointer transition-colors hover:bg-indigo-50/50 ${
-                    isEven ? 'bg-gray-50/60' : 'bg-white'
+                  className={`self-stretch px-6 py-4 border-b border-neutral-100 flex items-center cursor-pointer transition-colors hover:bg-oj-surface-hover ${
+                    isEven ? 'bg-oj-surface-alt' : 'bg-oj-surface'
                   }`}
                 >
                   {/* ID */}
@@ -200,22 +201,16 @@ export function ProblemListPage() {
                     </span>
                   </div>
 
-                  {/* Difficulty Badge */}
+                   {/* Difficulty Badge */}
                   <div className="w-40 flex items-center">
                     {prob.difficulty === 'Easy' && (
-                      <span className="px-3 py-1 bg-green-600 rounded-[20px] text-white text-xs font-semibold">
-                        Easy
-                      </span>
+                      <Badge variant="success">Easy</Badge>
                     )}
                     {prob.difficulty === 'Medium' && (
-                      <span className="px-3 py-1 bg-red-400 rounded-[20px] text-white text-xs font-semibold">
-                        Medium
-                      </span>
+                      <Badge variant="warning">Medium</Badge>
                     )}
                     {prob.difficulty === 'Hard' && (
-                      <span className="px-3 py-1 bg-red-500 rounded-[20px] text-white text-xs font-semibold">
-                        Hard
-                      </span>
+                      <Badge variant="error">Hard</Badge>
                     )}
                   </div>
 

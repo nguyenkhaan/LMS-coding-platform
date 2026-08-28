@@ -84,9 +84,9 @@ export const CourseEnrollmentPanel: React.FC<SidebarProps> = ({
 				{!isPaid && (
 					<button
 						onClick={handlePreviewClassroom}
-						className="w-full py-2.5 bg-neutral-50 hover:bg-neutral-100 text-zinc-900 text-sm font-semibold rounded-xl transition-all border border-neutral-200 cursor-pointer flex items-center justify-center gap-2"
+						className="w-full py-2.5 bg-sec-blue-bg hover:bg-sec-blue-hover text-sec-blue-text text-sm font-semibold rounded-xl transition-all border border-sec-blue-border cursor-pointer flex items-center justify-center gap-2"
 					>
-						<Play className="w-3.5 h-3.5 fill-primary text-primary" />
+						<Play className="w-3.5 h-3.5 fill-sec-blue-text text-sec-blue-text" />
 						Preview classroom
 					</button>
 				)}

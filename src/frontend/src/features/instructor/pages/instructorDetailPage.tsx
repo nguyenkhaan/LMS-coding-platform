@@ -359,7 +359,7 @@ export const InstructorDetailPage: React.FC = () => {
 				<div className="w-full lg:w-96 shrink-0 flex flex-col gap-6">
 					
 					{/* Contact Details Card (PII removed: no personal phone/address) */}
-					<div className="w-full p-6 bg-slate-100/90 rounded-2xl border border-slate-200 shadow-xs flex flex-col gap-5">
+					<div className="w-full p-6 bg-slate-100/80 rounded-2xl border border-slate-200 shadow-xs flex flex-col gap-5">
 						<h3 className="text-lg font-bold text-zinc-900 border-b border-slate-200/80 pb-3">
 							Contact Information
 						</h3>

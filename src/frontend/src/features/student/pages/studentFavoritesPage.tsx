@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, User, BookOpen, Heart, Bot, Settings, LogOut, Star, ChevronLeft, ChevronRight, Code2 } from 'lucide-react';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { StudentHeroCard } from '../components/studentHeroCard.tsx';
+import { Badge } from '@/components/ui/badge';
 
 interface FavoriteCourse {
   id: string;
@@ -324,17 +325,15 @@ export function StudentFavoritesPage() {
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <span
-                        className={`px-2.5 py-0.5 rounded-lg text-xs font-bold ${
-                          prob.difficulty === 'Easy'
-                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            : prob.difficulty === 'Medium'
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                            : 'bg-rose-50 text-rose-600 border border-rose-200'
-                        }`}
-                      >
-                        {prob.difficulty}
-                      </span>
+                      {prob.difficulty === 'Easy' && (
+                        <Badge variant="success">Easy</Badge>
+                      )}
+                      {prob.difficulty === 'Medium' && (
+                        <Badge variant="warning">Medium</Badge>
+                      )}
+                      {prob.difficulty === 'Hard' && (
+                        <Badge variant="error">Hard</Badge>
+                      )}
 
                       <button
                         onClick={(e) => handleRemoveProblem(prob.id, e)}

@@ -72,17 +72,17 @@ export function StudentProfilePage() {
             
             {/* ROW 1: First Name / Last Name / Registration Date */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="flex flex-col gap-1 p-3.5 bg-slate-50/70 rounded-xl border border-neutral-100">
+              <div className="flex flex-col gap-1 p-3.5 bg-profile-surface rounded-xl border border-profile-surface-border">
                 <span className="text-zinc-900 text-sm font-semibold">First Name</span>
                 <span className="text-neutral-600 text-sm font-medium">{profileData.firstName}</span>
               </div>
 
-              <div className="flex flex-col gap-1 p-3.5 bg-slate-50/70 rounded-xl border border-neutral-100">
+              <div className="flex flex-col gap-1 p-3.5 bg-profile-surface rounded-xl border border-profile-surface-border">
                 <span className="text-zinc-900 text-sm font-semibold">Last Name</span>
                 <span className="text-neutral-600 text-sm font-medium">{profileData.lastName}</span>
               </div>
 
-              <div className="flex flex-col gap-1 p-3.5 bg-slate-50/70 rounded-xl border border-neutral-100">
+              <div className="flex flex-col gap-1 p-3.5 bg-profile-surface rounded-xl border border-profile-surface-border">
                 <span className="text-zinc-900 text-sm font-semibold">Registration Date</span>
                 <span className="text-neutral-600 text-sm font-medium">{profileData.registrationDate}</span>
               </div>
@@ -90,17 +90,17 @@ export function StudentProfilePage() {
 
             {/* ROW 2: User Name / Phone Number / Email */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="flex flex-col gap-1 p-3.5 bg-slate-50/70 rounded-xl border border-neutral-100">
+              <div className="flex flex-col gap-1 p-3.5 bg-profile-surface rounded-xl border border-profile-surface-border">
                 <span className="text-zinc-900 text-sm font-semibold">User Name</span>
                 <span className="text-neutral-600 text-sm font-medium font-mono">{profileData.userName}</span>
               </div>
 
-              <div className="flex flex-col gap-1 p-3.5 bg-slate-50/70 rounded-xl border border-neutral-100">
+              <div className="flex flex-col gap-1 p-3.5 bg-profile-surface rounded-xl border border-profile-surface-border">
                 <span className="text-zinc-900 text-sm font-semibold">Phone Number</span>
                 <span className="text-neutral-600 text-sm font-medium">{profileData.phoneNumber}</span>
               </div>
 
-              <div className="flex flex-col gap-1 p-3.5 bg-slate-50/70 rounded-xl border border-neutral-100">
+              <div className="flex flex-col gap-1 p-3.5 bg-profile-surface rounded-xl border border-profile-surface-border">
                 <span className="text-zinc-900 text-sm font-semibold">Email</span>
                 <span className="text-neutral-600 text-sm font-medium">{profileData.email}</span>
               </div>
@@ -108,24 +108,24 @@ export function StudentProfilePage() {
 
             {/* ROW 3: Gender / DOB / Age */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="flex flex-col gap-1 p-3.5 bg-slate-50/70 rounded-xl border border-neutral-100">
+              <div className="flex flex-col gap-1 p-3.5 bg-profile-surface rounded-xl border border-profile-surface-border">
                 <span className="text-zinc-900 text-sm font-semibold">Gender</span>
                 <span className="text-neutral-600 text-sm font-medium">{profileData.gender}</span>
               </div>
 
-              <div className="flex flex-col gap-1 p-3.5 bg-slate-50/70 rounded-xl border border-neutral-100">
+              <div className="flex flex-col gap-1 p-3.5 bg-profile-surface rounded-xl border border-profile-surface-border">
                 <span className="text-zinc-900 text-sm font-semibold">DOB</span>
                 <span className="text-neutral-600 text-sm font-medium">{profileData.dob}</span>
               </div>
 
-              <div className="flex flex-col gap-1 p-3.5 bg-slate-50/70 rounded-xl border border-neutral-100">
+              <div className="flex flex-col gap-1 p-3.5 bg-profile-surface rounded-xl border border-profile-surface-border">
                 <span className="text-zinc-900 text-sm font-semibold">Age</span>
                 <span className="text-neutral-600 text-sm font-medium">{profileData.age}</span>
               </div>
             </div>
 
             {/* ROW 4: Bio (Full Width) */}
-            <div className="flex flex-col gap-2 p-4 bg-slate-50/70 rounded-xl border border-neutral-100">
+            <div className="flex flex-col gap-2 p-4 bg-profile-surface rounded-xl border border-profile-surface-border">
               <span className="text-zinc-900 text-sm font-semibold">Bio</span>
               <p className="text-neutral-600 text-sm font-normal leading-relaxed">
                 {profileData.bio}

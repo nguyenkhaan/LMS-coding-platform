@@ -85,7 +85,7 @@ export const MainLayout: React.FC = () => {
           </Link>
 
           {/* Navigation Links */}
-          <nav className="hidden lg:flex justify-start items-center gap-8">
+          <nav className="hidden lg:flex justify-start items-center gap-4 xl:gap-8 mr-auto ml-6 xl:ml-16">
             
             {/* Dashboard */}
             {isAuthenticated && (
@@ -181,14 +181,14 @@ export const MainLayout: React.FC = () => {
           </nav>
 
           {/* Actions (Search + Notifications + User profile) */}
-          <div className="flex justify-start items-center gap-3">
+          <div className="flex justify-start items-center gap-1.5 xl:gap-3 shrink-0 ml-4 xl:ml-6">
             <form onSubmit={handleSearchSubmit} className="relative flex items-center">
               <input
                 type="text"
                 placeholder="Search courses..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-3.5 py-1.5 border border-neutral-200 rounded-[40px] text-xs font-semibold focus:outline-none focus:border-primary transition-all bg-white text-zinc-900 w-40 sm:w-56 focus:w-60"
+                className="pl-9 pr-3.5 py-1.5 border border-neutral-200 rounded-[40px] text-xs font-semibold focus:outline-none focus:border-primary transition-all bg-white text-zinc-900 w-24 lg:w-32 xl:w-44 focus:w-52"
               />
               <button type="submit" className="absolute left-3 top-1/2 -translate-y-1/2 hover:text-primary cursor-pointer" title="Search">
                 <Search className="w-3.5 h-3.5 text-neutral-400" />
@@ -198,7 +198,7 @@ export const MainLayout: React.FC = () => {
             {/* Theme Toggle Button (Light/Dark) */}
             <button
               onClick={toggleTheme}
-              className="p-2.5 rounded-[40px] border border-neutral-200 hover:bg-slate-50 transition-colors cursor-pointer text-zinc-700"
+              className="p-2 xl:p-2.5 rounded-[40px] border border-slate-200 hover:bg-slate-100 transition-colors cursor-pointer text-slate-700"
               title="Toggle Light/Dark Theme"
             >
               {theme === 'dark' ? (
@@ -212,12 +212,12 @@ export const MainLayout: React.FC = () => {
             <NotificationDropdown />
 
             {isAuthenticated && user ? (
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-1.5 xl:gap-2.5">
                 {user.roles.includes('TEACHER') && (
                   location.pathname.startsWith('/teacher') ? (
                     <Link
                       to="/dashboard"
-                      className="px-3.5 py-1.5 rounded-[40px] border border-indigo-900 text-indigo-900 text-xs font-semibold hover:bg-indigo-50 transition-colors flex items-center gap-1.5"
+                      className="px-2 xl:px-3.5 py-1.5 rounded-[40px] border border-indigo-900 text-indigo-900 text-xs font-semibold hover:bg-indigo-50 transition-colors flex items-center gap-1 xl:gap-1.5"
                     >
                       <User className="w-3.5 h-3.5" />
                       Switch to Student
@@ -225,7 +225,7 @@ export const MainLayout: React.FC = () => {
                   ) : (
                     <Link
                       to="/teacher/dashboard"
-                      className="px-3.5 py-1.5 rounded-[40px] border border-indigo-900 text-indigo-900 text-xs font-semibold hover:bg-indigo-50 transition-colors flex items-center gap-1.5"
+                      className="px-2 xl:px-3.5 py-1.5 rounded-[40px] border border-indigo-900 text-indigo-900 text-xs font-semibold hover:bg-indigo-50 transition-colors flex items-center gap-1 xl:gap-1.5"
                     >
                       <GraduationCap className="w-3.5 h-3.5" />
                       Teacher Portal
@@ -235,7 +235,7 @@ export const MainLayout: React.FC = () => {
                 {user.roles.includes('ADMIN') && (
                   <Link
                     to="/admin/verifications"
-                    className="px-3.5 py-1.5 rounded-[40px] border border-emerald-600 text-emerald-600 text-xs font-semibold hover:bg-emerald-50 transition-colors flex items-center gap-1.5"
+                    className="px-2 xl:px-3.5 py-1.5 rounded-[40px] border border-emerald-600 text-emerald-600 text-xs font-semibold hover:bg-emerald-50 transition-colors flex items-center gap-1 xl:gap-1.5"
                   >
                     <ShieldCheck className="w-3.5 h-3.5" />
                     Admin
@@ -243,31 +243,31 @@ export const MainLayout: React.FC = () => {
                 )}
                 <Link
                   to="/dashboard"
-                  className="px-4 py-1.5 bg-neutral-200 hover:bg-neutral-300 rounded-[40px] flex items-center gap-1.5 text-zinc-900 text-sm font-medium transition-colors"
+                  className="px-2.5 xl:px-4 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-[40px] flex items-center gap-1 xl:gap-1.5 text-zinc-800 text-xs xl:text-sm font-medium transition-colors"
                 >
-                  <User className="w-3.5 h-3.5 text-zinc-800" />
+                  <User className="w-3.5 h-3.5 text-zinc-700" />
                   {user.fullName || user.email.split('@')[0]}
                 </Link>
                 <button
                   onClick={logout}
-                  className="p-2 rounded-[40px] hover:bg-rose-50 text-neutral-500 hover:text-rose-500 transition-colors cursor-pointer"
+                  className="p-1.5 xl:p-2 rounded-[40px] hover:bg-rose-50 text-neutral-500 hover:text-rose-500 transition-colors cursor-pointer"
                   title="Sign out"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-1.5 xl:gap-2.5">
                 <Link
                   to="/login"
-                  className="px-4 py-1.5 bg-neutral-200 hover:bg-neutral-300 rounded-[40px] flex items-center gap-1.5 text-zinc-900 text-sm font-medium transition-colors"
+                  className="px-2.5 xl:px-4 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-[40px] flex items-center gap-1 xl:gap-1.5 text-zinc-800 text-xs xl:text-sm font-medium transition-colors"
                 >
-                  <User className="w-3.5 h-3.5 text-zinc-800" />
+                  <User className="w-3.5 h-3.5 text-zinc-700" />
                   Sign In
                 </Link>
                 <Link
                   to="/register"
-                  className="px-4 py-1.5 bg-rose-500 hover:bg-rose-600 rounded-[40px] text-white text-sm font-medium transition-colors shadow-sm shadow-rose-500/20"
+                  className="px-2.5 xl:px-4 py-1.5 bg-rose-500 hover:bg-rose-600 rounded-[40px] text-white text-xs xl:text-sm font-medium transition-colors shadow-sm shadow-rose-500/20"
                 >
                   Register
                 </Link>

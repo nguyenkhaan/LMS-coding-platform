@@ -33,6 +33,18 @@
 	--color-border: var(--color-border);
 	--color-border-subtle: var(--color-border-subtle);
 	--color-border-strong: var(--color-border-strong);
+
+	--color-oj-surface: var(--color-oj-surface);
+	--color-oj-surface-alt: var(--color-oj-surface-alt);
+	--color-oj-surface-hover: var(--color-oj-surface-hover);
+
+	--color-profile-surface: var(--color-profile-surface);
+	--color-profile-surface-border: var(--color-profile-surface-border);
+
+	--color-sec-blue-bg: var(--color-secondary-blue-bg);
+	--color-sec-blue-border: var(--color-secondary-blue-border);
+	--color-sec-blue-text: var(--color-secondary-blue-text);
+	--color-sec-blue-hover: var(--color-secondary-blue-hover);
 }
 
 @layer base {

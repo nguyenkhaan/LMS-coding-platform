@@ -440,7 +440,7 @@ export function StudentHistoryPage() {
           </div>
 
           {/* Submissions Table Header */}
-          <div className="self-stretch px-6 py-3.5 bg-gray-50 border-b border-neutral-200 flex items-center text-zinc-900 text-sm font-bold">
+          <div className="self-stretch px-6 py-3.5 bg-oj-surface-alt border-b border-neutral-200 flex items-center text-zinc-900 text-sm font-bold">
             <div className="w-48 text-neutral-500 font-semibold">Submitted</div>
             <div className="flex-1 text-neutral-500 font-semibold">Problem</div>
             <div className="w-36 text-neutral-500 font-semibold">Language</div>
@@ -458,8 +458,8 @@ export function StudentHistoryPage() {
               return (
                 <div
                   key={sub.id}
-                  className={`self-stretch px-6 py-4 border-b border-neutral-100 flex items-center transition-colors hover:bg-indigo-50/40 ${
-                    isEven ? 'bg-gray-50/50' : 'bg-white'
+                  className={`self-stretch px-6 py-4 border-b border-neutral-100 flex items-center transition-colors hover:bg-oj-surface-hover ${
+                    isEven ? 'bg-oj-surface-alt' : 'bg-oj-surface'
                   }`}
                 >
                   {/* Submitted Date */}

@@ -214,7 +214,7 @@ export function ClassroomPage() {
     <div className="w-full min-h-screen bg-gray-50 flex flex-col justify-start items-start font-['Inter'] antialiased">
       
       {/* 1. HERO BANNER */}
-      <div className="self-stretch px-6 lg:px-20 py-14 bg-gradient-to-r from-red-100 via-sky-100 to-blue-100 flex flex-col justify-center items-center gap-3 text-center border-b border-neutral-200/60 font-['Inter']">
+      <div className="self-stretch px-6 lg:px-20 py-14 bg-gradient-to-r from-red-50 via-sky-50 to-blue-100 flex flex-col justify-center items-center gap-3 text-center border-b border-neutral-200/60 font-['Inter']">
         <h1 className="text-zinc-900 text-4xl font-extrabold tracking-tight">Workspace</h1>
         <div className="opacity-80 text-zinc-700 text-sm font-medium flex items-center gap-2">
           <Link to="/dashboard" className="hover:underline">Dashboard</Link>
@@ -233,7 +233,7 @@ export function ClassroomPage() {
       </div>
 
       {/* 2. SUBHEADER: SEARCH & STUDENT PROFILE BAR */}
-      <div className="self-stretch bg-white/90 border-b border-neutral-200 backdrop-blur-xs px-6 lg:px-20 py-3.5 flex justify-between items-center shadow-xs font-['Inter']">
+      <div className="self-stretch bg-oj-surface-alt/90 border-b border-neutral-200 backdrop-blur-xs px-6 lg:px-20 py-3.5 flex justify-between items-center shadow-xs font-['Inter']">
         <div className="max-w-[1608px] w-full mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           
           {/* Search bar */}
@@ -356,15 +356,15 @@ export function ClassroomPage() {
               <section className="space-y-2 pt-2 border-t border-neutral-100">
                 <h3 className="text-zinc-900 text-lg font-bold">4. Complexity &amp; Resource Evaluation</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  <div className="p-3.5 bg-emerald-50/60 rounded-xl border border-emerald-200">
-                    <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide">Time Complexity</span>
-                    <p className="text-emerald-950 font-bold text-lg font-mono mt-1">O(N)</p>
-                    <p className="text-neutral-600 text-xs mt-0.5">Each element in the array is evaluated at most once as pointers converge.</p>
+                  <div className="p-4 bg-profile-surface rounded-xl border border-profile-surface-border shadow-2xs">
+                    <span className="text-xs font-bold text-indigo-900 uppercase tracking-wide">Time Complexity</span>
+                    <p className="text-indigo-900 font-extrabold text-lg font-mono mt-1">O(N)</p>
+                    <p className="text-neutral-600 text-xs mt-1">Each element in the array is evaluated at most once as pointers converge.</p>
                   </div>
-                  <div className="p-3.5 bg-sky-50/60 rounded-xl border border-sky-200">
-                    <span className="text-xs font-bold text-sky-800 uppercase tracking-wide">Space Complexity</span>
-                    <p className="text-sky-950 font-bold text-lg font-mono mt-1">O(1)</p>
-                    <p className="text-neutral-600 text-xs mt-0.5">Operates in-place utilizing only two constant auxiliary pointer variables.</p>
+                  <div className="p-4 bg-profile-surface rounded-xl border border-profile-surface-border shadow-2xs">
+                    <span className="text-xs font-bold text-indigo-900 uppercase tracking-wide">Space Complexity</span>
+                    <p className="text-indigo-900 font-extrabold text-lg font-mono mt-1">O(1)</p>
+                    <p className="text-neutral-600 text-xs mt-1">Operates in-place utilizing only two constant auxiliary pointer variables.</p>
                   </div>
                 </div>
               </section>

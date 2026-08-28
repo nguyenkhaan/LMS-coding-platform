@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    STYLE.CSS - Centralized Design Tokens & Theme Engine
    Bespoke, High-Contrast, Production Dark & Light System
    ========================================================================== */
@@ -14,6 +14,8 @@
   --color-secondary-hover: #471EC2;
   --color-accent: #FF4667;
   --color-accent-hover: #E03554;
+  --color-brand-indigo: 250 48% 33%;
+  --color-brand-purple: 255 81% 53%;
 
   /* Feedback & Semantic States */
   --color-success: #0FA05C;
@@ -40,6 +42,21 @@
   --color-border-subtle: #E1E5EB;
   --color-border-strong: #D1D5DB;
 
+  /* OJ Table Surfaces */
+  --color-oj-surface: #FFFFFF;
+  --color-oj-surface-alt: #F8FAFC;
+  --color-oj-surface-hover: #F1F5F9;
+
+  /* Profile Surfaces */
+  --color-profile-surface: #F0F4FA;
+  --color-profile-surface-border: #D9E2EC;
+
+  /* Secondary Blue Button (Restrained blue palette) */
+  --color-secondary-blue-bg: #E0E7FF;
+  --color-secondary-blue-border: #C7D2FE;
+  --color-secondary-blue-text: #1E1B4B;
+  --color-secondary-blue-hover: #C7D2FE;
+
   /* Legacy HSL Variables */
   --bg-main: 220 27% 97%;
   --bg-card: 0 0% 100%;
@@ -63,6 +80,8 @@
   --color-secondary-hover: #5B21B6;
   --color-accent: #FF4667;
   --color-accent-hover: #E03554;
+  --color-brand-indigo: 243 75% 59%;
+  --color-brand-purple: 263 70% 50%;
 
   /* Feedback & Semantic States */
   --color-success: #10B981;
@@ -81,13 +100,28 @@
   /* Soft Light Typography */
   --color-text-primary: #F3F4F6;
   --color-text-secondary: #9CA3AF;
-  --color-text-muted: #6B7280;
+  --color-text-muted: #8A94A6;
   --color-text-strong: #FFFFFF;
 
   /* Borders & Dividers */
   --color-border: #1F2937;
   --color-border-subtle: #182234;
   --color-border-strong: #374151;
+
+  /* OJ Table Surfaces */
+  --color-oj-surface: #111827;
+  --color-oj-surface-alt: #162032;
+  --color-oj-surface-hover: #1E293B;
+
+  /* Profile Surfaces */
+  --color-profile-surface: #172237;
+  --color-profile-surface-border: #24334C;
+
+  /* Secondary Blue Button (Restrained blue palette) */
+  --color-secondary-blue-bg: rgba(79, 70, 229, 0.15);
+  --color-secondary-blue-border: rgba(99, 102, 241, 0.4);
+  --color-secondary-blue-text: #818CF8;
+  --color-secondary-blue-hover: rgba(99, 102, 241, 0.25);
 
   /* Legacy HSL Variables */
   --bg-main: 222 47% 7%;
@@ -109,30 +143,38 @@
 
 /* Surfaces */
 .dark .bg-white {
-  background-color: #111827 !important;
+  background-color: var(--color-surface) !important;
+}
+
+.dark .bg-white\/90 {
+  background-color: rgba(17, 24, 39, 0.9) !important;
 }
 
 .dark .bg-slate-50,
 .dark .bg-gray-50 {
-  background-color: #162032 !important;
+  background-color: var(--color-background) !important;
 }
 
 .dark .bg-slate-50\/50,
 .dark .bg-slate-50\/80 {
-  background-color: rgba(22, 32, 50, 0.8) !important;
+  background-color: rgba(11, 15, 23, 0.8) !important;
 }
 
 .dark .bg-slate-100,
 .dark .bg-gray-100 {
-  background-color: #1E293B !important;
+  background-color: var(--color-surface-soft) !important;
 }
 
 .dark .bg-slate-100\/80 {
-  background-color: rgba(30, 41, 59, 0.8) !important;
+  background-color: rgba(24, 34, 52, 0.8) !important;
+}
+
+.dark .bg-slate-100\/90 {
+  background-color: rgba(24, 34, 52, 0.9) !important;
 }
 
 .dark .bg-slate-200 {
-  background-color: #334155 !important;
+  background-color: var(--color-border-strong) !important;
 }
 
 /* Soft Badges & Highlights */
@@ -140,6 +182,10 @@
 .dark .bg-indigo-50\/70,
 .dark .bg-indigo-50\/50 {
   background-color: rgba(79, 70, 229, 0.15) !important;
+}
+
+.dark .bg-indigo-100 {
+  background-color: rgba(79, 70, 229, 0.25) !important;
 }
 
 .dark .bg-emerald-50,
@@ -172,13 +218,15 @@
 
 .dark .text-zinc-800,
 .dark .text-gray-800,
-.dark .text-neutral-800 {
+.dark .text-neutral-800,
+.dark .text-slate-800 {
   color: #E5E7EB !important;
 }
 
 .dark .text-zinc-700,
 .dark .text-gray-700,
-.dark .text-neutral-700 {
+.dark .text-neutral-700,
+.dark .text-slate-700 {
   color: #D1D5DB !important;
 }
 
@@ -200,7 +248,7 @@
 .dark .text-zinc-400,
 .dark .text-gray-400,
 .dark .text-slate-400 {
-  color: #6B7280 !important;
+  color: #8A94A6 !important;
 }
 
 .dark .text-indigo-950,
@@ -240,8 +288,22 @@
 }
 
 .dark .border-indigo-100,
-.dark .border-indigo-200 {
-  border-color: rgba(99, 102, 241, 0.3) !important;
+.dark .border-indigo-200,
+.dark .border-indigo-300,
+.dark .border-indigo-900 {
+  border-color: rgba(99, 102, 241, 0.4) !important;
+}
+
+/* Hover Overrides in Dark Mode to prevent text blending */
+.dark .hover\:bg-slate-50:hover,
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-neutral-50:hover,
+.dark .hover\:bg-indigo-50:hover,
+.dark .hover\:bg-indigo-50\/70:hover,
+.dark .hover\:bg-indigo-50\/50:hover,
+.dark .hover\:bg-slate-100:hover,
+.dark .hover\:bg-gray-100:hover {
+  background-color: var(--color-oj-surface-hover) !important;
 }
 
 .dark .border-emerald-300,
@@ -291,4 +353,108 @@
 .dark .shadow-xl,
 .dark .shadow-2xl {
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ==========================================================================
+   4. AUTH LAYOUT SPECIFIC OVERRIDES (Forces LIGHT theme inside .auth-layout
+   even if the global document theme is .dark)
+   ========================================================================== */
+.dark .auth-layout {
+  background-color: #F4F6F9 !important;
+  color: #191919 !important;
+}
+
+.dark .auth-layout .bg-white {
+  background-color: #FFFFFF !important;
+}
+
+.dark .auth-layout .bg-slate-50,
+.dark .auth-layout .bg-gray-50 {
+  background-color: #F4F6F9 !important;
+}
+
+.dark .auth-layout .bg-neutral-100 {
+  background-color: #F3F4F6 !important;
+}
+
+.dark .auth-layout .bg-neutral-200 {
+  background-color: #E5E7EB !important;
+}
+
+.dark .auth-layout .bg-rose-50 {
+  background-color: #FFF1F2 !important;
+}
+
+.dark .auth-layout .text-zinc-900,
+.dark .auth-layout .text-gray-900,
+.dark .auth-layout .text-neutral-900,
+.dark .auth-layout .text-slate-900 {
+  color: #191919 !important;
+}
+
+.dark .auth-layout .text-zinc-800,
+.dark .auth-layout .text-gray-800,
+.dark .auth-layout .text-neutral-800 {
+  color: #151E37 !important;
+}
+
+.dark .auth-layout .text-neutral-600,
+.dark .auth-layout .text-zinc-600,
+.dark .auth-layout .text-gray-600,
+.dark .auth-layout .text-slate-600 {
+  color: #6D6D6D !important;
+}
+
+.dark .auth-layout .text-neutral-500,
+.dark .auth-layout .text-zinc-500,
+.dark .auth-layout .text-gray-500,
+.dark .auth-layout .text-slate-500 {
+  color: #6D6D6D !important;
+}
+
+.dark .auth-layout .text-neutral-400,
+.dark .auth-layout .text-zinc-400,
+.dark .auth-layout .text-gray-400,
+.dark .auth-layout .text-slate-400 {
+  color: #90A1B9 !important;
+}
+
+.dark .auth-layout .text-indigo-900 {
+  color: #312E81 !important;
+}
+
+.dark .auth-layout .text-indigo-950 {
+  color: #1E1B4B !important;
+}
+
+.dark .auth-layout .text-rose-600 {
+  color: #E11D48 !important;
+}
+
+.dark .auth-layout .border-neutral-200,
+.dark .auth-layout .border-slate-200,
+.dark .auth-layout .border-gray-200,
+.dark .auth-layout .border-gray-100,
+.dark .auth-layout .border-neutral-100,
+.dark .auth-layout .border-slate-100 {
+  border-color: #E7E7E7 !important;
+}
+
+.dark .auth-layout .border-neutral-300,
+.dark .auth-layout .border-slate-300,
+.dark .auth-layout .border-gray-300 {
+  border-color: #D1D5DB !important;
+}
+
+.dark .auth-layout input:not([type="checkbox"]):not([type="radio"]),
+.dark .auth-layout textarea,
+.dark .auth-layout select {
+  background-color: #FFFFFF !important;
+  color: #191919 !important;
+  border-color: #E7E7E7 !important;
+}
+
+.dark .auth-layout input::placeholder,
+.dark .auth-layout textarea::placeholder {
+  color: #90A1B9 !important;
 }
