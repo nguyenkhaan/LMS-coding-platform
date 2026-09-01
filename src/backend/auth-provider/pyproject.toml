@@ -26,4 +26,5 @@ dependencies = [
 [dependency-groups]
 dev = [
     "mypy-protobuf>=5.1.0",
+    "pytest-asyncio>=1.4.0",
 ]
