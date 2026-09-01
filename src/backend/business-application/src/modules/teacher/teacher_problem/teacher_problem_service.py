@@ -26,7 +26,7 @@ class TeacherProblemService:
         tags = result.scalars().all()
         return [ProblemTagView.model_validate(t) for t in tags]
 
-    async def _validate_tag_ids(self, tag_ids: list[int]):
+    async def _validate_tag_ids(self, tag_ids: list[int]) -> None:
         if tag_ids:
             stmt = select(ProblemTagModel.id).where(ProblemTagModel.id.in_(tag_ids))
             result = await self.db.execute(stmt)

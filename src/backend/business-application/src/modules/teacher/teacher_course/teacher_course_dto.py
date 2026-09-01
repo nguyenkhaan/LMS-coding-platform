@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -9,10 +10,10 @@ class TeacherCourseBase(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
     title: str
-    description: str
-    price: int
+    description: str | None
+    price: float
     thumbnail_url: str | None = None
-    category: str = Field(alias="field")
+    category: str | None = Field(alias="field")
     tags: list[str]
     status: CourseStatus
 
@@ -26,11 +27,11 @@ class TeacherCourseCreateRequest(BaseModel):
     tags: list[str]
 
 
-class TeacherCourseUpdateRequest(TeacherCourseBase):
+class TeacherCourseUpdateRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     title: str | None = None
     description: str | None = None
-    price: int | None = None
+    price: float | None = None
     thumbnail_url: str | None = None
     category: str | None = Field(default=None, alias="field")
     tags: list[str] | None = None
@@ -49,6 +50,23 @@ class TeacherCourseResponse(TeacherCourseBase):
     reviewed_at: str | None = None
     created_at: str | None = None
     updated_at: str | None = None
+
+
+class CourseModerationView(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    course_id: int
+    reviewed_note: str | None
+    approved_at: datetime | None
+    submitted_at: datetime
+
+
+class CourseModerationHistoryResponse(BaseModel):
+    total_items: int
+    total_pages: int
+    current_page: int
+    items: list[CourseModerationView]
 
 
 class TeacherCourseSectionCreateRequest(BaseModel):
@@ -175,9 +193,6 @@ class TeacherCourseReadingCreateResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     reading_content: TeacherCourseReadingResponse
     lesson_content: TeacherCourseLessonContentResponse
-
-from datetime import datetime
-
 
 class TeacherCourseQuizCreateRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)

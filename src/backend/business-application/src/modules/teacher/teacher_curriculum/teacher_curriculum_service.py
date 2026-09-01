@@ -14,7 +14,7 @@ from src.models.problem_model import ProblemModel
 from src.models.quiz_model import QuizModel
 from src.models.reading_content_model import ReadingContentModel
 from src.models.section_model import SectionModel
-from src.modules.teacher.teacher_dto import (
+from src.modules.teacher.teacher_curriculum.teacher_curriculum_dto import (
     CurriculumItemType,
     CurriculumReorderRequest,
     CurriculumReorderResponse,

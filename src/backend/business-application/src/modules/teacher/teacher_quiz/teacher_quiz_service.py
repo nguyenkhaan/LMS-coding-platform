@@ -2,8 +2,11 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.base_model import LessonContentType
+from src.models.course_model import CourseModel
 from src.models.lesson_content_model import LessonContentModel
+from src.models.lesson_model import LessonModel
 from src.models.quiz_model import QuizModel
+from src.models.section_model import SectionModel
 from src.modules.teacher.teacher_course.teacher_course_dto import (
     TeacherCourseLessonContentResponse,
     TeacherCourseQuizCreateRequest,
@@ -12,18 +15,32 @@ from src.modules.teacher.teacher_course.teacher_course_dto import (
     TeacherCourseQuizResponse,
     TeacherCourseQuizUpdateRequest,
 )
-from src.modules.teacher.teacher_course.teacher_course_service import TeacherCourseService
-
-
 class TeacherQuizService:
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.course_service = TeacherCourseService()
+
+    async def _require_owned_lesson(self, lesson_id: int, teacher_id: int) -> None:
+        from sqlalchemy import select
+
+        course_teacher_id = await self.db.scalar(
+            select(CourseModel.teacher_id)
+            .select_from(LessonModel)
+            .join(SectionModel, SectionModel.id == LessonModel.section_id)
+            .join(CourseModel, CourseModel.id == SectionModel.course_id)
+            .where(
+                LessonModel.id == lesson_id,
+                CourseModel.deleted_at.is_(None),
+            )
+        )
+        if course_teacher_id is None:
+            raise HTTPException(status_code=404, detail="LESSON_NOT_FOUND")
+        if course_teacher_id != teacher_id:
+            raise HTTPException(status_code=403, detail="FORBIDDEN")
 
     async def create_quiz(self, teacher_id: int, lesson_id: int, data: TeacherCourseQuizCreateRequest) -> TeacherCourseQuizCreateResponse:
         # Verify ownership using Task 1 pattern
         # Quiz creation/editing is intentionally NOT restricted by course status (unlike sections/lessons) - confirmed with team lead, since teachers may need to fix quiz content even after course is published.
-        self.course_service._get_lesson_or_404(lesson_id, teacher_id)
+        await self._require_owned_lesson(lesson_id, teacher_id)
         
         # Atomic creation
         new_quiz = QuizModel(
@@ -74,7 +91,7 @@ class TeacherQuizService:
             raise HTTPException(status_code=404, detail="QUIZ_NOT_FOUND")
             
         # Verify ownership
-        self.course_service._get_lesson_or_404(lesson_content.lesson_id, teacher_id)
+        await self._require_owned_lesson(lesson_content.lesson_id, teacher_id)
         
         # Get quiz
         quiz_stmt = select(QuizModel).where(QuizModel.id == quiz_id)
@@ -113,7 +130,7 @@ class TeacherQuizService:
             raise HTTPException(status_code=404, detail="QUIZ_NOT_FOUND")
             
         # Verify ownership
-        self.course_service._get_lesson_or_404(lesson_content.lesson_id, teacher_id)
+        await self._require_owned_lesson(lesson_content.lesson_id, teacher_id)
         
         # Check if quiz exists
         quiz_stmt = select(QuizModel).where(QuizModel.id == quiz_id)

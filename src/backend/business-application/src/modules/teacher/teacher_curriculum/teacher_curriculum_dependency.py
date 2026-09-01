@@ -1,7 +1,9 @@
 from typing import Annotated
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.modules.teacher.teacher_service import TeacherService
+from src.modules.teacher.teacher_curriculum.teacher_curriculum_service import (
+    TeacherService,
+)
 from src.db import get_db_session 
 
 def get_teacher_service(

@@ -19,7 +19,7 @@ from src.modules.student_course_directory.course_router import router as course_
 from src.modules.student_course_directory.student_router import router as student_router
 from src.modules.user.user_router import admin_router, router as user_router
 from src.modules.submission.submission_route import router as submission_router
-from src.modules.teacher.teacher_router import router as teacher_router 
+from src.modules.teacher import router as teacher_router
 from src.services.rabbitmq.rabbitmq_manager import RabbitMQManager
 from src.services.rabbitmq.submission_execution_result_consumer import (
     handle_submission_execution_result,

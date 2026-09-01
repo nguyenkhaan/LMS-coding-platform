@@ -15,7 +15,7 @@ from src.modules.teacher.teacher_problem.teacher_problem_dto import (
 )
 from src.modules.teacher.teacher_problem.teacher_problem_service import TeacherProblemService
 
-teacher_problem_router = APIRouter(prefix="/teacher", tags=["Teacher Problem"])
+router = APIRouter(tags=["Teacher Problem"])
 
 def get_current_teacher_id(user: dict = Depends(require_role(Role.TEACHER))) -> int:
     user_id = user.get("sub")
@@ -23,14 +23,14 @@ def get_current_teacher_id(user: dict = Depends(require_role(Role.TEACHER))) -> 
         raise HTTPException(status_code=401, detail="User ID not found in token")
     return int(user_id)
 
-@teacher_problem_router.get("/problem-tags", response_model=list[ProblemTagView])
+@router.get("/problem-tags", response_model=list[ProblemTagView])
 async def get_problem_tags(
     teacher_id: int = Depends(get_current_teacher_id),
     service: TeacherProblemService = Depends(get_teacher_problem_service)
 ):
     return await service.get_all_problem_tags()
 
-@teacher_problem_router.post("/problems", response_model=ProblemView, status_code=status.HTTP_201_CREATED)
+@router.post("/problems", response_model=ProblemView, status_code=status.HTTP_201_CREATED)
 async def create_problem(
     data: ProblemWrite,
     teacher_id: int = Depends(get_current_teacher_id),
@@ -38,7 +38,7 @@ async def create_problem(
 ):
     return await service.create_problem(teacher_id, data)
 
-@teacher_problem_router.put("/problems/{problem_id}", response_model=ProblemView)
+@router.put("/problems/{problem_id}", response_model=ProblemView)
 async def update_problem(
     problem_id: int,
     data: ProblemWrite,
@@ -68,7 +68,7 @@ def validate_file(file: UploadFile):
     if file.size and file.size > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail=f"File {filename} exceeds {MAX_TESTCASE_FILE_SIZE_MB}MB limit")
         
-@teacher_problem_router.post("/problems/{problem_id}/testcases/upload", response_model=TestcaseUploadResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/problems/{problem_id}/testcases/upload", response_model=TestcaseUploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_testcase(
     problem_id: int,
     input_file: UploadFile | None = File(None),
