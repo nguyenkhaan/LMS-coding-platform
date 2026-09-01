@@ -539,6 +539,12 @@ class TeacherCourseService:
             if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
                 raise HTTPException(status_code=409, detail="INVALID_STATE")
                 
+            has_contents = await self.db.scalar(
+                select(LessonContentModel.id).where(LessonContentModel.lesson_id == lesson_id).limit(1)
+            )
+            if has_contents is not None:
+                raise HTTPException(status_code=409, detail="INVALID_STATE")
+                
             await self.db.delete(db_lesson)
             await self.db.commit()
             return TeacherCourseDeleteResponse(message="Deleted successfully")
