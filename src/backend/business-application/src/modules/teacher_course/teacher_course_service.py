@@ -813,94 +813,153 @@ class TeacherCourseService:
         return TeacherCourseDeleteResponse(message="Deleted successfully")
 
     async def reorder_curriculum(self, teacher_id: int, course_id: int, data: TeacherCourseReorderRequest) -> TeacherCourseReorderResponse:
-
+        from sqlalchemy.exc import IntegrityError
         try:
-            course = await self.db.scalar(
+            course = (await self.db.execute(
                 select(CourseModel).where(
                     CourseModel.id == course_id,
-                    CourseModel.deleted_at.is_(None),
+                    CourseModel.deleted_at.is_(None)
                 ).with_for_update()
-            )
+            )).scalar_one_or_none()
+            
             if course is None:
                 raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
             if course.teacher_id != teacher_id:
                 raise HTTPException(status_code=403, detail="FORBIDDEN")
             if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
                 raise HTTPException(status_code=409, detail="INVALID_STATE")
-        except HTTPException:
-            raise
-        except Exception:
-            logger.exception("Error checking course ownership")
-            raise
 
-        self._get_course_or_404(course_id, teacher_id)
+            sections = list((await self.db.scalars(
+                select(SectionModel).where(SectionModel.course_id == course_id)
+            )).all())
+            lessons = list((await self.db.scalars(
+                select(LessonModel)
+                .join(SectionModel, SectionModel.id == LessonModel.section_id)
+                .where(SectionModel.course_id == course_id)
+            )).all())
+            lesson_contents = list((await self.db.scalars(
+                select(LessonContentModel)
+                .join(LessonModel, LessonModel.id == LessonContentModel.lesson_id)
+                .join(SectionModel, SectionModel.id == LessonModel.section_id)
+                .where(SectionModel.course_id == course_id)
+            )).all())
 
-        # 1. Gather all existing items for this course
-        existing_sections = {sid: s for sid, s in _sections.items() if s["course_id"] == course_id}
-        existing_lessons = {lid: l for lid, l in _lessons.items() if l["section_id"] in existing_sections}
-        existing_contents = {cid: c for cid, c in _contents.items() if c["lesson_id"] in existing_lessons}
-        
-        # 2. Check if the provided items match the existing items exactly
-        provided_sections = {item.id for item in data.items if item.item_kind == "section"}
-        provided_lessons = {item.id for item in data.items if item.item_kind == "lesson"}
-        provided_contents = {item.id for item in data.items if item.item_kind == "lesson_content"}
-        
-        if provided_sections != set(existing_sections.keys()) or \
-           provided_lessons != set(existing_lessons.keys()) or \
-           provided_contents != set(existing_contents.keys()):
-            raise HTTPException(status_code=400, detail="INVALID_REQUEST")
+            sections_by_id = {section.id: section for section in sections}
+            lessons_by_id = {lesson.id: lesson for lesson in lessons}
+            lesson_contents_by_id = {c.id: c for c in lesson_contents}
+            
+            section_positions = {section.id: section.position for section in sections}
+            lesson_targets = {lesson.id: (lesson.section_id, lesson.position) for lesson in lessons}
+            content_targets = {c.id: (c.lesson_id, c.position) for c in lesson_contents}
+            
+            reordered_section_ids: set[int] = set()
+            reordered_lesson_ids: set[int] = set()
+            reordered_content_ids: set[int] = set()
 
-        # 3. Validate parent changes and uniqueness of positions
-        positions_by_parent = {}
+            for item in data.items:
+                if item.item_kind == "section":
+                    if item.section_id is not None or item.id not in sections_by_id or item.id in reordered_section_ids:
+                        raise HTTPException(status_code=400, detail="INVALID_REQUEST")
+                    section_positions[item.id] = item.order
+                    reordered_section_ids.add(item.id)
+                elif item.item_kind == "lesson":
+                    lesson = lessons_by_id.get(item.id)
+                    parent_section_id = item.section_id if item.section_id is not None else lesson.section_id if lesson else None
+                    if lesson is None or parent_section_id not in sections_by_id or item.id in reordered_lesson_ids:
+                        raise HTTPException(status_code=400, detail="INVALID_REQUEST")
+                    lesson_targets[item.id] = (parent_section_id, item.order)
+                    reordered_lesson_ids.add(item.id)
+                elif item.item_kind == "lesson_content":
+                    lesson_content = lesson_contents_by_id.get(item.id)
+                    parent_lesson_id = item.section_id if item.section_id is not None else lesson_content.lesson_id if lesson_content else None
+                    if lesson_content is None or parent_lesson_id not in lessons_by_id or item.id in reordered_content_ids:
+                        raise HTTPException(status_code=400, detail="INVALID_REQUEST")
+                    content_targets[item.id] = (parent_lesson_id, item.order)
+                    reordered_content_ids.add(item.id)
 
-        for item in data.items:
-            if item.item_kind == "section":
-                parent_key = "course"
-            elif item.item_kind == "lesson":
-                if item.section_id is not None:
-                    if item.section_id not in existing_sections:
-                        raise HTTPException(status_code=404, detail="SECTION_NOT_FOUND")
-                    parent_key = f"section_{item.section_id}"
-                else:
-                    parent_key = f"section_{existing_lessons[item.id]['section_id']}"
-            elif item.item_kind == "lesson_content":
-                if item.section_id is not None:
-                    if item.section_id not in existing_lessons:
-                        raise HTTPException(status_code=404, detail="LESSON_NOT_FOUND")
-                    parent_key = f"lesson_{item.section_id}"
-                else:
-                    parent_key = f"lesson_{existing_contents[item.id]['lesson_id']}"
-                    
-            if parent_key not in positions_by_parent:
-                positions_by_parent[parent_key] = set()
-            if item.order in positions_by_parent[parent_key]:
+            if len(reordered_section_ids) != len(sections) or len(reordered_lesson_ids) != len(lessons) or len(reordered_content_ids) != len(lesson_contents):
+                raise HTTPException(status_code=400, detail="INVALID_REQUEST")
+
+            if len(section_positions.values()) != len(set(section_positions.values())):
                 raise HTTPException(status_code=409, detail="INVALID_STATE")
-            positions_by_parent[parent_key].add(item.order)
+                
+            lesson_positions: dict[int, set[int]] = {}
+            for parent_section_id, position in lesson_targets.values():
+                if parent_section_id not in lesson_positions:
+                    lesson_positions[parent_section_id] = set()
+                if position in lesson_positions[parent_section_id]:
+                    raise HTTPException(status_code=409, detail="INVALID_STATE")
+                lesson_positions[parent_section_id].add(position)
+                
+            content_positions: dict[int, set[int]] = {}
+            for parent_lesson_id, position in content_targets.values():
+                if parent_lesson_id not in content_positions:
+                    content_positions[parent_lesson_id] = set()
+                if position in content_positions[parent_lesson_id]:
+                    raise HTTPException(status_code=409, detail="INVALID_STATE")
+                content_positions[parent_lesson_id].add(position)
 
-        # 4. Apply updates
-        for item in data.items:
-            if item.item_kind == "section":
-                _sections[item.id]["order"] = item.order
-            elif item.item_kind == "lesson":
-                _lessons[item.id]["order"] = item.order
-                if item.section_id is not None:
-                    _lessons[item.id]["section_id"] = item.section_id
-            elif item.item_kind == "lesson_content":
-                _contents[item.id]["order"] = item.order
-                if item.section_id is not None:
-                    _contents[item.id]["lesson_id"] = item.section_id
-                    
-        return TeacherCourseReorderResponse(
-            sections=[TeacherCourseSectionResponse(**s) for s in existing_sections.values()],
-            lessons=[TeacherCourseLessonResponse(**l) for l in existing_lessons.values()],
-            lesson_contents=[TeacherCourseLessonContentResponse(**c) for c in existing_contents.values()]
-        )
+            for section_id in reordered_section_ids:
+                sections_by_id[section_id].position = -section_id
+            for lesson_id in reordered_lesson_ids:
+                lessons_by_id[lesson_id].position = -lesson_id
+            for content_id in reordered_content_ids:
+                lesson_contents_by_id[content_id].position = -content_id
+            await self.db.flush()
 
+            for section_id in reordered_section_ids:
+                sections_by_id[section_id].position = section_positions[section_id]
+            for lesson_id in reordered_lesson_ids:
+                lesson = lessons_by_id[lesson_id]
+                lesson.section_id, lesson.position = lesson_targets[lesson_id]
+            for content_id in reordered_content_ids:
+                lesson_content = lesson_contents_by_id[content_id]
+                lesson_content.lesson_id, lesson_content.position = content_targets[content_id]
 
-
-
-
-
+            await self.db.flush()
+            
+            # Form response BEFORE commit to avoid MissingGreenlet on expired attributes
+            response = TeacherCourseReorderResponse(
+                sections=[
+                    TeacherCourseSectionResponse(
+                        id=s.id,
+                        course_id=s.course_id,
+                        title=s.title,
+                        order=s.position
+                    ) for s in sorted(sections, key=lambda item: item.position)
+                ],
+                lessons=[
+                    TeacherCourseLessonResponse(
+                        id=l.id,
+                        section_id=l.section_id,
+                        title=l.title,
+                        order=l.position
+                    ) for l in sorted(lessons, key=lambda item: (item.section_id, item.position))
+                ],
+                lesson_contents=[
+                    TeacherCourseLessonContentResponse(
+                        id=c.id,
+                        lesson_id=c.lesson_id,
+                        content_type=c.content_type.value if hasattr(c.content_type, 'value') else c.content_type,
+                        content_id=c.content_id,
+                        media_url=c.media_url,
+                        order=c.position,
+                        created_at=c.created_at.isoformat() + "Z" if getattr(c, 'created_at', None) else None
+                    ) for c in sorted(lesson_contents, key=lambda item: (item.lesson_id, item.position))
+                ]
+            )
+            
+            await self.db.commit()
+            return response
+        except IntegrityError as e:
+            await self.db.rollback()
+            raise HTTPException(status_code=409, detail="INVALID_STATE") from e
+        except HTTPException:
+            await self.db.rollback()
+            raise
+        except Exception as e:
+            await self.db.rollback()
+            raise e
 
     async def get_course_submissions(self, teacher_id: int, course_id: int, page: int, size: int, problem_id: int | None, student_id: int | None, status: ProblemSubmissionStatus | None) -> SubmissionListResponse:
 
