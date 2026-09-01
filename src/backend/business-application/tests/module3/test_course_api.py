@@ -15,6 +15,20 @@ def override_get_current_user_teacher():
 def override_get_current_user_student():
     return {"sub": "2", "roles": ["STUDENT"]}
 
+@pytest.fixture
+def created_course():
+    app.dependency_overrides[get_current_user] = override_get_current_user_teacher
+    payload = {
+        "title": "Created Course",
+        "description": "Course description",
+        "price": 100,
+        "thumbnail_url": "http://example.com/img.png",
+        "field": "IT",
+        "tags": ["programming"]
+    }
+    response = client.post("/api/v1/teacher/courses", json=payload)
+    return response.json()
+
 def test_get_courses_unauthorized():
     # Test 401 when not logged in (no dependency override)
     app.dependency_overrides = {}
@@ -75,7 +89,7 @@ def test_create_course_success():
     assert "created_at" in data
     assert "updated_at" in data
 
-def test_update_course_success():
+def test_update_course_success(created_course):
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     payload = {
         "title": "Updated Course",
@@ -86,7 +100,7 @@ def test_update_course_success():
         "field": "IT",
         "tags": ["advanced"]
     }
-    response = client.put("/api/v1/teacher/courses/1", json=payload)
+    response = client.put(f"/api/v1/teacher/courses/{created_course['id']}", json=payload)
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "PENDING_REVIEW"
@@ -221,16 +235,8 @@ def test_submit_review_invalid_state():
     assert response.json()["error_code"] == "INVALID_STATE"
 
 def test_submit_review_forbidden():
-    # Simulate course created by teacher 2
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher2
-    payload = {
-        "title": "Teacher 2 Course",
-        "description": "Desc",
-        "price": 50,
-        "thumbnail_url": "url",
-        "field": "IT",
-        "tags": []
-    }
+    payload = {"title": "T2", "description": "", "price": 0, "thumbnail_url": "", "field": "IT", "tags": []}
     create_resp = client.post("/api/v1/teacher/courses", json=payload)
     course_id = create_resp.json()["id"]
 
@@ -502,7 +508,8 @@ def test_delete_lesson_forbidden():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher2
     del_resp = client.delete(f"/api/v1/teacher/lessons/{l_id}")
     # Either 404 or 403 depending on get_lesson_or_404
-    assert del_resp.status_code in [403, 404]
+    assert del_resp.status_code == 403
+    assert del_resp.json()["error_code"] == "FORBIDDEN"
 
 
 def test_create_reading_success():
@@ -564,7 +571,8 @@ def test_create_reading_forbidden():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher2
     payload = {"title": "R1", "content": "C", "position": 1}
     r_resp = client.post(f"/api/v1/teacher/lessons/{l_id}/readings", json=payload)
-    assert r_resp.status_code in [403, 404]
+    assert r_resp.status_code == 403
+    assert r_resp.json()["error_code"] == "FORBIDDEN"
 
 
 def test_update_reading_success():
@@ -641,7 +649,8 @@ def test_update_reading_forbidden():
 
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher2
     u_resp = client.put(f"/api/v1/teacher/lesson-contents/{lc_id}/reading", json={"title": "New"})
-    assert u_resp.status_code in [403, 404]
+    assert u_resp.status_code == 403
+    assert u_resp.json()["error_code"] == "FORBIDDEN"
 
 
 def test_delete_lesson_content_success():
@@ -695,5 +704,6 @@ def test_delete_lesson_content_forbidden():
 
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher2
     del_resp = client.delete(f"/api/v1/teacher/lesson-contents/{lc_id}")
-    assert del_resp.status_code in [403, 404]
+    assert del_resp.status_code == 403
+    assert del_resp.json()["error_code"] == "FORBIDDEN"
 

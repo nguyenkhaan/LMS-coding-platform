@@ -1,3 +1,5 @@
+import logging
+logger = logging.getLogger(__name__)
 from datetime import UTC
 
 from fastapi import HTTPException
@@ -88,55 +90,195 @@ class TeacherCourseService:
         return content
 
     async def get_teacher_courses(self, teacher_id: int) -> list[TeacherCourseResponse]:
-        return [TeacherCourseResponse(**c) for c in _courses.values() if c["teacher_id"] == teacher_id]
+        import json
+        stmt = select(CourseModel).where(
+            CourseModel.teacher_id == teacher_id,
+            CourseModel.deleted_at.is_(None)
+        ).order_by(CourseModel.created_at.desc())
+        
+        result = await self.db.execute(stmt)
+        courses = result.scalars().all()
+        
+        return [
+            TeacherCourseResponse(
+                id=c.id,
+                title=c.title,
+                description=c.description,
+                price=c.price,
+                thumbnail_url=c.thumbnail_url,
+                field=c.field,
+                tags=json.loads(c.tags) if c.tags else [],
+                status=c.status,
+                teacher_id=c.teacher_id,
+                created_at=c.created_at.isoformat() if c.created_at else None,
+                updated_at=c.updated_at.isoformat() if c.updated_at else None,
+                slug=c.slug,
+                rating=0.0,
+                currency="USD"
+            ) for c in courses
+        ]
 
     async def create_course(self, teacher_id: int, data: TeacherCourseCreateRequest) -> TeacherCourseResponse:
-        from datetime import datetime
-        global _course_id_counter
-        course_id = _course_id_counter
-        _course_id_counter += 1
-
-        course_data = data.model_dump()
-        course_data["id"] = course_id
-        course_data["teacher_id"] = teacher_id
-        course_data["status"] = getattr(data, "status", CourseStatus.DRAFT) or CourseStatus.DRAFT
+        import json
+        import uuid
+        tags_str = json.dumps(data.tags) if data.tags is not None else "[]"
         
-        now = datetime.now(UTC).isoformat()
-        course_data["created_at"] = now
-        course_data["updated_at"] = now
-        course_data["slug"] = f"course-{course_id}"
-        course_data["rating"] = 0.0
-        course_data["currency"] = "USD"
-
-        _courses[course_id] = course_data
-        return TeacherCourseResponse(**course_data)
+        new_course = CourseModel(
+            title=data.title,
+            description=data.description,
+            price=data.price,
+            thumbnail_url=data.thumbnail_url,
+            field=data.category,
+            tags=tags_str,
+            teacher_id=teacher_id,
+            status=CourseStatus.DRAFT,
+            slug=str(uuid.uuid4())
+        )
+        self.db.add(new_course)
+        await self.db.flush()
+        
+        new_course.slug = f"course-{new_course.id}"
+        await self.db.flush()
+        
+        await self.db.commit()
+        await self.db.refresh(new_course)
+        
+        return TeacherCourseResponse(
+            id=new_course.id,
+            title=new_course.title,
+            description=new_course.description,
+            price=new_course.price,
+            thumbnail_url=new_course.thumbnail_url,
+            field=new_course.field,
+            tags=json.loads(new_course.tags) if new_course.tags else [],
+            status=new_course.status,
+            teacher_id=new_course.teacher_id,
+            created_at=new_course.created_at.isoformat() if new_course.created_at else None,
+            updated_at=new_course.updated_at.isoformat() if new_course.updated_at else None,
+            slug=new_course.slug,
+            rating=0.0,
+            currency="USD"
+        )
 
     async def update_course(self, teacher_id: int, course_id: int, data: TeacherCourseUpdateRequest) -> TeacherCourseResponse:
-        from datetime import datetime
-        course = self._get_course_or_404(course_id, teacher_id)
-        self._partial_update(course, data)
-        course["updated_at"] = datetime.now(UTC).isoformat()
-        _courses[course_id] = course
-        return TeacherCourseResponse(**course)
+        import json
+        try:
+            stmt = select(CourseModel).where(
+                CourseModel.id == course_id,
+                CourseModel.deleted_at.is_(None)
+            ).with_for_update()
+            
+            db_course = (await self.db.execute(stmt)).scalar_one_or_none()
+            if db_course is None:
+                raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+            if db_course.teacher_id != teacher_id:
+                raise HTTPException(status_code=403, detail="FORBIDDEN")
+            if db_course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
+                raise HTTPException(status_code=409, detail="INVALID_STATE")
+            
+            update_data = data.model_dump(exclude_unset=True)
+            if "category" in update_data:
+                db_course.field = update_data.pop("category")
+            if "tags" in update_data:
+                db_course.tags = json.dumps(update_data.pop("tags"))
+                
+            for key, value in update_data.items():
+                if hasattr(db_course, key):
+                    setattr(db_course, key, value)
+            
+            await self.db.commit()
+            await self.db.refresh(db_course)
+            
+            return TeacherCourseResponse(
+                id=db_course.id,
+                title=db_course.title,
+                description=db_course.description,
+                price=db_course.price,
+                thumbnail_url=db_course.thumbnail_url,
+                field=db_course.field,
+                tags=json.loads(db_course.tags) if db_course.tags else [],
+                status=db_course.status,
+                teacher_id=db_course.teacher_id,
+                created_at=db_course.created_at.isoformat() if db_course.created_at else None,
+                updated_at=db_course.updated_at.isoformat() if db_course.updated_at else None,
+                slug=db_course.slug,
+                rating=0.0,
+                currency="USD"
+            )
+        except HTTPException:
+            raise
+        except Exception:
+            await self.db.rollback()
+            logger.exception("Error updating course")
+            raise
 
     async def get_course_detail(self, teacher_id: int, course_id: int) -> TeacherCourseResponse:
-        course = self._get_course_or_404(course_id, teacher_id)
-        return TeacherCourseResponse(**course)
+        import json
+        stmt = select(CourseModel).where(
+            CourseModel.id == course_id,
+            CourseModel.deleted_at.is_(None)
+        )
+        
+        db_course = (await self.db.execute(stmt)).scalar_one_or_none()
+        if db_course is None:
+            raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+        if db_course.teacher_id != teacher_id:
+            raise HTTPException(status_code=403, detail="FORBIDDEN")
+            
+        return TeacherCourseResponse(
+            id=db_course.id,
+            title=db_course.title,
+            description=db_course.description,
+            price=db_course.price,
+            thumbnail_url=db_course.thumbnail_url,
+            field=db_course.field,
+            tags=json.loads(db_course.tags) if db_course.tags else [],
+            status=db_course.status,
+            teacher_id=db_course.teacher_id,
+            created_at=db_course.created_at.isoformat() if db_course.created_at else None,
+            updated_at=db_course.updated_at.isoformat() if db_course.updated_at else None,
+            slug=db_course.slug,
+            rating=0.0,
+            currency="USD"
+        )
 
     async def submit_course_review(self, teacher_id: int, course_id: int) -> TeacherCourseResponse:
-        from datetime import datetime
-        course = self._get_course_or_404(course_id, teacher_id)
+        import json
+        from datetime import datetime, UTC
+        stmt = select(CourseModel).where(
+            CourseModel.id == course_id,
+            CourseModel.deleted_at.is_(None)
+        ).with_for_update()
         
-        if course["status"] not in (CourseStatus.DRAFT, CourseStatus.REJECTED):
+        db_course = (await self.db.execute(stmt)).scalar_one_or_none()
+        if db_course is None:
+            raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+        if db_course.teacher_id != teacher_id:
+            raise HTTPException(status_code=403, detail="FORBIDDEN")
+            
+        if db_course.status not in (CourseStatus.DRAFT, CourseStatus.REJECTED):
             raise HTTPException(status_code=409, detail="INVALID_STATE")
             
-        now = datetime.now(UTC).isoformat()
-        course["status"] = CourseStatus.PENDING_REVIEW
-        course["submitted_at"] = now
-        course["updated_at"] = now
+        db_course.status = CourseStatus.PENDING_REVIEW
+        await self.db.commit()
+        await self.db.refresh(db_course)
         
-        _courses[course_id] = course
-        return TeacherCourseResponse(**course)
+        return TeacherCourseResponse(
+            id=db_course.id,
+            title=db_course.title,
+            description=db_course.description,
+            price=db_course.price,
+            thumbnail_url=db_course.thumbnail_url,
+            field=db_course.field,
+            tags=json.loads(db_course.tags) if db_course.tags else [],
+            status=db_course.status,
+            teacher_id=db_course.teacher_id,
+            created_at=db_course.created_at.isoformat() if db_course.created_at else None,
+            updated_at=db_course.updated_at.isoformat() if db_course.updated_at else None,
+            slug=db_course.slug,
+            rating=0.0,
+            currency="USD"
+        )
 
     @classmethod
     def _reset_mock_data(cls):
@@ -153,164 +295,292 @@ class TeacherCourseService:
         _reading_id_counter = 1
 
     async def create_section(self, teacher_id: int, course_id: int, data: TeacherCourseSectionCreateRequest) -> TeacherCourseSectionResponse:
-        self._get_course_or_404(course_id, teacher_id)
+        try:
+            course = await self.db.scalar(
+                select(CourseModel).where(
+                    CourseModel.id == course_id,
+                    CourseModel.deleted_at.is_(None),
+                ).with_for_update()
+            )
+            if course is None:
+                raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+            if course.teacher_id != teacher_id:
+                raise HTTPException(status_code=403, detail="FORBIDDEN")
+            if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
+                raise HTTPException(status_code=409, detail="INVALID_STATE")
+            
+            max_position = await self.db.scalar(
+                select(func.coalesce(func.max(SectionModel.position), -1)).where(
+                    SectionModel.course_id == course_id,
+                )
+            )
+            next_position = int(max_position) + 1 if max_position is not None else 0
 
-        global _section_id_counter
-        section_id = _section_id_counter
-        _section_id_counter += 1
+            new_section = SectionModel(
+                course_id=course_id,
+                title=data.title,
+                position=next_position,
+            )
+            self.db.add(new_section)
 
-        section_data = data.model_dump()
-        section_data["id"] = section_id
-        section_data["course_id"] = course_id
+            await self.db.flush()
+            await self.db.commit()
+            await self.db.refresh(new_section)
 
-        _sections[section_id] = section_data
-        return TeacherCourseSectionResponse(**section_data)
+            return TeacherCourseSectionResponse(
+                id=new_section.id,
+                course_id=new_section.course_id,
+                title=new_section.title,
+                order=new_section.position,
+            )
+        except HTTPException:
+            raise
+        except Exception:
+            await self.db.rollback()
+            logger.exception("Error creating section")
+            raise
 
     async def update_section(self, teacher_id: int, section_id: int, data: TeacherCourseSectionUpdateRequest) -> TeacherCourseSectionResponse:
-        section = self._get_section_or_404(section_id, teacher_id)
-        self._partial_update(section, data)
-        _sections[section_id] = section
-        return TeacherCourseSectionResponse(**section)
+
+        try:
+            stmt = select(SectionModel).where(
+                SectionModel.id == section_id
+            )
+            db_section = (await self.db.execute(stmt)).scalar_one_or_none()
+            if db_section is None:
+                raise HTTPException(status_code=404, detail="SECTION_NOT_FOUND")
+                
+            course_stmt = select(CourseModel).where(
+                CourseModel.id == db_section.course_id,
+                CourseModel.deleted_at.is_(None)
+            ).with_for_update()
+            course = (await self.db.execute(course_stmt)).scalar_one_or_none()
+            if course is None:
+                raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+            if course.teacher_id != teacher_id:
+                raise HTTPException(status_code=403, detail="FORBIDDEN")
+            if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
+                raise HTTPException(status_code=409, detail="INVALID_STATE")
+                
+            update_data = data.model_dump(exclude_unset=True)
+            if "order" in update_data:
+                db_section.position = update_data.pop("order")
+                
+            for key, value in update_data.items():
+                if hasattr(db_section, key):
+                    setattr(db_section, key, value)
+            
+            await self.db.commit()
+            await self.db.refresh(db_section)
+            
+            return TeacherCourseSectionResponse(
+                id=db_section.id,
+                title=db_section.title,
+                order=db_section.position,
+                course_id=db_section.course_id
+            )
+        except HTTPException:
+            raise
+        except Exception:
+            await self.db.rollback()
+            logger.exception("Error updating section")
+            raise
 
     async def delete_section(self, teacher_id: int, section_id: int) -> TeacherCourseDeleteResponse:
-        self._get_section_or_404(section_id, teacher_id)
-        del _sections[section_id]
-
-        lessons_to_delete = [lid for lid, l in _lessons.items() if l["section_id"] == section_id]
-        for lid in lessons_to_delete:
-            contents_to_delete = [cid for cid, c in _contents.items() if c["lesson_id"] == lid]
-            for cid in contents_to_delete:
-                del _contents[cid]
-            del _lessons[lid]
-
-        return TeacherCourseDeleteResponse(message="Section deleted successfully")
+        try:
+            stmt = select(SectionModel).where(
+                SectionModel.id == section_id
+            )
+            db_section = (await self.db.execute(stmt)).scalar_one_or_none()
+            if db_section is None:
+                raise HTTPException(status_code=404, detail="SECTION_NOT_FOUND")
+                
+            course_stmt = select(CourseModel).where(
+                CourseModel.id == db_section.course_id,
+                CourseModel.deleted_at.is_(None)
+            ).with_for_update()
+            course = (await self.db.execute(course_stmt)).scalar_one_or_none()
+            if course is None:
+                raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+            if course.teacher_id != teacher_id:
+                raise HTTPException(status_code=403, detail="FORBIDDEN")
+            if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
+                raise HTTPException(status_code=409, detail="INVALID_STATE")
+                
+            has_lessons = await self.db.scalar(
+                select(LessonModel.id).where(LessonModel.section_id == section_id).limit(1)
+            )
+            if has_lessons is not None:
+                raise HTTPException(status_code=409, detail="SECTION_HAS_LESSONS")
+                
+            await self.db.delete(db_section)
+            await self.db.commit()
+            return TeacherCourseDeleteResponse(message="Section deleted successfully")
+            
+        except HTTPException:
+            raise
+        except Exception:
+            await self.db.rollback()
+            logger.exception("Error deleting section")
+            raise
 
     async def create_lesson(self, teacher_id: int, section_id: int, data: TeacherCourseLessonCreateRequest) -> TeacherCourseLessonResponse:
-        self._get_section_or_404(section_id, teacher_id)
 
-        global _lesson_id_counter
-        lesson_id = _lesson_id_counter
-        _lesson_id_counter += 1
-
-        lesson_data = data.model_dump()
-        lesson_data["id"] = lesson_id
-        lesson_data["section_id"] = section_id
-
-        _lessons[lesson_id] = lesson_data
-        return TeacherCourseLessonResponse(**lesson_data)
+        try:
+            stmt = select(SectionModel).where(
+                SectionModel.id == section_id
+            )
+            db_section = (await self.db.execute(stmt)).scalar_one_or_none()
+            if db_section is None:
+                raise HTTPException(status_code=404, detail="SECTION_NOT_FOUND")
+                
+            course_stmt = select(CourseModel).where(
+                CourseModel.id == db_section.course_id,
+                CourseModel.deleted_at.is_(None)
+            ).with_for_update()
+            course = (await self.db.execute(course_stmt)).scalar_one_or_none()
+            if course is None:
+                raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+            if course.teacher_id != teacher_id:
+                raise HTTPException(status_code=403, detail="FORBIDDEN")
+            if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
+                raise HTTPException(status_code=409, detail="INVALID_STATE")
+                
+            new_lesson = LessonModel(
+                title=data.title,
+                position=data.order,
+                section_id=section_id
+            )
+            self.db.add(new_lesson)
+            await self.db.commit()
+            await self.db.refresh(new_lesson)
+            
+            return TeacherCourseLessonResponse(
+                id=new_lesson.id,
+                title=new_lesson.title,
+                order=new_lesson.position,
+                section_id=new_lesson.section_id
+            )
+        except HTTPException:
+            raise
+        except Exception:
+            await self.db.rollback()
+            logger.exception("Error creating lesson")
+            raise
 
     async def update_lesson(self, teacher_id: int, lesson_id: int, data: TeacherCourseLessonUpdateRequest) -> TeacherCourseLessonResponse:
-        lesson = self._get_lesson_or_404(lesson_id, teacher_id)
-        self._partial_update(lesson, data)
-        _lessons[lesson_id] = lesson
-        return TeacherCourseLessonResponse(**lesson)
+
+        try:
+            stmt = select(LessonModel).where(LessonModel.id == lesson_id)
+            db_lesson = (await self.db.execute(stmt)).scalar_one_or_none()
+            if db_lesson is None:
+                raise HTTPException(status_code=404, detail="LESSON_NOT_FOUND")
+                
+            section_stmt = select(SectionModel).where(SectionModel.id == db_lesson.section_id)
+            db_section = (await self.db.execute(section_stmt)).scalar_one_or_none()
+            
+            course_stmt = select(CourseModel).where(
+                CourseModel.id == db_section.course_id,
+                CourseModel.deleted_at.is_(None)
+            ).with_for_update()
+            course = (await self.db.execute(course_stmt)).scalar_one_or_none()
+            if course is None:
+                raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+            if course.teacher_id != teacher_id:
+                raise HTTPException(status_code=403, detail="FORBIDDEN")
+            if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
+                raise HTTPException(status_code=409, detail="INVALID_STATE")
+                
+            update_data = data.model_dump(exclude_unset=True)
+            if "order" in update_data:
+                db_lesson.position = update_data.pop("order")
+                
+            for key, value in update_data.items():
+                if hasattr(db_lesson, key):
+                    setattr(db_lesson, key, value)
+            
+            await self.db.commit()
+            await self.db.refresh(db_lesson)
+            
+            return TeacherCourseLessonResponse(
+                id=db_lesson.id,
+                title=db_lesson.title,
+                summary=db_lesson.summary,
+                order=db_lesson.position,
+                section_id=db_lesson.section_id
+            )
+        except HTTPException:
+            raise
+        except Exception:
+            await self.db.rollback()
+            logger.exception("Error updating lesson")
+            raise
 
     async def delete_lesson(self, teacher_id: int, lesson_id: int) -> TeacherCourseDeleteResponse:
-        lesson = self._get_lesson_or_404(lesson_id, teacher_id)
-        section = _sections.get(lesson["section_id"])
-        course = _courses.get(section["course_id"])
-        
-        if course["status"] not in (CourseStatus.DRAFT, CourseStatus.REJECTED):
-            raise HTTPException(status_code=409, detail="INVALID_STATE")
+        try:
+            stmt = select(LessonModel).where(LessonModel.id == lesson_id)
+            db_lesson = (await self.db.execute(stmt)).scalar_one_or_none()
+            if db_lesson is None:
+                raise HTTPException(status_code=404, detail="LESSON_NOT_FOUND")
+                
+            section_stmt = select(SectionModel).where(SectionModel.id == db_lesson.section_id)
+            db_section = (await self.db.execute(section_stmt)).scalar_one_or_none()
             
-        has_contents = any(c["lesson_id"] == lesson_id for c in _contents.values())
-        if has_contents:
-            raise HTTPException(status_code=409, detail="INVALID_STATE")
+            course_stmt = select(CourseModel).where(
+                CourseModel.id == db_section.course_id,
+                CourseModel.deleted_at.is_(None)
+            ).with_for_update()
+            course = (await self.db.execute(course_stmt)).scalar_one_or_none()
+            if course is None:
+                raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+            if course.teacher_id != teacher_id:
+                raise HTTPException(status_code=403, detail="FORBIDDEN")
+            if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
+                raise HTTPException(status_code=409, detail="INVALID_STATE")
+                
+            await self.db.delete(db_lesson)
+            await self.db.commit()
+            return TeacherCourseDeleteResponse(message="Deleted successfully")
             
-        del _lessons[lesson_id]
-        return TeacherCourseDeleteResponse(message="Deleted successfully")
-
-    async def create_reading_content(self, teacher_id: int, lesson_id: int, data: TeacherCourseReadingCreateRequest) -> TeacherCourseReadingCreateResponse:
-        lesson = self._get_lesson_or_404(lesson_id, teacher_id)
-        section = _sections.get(lesson["section_id"])
-        course = _courses.get(section["course_id"])
-        
-        if course["status"] not in (CourseStatus.DRAFT, CourseStatus.REJECTED):
-            raise HTTPException(status_code=409, detail="INVALID_STATE")
-
-        from datetime import datetime
-        
-        global _reading_id_counter, _content_id_counter
-        reading_id = _reading_id_counter
-        _reading_id_counter += 1
-        
-        content_id = _content_id_counter
-        _content_id_counter += 1
-
-        now = datetime.now(UTC).isoformat()
-        
-        reading_data = {
-            "id": reading_id,
-            "title": data.title,
-            "content": data.content,
-            "created_at": now,
-            "updated_at": now
-        }
-        _readings[reading_id] = reading_data
-        
-        lesson_content_data = {
-            "id": content_id,
-            "lesson_id": lesson_id,
-            "content_type": "READING",
-            "content_id": reading_id,
-            "position": data.order,
-            "created_at": now
-        }
-        _contents[content_id] = lesson_content_data
-        
-        return TeacherCourseReadingCreateResponse(
-            reading_content=TeacherCourseReadingResponse(**reading_data),
-            lesson_content=TeacherCourseLessonContentResponse(**lesson_content_data)
-        )
-
-    async def update_reading_content(self, teacher_id: int, content_id: int, data: TeacherCourseReadingUpdateRequest) -> TeacherCourseReadingResponse:
-        content = self._get_content_or_404(content_id, teacher_id)
-        
-        lesson = _lessons.get(content["lesson_id"])
-        section = _sections.get(lesson["section_id"])
-        course = _courses.get(section["course_id"])
-        
-        if course["status"] not in (CourseStatus.DRAFT, CourseStatus.REJECTED):
-            raise HTTPException(status_code=409, detail="INVALID_STATE")
-            
-        if content["content_type"] != "READING":
-            raise HTTPException(status_code=400, detail="INVALID_REQUEST")
-            
-        reading = _readings.get(content["content_id"])
-        if not reading:
-            raise HTTPException(status_code=404, detail="CONTENT_NOT_FOUND")
-            
-        from datetime import datetime
-        if data.title is not None:
-            reading["title"] = data.title
-        if data.content is not None:
-            reading["content"] = data.content
-        reading["updated_at"] = datetime.now(UTC).isoformat()
-        
-        _readings[content["content_id"]] = reading
-        return TeacherCourseReadingResponse(**reading)
-
-    async def create_lesson_content(self, teacher_id: int, lesson_id: int, data: TeacherCourseLessonContentCreateRequest) -> TeacherCourseLessonContentResponse:
-        self._get_lesson_or_404(lesson_id, teacher_id)
-
-        global _content_id_counter
-        content_id = _content_id_counter
-        _content_id_counter += 1
-
-        content_data = data.model_dump()
-        content_data["id"] = content_id
-        content_data["lesson_id"] = lesson_id
-
-        _contents[content_id] = content_data
-        return TeacherCourseLessonContentResponse(**content_data)
-
-    async def update_lesson_content(self, teacher_id: int, content_id: int, data: TeacherCourseLessonContentUpdateRequest) -> TeacherCourseLessonContentResponse:
-        content = self._get_content_or_404(content_id, teacher_id)
-        self._partial_update(content, data)
-        _contents[content_id] = content
-        return TeacherCourseLessonContentResponse(**content)
+        except HTTPException:
+            raise
+        except Exception:
+            await self.db.rollback()
+            logger.exception("Error deleting lesson")
+            raise
 
     async def delete_lesson_content(self, teacher_id: int, content_id: int) -> TeacherCourseDeleteResponse:
+
+        try:
+            stmt = select(LessonContentModel).where(LessonContentModel.id == content_id)
+            db_content = (await self.db.execute(stmt)).scalar_one_or_none()
+            if db_content is None:
+                raise HTTPException(status_code=404, detail="CONTENT_NOT_FOUND")
+                
+            lesson_stmt = select(LessonModel).where(LessonModel.id == db_content.lesson_id)
+            db_lesson = (await self.db.execute(lesson_stmt)).scalar_one_or_none()
+            
+            section_stmt = select(SectionModel).where(SectionModel.id == db_lesson.section_id)
+            db_section = (await self.db.execute(section_stmt)).scalar_one_or_none()
+            
+            course_stmt = select(CourseModel).where(
+                CourseModel.id == db_section.course_id,
+                CourseModel.deleted_at.is_(None)
+            ).with_for_update()
+            course = (await self.db.execute(course_stmt)).scalar_one_or_none()
+            
+            if course is None:
+                raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+            if course.teacher_id != teacher_id:
+                raise HTTPException(status_code=403, detail="FORBIDDEN")
+            if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
+                raise HTTPException(status_code=409, detail="INVALID_STATE")
+        except HTTPException:
+            raise
+        except Exception:
+            logger.exception("Error checking content ownership")
+            raise
+
         content = self._get_content_or_404(content_id, teacher_id)
         
         lesson = _lessons.get(content["lesson_id"])
@@ -329,6 +599,26 @@ class TeacherCourseService:
         return TeacherCourseDeleteResponse(message="Deleted successfully")
 
     async def reorder_curriculum(self, teacher_id: int, course_id: int, data: TeacherCourseReorderRequest) -> TeacherCourseReorderResponse:
+
+        try:
+            course = await self.db.scalar(
+                select(CourseModel).where(
+                    CourseModel.id == course_id,
+                    CourseModel.deleted_at.is_(None),
+                ).with_for_update()
+            )
+            if course is None:
+                raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+            if course.teacher_id != teacher_id:
+                raise HTTPException(status_code=403, detail="FORBIDDEN")
+            if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
+                raise HTTPException(status_code=409, detail="INVALID_STATE")
+        except HTTPException:
+            raise
+        except Exception:
+            logger.exception("Error checking course ownership")
+            raise
+
         self._get_course_or_404(course_id, teacher_id)
 
         # 1. Gather all existing items for this course
