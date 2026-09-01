@@ -132,6 +132,8 @@ Không thêm `VIDEO`, `video_content`, `watched_percent` hoặc video completion
 
 Student gửi source code, language và problem. Business Application lưu submission `PENDING`, gọi Judge Service và cập nhật kết quả. Các status gồm `PENDING`, `RUNNING`, `ACCEPTED`, `WRONG_ANSWER`, `TIME_LIMIT_EXCEEDED`, `MEMORY_LIMIT_EXCEEDED`, `RUNTIME_ERROR` và `COMPILE_ERROR`.
 
+Output của testcase được so khớp tuyệt đối theo byte UTF-8, bao gồm whitespace và newline cuối. Với Submit, Judge chạy testcase tuần tự, gửi kết quả ngay sau mỗi testcase đã chạy, và dừng ở testcase lỗi đầu tiên. Chỉ submission pass toàn bộ testcase mới có status `ACCEPTED`; mọi kết quả trước đó chỉ là progress hoặc partial result, không được coi là accepted.
+
 Hidden testcase không trả raw input/output cho Student. Submission history chỉ hiển thị cho owner hoặc role được cấp quyền. Teacher chỉ quản lý problem thuộc quyền của mình.
 
 Problem recommendation cần quan hệ Problem–Tag. `user_history.problem_count` không được dùng làm nguồn duy nhất cho contribution, streak hoặc recommendation.

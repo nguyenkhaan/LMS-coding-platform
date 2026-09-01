@@ -3,6 +3,7 @@ from fastapi import HTTPException
 from sqlalchemy import delete, exc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.services.minio.minio_handler import MinioHandler
 from src.models.problem_config_model import ProblemConfigModel
 from src.models.problem_model import ProblemModel
 from src.models.problem_tag_mapping_model import ProblemTagMappingModel
@@ -14,11 +15,12 @@ from src.modules.teacher.teacher_problem.teacher_problem_dto import (
     TestcaseUploadResponse,
     TestcaseView,
 )
-
+from fastapi import UploadFile
 
 class TeacherProblemService:
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: AsyncSession , minio_handler : MinioHandler):
         self.db = db
+        self.minio_handler = minio_handler
 
     async def get_all_problem_tags(self) -> list[ProblemTagView]:
         stmt = select(ProblemTagModel).order_by(ProblemTagModel.tag_name)
@@ -36,7 +38,14 @@ class TeacherProblemService:
 
     async def create_problem(self, teacher_id: int, data: ProblemWrite) -> ProblemView:
         await self._validate_tag_ids(data.tag_ids)
-
+        problem = (await self.db.execute(
+            select(ProblemModel).where(ProblemModel.slug == data.slug)
+        )).scalar_one_or_none() 
+        if problem is not None: 
+            raise HTTPException(
+                status_code = 409, 
+                detail = "Problem slug has been existed"
+            )
         new_problem = ProblemModel(
             teacher_id=teacher_id,
             title=data.title,
@@ -70,7 +79,7 @@ class TeacherProblemService:
         await self.db.commit()
         await self.db.refresh(new_problem)
         return ProblemView.model_validate(new_problem)
-
+    # Tien hanh cap nhat lai, hien tai no choi update fullbatch. Cai nay thuc hien cap nhat sau 
     async def update_problem(self, teacher_id: int, problem_id: int, data: ProblemWrite) -> ProblemView:
         # Check problem existence and ownership
         stmt = select(ProblemModel).where(ProblemModel.id == problem_id)
@@ -137,7 +146,7 @@ class TeacherProblemService:
         await self.db.commit()
         await self.db.refresh(problem)
         return ProblemView.model_validate(problem)
-
+    """
     async def upload_testcase(self, teacher_id: int, problem_id: int, input_file: str, output_file: str, score: float, is_hidden: bool) -> TestcaseUploadResponse:
         # Check problem existence and ownership
         stmt = select(ProblemModel).where(ProblemModel.id == problem_id)
@@ -167,3 +176,6 @@ class TeacherProblemService:
             message="Testcase uploaded successfully",
             testcases=[TestcaseView.model_validate(new_tc)]
         )
+    """
+    
+    # Bo sung them API de thuc hien xoa testcase 
