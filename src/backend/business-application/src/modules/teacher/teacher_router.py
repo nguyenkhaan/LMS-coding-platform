@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Path
 
 from src.middlewares.role_middleware import require_role
 from src.models.base_model import Role
+from src.middlewares.auth_middleware import UserPayload
 from src.modules.teacher.teacher_dependency import get_teacher_service
 from src.modules.teacher.teacher_dto import (
     CurriculumReorderRequest,
@@ -28,7 +29,7 @@ from src.modules.teacher.teacher_service import TeacherService
 
 router = APIRouter(prefix="/teacher", tags=["Teacher Curriculum Builder"])
 
-TeacherUser = Annotated[dict, Depends(require_role(Role.TEACHER))]
+TeacherUser = Annotated[UserPayload, Depends(require_role(Role.TEACHER))]
 TeacherServiceDependency = Annotated[TeacherService, Depends(get_teacher_service)]
 
 

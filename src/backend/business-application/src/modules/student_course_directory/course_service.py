@@ -518,6 +518,9 @@ _MOCK_QUIZZES: dict[int, QuizResponse] = {
     1: QuizResponse(
         id=1,
         title="Kiểm tra kiến thức Python cơ bản",
+        # passing_score mirrors quiz.passing_score configured by the teacher.
+        # Real implementation reads this from the DB; mock uses the same field.
+        passing_score=5.0,
         questions=[
             QuizQuestionResponse(
                 id=1,
@@ -599,7 +602,7 @@ class CourseService:
     async def get_course_detail(self, slug: str) -> CourseDetailResponse:
         course = next((c for c in _MOCK_COURSES if c.slug == slug), None)
         if course is None:
-            raise HTTPException(status_code=404, detail="Khoá học không tồn tại")
+            raise HTTPException(status_code=404, detail="Course not found")
 
         sections = _MOCK_COURSE_SECTIONS.get(slug, [])
         return CourseDetailResponse(
@@ -626,7 +629,7 @@ class CourseService:
     async def enroll_course(self, slug: str, user_id: int) -> EnrollResponse:
         course = next((c for c in _MOCK_COURSES if c.slug == slug), None)
         if course is None:
-            raise HTTPException(status_code=404, detail="Khoá học không tồn tại")
+            raise HTTPException(status_code=404, detail="Course not found")
 
         if course.price_type == PriceType.PAID:
             return EnrollResponse(
@@ -652,7 +655,7 @@ class CourseService:
         if study is None:
             raise HTTPException(
                 status_code=404,
-                detail="Khoá học không tồn tại hoặc bạn chưa đăng ký",
+                detail="Course not found or not enrolled",
             )
         return study
 
@@ -665,10 +668,10 @@ class CourseService:
     ) -> CompleteContentResponse:
         if lesson_content_id not in _VALID_LESSON_CONTENT_IDS:
             raise HTTPException(
-                status_code=404, detail="Nội dung bài học không tồn tại"
+                status_code=404, detail="Lesson content not found"
             )
         return CompleteContentResponse(
-            message="Đã đánh dấu hoàn thành nội dung bài học",
+            message="Lesson content marked as completed",
             completed_at=datetime.now(timezone.utc),
         )
 
@@ -681,7 +684,7 @@ class CourseService:
     async def get_quiz(self, quiz_id: int) -> QuizResponse:
         quiz = _MOCK_QUIZZES.get(quiz_id)
         if quiz is None:
-            raise HTTPException(status_code=404, detail="Bài kiểm tra không tồn tại")
+            raise HTTPException(status_code=404, detail="Quiz not found")
         return quiz
 
     # ------------------------------------------------------------------
@@ -693,11 +696,11 @@ class CourseService:
     ) -> QuizSubmitResponse:
         quiz = _MOCK_QUIZZES.get(quiz_id)
         if quiz is None:
-            raise HTTPException(status_code=404, detail="Bài kiểm tra không tồn tại")
+            raise HTTPException(status_code=404, detail="Quiz not found")
 
         if not payload.answers:
             raise HTTPException(
-                status_code=400, detail="Cần cung cấp ít nhất một câu trả lời"
+                status_code=400, detail="At least one answer is required"
             )
 
         answer_key = _MOCK_QUIZ_ANSWER_KEY.get(quiz_id, {})
@@ -708,7 +711,7 @@ class CourseService:
             if answer_key.get(q_id) == chosen_option_id
         )
         score = round((correct_count / total_count) * 10, 2) if total_count else 0.0
-        passed = score >= 5.0
+        passed = score >= quiz.passing_score
 
         return QuizSubmitResponse(
             submission_id=1001,
@@ -725,6 +728,6 @@ class CourseService:
     async def unenroll_course(self, slug: str, user_id: int) -> UnenrollResponse:
         course = next((c for c in _MOCK_COURSES if c.slug == slug), None)
         if course is None:
-            raise HTTPException(status_code=404, detail="Khoá học không tồn tại")
+            raise HTTPException(status_code=404, detail="Course not found")
 
-        return UnenrollResponse(message=f"Đã huỷ đăng ký khoá học '{course.title}' thành công")
+        return UnenrollResponse(message=f"Successfully unenrolled from course '{course.title}'")
