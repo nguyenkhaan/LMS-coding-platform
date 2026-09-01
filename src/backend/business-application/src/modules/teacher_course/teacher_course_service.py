@@ -13,6 +13,7 @@ from src.models.base_model import (
 from src.models.course_model import CourseModel
 from src.models.lesson_content_model import LessonContentModel
 from src.models.lesson_model import LessonModel
+from src.models.reading_content_model import ReadingContentModel
 from src.models.section_model import SectionModel
 from src.models.submission_model import SubmissionModel
 from src.modules.teacher_course.teacher_course_dto import (
@@ -549,53 +550,266 @@ class TeacherCourseService:
             logger.exception("Error deleting lesson")
             raise
 
-    async def delete_lesson_content(self, teacher_id: int, content_id: int) -> TeacherCourseDeleteResponse:
-
-        try:
-            stmt = select(LessonContentModel).where(LessonContentModel.id == content_id)
-            db_content = (await self.db.execute(stmt)).scalar_one_or_none()
-            if db_content is None:
-                raise HTTPException(status_code=404, detail="CONTENT_NOT_FOUND")
-                
-            lesson_stmt = select(LessonModel).where(LessonModel.id == db_content.lesson_id)
-            db_lesson = (await self.db.execute(lesson_stmt)).scalar_one_or_none()
+    async def create_reading_content(self, teacher_id: int, lesson_id: int, data: TeacherCourseReadingCreateRequest) -> TeacherCourseReadingCreateResponse:
+        stmt = select(LessonModel).where(LessonModel.id == lesson_id)
+        db_lesson = (await self.db.execute(stmt)).scalar_one_or_none()
+        if db_lesson is None:
+            raise HTTPException(status_code=404, detail="LESSON_NOT_FOUND")
             
-            section_stmt = select(SectionModel).where(SectionModel.id == db_lesson.section_id)
-            db_section = (await self.db.execute(section_stmt)).scalar_one_or_none()
-            
-            course_stmt = select(CourseModel).where(
-                CourseModel.id == db_section.course_id,
-                CourseModel.deleted_at.is_(None)
-            ).with_for_update()
-            course = (await self.db.execute(course_stmt)).scalar_one_or_none()
-            
-            if course is None:
-                raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
-            if course.teacher_id != teacher_id:
-                raise HTTPException(status_code=403, detail="FORBIDDEN")
-            if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
-                raise HTTPException(status_code=409, detail="INVALID_STATE")
-        except HTTPException:
-            raise
-        except Exception:
-            logger.exception("Error checking content ownership")
-            raise
-
-        content = self._get_content_or_404(content_id, teacher_id)
+        section_stmt = select(SectionModel).where(SectionModel.id == db_lesson.section_id)
+        db_section = (await self.db.execute(section_stmt)).scalar_one_or_none()
         
-        lesson = _lessons.get(content["lesson_id"])
-        section = _sections.get(lesson["section_id"])
-        course = _courses.get(section["course_id"])
+        course_stmt = select(CourseModel).where(
+            CourseModel.id == db_section.course_id,
+            CourseModel.deleted_at.is_(None)
+        ).with_for_update()
+        course = (await self.db.execute(course_stmt)).scalar_one_or_none()
         
-        if course["status"] not in (CourseStatus.DRAFT, CourseStatus.REJECTED):
+        if course is None:
+            raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+        if course.teacher_id != teacher_id:
+            raise HTTPException(status_code=403, detail="FORBIDDEN")
+        if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
             raise HTTPException(status_code=409, detail="INVALID_STATE")
             
-        del _contents[content_id]
-        # Also clean up the reading content if it exists
-        if content["content_type"] == "READING":
-            reading_id = content.get("content_id")
-            _readings.pop(reading_id, None)
+        db_reading = ReadingContentModel(
+            title=data.title,
+            content=data.content
+        )
+        self.db.add(db_reading)
+        await self.db.flush()
+        
+        db_lesson_content = LessonContentModel(
+            lesson_id=lesson_id,
+            content_type="READING",
+            content_id=db_reading.id,
+            position=data.order
+        )
+        self.db.add(db_lesson_content)
+        await self.db.flush()
+        await self.db.commit()
+        await self.db.refresh(db_reading)
+        await self.db.refresh(db_lesson_content)
+        
+        return TeacherCourseReadingCreateResponse(
+            reading_content={
+                "id": db_reading.id,
+                "title": db_reading.title,
+                "content": db_reading.content,
+                "created_at": db_reading.created_at.isoformat() + "Z" if db_reading.created_at else None,
+                "updated_at": db_reading.updated_at.isoformat() + "Z" if db_reading.updated_at else None
+            },
+            lesson_content={
+                "id": db_lesson_content.id,
+                "lesson_id": db_lesson_content.lesson_id,
+                "content_type": db_lesson_content.content_type.value if hasattr(db_lesson_content.content_type, 'value') else db_lesson_content.content_type,
+                "content_id": db_lesson_content.content_id,
+                "media_url": db_lesson_content.media_url,
+                "order": db_lesson_content.position,
+                "created_at": db_lesson_content.created_at.isoformat() + "Z" if db_lesson_content.created_at else None
+            }
+        )
+
+    async def create_lesson_content(self, teacher_id: int, lesson_id: int, data: TeacherCourseLessonContentCreateRequest) -> TeacherCourseLessonContentResponse:
+        stmt = select(LessonModel).where(LessonModel.id == lesson_id)
+        db_lesson = (await self.db.execute(stmt)).scalar_one_or_none()
+        if db_lesson is None:
+            raise HTTPException(status_code=404, detail="LESSON_NOT_FOUND")
+            
+        section_stmt = select(SectionModel).where(SectionModel.id == db_lesson.section_id)
+        db_section = (await self.db.execute(section_stmt)).scalar_one_or_none()
+        
+        course_stmt = select(CourseModel).where(
+            CourseModel.id == db_section.course_id,
+            CourseModel.deleted_at.is_(None)
+        ).with_for_update()
+        course = (await self.db.execute(course_stmt)).scalar_one_or_none()
+        
+        if course is None:
+            raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+        if course.teacher_id != teacher_id:
+            raise HTTPException(status_code=403, detail="FORBIDDEN")
+        if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
+            raise HTTPException(status_code=409, detail="INVALID_STATE")
+            
+        db_lesson_content = LessonContentModel(
+            lesson_id=lesson_id,
+            content_type=data.content_type,
+            content_id=data.content_id,
+            media_url=data.media_url,
+            position=data.order
+        )
+        self.db.add(db_lesson_content)
+        await self.db.flush()
+        await self.db.commit()
+        await self.db.refresh(db_lesson_content)
+        
+        return TeacherCourseLessonContentResponse(
+            id=db_lesson_content.id,
+            lesson_id=db_lesson_content.lesson_id,
+            content_type=db_lesson_content.content_type.value if hasattr(db_lesson_content.content_type, 'value') else db_lesson_content.content_type,
+            content_id=db_lesson_content.content_id,
+            media_url=db_lesson_content.media_url,
+            order=db_lesson_content.position,
+            created_at=db_lesson_content.created_at.isoformat() + "Z" if db_lesson_content.created_at else None
+        )
+
+    async def update_reading_content(self, teacher_id: int, content_id: int, data: TeacherCourseReadingUpdateRequest) -> TeacherCourseReadingResponse:
+        stmt = select(LessonContentModel).where(LessonContentModel.id == content_id)
+        db_lesson_content = (await self.db.execute(stmt)).scalar_one_or_none()
+        if db_lesson_content is None:
+            raise HTTPException(status_code=404, detail="CONTENT_NOT_FOUND")
+            
+        lesson_stmt = select(LessonModel).where(
+            LessonModel.id == db_lesson_content.lesson_id
+        )
+        db_lesson = (await self.db.execute(lesson_stmt)).scalar_one_or_none()
+        if db_lesson is None:
+            raise HTTPException(status_code=404, detail="LESSON_NOT_FOUND")
+            
+        section_stmt = select(SectionModel).where(
+            SectionModel.id == db_lesson.section_id
+        )
+        db_section = (await self.db.execute(section_stmt)).scalar_one_or_none()
+        if db_section is None:
+            raise HTTPException(status_code=404, detail="SECTION_NOT_FOUND")
+            
+        course_stmt = select(CourseModel).where(
+            CourseModel.id == db_section.course_id,
+            CourseModel.deleted_at.is_(None)
+        ).with_for_update()
+        course = (await self.db.execute(course_stmt)).scalar_one_or_none()
+        
+        if course is None:
+            raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+        if course.teacher_id != teacher_id:
+            raise HTTPException(status_code=403, detail="FORBIDDEN")
+        if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
+            raise HTTPException(status_code=409, detail="INVALID_STATE")
+            
+        ctype = db_lesson_content.content_type.value if hasattr(db_lesson_content.content_type, 'value') else db_lesson_content.content_type
+        if ctype != "READING":
+            raise HTTPException(status_code=400, detail="INVALID_REQUEST")
+            
+        reading_stmt = select(ReadingContentModel).where(ReadingContentModel.id == db_lesson_content.content_id)
+        db_reading = (await self.db.execute(reading_stmt)).scalar_one_or_none()
+        if db_reading is None:
+            raise HTTPException(status_code=404, detail="READING_NOT_FOUND")
+            
+        update_data = data.model_dump(exclude_unset=True)
+        for key, value in update_data.items():
+            if hasattr(db_reading, key):
+                setattr(db_reading, key, value)
                 
+        await self.db.commit()
+        await self.db.refresh(db_reading)
+        
+        return TeacherCourseReadingResponse(
+            id=db_reading.id,
+            title=db_reading.title,
+            content=db_reading.content,
+            created_at=db_reading.created_at.isoformat() + "Z" if db_reading.created_at else None,
+            updated_at=db_reading.updated_at.isoformat() + "Z" if getattr(db_reading, 'updated_at', None) else None
+        )
+
+    async def update_lesson_content(self, teacher_id: int, content_id: int, data: TeacherCourseLessonContentUpdateRequest) -> TeacherCourseLessonContentResponse:
+        stmt = select(LessonContentModel).where(LessonContentModel.id == content_id)
+        db_lesson_content = (await self.db.execute(stmt)).scalar_one_or_none()
+        if db_lesson_content is None:
+            raise HTTPException(status_code=404, detail="CONTENT_NOT_FOUND")
+            
+        lesson_stmt = select(LessonModel).where(
+            LessonModel.id == db_lesson_content.lesson_id
+        )
+        db_lesson = (await self.db.execute(lesson_stmt)).scalar_one_or_none()
+        if db_lesson is None:
+            raise HTTPException(status_code=404, detail="LESSON_NOT_FOUND")
+            
+        section_stmt = select(SectionModel).where(
+            SectionModel.id == db_lesson.section_id
+        )
+        db_section = (await self.db.execute(section_stmt)).scalar_one_or_none()
+        if db_section is None:
+            raise HTTPException(status_code=404, detail="SECTION_NOT_FOUND")
+            
+        course_stmt = select(CourseModel).where(
+            CourseModel.id == db_section.course_id,
+            CourseModel.deleted_at.is_(None)
+        ).with_for_update()
+        course = (await self.db.execute(course_stmt)).scalar_one_or_none()
+        
+        if course is None:
+            raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+        if course.teacher_id != teacher_id:
+            raise HTTPException(status_code=403, detail="FORBIDDEN")
+        if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
+            raise HTTPException(status_code=409, detail="INVALID_STATE")
+            
+        update_data = data.model_dump(exclude_unset=True)
+        if "order" in update_data:
+            db_lesson_content.position = update_data.pop("order")
+            
+        for key, value in update_data.items():
+            if hasattr(db_lesson_content, key):
+                setattr(db_lesson_content, key, value)
+                
+        await self.db.commit()
+        await self.db.refresh(db_lesson_content)
+        
+        return TeacherCourseLessonContentResponse(
+            id=db_lesson_content.id,
+            lesson_id=db_lesson_content.lesson_id,
+            content_type=db_lesson_content.content_type.value if hasattr(db_lesson_content.content_type, 'value') else db_lesson_content.content_type,
+            content_id=db_lesson_content.content_id,
+            media_url=db_lesson_content.media_url,
+            order=db_lesson_content.position,
+            created_at=db_lesson_content.created_at.isoformat() + "Z" if getattr(db_lesson_content, 'created_at', None) else None
+        )
+
+    async def delete_lesson_content(self, teacher_id: int, content_id: int) -> TeacherCourseDeleteResponse:
+        stmt = select(LessonContentModel).where(LessonContentModel.id == content_id)
+        db_lesson_content = (await self.db.execute(stmt)).scalar_one_or_none()
+        if db_lesson_content is None:
+            raise HTTPException(status_code=404, detail="CONTENT_NOT_FOUND")
+            
+        lesson_stmt = select(LessonModel).where(
+            LessonModel.id == db_lesson_content.lesson_id
+        )
+        db_lesson = (await self.db.execute(lesson_stmt)).scalar_one_or_none()
+        if db_lesson is None:
+            raise HTTPException(status_code=404, detail="LESSON_NOT_FOUND")
+            
+        section_stmt = select(SectionModel).where(
+            SectionModel.id == db_lesson.section_id
+        )
+        db_section = (await self.db.execute(section_stmt)).scalar_one_or_none()
+        if db_section is None:
+            raise HTTPException(status_code=404, detail="SECTION_NOT_FOUND")
+            
+        course_stmt = select(CourseModel).where(
+            CourseModel.id == db_section.course_id,
+            CourseModel.deleted_at.is_(None)
+        ).with_for_update()
+        course = (await self.db.execute(course_stmt)).scalar_one_or_none()
+        
+        if course is None:
+            raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+        if course.teacher_id != teacher_id:
+            raise HTTPException(status_code=403, detail="FORBIDDEN")
+        if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
+            raise HTTPException(status_code=409, detail="INVALID_STATE")
+            
+        ctype = db_lesson_content.content_type.value if hasattr(db_lesson_content.content_type, 'value') else db_lesson_content.content_type
+        
+        if ctype == "READING":
+            reading_stmt = select(ReadingContentModel).where(ReadingContentModel.id == db_lesson_content.content_id)
+            db_reading = (await self.db.execute(reading_stmt)).scalar_one_or_none()
+            if db_reading:
+                await self.db.delete(db_reading)
+                
+        await self.db.delete(db_lesson_content)
+        await self.db.commit()
+        
         return TeacherCourseDeleteResponse(message="Deleted successfully")
 
     async def reorder_curriculum(self, teacher_id: int, course_id: int, data: TeacherCourseReorderRequest) -> TeacherCourseReorderResponse:
