@@ -554,11 +554,17 @@ _MOCK_QUIZZES: dict[int, QuizResponse] = {
 }
 
 
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, or_, func
+
 class CourseService:
     """
     Service layer for Module 2: Student Course Directory & Study Mode.
     All methods use mock data — DB integration is deferred until API contract is stable.
     """
+
+    def __init__(self, db_session: AsyncSession):
+        self.db_session = db_session
 
     # ------------------------------------------------------------------
     # Endpoint 1 — GET /courses
@@ -571,19 +577,81 @@ class CourseService:
         q: str | None,
         price_type: PriceType | None,
     ) -> CourseCatalogResponse:
-        filtered = list(_MOCK_COURSES)
+        from src.models.course_model import CourseModel
+        from src.models.base_model import CourseStatus
+        from src.models.enrollment_model import EnrollmentModel
+        from src.models.course_review_model import CourseReviewModel
+        
+        enrolled_count_sq = (
+            select(func.count(EnrollmentModel.id))
+            .where(EnrollmentModel.course_id == CourseModel.id)
+            .scalar_subquery()
+            .label("enrolled_count")
+        )
+        
+        rating_sq = (
+            select(func.coalesce(func.avg(CourseReviewModel.rating), 0.0))
+            .where(CourseReviewModel.course_id == CourseModel.id)
+            .scalar_subquery()
+            .label("rating")
+        )
+
+        stmt = select(CourseModel, enrolled_count_sq, rating_sq).where(
+            CourseModel.status == CourseStatus.APPROVED,
+            CourseModel.deleted_at.is_(None)
+        )
 
         if q:
-            q_lower = q.lower()
-            filtered = [c for c in filtered if q_lower in c.title.lower()]
+            stmt = stmt.where(CourseModel.title.ilike(f"%{q}%"))
 
-        if price_type:
-            filtered = [c for c in filtered if c.price_type == price_type]
+        if price_type == PriceType.FREE:
+            stmt = stmt.where(CourseModel.price == 0)
+        elif price_type == PriceType.PAID:
+            stmt = stmt.where(CourseModel.price > 0)
 
-        total_items = len(filtered)
-        total_pages = max(1, (total_items + size - 1) // size)
+        # Count total items
+        count_stmt = select(func.count(CourseModel.id)).where(
+            CourseModel.status == CourseStatus.APPROVED,
+            CourseModel.deleted_at.is_(None)
+        )
+        if q:
+            count_stmt = count_stmt.where(CourseModel.title.ilike(f"%{q}%"))
+        if price_type == PriceType.FREE:
+            count_stmt = count_stmt.where(CourseModel.price == 0)
+        elif price_type == PriceType.PAID:
+            count_stmt = count_stmt.where(CourseModel.price > 0)
+
+        total_items = await self.db_session.scalar(count_stmt)
+        total_items = total_items or 0
+
+        # Pagination
         start = (page - 1) * size
-        page_items = filtered[start : start + size]
+        stmt = stmt.offset(start).limit(size)
+        
+        rows = (await self.db_session.execute(stmt)).all()
+
+        page_items = []
+        for c, enrolled_count, rating in rows:
+            c_price = float(c.price)
+            c_price_type = PriceType.FREE if c_price == 0 else PriceType.PAID
+            tags_list = [tag.strip() for tag in c.tags.split(",")] if c.tags else []
+
+            page_items.append(
+                CourseItemResponse(
+                    id=c.id,
+                    slug=c.slug,
+                    title=c.title,
+                    thumbnail_url=c.thumbnail_url or "",
+                    price=c_price,
+                    price_type=c_price_type,
+                    field=c.field or "",
+                    tags=tags_list,
+                    enrolled_count=int(enrolled_count),
+                    rating=float(rating),
+                )
+            )
+
+        total_pages = max(1, (total_items + size - 1) // size)
 
         return CourseCatalogResponse(
             total_items=total_items,

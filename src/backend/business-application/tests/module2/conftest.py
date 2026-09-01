@@ -30,7 +30,7 @@ import os
 
 # Set required env vars BEFORE any src.* import triggers settings validation.
 # Copied verbatim from tests/test_lesson_comment_service.py — same bootstrap.
-os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost:5432/db")
+os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://lms:lms@localhost:5433/lms")
 os.environ.setdefault("VERIFY_REGISTER_SECRET", "test-secret")
 os.environ.setdefault("AUTH_PROVIDER_URL", "http://localhost:4001")
 os.environ.setdefault("UPSTASH_REDIS_REST_URL", "http://localhost")
