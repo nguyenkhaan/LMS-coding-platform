@@ -14,7 +14,7 @@ export const CourseCatalogItemThumbnailCard: React.FC = () => {
 				{/* Visual play button overlay matching video previews */}
 				<div className="absolute inset-0 flex justify-center items-center">
 					<div className="size-16 rounded-full bg-white/20 backdrop-blur-xs flex justify-center items-center text-white shadow-lg cursor-pointer hover:scale-105 transition-all">
-						<PlayCircle className="w-10 h-10 fill-white stroke-[#392C7D]" />
+						<PlayCircle className="w-10 h-10 fill-white stroke-primary" />
 					</div>
 				</div>
 			</div>

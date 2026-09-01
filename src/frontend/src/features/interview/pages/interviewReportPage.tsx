@@ -250,7 +250,7 @@ function RadarChart() {
 				{/* Labels with Scores */}
 				{COMPETENCY_DATA.map((d, i) => {
 					const { x, y } = pt(i, 1.0);
-					const cfg = labelConfigs[i];
+					const cfg = labelConfigs[i] || { dx: 0, dy: 0, textAnchor: 'middle' as const, dominantBaseline: 'middle' as const };
 					return (
 						<g key={i}>
 							<text

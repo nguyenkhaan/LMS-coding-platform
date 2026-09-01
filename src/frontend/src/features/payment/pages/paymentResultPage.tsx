@@ -6,6 +6,14 @@ import { Button } from '@/components/ui/button';
 import { useCourseStore } from '@/features/courses/model/useCourseStore';
 import { toast } from 'sonner';
 
+interface EnrolledRecord {
+  id: string;
+  slug: string;
+  title: string;
+  thumbnail_url: string;
+  progress_percent: number;
+}
+
 export const PaymentResultPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -17,8 +25,8 @@ export const PaymentResultPage: React.FC = () => {
 
   useEffect(() => {
     if (status === 'success' && activeCourse) {
-      const localEnrolled = JSON.parse(localStorage.getItem('local_enrolled_courses') || '[]');
-      if (!localEnrolled.some((c: any) => c.id === activeCourse.id || c.slug === activeCourse.slug)) {
+      const localEnrolled: EnrolledRecord[] = JSON.parse(localStorage.getItem('local_enrolled_courses') || '[]');
+      if (!localEnrolled.some((c: EnrolledRecord) => c.id === activeCourse.id || c.slug === activeCourse.slug)) {
         localEnrolled.push({
           id: activeCourse.id,
           slug: activeCourse.slug,
@@ -69,14 +77,14 @@ export const PaymentResultPage: React.FC = () => {
             </div>
 
             {/* Heading */}
-            <h2 className="text-2xl font-bold text-[#111827] tracking-tight leading-tight mb-3">
+            <h2 className="text-2xl font-bold text-zinc-900 tracking-tight leading-tight mb-3">
               {status === 'success' && 'Payment successful'}
               {status === 'pending' && 'Payment pending'}
               {(status === 'failed' || status === 'cancelled') && 'Payment failed'}
             </h2>
 
             {/* Description */}
-            <p className="text-sm text-[#374151] max-w-md leading-relaxed">
+            <p className="text-sm text-zinc-700 max-w-md leading-relaxed">
               {status === 'success' && 'Your payment has been confirmed by the payment provider. Enrollment is now active and you can start the course immediately.'}
               {status === 'pending' && 'We are waiting for confirmation from your bank or payment provider. This usually takes less than 30 seconds.'}
               {(status === 'failed' || status === 'cancelled') && 'The payment session was cancelled or failed. No charges were made. You can try checkout again.'}
@@ -85,33 +93,33 @@ export const PaymentResultPage: React.FC = () => {
 
           {/* Details list */}
           <div className="px-8 pb-6 border-t border-gray-100 pt-6">
-            <h3 className="text-sm font-bold text-[#392C7D] uppercase tracking-wider mb-4">Transaction Details</h3>
+            <h3 className="text-sm font-bold text-primary uppercase tracking-wider mb-4">Transaction Details</h3>
             
             <div className="flex flex-col gap-3">
               <div className="flex justify-between py-2 border-b border-gray-50 text-sm">
-                <span className="text-[#374151] font-medium">Course</span>
-                <span className="font-semibold text-[#111827] text-right max-w-[65%]">{activeCourse ? activeCourse.title : "Data Structures & Algorithms Interview Prep"}</span>
+                <span className="text-zinc-700 font-medium">Course</span>
+                <span className="font-semibold text-zinc-900 text-right max-w-[65%]">{activeCourse ? activeCourse.title : "Data Structures & Algorithms Interview Prep"}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-gray-50 text-sm">
-                <span className="text-[#374151] font-medium">Amount paid</span>
-                <span className="font-semibold text-[#111827]">{activeCourse ? `$${activeCourse.price} USD` : "$119.44 USD"}</span>
+                <span className="text-zinc-700 font-medium">Amount paid</span>
+                <span className="font-semibold text-zinc-900">{activeCourse ? `$${activeCourse.price} USD` : "$119.44 USD"}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-gray-50 text-sm">
-                <span className="text-[#374151] font-medium">Transaction code</span>
-                <span className="font-semibold text-[#111827] font-mono text-xs">TXN-2026-0815-CMP</span>
+                <span className="text-zinc-700 font-medium">Transaction code</span>
+                <span className="font-semibold text-zinc-900 font-mono text-xs">TXN-2026-0815-CMP</span>
               </div>
               <div className="flex justify-between py-2 border-b border-gray-50 text-sm">
-                <span className="text-[#374151] font-medium">Payment reference</span>
-                <span className="font-semibold text-[#111827] font-mono text-xs">PAYOS-7741903</span>
+                <span className="text-zinc-700 font-medium">Payment reference</span>
+                <span className="font-semibold text-zinc-900 font-mono text-xs">PAYOS-7741903</span>
               </div>
               <div className="flex justify-between py-2 border-b border-gray-50 text-sm">
-                <span className="text-[#374151] font-medium">Created</span>
-                <span className="font-semibold text-[#111827]">Aug 15, 2026, 04:41 PM</span>
+                <span className="text-zinc-700 font-medium">Created</span>
+                <span className="font-semibold text-zinc-900">Aug 15, 2026, 04:41 PM</span>
               </div>
               {status === 'success' && (
                 <div className="flex justify-between py-2 text-sm">
-                  <span className="text-[#374151] font-medium">Completed</span>
-                  <span className="font-semibold text-[#111827]">Aug 15, 2026, 04:45 PM</span>
+                  <span className="text-zinc-700 font-medium">Completed</span>
+                  <span className="font-semibold text-zinc-900">Aug 15, 2026, 04:45 PM</span>
                 </div>
               )}
             </div>
@@ -124,7 +132,7 @@ export const PaymentResultPage: React.FC = () => {
                 size="lg"
                 variant="primary"
                 onClick={() => navigate(activeCourse ? `/learn/${activeCourse.slug}` : '/learn/data-structures-algorithms')}
-                className="flex-1 bg-[#FF4667] hover:bg-[#e03d5b] text-white h-12 rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer flex items-center justify-center gap-2"
+                className="flex-1 bg-accent hover:bg-accent-hover text-white h-12 rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 Start learning
                 <ArrowRight className="w-4 h-4" />
@@ -135,7 +143,7 @@ export const PaymentResultPage: React.FC = () => {
                 size="lg"
                 variant="primary"
                 onClick={() => window.location.reload()}
-                className="flex-1 bg-[#392C7D] hover:bg-[#2d2263] text-white h-12 rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer animate-pulse"
+                className="flex-1 bg-primary hover:bg-primary-hover text-white h-12 rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer animate-pulse"
               >
                 Refresh status
               </Button>
@@ -145,7 +153,7 @@ export const PaymentResultPage: React.FC = () => {
                 size="lg"
                 variant="primary"
                 onClick={() => navigate(activeCourse ? `/checkout/${activeCourse.id}` : '/checkout/1')}
-                className="flex-1 bg-[#392C7D] hover:bg-[#2d2263] text-white h-12 rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer"
+                className="flex-1 bg-primary hover:bg-primary-hover text-white h-12 rounded-xl font-bold text-sm tracking-wide transition-all cursor-pointer"
               >
                 Try checkout again
               </Button>
@@ -154,7 +162,7 @@ export const PaymentResultPage: React.FC = () => {
               size="lg"
               variant="outline"
               onClick={() => navigate('/student/courses')}
-              className="flex-1 h-12 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-[#374151] font-bold text-sm transition-all cursor-pointer"
+              className="flex-1 h-12 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 text-zinc-700 font-bold text-sm transition-all cursor-pointer"
             >
               Go to my courses
             </Button>
@@ -162,7 +170,7 @@ export const PaymentResultPage: React.FC = () => {
         </div>
 
         {/* Disclaimer footer */}
-        <p className="text-center text-xs text-[#6B7280] max-w-lg mt-6 leading-relaxed">
+        <p className="text-center text-xs text-neutral-500 max-w-lg mt-6 leading-relaxed">
           Amounts shown are the snapshot recorded on this transaction and may differ from the current course price. Enrollment is granted only after the payment provider confirms the transaction.
         </p>
       </div>

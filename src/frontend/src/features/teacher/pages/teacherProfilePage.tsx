@@ -70,8 +70,8 @@ interface ProfileFieldProps {
 
 const ProfileField: React.FC<ProfileFieldProps> = ({ label, value }) => (
   <div className='flex flex-col gap-0.5'>
-    <span className='text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide'>{label}</span>
-    <span className='text-[14px] text-[#111827] font-medium break-words'>{value || '—'}</span>
+    <span className='text-[12px] font-semibold text-neutral-500 uppercase tracking-wide'>{label}</span>
+    <span className='text-[14px] text-zinc-900 font-medium break-words'>{value || '—'}</span>
   </div>
 );
 
@@ -85,12 +85,12 @@ interface EducationRowProps {
 const EducationRow: React.FC<EducationRowProps> = ({ entry }) => (
   <div className='flex items-start gap-3 py-3 border-b border-gray-100 last:border-0'>
     <div className='w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0'>
-      <GraduationCap className='w-4 h-4 text-[#392C7D]' />
+      <GraduationCap className='w-4 h-4 text-primary' />
     </div>
     <div className='flex-1 min-w-0'>
-      <p className='text-[14px] font-semibold text-[#111827]'>{entry.degree}</p>
-      <p className='text-[13px] text-[#374151]'>{entry.institution}</p>
-      <p className='text-[12px] text-[#6B7280] mt-0.5'>{entry.year}</p>
+      <p className='text-[14px] font-semibold text-zinc-900'>{entry.degree}</p>
+      <p className='text-[13px] text-zinc-700'>{entry.institution}</p>
+      <p className='text-[12px] text-neutral-500 mt-0.5'>{entry.year}</p>
     </div>
   </div>
 );
@@ -102,12 +102,12 @@ interface ExperienceRowProps {
 const ExperienceRow: React.FC<ExperienceRowProps> = ({ entry }) => (
   <div className='flex items-start gap-3 py-3 border-b border-gray-100 last:border-0'>
     <div className='w-9 h-9 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center shrink-0'>
-      <Briefcase className='w-4 h-4 text-[#FF4667]' />
+      <Briefcase className='w-4 h-4 text-accent' />
     </div>
     <div className='flex-1 min-w-0'>
-      <p className='text-[14px] font-semibold text-[#111827]'>{entry.title}</p>
-      <p className='text-[13px] text-[#374151]'>{entry.company} · {entry.duration}</p>
-      <p className='text-[13px] text-[#6B7280] mt-1'>{entry.description}</p>
+      <p className='text-[14px] font-semibold text-zinc-900'>{entry.title}</p>
+      <p className='text-[13px] text-zinc-700'>{entry.company} · {entry.duration}</p>
+      <p className='text-[13px] text-neutral-500 mt-1'>{entry.description}</p>
     </div>
   </div>
 );
@@ -143,13 +143,13 @@ export const TeacherProfilePage: React.FC = () => {
     setDraft((prev) => ({ ...prev, [field]: value }));
   };
 
-  const inputClass = 'w-full px-3 py-2 text-[14px] text-[#111827] border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] focus:ring-1 focus:ring-[#392C7D]/20 transition-all bg-white';
+  const inputClass = 'w-full px-3 py-2 text-[14px] text-zinc-900 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all bg-white';
 
   return (
     <div className="w-full min-h-screen bg-gray-50 flex flex-col">
 
         {/* Page title banner */}
-        <div className='w-full bg-gradient-to-r from-[#392C7D] to-purple-600 py-8 flex flex-col items-center justify-center gap-1'>
+        <div className='w-full bg-gradient-to-r from-primary to-purple-600 py-8 flex flex-col items-center justify-center gap-1'>
           <h1 className='text-2xl lg:text-3xl font-bold text-white tracking-tight'>My Profile</h1>
           <p className='text-[13px] font-medium text-white/70'>Dashboard &rsaquo; My Profile</p>
         </div>
@@ -194,12 +194,12 @@ export const TeacherProfilePage: React.FC = () => {
             {/* Profile detail card */}
             <div className='bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden'>
               <div className='flex items-center justify-between px-6 py-4 border-b border-gray-100'>
-                <h2 className='text-[20px] font-bold text-[#392C7D]'>My Profile</h2>
+                <h2 className='text-[20px] font-bold text-primary'>My Profile</h2>
                 {!isEditing ? (
                   <button
                     onClick={handleEditToggle}
                     aria-label='Edit profile'
-                    className='flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-[14px] font-semibold text-[#374151] hover:bg-slate-50 hover:text-[#392C7D] hover:border-indigo-200 transition-all cursor-pointer'
+                    className='flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-[14px] font-semibold text-zinc-700 hover:bg-slate-50 hover:text-primary hover:border-indigo-200 transition-all cursor-pointer'
                   >
                     <Pencil className='w-3.5 h-3.5' />
                     Edit
@@ -209,7 +209,7 @@ export const TeacherProfilePage: React.FC = () => {
                     <button
                       onClick={handleCancel}
                       aria-label='Cancel editing'
-                      className='flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-[14px] font-semibold text-[#374151] hover:bg-slate-50 transition-all cursor-pointer'
+                      className='flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-[14px] font-semibold text-zinc-700 hover:bg-slate-50 transition-all cursor-pointer'
                     >
                       <X className='w-3.5 h-3.5' />
                       Cancel
@@ -217,7 +217,7 @@ export const TeacherProfilePage: React.FC = () => {
                     <button
                       onClick={handleSave}
                       aria-label='Save profile'
-                      className='flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#392C7D] text-white text-[14px] font-semibold hover:bg-[#2d2263] transition-all cursor-pointer'
+                      className='flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-[14px] font-semibold hover:bg-primary-hover transition-all cursor-pointer'
                     >
                       <Check className='w-3.5 h-3.5' />
                       Save
@@ -244,7 +244,7 @@ export const TeacherProfilePage: React.FC = () => {
                     </div>
                   )}
                   <div className='flex items-center gap-2'>
-                    <Mail className='w-4 h-4 text-[#6B7280] shrink-0' />
+                    <Mail className='w-4 h-4 text-neutral-500 shrink-0' />
                     <ProfileField label='Email' value={isEditing ? '' : profile.email} />
                   </div>
                   {isEditing && (
@@ -258,7 +258,7 @@ export const TeacherProfilePage: React.FC = () => {
                     />
                   )}
                   <div className='flex items-center gap-2'>
-                    <Phone className='w-4 h-4 text-[#6B7280] shrink-0' />
+                    <Phone className='w-4 h-4 text-neutral-500 shrink-0' />
                     <ProfileField label='Phone' value={isEditing ? '' : profile.phone} />
                   </div>
                   {isEditing && (
@@ -276,7 +276,7 @@ export const TeacherProfilePage: React.FC = () => {
 
                 {/* Bio */}
                 <div className='flex flex-col gap-2'>
-                  <span className='text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide'>Bio</span>
+                  <span className='text-[12px] font-semibold text-neutral-500 uppercase tracking-wide'>Bio</span>
                   {isEditing ? (
                     <textarea
                       value={draft.headline}
@@ -287,7 +287,7 @@ export const TeacherProfilePage: React.FC = () => {
                       aria-label='Bio'
                     />
                   ) : (
-                    <p className='text-[14px] text-[#374151] leading-relaxed'>
+                    <p className='text-[14px] text-zinc-700 leading-relaxed'>
                       {profile.headline}
                     </p>
                   )}
@@ -295,14 +295,14 @@ export const TeacherProfilePage: React.FC = () => {
 
                 {/* Expertise tags */}
                 <div className='flex flex-col gap-2'>
-                  <span className='text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide flex items-center gap-1.5'>
+                  <span className='text-[12px] font-semibold text-neutral-500 uppercase tracking-wide flex items-center gap-1.5'>
                     <Tag className='w-3 h-3' /> Expertise
                   </span>
                   <div className='flex flex-wrap gap-2'>
                     {profile.expertiseTags.map((tag) => (
                       <span
                         key={tag}
-                        className='px-3 py-1 bg-indigo-50 text-[#392C7D] text-[12px] font-semibold rounded-full border border-indigo-100'
+                        className='px-3 py-1 bg-indigo-50 text-primary text-[12px] font-semibold rounded-full border border-indigo-100'
                       >
                         {tag}
                       </span>
@@ -312,11 +312,11 @@ export const TeacherProfilePage: React.FC = () => {
 
                 {/* External links */}
                 <div className='flex flex-col gap-3'>
-                  <span className='text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide'>Links</span>
+                  <span className='text-[12px] font-semibold text-neutral-500 uppercase tracking-wide'>Links</span>
                   <div className='flex flex-wrap gap-3'>
                     {profile.githubUrl && (
                       <a href={profile.githubUrl} target='_blank' rel='noopener noreferrer'
-                        className='flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-[13px] font-medium text-[#374151] hover:border-[#392C7D] hover:text-[#392C7D] transition-all'
+                        className='flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-[13px] font-medium text-zinc-700 hover:border-primary hover:text-primary transition-all'
                       >
                         <LinkIcon className="w-4 h-4" />
                         GitHub
@@ -324,7 +324,7 @@ export const TeacherProfilePage: React.FC = () => {
                     )}
                     {profile.linkedinUrl && (
                       <a href={profile.linkedinUrl} target='_blank' rel='noopener noreferrer'
-                        className='flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-[13px] font-medium text-[#374151] hover:border-[#392C7D] hover:text-[#392C7D] transition-all'
+                        className='flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-[13px] font-medium text-zinc-700 hover:border-primary hover:text-primary transition-all'
                       >
                         <LinkIcon className="w-4 h-4" />
                         LinkedIn
@@ -332,7 +332,7 @@ export const TeacherProfilePage: React.FC = () => {
                     )}
                     {profile.websiteUrl && (
                       <a href={profile.websiteUrl} target='_blank' rel='noopener noreferrer'
-                        className='flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-[13px] font-medium text-[#374151] hover:border-[#392C7D] hover:text-[#392C7D] transition-all'
+                        className='flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-[13px] font-medium text-zinc-700 hover:border-primary hover:text-primary transition-all'
                       >
                         <Globe className='w-4 h-4' />
                         Website
@@ -346,8 +346,8 @@ export const TeacherProfilePage: React.FC = () => {
             {/* Education */}
             <div className='bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden'>
               <div className='flex items-center justify-between px-6 py-4 border-b border-gray-100'>
-                <h2 className='text-[16px] font-bold text-[#111827] flex items-center gap-2'>
-                  <GraduationCap className='w-5 h-5 text-[#392C7D]' />
+                <h2 className='text-[16px] font-bold text-zinc-900 flex items-center gap-2'>
+                  <GraduationCap className='w-5 h-5 text-primary' />
                   Education
                 </h2>
               </div>
@@ -361,8 +361,8 @@ export const TeacherProfilePage: React.FC = () => {
             {/* Experience */}
             <div className='bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden'>
               <div className='flex items-center justify-between px-6 py-4 border-b border-gray-100'>
-                <h2 className='text-[16px] font-bold text-[#111827] flex items-center gap-2'>
-                  <Briefcase className='w-5 h-5 text-[#FF4667]' />
+                <h2 className='text-[16px] font-bold text-zinc-900 flex items-center gap-2'>
+                  <Briefcase className='w-5 h-5 text-accent' />
                   Experience
                 </h2>
               </div>

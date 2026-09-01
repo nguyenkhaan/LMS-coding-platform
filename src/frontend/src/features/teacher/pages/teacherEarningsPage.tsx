@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { TeacherSidebar } from '../components/teacherSidebar.tsx';
-import { Clock, TrendingUp, Wallet } from 'lucide-react';
+import { Clock, TrendingUp, Wallet, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Types
 interface WalletData {
@@ -79,9 +79,11 @@ const LineChart: React.FC<LineChartProps> = ({ data, labels }) => {
     ''
   );
 
+  const firstPoint = points[0];
+  const lastPoint = points[points.length - 1];
   const areaD =
-    points.length > 0
-      ? `${pathD} L ${points[points.length - 1].x} ${height - paddingBottom} L ${points[0].x} ${height - paddingBottom} Z`
+    firstPoint && lastPoint
+      ? `${pathD} L ${lastPoint.x} ${height - paddingBottom} L ${firstPoint.x} ${height - paddingBottom} Z`
       : '';
 
   return (
@@ -89,8 +91,8 @@ const LineChart: React.FC<LineChartProps> = ({ data, labels }) => {
       <svg className="w-full h-[220px] min-w-[500px]" viewBox={`0 0 ${width} ${height}`}>
         <defs>
           <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#392C7D" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#392C7D" stopOpacity="0.0" />
+            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.0" />
           </linearGradient>
         </defs>
         
@@ -105,14 +107,14 @@ const LineChart: React.FC<LineChartProps> = ({ data, labels }) => {
                 y1={y}
                 x2={width - paddingRight}
                 y2={y}
-                stroke="#F3F4F6"
+                className="stroke-slate-100"
                 strokeWidth={1}
               />
               <text
                 x={paddingLeft - 8}
                 y={y + 4}
                 textAnchor="end"
-                className="fill-[#6B7280] text-[9px] font-semibold"
+                className="fill-neutral-500 text-[9px] font-semibold"
               >
                 ${Math.round(val)}
               </text>
@@ -125,7 +127,7 @@ const LineChart: React.FC<LineChartProps> = ({ data, labels }) => {
 
         {/* Main Line path */}
         {pathD && (
-          <path d={pathD} fill="none" stroke="#392C7D" strokeWidth={2.5} strokeLinecap="round" />
+          <path d={pathD} fill="none" className="stroke-primary" strokeWidth={2.5} strokeLinecap="round" />
         )}
 
         {/* Data points */}
@@ -135,7 +137,7 @@ const LineChart: React.FC<LineChartProps> = ({ data, labels }) => {
               cx={pt.x}
               cy={pt.y}
               r={3.5}
-              className="fill-white stroke-[#392C7D] stroke-2 hover:r-5 cursor-pointer transition-all"
+              className="fill-white stroke-primary stroke-2 hover:r-5 cursor-pointer transition-all"
             />
             <title>{`$${data[idx]}`}</title>
           </g>
@@ -150,7 +152,7 @@ const LineChart: React.FC<LineChartProps> = ({ data, labels }) => {
               x={x}
               y={height - 4}
               textAnchor="middle"
-              className="fill-[#6B7280] text-[9px] font-medium"
+              className="fill-neutral-500 text-[9px] font-medium"
             >
               {lbl}
             </text>
@@ -231,7 +233,7 @@ export const TeacherEarningsPage: React.FC = () => {
   };
 
   const handlePeriodChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setPeriod(e.target.value as any);
+    setPeriod(e.target.value as 'this_month' | 'last_3_months' | 'all_time');
     setCurrentPage(1);
   };
 
@@ -239,7 +241,7 @@ export const TeacherEarningsPage: React.FC = () => {
     <div className="w-full min-h-screen bg-gray-50 flex flex-col">
 
         {/* Page title banner */}
-        <div className="w-full bg-gradient-to-r from-[#392C7D] to-purple-600 py-8 flex flex-col items-center justify-center gap-1">
+        <div className="w-full bg-gradient-to-r from-primary to-purple-600 py-8 flex flex-col items-center justify-center gap-1">
           <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight">Earnings</h1>
           <p className="text-[13px] font-medium text-white/70">Dashboard &rsaquo; Earnings</p>
         </div>
@@ -282,13 +284,13 @@ export const TeacherEarningsPage: React.FC = () => {
             
             {/* Header & period selector toolbar */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <h2 className="text-[20px] font-bold text-[#392C7D]">Earnings & Wallet Overview</h2>
+              <h2 className="text-[20px] font-bold text-primary">Earnings & Wallet Overview</h2>
               <div className="flex items-center gap-2">
-                <span className="text-[13px] text-[#6B7280] font-medium">Filter Period:</span>
+                <span className="text-[13px] text-neutral-500 font-medium">Filter Period:</span>
                 <select
                   value={period}
                   onChange={handlePeriodChange}
-                  className="px-3.5 py-1.5 border border-gray-200 rounded-xl text-[13px] font-semibold text-[#374151] focus:outline-none focus:border-[#392C7D] cursor-pointer bg-white"
+                  className="px-3.5 py-1.5 border border-gray-200 rounded-xl text-[13px] font-semibold text-zinc-700 focus:outline-none focus:border-primary cursor-pointer bg-white"
                 >
                   <option value="this_month">This Month</option>
                   <option value="last_3_months">Last 3 Months</option>
@@ -303,12 +305,12 @@ export const TeacherEarningsPage: React.FC = () => {
               {/* Total Revenue card */}
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex items-center gap-4 hover:border-indigo-100 transition-all">
                 <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-                  <TrendingUp className="w-6 h-6 text-[#392C7D]" />
+                  <TrendingUp className="w-6 h-6 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide">Total Revenue</span>
-                  <h3 className="text-[20px] font-bold text-[#111827] mt-0.5">${metrics.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
-                  <p className="text-[11px] text-[#374151] font-medium mt-0.5">Earning: ${metrics.thisPeriodEarning.toLocaleString('en-US', { minimumFractionDigits: 2 })} this period</p>
+                  <span className="text-[12px] font-semibold text-neutral-500 uppercase tracking-wide">Total Revenue</span>
+                  <h3 className="text-[20px] font-bold text-zinc-900 mt-0.5">${metrics.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+                  <p className="text-[11px] text-zinc-700 font-medium mt-0.5">Earning: ${metrics.thisPeriodEarning.toLocaleString('en-US', { minimumFractionDigits: 2 })} this period</p>
                 </div>
               </div>
 
@@ -318,7 +320,7 @@ export const TeacherEarningsPage: React.FC = () => {
                   <Wallet className="w-6 h-6 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide">Available Balance</span>
+                  <span className="text-[12px] font-semibold text-neutral-500 uppercase tracking-wide">Available Balance</span>
                   <h3 className="text-[20px] font-bold text-emerald-700 mt-0.5">${metrics.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
                   <p className="text-[11px] text-emerald-600 font-medium mt-0.5">Ready for payout withdrawal</p>
                 </div>
@@ -330,7 +332,7 @@ export const TeacherEarningsPage: React.FC = () => {
                   <Clock className="w-6 h-6 text-amber-600" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide">Pending Balance</span>
+                  <span className="text-[12px] font-semibold text-neutral-500 uppercase tracking-wide">Pending Balance</span>
                   <h3 className="text-[20px] font-bold text-amber-700 mt-0.5">${metrics.pendingBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
                   <p className="text-[11px] text-amber-600 font-medium mt-0.5">Includes ${MOCK_WALLET.pending_balance.toFixed(2)} payout requested</p>
                 </div>
@@ -341,8 +343,8 @@ export const TeacherEarningsPage: React.FC = () => {
             {/* Revenue Overview chart card */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col gap-4">
               <div>
-                <h3 className="text-[16px] font-bold text-[#111827]">Revenue Overview</h3>
-                <p className="text-[13px] text-[#6B7280] mt-0.5">Visual overview of course sales and payouts over time</p>
+                <h3 className="text-[16px] font-bold text-zinc-900">Revenue Overview</h3>
+                <p className="text-[13px] text-neutral-500 mt-0.5">Visual overview of course sales and payouts over time</p>
               </div>
               <div className="border-t border-gray-100 pt-4">
                 <LineChart data={metrics.chartData} labels={metrics.chartLabels} />
@@ -353,8 +355,8 @@ export const TeacherEarningsPage: React.FC = () => {
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
                 <div>
-                  <h3 className="text-[16px] font-bold text-[#111827]">Wallet Ledger</h3>
-                  <p className="text-[13px] text-[#6B7280] mt-0.5">Immutable record of payouts, revenues and refunds</p>
+                  <h3 className="text-[16px] font-bold text-zinc-900">Wallet Ledger</h3>
+                  <p className="text-[13px] text-neutral-500 mt-0.5">Immutable record of payouts, revenues and refunds</p>
                 </div>
               </div>
               
@@ -362,7 +364,7 @@ export const TeacherEarningsPage: React.FC = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50/75 border-b border-gray-100 text-[12px] font-bold text-[#111827] uppercase tracking-wider">
+                    <tr className="bg-slate-50/75 border-b border-gray-100 text-[12px] font-bold text-zinc-900 uppercase tracking-wider">
                       <th className="px-6 py-3.5">Date</th>
                       <th className="px-6 py-3.5">Course / Transaction</th>
                       <th className="px-6 py-3.5">Student</th>
@@ -375,16 +377,16 @@ export const TeacherEarningsPage: React.FC = () => {
                       const isNegative = entry.amount < 0;
                       return (
                         <tr key={entry.id} className="hover:bg-slate-50/50 transition-colors">
-                          <td className="px-6 py-4 text-[#6B7280] font-medium whitespace-nowrap">
+                          <td className="px-6 py-4 text-neutral-500 font-medium whitespace-nowrap">
                             {entry.date}
                           </td>
-                          <td className="px-6 py-4 text-[#111827] font-semibold max-w-[280px] truncate">
+                          <td className="px-6 py-4 text-zinc-900 font-semibold max-w-[280px] truncate">
                             {entry.course}
                           </td>
-                          <td className="px-6 py-4 text-[#374151] font-medium">
+                          <td className="px-6 py-4 text-zinc-700 font-medium">
                             {entry.student}
                           </td>
-                          <td className={`px-6 py-4 text-right font-bold whitespace-nowrap ${isNegative ? 'text-rose-600' : 'text-[#392C7D]'}`}>
+                          <td className={`px-6 py-4 text-right font-bold whitespace-nowrap ${isNegative ? 'text-rose-600' : 'text-primary'}`}>
                             {isNegative ? '-' : ''}${Math.abs(entry.amount).toFixed(2)}
                           </td>
                           <td className="px-6 py-4 text-center whitespace-nowrap">
@@ -405,7 +407,7 @@ export const TeacherEarningsPage: React.FC = () => {
                     })}
                     {paginatedLedger.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="px-6 py-8 text-center text-[#6B7280]">
+                        <td colSpan={5} className="px-6 py-8 text-center text-neutral-500">
                           No wallet activities found for this period.
                         </td>
                       </tr>
@@ -420,18 +422,18 @@ export const TeacherEarningsPage: React.FC = () => {
                   <button
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    className="flex items-center gap-1 px-3.5 py-1.5 rounded-xl border border-gray-200 text-[12px] font-semibold text-[#374151] bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                    className="flex items-center gap-1 px-3.5 py-1.5 rounded-xl border border-gray-200 text-[12px] font-semibold text-zinc-700 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                   >
                     <ChevronLeft className="w-3.5 h-3.5" />
                     Previous
                   </button>
-                  <span className="text-[12px] font-bold text-[#6B7280]">
+                  <span className="text-[12px] font-bold text-neutral-500">
                     Page {currentPage} of {totalPages}
                   </span>
                   <button
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    className="flex items-center gap-1 px-3.5 py-1.5 rounded-xl border border-gray-200 text-[12px] font-semibold text-[#374151] bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+                    className="flex items-center gap-1 px-3.5 py-1.5 rounded-xl border border-gray-200 text-[12px] font-semibold text-zinc-700 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
                   >
                     Next
                     <ChevronRight className="w-3.5 h-3.5" />

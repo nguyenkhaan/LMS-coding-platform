@@ -40,7 +40,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ activePath }) =>
     <div className="w-full lg:w-72 shrink-0 font-['Inter']">
       <div className="w-full bg-white rounded-2xl border border-gray-200 p-6 flex flex-col gap-6 shadow-sm">
         <div className="flex flex-col gap-4">
-          <h3 className="text-xs font-bold text-[#111827] uppercase tracking-wider">Main Menu</h3>
+          <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Main Menu</h3>
           <div className="flex flex-col gap-2">
             {menuItems.map((item) => {
               const Icon = item.icon;
@@ -54,8 +54,8 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ activePath }) =>
                   to={item.to}
                   className={
                     isActive
-                      ? 'flex items-center gap-3 px-3 py-2 rounded-xl text-[#FF4667] font-semibold bg-rose-50/60 text-sm'
-                      : 'flex items-center gap-3 py-1.5 px-2 rounded-lg text-[#6B7280] hover:text-[#FF4667] hover:bg-slate-50 transition-all text-sm font-medium'
+                      ? 'flex items-center gap-3 px-3 py-2 rounded-xl text-accent font-semibold bg-rose-50/60 text-sm'
+                      : 'flex items-center gap-3 py-1.5 px-2 rounded-lg text-neutral-500 hover:text-accent hover:bg-slate-50 transition-all text-sm font-medium'
                   }
                 >
                   <Icon className="w-4 h-4" />
@@ -67,14 +67,14 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ activePath }) =>
         </div>
 
         <div className="border-t border-gray-100 pt-6 flex flex-col gap-4">
-          <h3 className="text-xs font-bold text-[#111827] uppercase tracking-wider">Account Settings</h3>
+          <h3 className="text-xs font-bold text-zinc-900 uppercase tracking-wider">Account Settings</h3>
           <div className="flex flex-col gap-2">
             <Link
               to="/teacher/settings"
               className={
                 activePath === '/teacher/settings'
-                  ? 'flex items-center gap-3 px-3 py-2 rounded-xl text-[#FF4667] font-semibold bg-rose-50/60 text-sm'
-                  : 'flex items-center gap-3 py-1.5 px-2 rounded-lg text-[#6B7280] hover:text-[#FF4667] hover:bg-slate-50 transition-all text-sm font-medium'
+                  ? 'flex items-center gap-3 px-3 py-2 rounded-xl text-accent font-semibold bg-rose-50/60 text-sm'
+                  : 'flex items-center gap-3 py-1.5 px-2 rounded-lg text-neutral-500 hover:text-accent hover:bg-slate-50 transition-all text-sm font-medium'
               }
             >
               <Settings className="w-4 h-4" />
@@ -82,7 +82,7 @@ export const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ activePath }) =>
             </Link>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 py-1.5 px-2 rounded-lg text-[#6B7280] hover:text-rose-500 hover:bg-rose-50/50 transition-all text-sm text-left w-full cursor-pointer font-medium"
+              className="flex items-center gap-3 py-1.5 px-2 rounded-lg text-neutral-500 hover:text-rose-500 hover:bg-rose-50/50 transition-all text-sm text-left w-full cursor-pointer font-medium"
             >
               <LogOut className="w-4 h-4 text-rose-500" />
               <span>Logout</span>

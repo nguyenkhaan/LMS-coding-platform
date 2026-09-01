@@ -19,6 +19,14 @@ export const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    const remembered = localStorage.getItem('auth_remembered_email');
+    if (remembered) {
+      setEmail(remembered);
+      setRememberMe(true);
+    }
+  }, []);
+
   // Validation
   const validateForm = () => {
     if (!email.trim()) {
@@ -81,6 +89,13 @@ export const LoginPage: React.FC = () => {
 
       if (!mockAccount || mockAccount.password !== password) {
         throw new Error('Invalid email or password.');
+      }
+
+      // Persist remember me
+      if (rememberMe) {
+        localStorage.setItem('auth_remembered_email', normalizedEmail);
+      } else {
+        localStorage.removeItem('auth_remembered_email');
       }
 
       // Update Auth Store

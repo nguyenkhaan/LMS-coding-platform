@@ -108,7 +108,7 @@ const MOCK_COURSES: Omit<CourseCatalogItem, 'id'>[] = [
 ];
 
 const ALL_COURSES: CourseCatalogItem[] = Array.from({ length: 20 }, (_, idx) => {
-	const template = MOCK_COURSES[idx % MOCK_COURSES.length];
+	const template = MOCK_COURSES[idx % MOCK_COURSES.length] || MOCK_COURSES[0]!;
 	return {
 		...template,
 		id: idx + 1,
@@ -200,7 +200,7 @@ export const CourseCatalogGridPage: React.FC = () => {
 				{/* Toolbar Header info */}
 				<div className="w-full flex justify-between items-center border-b border-slate-100 pb-4">
 					<div className="flex flex-col gap-1">
-						<h2 className="text-[#392C7D] text-lg font-bold">Courses</h2>
+						<h2 className="text-primary text-lg font-bold">Courses</h2>
 						<span className="text-neutral-500 text-xs">
 							{filteredCourses.length} courses matching your selection
 						</span>
@@ -228,8 +228,8 @@ export const CourseCatalogGridPage: React.FC = () => {
 					<div className="flex-1 w-full">
 						{paginatedCourses.length === 0 ? (
 							<div className="w-full h-80 flex flex-col justify-center items-center text-center p-8 bg-slate-50 rounded-2xl border border-neutral-200/50">
-								<BookOpen className="w-12 h-12 text-[#392C7D]/30 mb-3" />
-								<h4 className="text-[#392C7D] text-base font-bold">No courses found</h4>
+								<BookOpen className="w-12 h-12 text-primary/30 mb-3" />
+								<h4 className="text-primary text-base font-bold">No courses found</h4>
 								<p className="text-neutral-500 text-xs mt-1">Try resetting filters to discover courses.</p>
 							</div>
 						) : (

@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface QuizOption {
@@ -36,17 +36,17 @@ export const QuizQuestionPanel: React.FC<QuizQuestionPanelProps> = ({
 			{/* Question prompt */}
 			<div className="flex flex-col gap-3">
 				<div className="flex items-center gap-2">
-					<span className="text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide bg-slate-100 px-2.5 py-1 rounded-full">
+					<span className="text-[12px] font-semibold text-neutral-500 uppercase tracking-wide bg-slate-100 px-2.5 py-1 rounded-full">
 						Question {questionNumber}
 					</span>
 				</div>
-				<p className="text-[16px] font-semibold text-[#111827] leading-relaxed">{questionText}</p>
+				<p className="text-[16px] font-semibold text-zinc-900 leading-relaxed">{questionText}</p>
 			</div>
 
 			{/* Code block */}
 			{codeBlock && (
 				<div className="relative">
-					<pre className="bg-[#1e1e2e] text-[#cdd6f4] text-[13px] font-mono leading-relaxed rounded-xl p-4 overflow-x-auto whitespace-pre">
+					<pre className="bg-slate-900 text-slate-100 text-[13px] font-mono leading-relaxed rounded-xl p-4 overflow-x-auto whitespace-pre">
 						<code>{codeBlock}</code>
 					</pre>
 				</div>
@@ -62,18 +62,18 @@ export const QuizQuestionPanel: React.FC<QuizQuestionPanelProps> = ({
 							key={option.id}
 							className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all select-none ${
 								isSelected
-									? 'border-[#392C7D] bg-indigo-50/60'
+									? 'border-primary bg-indigo-50/60'
 									: 'border-gray-200 bg-white hover:border-indigo-200 hover:bg-slate-50'
 							}`}
 						>
 							<span
 								className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-									isSelected ? 'border-[#392C7D]' : 'border-gray-300'
+									isSelected ? 'border-primary' : 'border-gray-300'
 								}`}
 								aria-hidden="true"
 							>
 								{isSelected && (
-									<span className="w-2.5 h-2.5 rounded-full bg-[#392C7D]" />
+									<span className="w-2.5 h-2.5 rounded-full bg-primary" />
 								)}
 							</span>
 							<input
@@ -84,7 +84,7 @@ export const QuizQuestionPanel: React.FC<QuizQuestionPanelProps> = ({
 								onChange={() => onSelectOption(option.id)}
 								className="sr-only"
 							/>
-							<span className={`text-[14px] font-medium leading-snug ${isSelected ? 'text-[#392C7D]' : 'text-[#374151]'}`}>
+							<span className={`text-[14px] font-medium leading-snug ${isSelected ? 'text-primary' : 'text-zinc-700'}`}>
 								{option.text}
 							</span>
 						</label>
@@ -98,7 +98,7 @@ export const QuizQuestionPanel: React.FC<QuizQuestionPanelProps> = ({
 					onClick={onPrevious}
 					disabled={isFirst}
 					aria-label="Previous question"
-					className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-200 text-[14px] font-semibold text-[#374151] hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+					className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-200 text-[14px] font-semibold text-zinc-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
 				>
 					<ChevronLeft className="w-4 h-4" />
 					Previous
@@ -107,7 +107,7 @@ export const QuizQuestionPanel: React.FC<QuizQuestionPanelProps> = ({
 					onClick={onNext}
 					disabled={isLast}
 					aria-label="Next question"
-					className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#392C7D] text-white text-[14px] font-semibold hover:bg-[#2d2263] disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
+					className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-[14px] font-semibold hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
 				>
 					Next
 					<ChevronRight className="w-4 h-4" />

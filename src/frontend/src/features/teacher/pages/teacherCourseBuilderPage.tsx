@@ -186,9 +186,11 @@ export const CourseBuilderPage: React.FC = () => {
     if (targetIdx < 0 || targetIdx >= sections.length) return;
 
     const newSections = [...sections];
-    const temp = newSections[index];
-    newSections[index] = newSections[targetIdx];
-    newSections[targetIdx] = temp;
+    const tempA = newSections[index];
+    const tempB = newSections[targetIdx];
+    if (!tempA || !tempB) return;
+    newSections[index] = tempB;
+    newSections[targetIdx] = tempA;
 
     // Recalculate position indexes
     const updated = newSections.map((s, idx) => ({
@@ -209,9 +211,11 @@ export const CourseBuilderPage: React.FC = () => {
     const updatedSections = sections.map(sec => {
       if (sec.id === sectionId) {
         const newLessons = [...sec.lessons];
-        const temp = newLessons[lessonIndex];
-        newLessons[lessonIndex] = newLessons[targetIdx];
-        newLessons[targetIdx] = temp;
+        const tempA = newLessons[lessonIndex];
+        const tempB = newLessons[targetIdx];
+        if (!tempA || !tempB) return sec;
+        newLessons[lessonIndex] = tempB;
+        newLessons[targetIdx] = tempA;
 
         const updatedLessons = newLessons.map((l, idx) => ({
           ...l,
@@ -332,8 +336,11 @@ export const CourseBuilderPage: React.FC = () => {
   const handleTestcaseChange = (index: number, field: 'input' | 'output' | 'explanation', value: string) => {
     setProblemForm(prev => {
       const newTestcases = [...prev.sampleTestcases];
+      const currentTc = newTestcases[index] || { input: '', output: '', explanation: '' };
       newTestcases[index] = {
-        ...newTestcases[index],
+        input: currentTc.input,
+        output: currentTc.output,
+        explanation: currentTc.explanation,
         [field]: value
       };
       return { ...prev, sampleTestcases: newTestcases };
@@ -461,30 +468,32 @@ export const CourseBuilderPage: React.FC = () => {
   };
 
   const addContent = (sectionId: string, lessonId: string) => {
+    const targetCourseId = activeCourse?.id || courseId || 'dsa-foundations';
     const typeChoice = prompt('Choose content type: 1 for Reading, 2 for Quiz, 3 for Code Problem');
     if (!typeChoice) return;
 
     if (typeChoice === '1') {
-      navigate(`/teacher/courses/${activeCourse.id}/reading-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
+      navigate(`/teacher/courses/${targetCourseId}/reading-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
       return;
     }
     if (typeChoice === '2') {
-      navigate(`/teacher/courses/${activeCourse.id}/quiz-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
+      navigate(`/teacher/courses/${targetCourseId}/quiz-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
       return;
     }
     if (typeChoice === '3') {
-      navigate(`/teacher/courses/${activeCourse.id}/problem-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
+      navigate(`/teacher/courses/${targetCourseId}/problem-builder/new?sectionId=${sectionId}&lessonId=${lessonId}`);
       return;
     }
   };
 
   const handleEditActivity = (sectionId: string, lessonId: string, activityId: string, contentType: 'Reading' | 'Quiz' | 'Code Problem') => {
+    const targetCourseId = activeCourse?.id || courseId || 'dsa-foundations';
     if (contentType === 'Reading') {
-      navigate(`/teacher/courses/${activeCourse.id}/reading-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
+      navigate(`/teacher/courses/${targetCourseId}/reading-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
     } else if (contentType === 'Quiz') {
-      navigate(`/teacher/courses/${activeCourse.id}/quiz-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
+      navigate(`/teacher/courses/${targetCourseId}/quiz-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
     } else if (contentType === 'Code Problem') {
-      navigate(`/teacher/courses/${activeCourse.id}/problem-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
+      navigate(`/teacher/courses/${targetCourseId}/problem-builder/${activityId}/edit?sectionId=${sectionId}&lessonId=${lessonId}`);
     }
   };
 
@@ -525,15 +534,18 @@ export const CourseBuilderPage: React.FC = () => {
     navigate(`/learn/${metadata.slug}`);
   };
 
-  // Save / Publish Actions
+  // ---------------------------------------------------------------------------
+  // Action Handlers
+  // ---------------------------------------------------------------------------
   const handleSaveDraft = (e: React.FormEvent) => {
     e.preventDefault();
     if (!metadata.title) {
       toast.error('Course title is required.');
       return;
     }
+    const targetCourseId = activeCourse?.id || courseId || 'dsa-foundations';
     setMetadata(prev => ({ ...prev, status: 'DRAFT' }));
-    updateCourse(activeCourse.id, {
+    updateCourse(targetCourseId, {
       title: metadata.title,
       slug: metadata.slug,
       field: metadata.field,
@@ -552,8 +564,9 @@ export const CourseBuilderPage: React.FC = () => {
       toast.error('Course title is required.');
       return;
     }
+    const targetCourseId = activeCourse?.id || courseId || 'dsa-foundations';
     setMetadata(prev => ({ ...prev, status: 'PENDING_REVIEW' }));
-    updateCourse(activeCourse.id, {
+    updateCourse(targetCourseId, {
       title: metadata.title,
       slug: metadata.slug,
       field: metadata.field,
@@ -582,7 +595,7 @@ export const CourseBuilderPage: React.FC = () => {
     <div className="w-full min-h-screen bg-gray-50 flex flex-col">
 
         {/* Page title banner */}
-        <div className="w-full bg-gradient-to-r from-[#392C7D] to-purple-600 py-8 flex flex-col items-center justify-center gap-1">
+        <div className="w-full bg-gradient-to-r from-primary to-purple-600 py-8 flex flex-col items-center justify-center gap-1">
           <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight">Course Builder</h1>
           <p className="text-[13px] font-medium text-white/70">Dashboard &rsaquo; Course Curriculum Builder</p>
         </div>
@@ -633,8 +646,8 @@ export const CourseBuilderPage: React.FC = () => {
             <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col gap-5">
               <div className="flex justify-between items-start gap-4">
                 <div>
-                  <h3 className="text-[16px] font-bold text-[#111827]">Course Information</h3>
-                  <p className="text-[13px] text-[#6B7280] mt-0.5">Define core course specifications.</p>
+                  <h3 className="text-[16px] font-bold text-zinc-900">Course Information</h3>
+                  <p className="text-[13px] text-neutral-500 mt-0.5">Define core course specifications.</p>
                 </div>
                 <span
                   className={`px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase ${
@@ -642,7 +655,7 @@ export const CourseBuilderPage: React.FC = () => {
                       ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
                       : metadata.status === 'PENDING_REVIEW'
                       ? 'bg-amber-50 text-amber-700 border border-amber-100'
-                      : 'bg-slate-50 text-[#6B7280] border border-gray-200'
+                      : 'bg-slate-50 text-neutral-500 border border-gray-200'
                   }`}
                 >
                   {metadata.status}
@@ -652,36 +665,36 @@ export const CourseBuilderPage: React.FC = () => {
               <form className="flex flex-col gap-4">
                 {/* Title */}
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="course-title" className="text-[13px] font-semibold text-[#374151]">Course Title</label>
+                  <label htmlFor="course-title" className="text-[13px] font-semibold text-zinc-700">Course Title</label>
                   <input
                     type="text"
                     id="course-title"
                     value={metadata.title}
                     onChange={(e) => setMetadata(prev => ({ ...prev, title: e.target.value }))}
-                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
+                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
                   />
                 </div>
 
                 {/* Slug */}
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="course-slug" className="text-[13px] font-semibold text-[#374151]">Course Slug</label>
+                  <label htmlFor="course-slug" className="text-[13px] font-semibold text-zinc-700">Course Slug</label>
                   <input
                     type="text"
                     id="course-slug"
                     value={metadata.slug}
                     onChange={(e) => setMetadata(prev => ({ ...prev, slug: e.target.value }))}
-                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
+                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
                   />
                 </div>
 
                 {/* Field/Category */}
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="course-category" className="text-[13px] font-semibold text-[#374151]">Category</label>
+                  <label htmlFor="course-category" className="text-[13px] font-semibold text-zinc-700">Category</label>
                   <select
                     id="course-category"
                     value={metadata.field}
                     onChange={(e) => setMetadata(prev => ({ ...prev, field: e.target.value }))}
-                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white cursor-pointer text-zinc-900"
+                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white cursor-pointer text-zinc-900"
                   >
                     <option value="Programming">Programming</option>
                     <option value="Algorithms">Algorithms & DS</option>
@@ -692,34 +705,34 @@ export const CourseBuilderPage: React.FC = () => {
 
                 {/* Description */}
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="course-description" className="text-[13px] font-semibold text-[#374151]">Description</label>
+                  <label htmlFor="course-description" className="text-[13px] font-semibold text-zinc-700">Description</label>
                   <textarea
                     id="course-description"
                     rows={4}
                     value={metadata.description}
                     onChange={(e) => setMetadata(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400"
+                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400"
                   />
                 </div>
 
                 {/* Price */}
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="course-price" className="text-[13px] font-semibold text-[#374151]">Course Price (USD)</label>
+                  <label htmlFor="course-price" className="text-[13px] font-semibold text-zinc-700">Course Price (USD)</label>
                   <div className="relative">
-                    <span className="absolute left-3.5 top-2 text-[#6B7280] font-semibold">$</span>
+                    <span className="absolute left-3.5 top-2 text-neutral-500 font-semibold">$</span>
                     <input
                       type="number"
                       id="course-price"
                       value={metadata.price}
                       onChange={(e) => setMetadata(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
-                      className="w-full pl-7 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
+                      className="w-full pl-7 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
                     />
                   </div>
                 </div>
 
                 {/* Thumbnail upload simulation */}
                 <div className="flex flex-col gap-1.5">
-                  <span className="text-[13px] font-semibold text-[#374151]">Course Cover Image</span>
+                  <span className="text-[13px] font-semibold text-zinc-700">Course Cover Image</span>
                   <input
                     type="file"
                     id="cover-image-upload"
@@ -734,14 +747,14 @@ export const CourseBuilderPage: React.FC = () => {
                         <div className="flex gap-4">
                           <label
                             htmlFor="cover-image-upload"
-                            className="text-[12px] font-bold text-[#392C7D] hover:underline cursor-pointer"
+                            className="text-[12px] font-bold text-primary hover:underline cursor-pointer"
                           >
                             Replace image
                           </label>
                           <button
                             type="button"
                             onClick={handleRemoveImage}
-                            className="text-[12px] font-bold text-[#FF4667] hover:underline cursor-pointer"
+                            className="text-[12px] font-bold text-accent hover:underline cursor-pointer"
                           >
                             Remove image
                           </button>
@@ -750,10 +763,10 @@ export const CourseBuilderPage: React.FC = () => {
                     ) : (
                       <label htmlFor="cover-image-upload" className="flex flex-col items-center gap-2 cursor-pointer w-full hover:bg-slate-100/50 rounded-xl py-4 transition-colors">
                         <div className="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center">
-                          <Upload className="w-5 h-5 text-[#392C7D]" />
+                          <Upload className="w-5 h-5 text-primary" />
                         </div>
-                        <p className="text-[13px] text-[#374151] font-semibold">Click to upload cover image</p>
-                        <p className="text-[11px] text-[#6B7280]">Supports PNG, JPG, JPEG, WEBP (Max 2MB)</p>
+                        <p className="text-[13px] text-zinc-700 font-semibold">Click to upload cover image</p>
+                        <p className="text-[11px] text-neutral-500">Supports PNG, JPG, JPEG, WEBP (Max 2MB)</p>
                       </label>
                     )}
                   </div>
@@ -764,14 +777,14 @@ export const CourseBuilderPage: React.FC = () => {
                   <button
                     onClick={handleSaveDraft}
                     type="button"
-                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-[14px] font-semibold text-[#374151] hover:bg-slate-50 transition-all cursor-pointer"
+                    className="flex-1 py-2.5 rounded-xl border border-gray-200 text-[14px] font-semibold text-zinc-700 hover:bg-slate-50 transition-all cursor-pointer"
                   >
                     Save draft
                   </button>
                   <button
                     onClick={handlePublishCourse}
                     type="button"
-                    className="flex-1 py-2.5 rounded-xl bg-[#FF4667] text-white text-[14px] font-semibold hover:bg-[#e03d5b] transition-all shadow-sm cursor-pointer"
+                    className="flex-1 py-2.5 rounded-xl bg-accent text-white text-[14px] font-semibold hover:bg-accent-hover transition-all shadow-sm cursor-pointer"
                   >
                     Submit for Review
                   </button>
@@ -783,12 +796,12 @@ export const CourseBuilderPage: React.FC = () => {
             <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col gap-4">
               <div className="flex justify-between items-center gap-4">
                 <div>
-                  <h3 className="text-[16px] font-bold text-[#111827]">Curriculum Preview</h3>
-                  <p className="text-[13px] text-[#6B7280] mt-0.5">Manage lessons and modules.</p>
+                  <h3 className="text-[16px] font-bold text-zinc-900">Curriculum Preview</h3>
+                  <p className="text-[13px] text-neutral-500 mt-0.5">Manage lessons and modules.</p>
                 </div>
                 <button
                   onClick={addSection}
-                  className="p-1.5 rounded-full bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-[#392C7D] transition-all cursor-pointer"
+                  className="p-1.5 rounded-full bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 text-primary transition-all cursor-pointer"
                   title="Add Section"
                 >
                   <Plus className="w-4 h-4" />
@@ -806,14 +819,14 @@ export const CourseBuilderPage: React.FC = () => {
                         <div className="flex items-center gap-2 min-w-0">
                           <button
                             onClick={() => toggleSection(section.id)}
-                            className="p-1 rounded-md text-[#6B7280] hover:bg-slate-200 shrink-0 transition-colors"
+                            className="p-1 rounded-md text-neutral-500 hover:bg-slate-200 shrink-0 transition-colors"
                           >
                             {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
                           </button>
-                          <span className="text-[12px] font-extrabold text-[#392C7D] bg-indigo-50 px-2 py-0.5 rounded-full shrink-0">
+                          <span className="text-[12px] font-extrabold text-primary bg-indigo-50 px-2 py-0.5 rounded-full shrink-0">
                             {secIdx + 1}
                           </span>
-                          <span className="text-[14px] font-bold text-[#111827] truncate">
+                          <span className="text-[14px] font-bold text-zinc-900 truncate">
                             {section.title}
                           </span>
                         </div>
@@ -823,7 +836,7 @@ export const CourseBuilderPage: React.FC = () => {
                           <button
                             onClick={() => moveSection(secIdx, 'UP')}
                             disabled={secIdx === 0}
-                            className="p-1 rounded-md text-[#6B7280] hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent"
+                            className="p-1 rounded-md text-neutral-500 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent"
                             title="Move Up"
                           >
                             <ArrowUp className="w-3.5 h-3.5" />
@@ -831,7 +844,7 @@ export const CourseBuilderPage: React.FC = () => {
                           <button
                             onClick={() => moveSection(secIdx, 'DOWN')}
                             disabled={secIdx === sections.length - 1}
-                            className="p-1 rounded-md text-[#6B7280] hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent"
+                            className="p-1 rounded-md text-neutral-500 hover:bg-slate-200 disabled:opacity-30 disabled:hover:bg-transparent"
                             title="Move Down"
                           >
                             <ArrowDown className="w-3.5 h-3.5" />
@@ -860,11 +873,11 @@ export const CourseBuilderPage: React.FC = () => {
                             <div key={lesson.id} className="pt-3 first:pt-0 flex flex-col gap-2">
                               <div className="flex items-start justify-between gap-3">
                                 <div className="min-w-0">
-                                  <p className="text-[13px] font-semibold text-[#111827] flex items-center gap-1.5">
-                                    <span className="text-[#6B7280]">{secIdx + 1}.{lesIdx + 1}</span>
+                                  <p className="text-[13px] font-semibold text-zinc-900 flex items-center gap-1.5">
+                                    <span className="text-neutral-500">{secIdx + 1}.{lesIdx + 1}</span>
                                     {lesson.title}
                                   </p>
-                                  <p className="text-[11px] text-[#6B7280] mt-0.5 max-w-[200px] truncate">
+                                  <p className="text-[11px] text-neutral-500 mt-0.5 max-w-[200px] truncate">
                                     {lesson.summary}
                                   </p>
                                 </div>
@@ -874,7 +887,7 @@ export const CourseBuilderPage: React.FC = () => {
                                   <button
                                     onClick={() => moveLesson(section.id, lesIdx, 'UP')}
                                     disabled={lesIdx === 0}
-                                    className="p-1 rounded text-[#6B7280] hover:bg-slate-100 disabled:opacity-30"
+                                    className="p-1 rounded text-neutral-500 hover:bg-slate-100 disabled:opacity-30"
                                     title="Move Lesson Up"
                                   >
                                     <ArrowUp className="w-3 h-3" />
@@ -882,7 +895,7 @@ export const CourseBuilderPage: React.FC = () => {
                                   <button
                                     onClick={() => moveLesson(section.id, lesIdx, 'DOWN')}
                                     disabled={lesIdx === section.lessons.length - 1}
-                                    className="p-1 rounded text-[#6B7280] hover:bg-slate-100 disabled:opacity-30"
+                                    className="p-1 rounded text-neutral-500 hover:bg-slate-100 disabled:opacity-30"
                                     title="Move Lesson Down"
                                   >
                                     <ArrowDown className="w-3 h-3" />
@@ -908,10 +921,10 @@ export const CourseBuilderPage: React.FC = () => {
                               {lesson.contents.length > 0 && (
                                 <div className="pl-6 flex flex-col gap-1.5">
                                   {lesson.contents.map(c => (
-                                    <div key={c.id} className="flex items-center justify-between text-[11px] font-semibold text-[#374151] bg-slate-50 border border-gray-100 rounded-lg px-2 py-1">
+                                    <div key={c.id} className="flex items-center justify-between text-[11px] font-semibold text-zinc-700 bg-slate-50 border border-gray-100 rounded-lg px-2 py-1">
                                       <div className="flex items-center gap-1.5 truncate">
                                         {getContentIcon(c.content_type)}
-                                        <span className="text-[#6B7280] capitalize font-bold shrink-0">{c.content_type}:</span>
+                                        <span className="text-neutral-500 capitalize font-bold shrink-0">{c.content_type}:</span>
                                         <span className="truncate">{c.title}</span>
                                       </div>
                                       <div className="flex items-center gap-1 shrink-0">
@@ -937,7 +950,7 @@ export const CourseBuilderPage: React.FC = () => {
                             </div>
                           ))}
                           {section.lessons.length === 0 && (
-                            <p className="text-[11px] text-[#6B7280] italic text-center py-2">
+                            <p className="text-[11px] text-neutral-500 italic text-center py-2">
                               No lessons created. Click + to add one.
                             </p>
                           )}
@@ -947,7 +960,7 @@ export const CourseBuilderPage: React.FC = () => {
                   );
                 })}
                 {sections.length === 0 && (
-                  <p className="text-[13px] text-[#6B7280] text-center py-8">
+                  <p className="text-[13px] text-neutral-500 text-center py-8">
                     No curriculum modules set. Click + Add section above to begin.
                   </p>
                 )}
@@ -974,7 +987,7 @@ export const CourseBuilderPage: React.FC = () => {
                 resetProblemForm();
                 setIsProblemModalOpen(false);
               }}
-              className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-[#374151] hover:bg-slate-50 transition-all cursor-pointer"
+              className="px-4 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-zinc-700 hover:bg-slate-50 transition-all cursor-pointer"
               disabled={isSavingProblem}
             >
               Cancel
@@ -982,7 +995,7 @@ export const CourseBuilderPage: React.FC = () => {
             <button
               type="submit"
               onClick={handleSaveProblem}
-              className="px-4 py-2 rounded-xl bg-[#FF4667] text-white text-sm font-semibold hover:bg-[#e03d5b] transition-all shadow-sm cursor-pointer flex items-center gap-2 disabled:opacity-50"
+              className="px-4 py-2 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent-hover transition-all shadow-sm cursor-pointer flex items-center gap-2 disabled:opacity-50"
               disabled={isSavingProblem}
             >
               {isSavingProblem ? (
@@ -1001,103 +1014,103 @@ export const CourseBuilderPage: React.FC = () => {
           {/* Row 1: Title & Slug */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[13px] font-semibold text-[#374151]">Problem Title</label>
+              <label className="text-[13px] font-semibold text-zinc-700">Problem Title</label>
               <input
                 type="text"
                 placeholder="e.g., Reverse a Linked List"
                 value={problemForm.title}
                 onChange={(e) => handleTitleChange(e.target.value)}
-                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
-                  problemErrors.title ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
+                  problemErrors.title ? 'border-accent focus:border-accent' : 'border-gray-200'
                 }`}
               />
-              {problemErrors.title && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.title}</p>}
+              {problemErrors.title && <p className="text-[11px] text-accent font-semibold">{problemErrors.title}</p>}
             </div>
             
             <div className="space-y-1">
-              <label className="text-[13px] font-semibold text-[#374151]">Problem Slug</label>
+              <label className="text-[13px] font-semibold text-zinc-700">Problem Slug</label>
               <input
                 type="text"
                 placeholder="e.g., reverse-linked-list"
                 value={problemForm.slug}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, slug: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
-                  problemErrors.slug ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
+                  problemErrors.slug ? 'border-accent focus:border-accent' : 'border-gray-200'
                 }`}
               />
-              {problemErrors.slug && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.slug}</p>}
+              {problemErrors.slug && <p className="text-[11px] text-accent font-semibold">{problemErrors.slug}</p>}
             </div>
           </div>
 
           {/* Row 2: Problem Statement */}
           <div className="space-y-1">
-            <label className="text-[13px] font-semibold text-[#374151]">Problem Statement / Description</label>
+            <label className="text-[13px] font-semibold text-zinc-700">Problem Statement / Description</label>
             <textarea
               rows={4}
               placeholder="Describe the problem, input format requirements, examples, etc. Supports Markdown."
               value={problemForm.statement}
               onChange={(e) => setProblemForm(prev => ({ ...prev, statement: e.target.value }))}
-              className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
-                problemErrors.statement ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+              className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
+                problemErrors.statement ? 'border-accent focus:border-accent' : 'border-gray-200'
               }`}
             />
-            {problemErrors.statement && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.statement}</p>}
+            {problemErrors.statement && <p className="text-[11px] text-accent font-semibold">{problemErrors.statement}</p>}
           </div>
 
           {/* Row 3: Input & Output Formats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[13px] font-semibold text-[#374151]">Input Format Description</label>
+              <label className="text-[13px] font-semibold text-zinc-700">Input Format Description</label>
               <textarea
                 rows={3}
                 placeholder="Describe the shape/constraints of the input data."
                 value={problemForm.inputDescription}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, inputDescription: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
-                  problemErrors.inputDescription ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
+                  problemErrors.inputDescription ? 'border-accent focus:border-accent' : 'border-gray-200'
                 }`}
               />
-              {problemErrors.inputDescription && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.inputDescription}</p>}
+              {problemErrors.inputDescription && <p className="text-[11px] text-accent font-semibold">{problemErrors.inputDescription}</p>}
             </div>
 
             <div className="space-y-1">
-              <label className="text-[13px] font-semibold text-[#374151]">Output Format Description</label>
+              <label className="text-[13px] font-semibold text-zinc-700">Output Format Description</label>
               <textarea
                 rows={3}
                 placeholder="Describe the expected returned value or stdout format."
                 value={problemForm.outputDescription}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, outputDescription: e.target.value }))}
-                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
-                  problemErrors.outputDescription ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
+                  problemErrors.outputDescription ? 'border-accent focus:border-accent' : 'border-gray-200'
                 }`}
               />
-              {problemErrors.outputDescription && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.outputDescription}</p>}
+              {problemErrors.outputDescription && <p className="text-[11px] text-accent font-semibold">{problemErrors.outputDescription}</p>}
             </div>
           </div>
 
           {/* Row 4: Constraints */}
           <div className="space-y-1">
-            <label className="text-[13px] font-semibold text-[#374151]">Constraints</label>
+            <label className="text-[13px] font-semibold text-zinc-700">Constraints</label>
             <textarea
               rows={2}
               placeholder="e.g., 1 <= N <= 10^5, Array elements are integers."
               value={problemForm.constraints}
               onChange={(e) => setProblemForm(prev => ({ ...prev, constraints: e.target.value }))}
-              className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
-                problemErrors.constraints ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+              className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
+                problemErrors.constraints ? 'border-accent focus:border-accent' : 'border-gray-200'
               }`}
             />
-            {problemErrors.constraints && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.constraints}</p>}
+            {problemErrors.constraints && <p className="text-[11px] text-accent font-semibold">{problemErrors.constraints}</p>}
           </div>
 
           {/* Row 5: Metadata Grid (Difficulty, Passing Score, limits, tags) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-1">
-              <label className="text-[13px] font-semibold text-[#374151]">Difficulty</label>
+              <label className="text-[13px] font-semibold text-zinc-700">Difficulty</label>
               <select
                 value={problemForm.difficulty}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, difficulty: e.target.value as 'EASY' | 'MEDIUM' | 'HARD' }))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white cursor-pointer text-zinc-900"
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white cursor-pointer text-zinc-900"
               >
                 <option value="EASY">Easy</option>
                 <option value="MEDIUM">Medium</option>
@@ -1106,72 +1119,72 @@ export const CourseBuilderPage: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[13px] font-semibold text-[#374151]">Passing Score</label>
+              <label className="text-[13px] font-semibold text-zinc-700">Passing Score</label>
               <input
                 type="number"
                 value={problemForm.passingScore}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, passingScore: parseInt(e.target.value) || 0 }))}
-                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 ${
-                  problemErrors.passingScore ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 ${
+                  problemErrors.passingScore ? 'border-accent focus:border-accent' : 'border-gray-200'
                 }`}
               />
-              {problemErrors.passingScore && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.passingScore}</p>}
+              {problemErrors.passingScore && <p className="text-[11px] text-accent font-semibold">{problemErrors.passingScore}</p>}
             </div>
 
             <div className="space-y-1">
-              <label className="text-[13px] font-semibold text-[#374151]">Time Limit (ms)</label>
+              <label className="text-[13px] font-semibold text-zinc-700">Time Limit (ms)</label>
               <input
                 type="number"
                 value={problemForm.timeLimitMs}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, timeLimitMs: parseInt(e.target.value) || 0 }))}
-                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 ${
-                  problemErrors.timeLimitMs ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 ${
+                  problemErrors.timeLimitMs ? 'border-accent focus:border-accent' : 'border-gray-200'
                 }`}
               />
-              {problemErrors.timeLimitMs && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.timeLimitMs}</p>}
+              {problemErrors.timeLimitMs && <p className="text-[11px] text-accent font-semibold">{problemErrors.timeLimitMs}</p>}
             </div>
 
             <div className="space-y-1">
-              <label className="text-[13px] font-semibold text-[#374151]">Memory Limit (KB)</label>
+              <label className="text-[13px] font-semibold text-zinc-700">Memory Limit (KB)</label>
               <input
                 type="number"
                 value={problemForm.memoryLimitKb}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, memoryLimitKb: parseInt(e.target.value) || 0 }))}
-                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 ${
-                  problemErrors.memoryLimitKb ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                className={`w-full px-3 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 ${
+                  problemErrors.memoryLimitKb ? 'border-accent focus:border-accent' : 'border-gray-200'
                 }`}
               />
-              {problemErrors.memoryLimitKb && <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.memoryLimitKb}</p>}
+              {problemErrors.memoryLimitKb && <p className="text-[11px] text-accent font-semibold">{problemErrors.memoryLimitKb}</p>}
             </div>
           </div>
 
           {/* Row 6: Tags */}
           <div className="space-y-1">
-            <label className="text-[13px] font-semibold text-[#374151]">Tags (comma separated)</label>
+            <label className="text-[13px] font-semibold text-zinc-700">Tags (comma separated)</label>
             <input
               type="text"
               placeholder="e.g., Array, Two Pointers, Dynamic Programming"
               value={problemForm.tags}
               onChange={(e) => setProblemForm(prev => ({ ...prev, tags: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
             />
           </div>
 
           {/* Row 7: Sample Test cases */}
           <div className="space-y-3 border-t border-gray-100 pt-4">
             <div className="flex justify-between items-center">
-              <h4 className="text-[14px] font-bold text-[#111827]">Sample Test Cases</h4>
+              <h4 className="text-[14px] font-bold text-zinc-900">Sample Test Cases</h4>
               <button
                 type="button"
                 onClick={addSampleTestcase}
-                className="px-3 py-1 bg-indigo-50 border border-indigo-100 text-[#392C7D] hover:bg-indigo-100 transition-all rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1 bg-indigo-50 border border-indigo-100 text-primary hover:bg-indigo-100 transition-all rounded-lg text-xs font-bold flex items-center gap-1.5 cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" /> Add Test Case
               </button>
             </div>
             
             {problemErrors.sampleTestcases && (
-              <p className="text-[11px] text-[#FF4667] font-semibold">{problemErrors.sampleTestcases}</p>
+              <p className="text-[11px] text-accent font-semibold">{problemErrors.sampleTestcases}</p>
             )}
 
             <div className="space-y-4">
@@ -1186,42 +1199,42 @@ export const CourseBuilderPage: React.FC = () => {
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                   
-                  <span className="text-[11px] font-extrabold text-[#392C7D] bg-indigo-50 px-2.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-extrabold text-primary bg-indigo-50 px-2.5 py-0.5 rounded-full">
                     Test Case #{index + 1}
                   </span>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                     <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-[#6B7280]">Input</label>
+                      <label className="text-[11px] font-semibold text-neutral-500">Input</label>
                       <textarea
                         rows={2}
                         placeholder="e.g., nums = [2,7,11,15], target = 9"
                         value={testcase.input}
                         onChange={(e) => handleTestcaseChange(index, 'input', e.target.value)}
-                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 resize-none font-mono"
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-primary text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 resize-none font-mono"
                       />
                     </div>
                     
                     <div className="space-y-1">
-                      <label className="text-[11px] font-semibold text-[#6B7280]">Output</label>
+                      <label className="text-[11px] font-semibold text-neutral-500">Output</label>
                       <textarea
                         rows={2}
                         placeholder="e.g., [0,1]"
                         value={testcase.output}
                         onChange={(e) => handleTestcaseChange(index, 'output', e.target.value)}
-                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 resize-none font-mono"
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-primary text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 resize-none font-mono"
                       />
                     </div>
                   </div>
                   
                   <div className="space-y-1">
-                    <label className="text-[11px] font-semibold text-[#6B7280]">Explanation (Optional)</label>
+                    <label className="text-[11px] font-semibold text-neutral-500">Explanation (Optional)</label>
                     <textarea
                       rows={1.5}
                       placeholder="Explain why this output is expected."
                       value={testcase.explanation}
                       onChange={(e) => handleTestcaseChange(index, 'explanation', e.target.value)}
-                      className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 resize-none"
+                      className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-primary text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 resize-none"
                     />
                   </div>
                 </div>

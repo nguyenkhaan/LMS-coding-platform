@@ -55,8 +55,11 @@ export const mockJudgeEngine = {
         return;
       }
 
+      const currentCase = currentProgress.testCases[currentIdx];
+      if (!currentCase) return;
+
       currentProgress.status = 'Running';
-      currentProgress.testCases[currentIdx].status = 'Running';
+      currentCase.status = 'Running';
       onProgress({ ...currentProgress });
 
       setTimeout(() => {
@@ -64,14 +67,14 @@ export const mockJudgeEngine = {
         const passed = isCodeValid;
 
         if (passed) {
-          currentProgress.testCases[currentIdx].status = 'Passed';
-          currentProgress.testCases[currentIdx].actual = currentProgress.testCases[currentIdx].expected;
-          currentProgress.testCases[currentIdx].runtime = `${Math.floor(Math.random() * 15) + 10} ms`;
-          currentProgress.testCases[currentIdx].memory = `${(Math.random() * 1 + 13).toFixed(1)} MB`;
+          currentCase.status = 'Passed';
+          currentCase.actual = currentCase.expected;
+          currentCase.runtime = `${Math.floor(Math.random() * 15) + 10} ms`;
+          currentCase.memory = `${(Math.random() * 1 + 13).toFixed(1)} MB`;
           currentProgress.passedCount += 1;
         } else {
-          currentProgress.testCases[currentIdx].status = 'Failed';
-          currentProgress.testCases[currentIdx].actual = 'None / Error';
+          currentCase.status = 'Failed';
+          currentCase.actual = 'None / Error';
         }
 
         onProgress({ ...currentProgress });

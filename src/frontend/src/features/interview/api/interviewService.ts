@@ -32,6 +32,8 @@ export const interviewService = {
 	},
 
 	sendAnswerAndGetNextQuestion: async (sessionId: number, userMessage: string, questionIdx: number): Promise<string> => {
+		void sessionId;
+		void userMessage;
 		await new Promise((r) => setTimeout(r, 1000));
 
 		const mockQuestions = [

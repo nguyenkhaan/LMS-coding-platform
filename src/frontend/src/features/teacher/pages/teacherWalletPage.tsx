@@ -136,7 +136,7 @@ export const TeacherWalletPage: React.FC = () => {
     <div className="w-full min-h-screen bg-gray-50 flex flex-col">
 
         {/* Page title banner */}
-        <div className="w-full bg-gradient-to-r from-[#392C7D] to-purple-600 py-8 flex flex-col items-center justify-center gap-1">
+        <div className="w-full bg-gradient-to-r from-primary to-purple-600 py-8 flex flex-col items-center justify-center gap-1">
           <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight">Payout & Wallet</h1>
           <p className="text-[13px] font-medium text-white/70">Dashboard &rsaquo; Wallet & Payout</p>
         </div>
@@ -158,7 +158,7 @@ export const TeacherWalletPage: React.FC = () => {
             <div className="flex gap-4 relative z-10">
               <button
                 onClick={() => navigate('/teacher/dashboard')}
-                className="px-5 py-2.5 bg-[#FF4667] text-white text-sm font-semibold rounded-full hover:bg-[#e03d5b] transition-all cursor-pointer"
+                className="px-5 py-2.5 bg-accent text-white text-sm font-semibold rounded-full hover:bg-accent-hover transition-all cursor-pointer"
               >
                 Teacher Dashboard
               </button>
@@ -186,7 +186,7 @@ export const TeacherWalletPage: React.FC = () => {
                   <Wallet className="w-6 h-6 text-emerald-600" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide">Available Balance</span>
+                  <span className="text-[12px] font-semibold text-neutral-500 uppercase tracking-wide">Available Balance</span>
                   <h3 className="text-[22px] font-bold text-emerald-700 mt-0.5">${wallet.available_balance.toFixed(2)}</h3>
                   <p className="text-[11px] text-emerald-600 font-medium mt-0.5">USD Available for Payout</p>
                 </div>
@@ -198,7 +198,7 @@ export const TeacherWalletPage: React.FC = () => {
                   <Clock className="w-6 h-6 text-amber-600" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide">Pending Balance</span>
+                  <span className="text-[12px] font-semibold text-neutral-500 uppercase tracking-wide">Pending Balance</span>
                   <h3 className="text-[22px] font-bold text-amber-700 mt-0.5">${wallet.pending_balance.toFixed(2)}</h3>
                   <p className="text-[11px] text-amber-600 font-medium mt-0.5">Awaiting Admin Approval</p>
                 </div>
@@ -207,12 +207,12 @@ export const TeacherWalletPage: React.FC = () => {
               {/* Total Earned */}
               <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center shrink-0">
-                  <TrendingUp className="w-6 h-6 text-[#392C7D]" />
+                  <TrendingUp className="w-6 h-6 text-primary" />
                 </div>
                 <div className="min-w-0">
-                  <span className="text-[12px] font-semibold text-[#6B7280] uppercase tracking-wide">Total Earned</span>
-                  <h3 className="text-[22px] font-bold text-[#392C7D] mt-0.5">${wallet.total_earned.toFixed(2)}</h3>
-                  <p className="text-[11px] text-[#392C7D] font-medium mt-0.5">Lifetime Gross Revenue</p>
+                  <span className="text-[12px] font-semibold text-neutral-500 uppercase tracking-wide">Total Earned</span>
+                  <h3 className="text-[22px] font-bold text-primary mt-0.5">${wallet.total_earned.toFixed(2)}</h3>
+                  <p className="text-[11px] text-primary font-medium mt-0.5">Lifetime Gross Revenue</p>
                 </div>
               </div>
 
@@ -224,17 +224,17 @@ export const TeacherWalletPage: React.FC = () => {
               {/* Request Payout Form */}
               <div className="lg:col-span-3 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col gap-5">
                 <div>
-                  <h3 className="text-[16px] font-bold text-[#111827]">Request Payout</h3>
-                  <p className="text-[13px] text-[#6B7280] mt-0.5">Withdraw funds from your available balance.</p>
+                  <h3 className="text-[16px] font-bold text-zinc-900">Request Payout</h3>
+                  <p className="text-[13px] text-neutral-500 mt-0.5">Withdraw funds from your available balance.</p>
                 </div>
                 
                 <form onSubmit={handleRequestPayout} className="flex flex-col gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label htmlFor="amount" className="text-[13px] font-semibold text-[#374151]">
+                    <label htmlFor="amount" className="text-[13px] font-semibold text-zinc-700">
                       Amount to request (USD)
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3.5 top-2.5 text-[#6B7280] font-semibold">$</span>
+                      <span className="absolute left-3.5 top-2.5 text-neutral-500 font-semibold">$</span>
                       <input
                         type="number"
                         id="amount"
@@ -244,7 +244,7 @@ export const TeacherWalletPage: React.FC = () => {
                         onChange={(e) => setAmount(e.target.value)}
                         placeholder="0.00"
                         disabled={wallet.available_balance < minPayout || hasPendingRequest}
-                        className="w-full pl-7 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] focus:ring-1 focus:ring-[#392C7D]/20 text-[14px] font-medium transition-all bg-white disabled:bg-slate-50 disabled:text-[#9CA3AF]"
+                        className="w-full pl-7 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 text-[14px] font-medium transition-all bg-white disabled:bg-slate-50 disabled:text-neutral-400"
                       />
                     </div>
                     {wallet.available_balance < minPayout && (
@@ -264,7 +264,7 @@ export const TeacherWalletPage: React.FC = () => {
                   <button
                     type="submit"
                     disabled={wallet.available_balance < minPayout || hasPendingRequest || !amount}
-                    className="w-full py-2.5 bg-[#FF4667] text-white text-[14px] font-semibold rounded-xl hover:bg-[#e03d5b] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
+                    className="w-full py-2.5 bg-accent text-white text-[14px] font-semibold rounded-xl hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
                   >
                     Request Payout
                   </button>
@@ -274,36 +274,36 @@ export const TeacherWalletPage: React.FC = () => {
               {/* Payout Rules */}
               <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col gap-4">
                 <div>
-                  <h3 className="text-[16px] font-bold text-[#111827]">Payout Policies</h3>
-                  <p className="text-[13px] text-[#6B7280] mt-0.5">Platform terms & guidelines</p>
+                  <h3 className="text-[16px] font-bold text-zinc-900">Payout Policies</h3>
+                  <p className="text-[13px] text-neutral-500 mt-0.5">Platform terms & guidelines</p>
                 </div>
 
                 <div className="border-t border-gray-100 pt-4 flex flex-col gap-3">
                   
                   {/* Minimum policy */}
                   <div className="flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#392C7D] mt-0.5 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-[13px] font-semibold text-[#111827]">Minimum Payout Amount</p>
-                      <p className="text-[12px] text-[#6B7280]">Requests must be at least $5.00 USD.</p>
+                      <p className="text-[13px] font-semibold text-zinc-900">Minimum Payout Amount</p>
+                      <p className="text-[12px] text-neutral-500">Requests must be at least $5.00 USD.</p>
                     </div>
                   </div>
 
                   {/* Split policy */}
                   <div className="flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#392C7D] mt-0.5 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-[13px] font-semibold text-[#111827]">Revenue Split Policy</p>
-                      <p className="text-[12px] text-[#6B7280]">80% goes to the teacher, 20% platform share.</p>
+                      <p className="text-[13px] font-semibold text-zinc-900">Revenue Split Policy</p>
+                      <p className="text-[12px] text-neutral-500">80% goes to the teacher, 20% platform share.</p>
                     </div>
                   </div>
 
                   {/* Review policy */}
                   <div className="flex items-start gap-2.5">
-                    <CheckCircle2 className="w-4 h-4 text-[#392C7D] mt-0.5 shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <div>
-                      <p className="text-[13px] font-semibold text-[#111827]">Admin Verification</p>
-                      <p className="text-[12px] text-[#6B7280]">All requests require review and approval.</p>
+                      <p className="text-[13px] font-semibold text-zinc-900">Admin Verification</p>
+                      <p className="text-[12px] text-neutral-500">All requests require review and approval.</p>
                     </div>
                   </div>
 
@@ -315,15 +315,15 @@ export const TeacherWalletPage: React.FC = () => {
             {/* Payout Requests History List */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
               <div className="px-6 py-4 border-b border-gray-100">
-                <h3 className="text-[16px] font-bold text-[#111827]">Payout History</h3>
-                <p className="text-[13px] text-[#6B7280] mt-0.5">Historical records of payout requests and status logs</p>
+                <h3 className="text-[16px] font-bold text-zinc-900">Payout History</h3>
+                <p className="text-[13px] text-neutral-500 mt-0.5">Historical records of payout requests and status logs</p>
               </div>
 
               {/* Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50/75 border-b border-gray-100 text-[12px] font-bold text-[#111827] uppercase tracking-wider">
+                    <tr className="bg-slate-50/75 border-b border-gray-100 text-[12px] font-bold text-zinc-900 uppercase tracking-wider">
                       <th className="px-6 py-3.5">Request ID</th>
                       <th className="px-6 py-3.5">Submission Date</th>
                       <th className="px-6 py-3.5 text-right">Amount</th>
@@ -337,10 +337,10 @@ export const TeacherWalletPage: React.FC = () => {
                         <td className="px-6 py-4 font-semibold text-indigo-900 whitespace-nowrap">
                           {request.id}
                         </td>
-                        <td className="px-6 py-4 text-[#6B7280] font-medium whitespace-nowrap">
+                        <td className="px-6 py-4 text-neutral-500 font-medium whitespace-nowrap">
                           {request.date}
                         </td>
-                        <td className="px-6 py-4 text-right font-bold text-[#111827] whitespace-nowrap">
+                        <td className="px-6 py-4 text-right font-bold text-zinc-900 whitespace-nowrap">
                           ${request.amount.toFixed(2)}
                         </td>
                         <td className="px-6 py-4 text-center whitespace-nowrap">
@@ -356,7 +356,7 @@ export const TeacherWalletPage: React.FC = () => {
                             {request.status}
                           </span>
                         </td>
-                        <td className="px-6 py-4 text-[#374151] font-medium max-w-[300px] truncate">
+                        <td className="px-6 py-4 text-zinc-700 font-medium max-w-[300px] truncate">
                           {request.status === 'APPROVED' && (
                             <span className="font-semibold text-emerald-600">Ref: {request.settlement_reference}</span>
                           )}
@@ -374,7 +374,7 @@ export const TeacherWalletPage: React.FC = () => {
                     ))}
                     {payouts.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="px-6 py-8 text-center text-[#6B7280]">
+                        <td colSpan={5} className="px-6 py-8 text-center text-neutral-500">
                           No payout requests initiated yet.
                         </td>
                       </tr>

@@ -16,7 +16,7 @@ export const PaymentMethodSelection: React.FC = () => {
   return (
     <div className="self-stretch bg-white rounded-2xl shadow-sm border border-gray-200 flex flex-col font-['Inter']">
       <div className="self-stretch px-6 py-5 border-b border-gray-200 flex justify-between items-center">
-        <div className="text-[20px] font-bold text-[#392C7D]">Payment method</div>
+        <div className="text-[20px] font-bold text-primary">Payment method</div>
         <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
           Backend Limitation: PayOS Only
         </span>
@@ -26,17 +26,17 @@ export const PaymentMethodSelection: React.FC = () => {
         <Card 
           onClick={() => handleSelect('vietqr')}
           className={`p-4 border-2 rounded-xl flex items-center gap-4 cursor-pointer transition-all ${
-            selectedMethod === 'vietqr' ? 'border-[#392C7D] bg-indigo-50/10' : 'border-gray-200 bg-white'
+            selectedMethod === 'vietqr' ? 'border-primary bg-indigo-50/10' : 'border-gray-200 bg-white'
           }`}
         >
-          <div className="w-5 h-5 rounded-full border-2 border-[#392C7D] flex items-center justify-center flex-shrink-0">
-            <div className="w-2.5 h-2.5 bg-[#392C7D] rounded-full" />
+          <div className="w-5 h-5 rounded-full border-2 border-primary flex items-center justify-center flex-shrink-0">
+            <div className="w-2.5 h-2.5 bg-primary rounded-full" />
           </div>
           <div>
-            <div className="text-base font-semibold text-[#111827]">VietQR / PayOS QR</div>
-            <div className="text-sm text-[#374151]">Scan with any Vietnamese banking app</div>
+            <div className="text-base font-semibold text-zinc-900">VietQR / PayOS QR</div>
+            <div className="text-sm text-zinc-700">Scan with any Vietnamese banking app</div>
           </div>
-          <span className="ml-auto text-[11px] font-bold text-[#392C7D] bg-indigo-50 px-2 py-0.5 rounded-md">
+          <span className="ml-auto text-[11px] font-bold text-primary bg-indigo-50 px-2 py-0.5 rounded-md">
             Active
           </span>
         </Card>

@@ -135,7 +135,7 @@ export const CourseApprovalReviewPage: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
 
   const [courses, setCourses] = useState<CourseReviewData[]>(INITIAL_COURSES);
-  const [selectedCourseId, setSelectedCourseId] = useState<string>(courseId || INITIAL_COURSES[0].id);
+  const [selectedCourseId, setSelectedCourseId] = useState<string>(courseId || INITIAL_COURSES[0]?.id || 'CS-001');
   const [reviewNote, setReviewNote] = useState<string>('');
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({
     'S-1': true,
@@ -143,7 +143,7 @@ export const CourseApprovalReviewPage: React.FC = () => {
     'S-3': true
   });
 
-  const currentCourse = courses.find(c => c.id === selectedCourseId) || courses[0];
+  const currentCourse = courses.find(c => c.id === selectedCourseId) || courses[0] || INITIAL_COURSES[0]!;
 
   const toggleSection = (id: string) => {
     setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
@@ -378,14 +378,20 @@ export const CourseApprovalReviewPage: React.FC = () => {
 
           {/* Reviewer Note */}
           <div className="w-full p-6 bg-white rounded-2xl border border-neutral-200 shadow-xs flex flex-col gap-3">
-            <h3 className="text-lg font-bold text-zinc-900 border-b border-slate-100 pb-2">
-              Reviewer Moderation Feedback
-            </h3>
+            <div className="flex justify-between items-center border-b border-slate-100 pb-2">
+              <h3 className="text-lg font-bold text-zinc-900">
+                Reviewer Moderation Feedback
+              </h3>
+              <span className="text-xs text-neutral-400 font-medium">
+                {reviewNote.length}/500
+              </span>
+            </div>
             <textarea
               rows={3}
+              maxLength={500}
               value={reviewNote}
               onChange={(e) => setReviewNote(e.target.value)}
-              placeholder="Add your review notes or revision requirements for the course creator..."
+              placeholder="Add your review notes or revision requirements for the course creator (max 500 chars)..."
               className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-zinc-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-indigo-900/20 focus:outline-none resize-none"
             />
           </div>

@@ -418,7 +418,7 @@ export const CourseDetailPage: React.FC = () => {
 									{isFree ? 'Đăng ký học ngay' : 'Mua khóa học (Checkout)'}
 								</Button>
 								<Button
-									className="w-full border-[hsl(var(--color-brand-indigo))] text-[hsl(var(--color-brand-indigo))] hover:bg-indigo-50/50 bg-white"
+									className="w-full bg-sec-blue-bg hover:bg-sec-blue-hover border border-sec-blue-border text-sec-blue-text transition-colors shadow-2xs"
 									variant="outline"
 									size="md"
 									onClick={handlePreviewClassroom}

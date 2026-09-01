@@ -87,11 +87,11 @@ const MOCK_APPLICANTS: TeacherApplicant[] = [
 
 export const AdminVerificationsPage: React.FC = () => {
 	const [applicants, setApplicants] = useState<TeacherApplicant[]>(MOCK_APPLICANTS);
-	const [selectedApplicantId, setSelectedApplicantId] = useState<string>(MOCK_APPLICANTS[0].id);
+	const [selectedApplicantId, setSelectedApplicantId] = useState<string>(MOCK_APPLICANTS[0]?.id || '1');
 	const [reviewerNote, setReviewerNote] = useState<string>('');
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-	const currentApplicant = applicants.find((a) => a.id === selectedApplicantId) || applicants[0];
+	const currentApplicant = applicants.find((a) => a.id === selectedApplicantId) || applicants[0] || MOCK_APPLICANTS[0]!;
 
 	const handleApprove = () => {
 		setApplicants((prev) =>
@@ -392,14 +392,20 @@ export const AdminVerificationsPage: React.FC = () => {
 
 					{/* 6. Reviewer Note Card */}
 					<div className="w-full p-6 bg-white rounded-2xl border border-neutral-200 shadow-xs flex flex-col gap-3">
-						<h3 className="text-lg font-bold text-zinc-900 border-b border-slate-100 pb-2">
-							Reviewer Note
-						</h3>
+						<div className="flex justify-between items-center border-b border-slate-100 pb-2">
+							<h3 className="text-lg font-bold text-zinc-900">
+								Reviewer Note
+							</h3>
+							<span className="text-xs text-neutral-400 font-medium">
+								{reviewerNote.length}/500
+							</span>
+						</div>
 						<textarea
 							rows={3}
+							maxLength={500}
 							value={reviewerNote}
 							onChange={(e) => setReviewerNote(e.target.value)}
-							placeholder="Add your moderation feedback or notes for the applicant here..."
+							placeholder="Add your moderation feedback or notes for the applicant here (max 500 chars)..."
 							className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-zinc-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-indigo-900/20 focus:outline-none resize-none"
 						/>
 					</div>

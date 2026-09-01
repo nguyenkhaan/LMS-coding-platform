@@ -68,7 +68,7 @@ export const CourseInstructorProfile: React.FC = () => {
 				<img className="size-20 rounded-full border border-slate-200 object-cover" src="https://placehold.co/120x120" alt="Lê Quang Duy" />
 				<div className="flex-1 flex flex-col">
 					<h2 className="text-zinc-900 text-xl font-bold">Lê Quang Duy</h2>
-					<span className="text-[#392C7D] text-xs font-semibold mt-0.5">Senior Backend Architect & Lead Instructor</span>
+					<span className="text-primary text-xs font-semibold mt-0.5">Senior Backend Architect & Lead Instructor</span>
 					<div className="flex items-center gap-4 mt-2 text-neutral-500 text-xs font-semibold">
 						<div className="flex items-center gap-1.5">
 							<Star className="w-4 h-4 fill-amber-400 text-amber-400" />
@@ -108,15 +108,15 @@ export const CourseInstructorProfile: React.FC = () => {
 				<div className="flex flex-col gap-4">
 					{experiences.map((exp, idx) => (
 						<div key={idx} className="p-4 bg-slate-50 rounded-xl border border-slate-150 flex items-start gap-4 hover:border-slate-300 transition-colors">
-							<div className="size-12 rounded-lg bg-[#392C7D]/10 flex items-center justify-center border border-[#392C7D]/20">
-								<Briefcase className="w-5 h-5 text-[#392C7D]" />
+							<div className="size-12 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+								<Briefcase className="w-5 h-5 text-primary" />
 							</div>
 							<div className="flex-1 flex flex-col">
 								<div className="flex justify-between items-baseline flex-wrap">
 									<h3 className="text-zinc-900 text-sm font-semibold">{exp.company}</h3>
 									<span className="text-neutral-400 text-xs font-semibold">{exp.period}</span>
 								</div>
-								<span className="text-[#392C7D] text-xs font-semibold mt-0.5">{exp.role}</span>
+								<span className="text-primary text-xs font-semibold mt-0.5">{exp.role}</span>
 								<p className="text-neutral-500 text-xs mt-1 leading-normal">{exp.desc}</p>
 							</div>
 						</div>

@@ -9,7 +9,9 @@ import {
 	Terminal,
 	Bookmark,
 	Sparkles,
-	ArrowLeft
+	ArrowLeft,
+	CheckCircle2,
+	Circle
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
@@ -70,10 +72,10 @@ export const LessonProblemPreviewPage: React.FC = () => {
 
 	const toggleUpvote = (id: string) => {
 		if (hasUpvoted[id]) {
-			setUpvotes(prev => ({ ...prev, [id]: prev[id] - 1 }));
+			setUpvotes(prev => ({ ...prev, [id]: (prev[id] ?? 0) - 1 }));
 			setHasUpvoted(prev => ({ ...prev, [id]: false }));
 		} else {
-			setUpvotes(prev => ({ ...prev, [id]: prev[id] + 1 }));
+			setUpvotes(prev => ({ ...prev, [id]: (prev[id] ?? 0) + 1 }));
 			setHasUpvoted(prev => ({ ...prev, [id]: true }));
 		}
 	};
@@ -82,21 +84,19 @@ export const LessonProblemPreviewPage: React.FC = () => {
 		<div className="w-full min-h-screen bg-gray-50 flex flex-col justify-start items-start font-['Inter'] antialiased">
 			
 			{/* 1. HERO BANNER (Synchronized with Classroom & Problem List) */}
-			<div className="self-stretch px-6 lg:px-20 py-14 bg-gradient-to-r from-red-100 via-sky-100 to-blue-100 flex flex-col justify-center items-center gap-3 text-center border-b border-neutral-200/60">
-				<h1 className="text-zinc-900 text-4xl font-extrabold tracking-tight">Lesson Preview</h1>
+			<div className="self-stretch px-6 lg:px-20 py-14 bg-gradient-to-r from-red-50 via-sky-50 to-blue-100 flex flex-col justify-center items-center gap-3 text-center border-b border-neutral-200/60">
+				<h1 className="text-zinc-900 text-4xl font-extrabold tracking-tight">Workspace</h1>
 				<div className="opacity-80 text-zinc-700 text-sm font-medium flex items-center gap-2">
 					<Link to="/dashboard" className="hover:underline">Dashboard</Link>
 					<span>&gt;</span>
 					<Link to="/courses" className="hover:underline">Courses</Link>
-					<span>&gt;</span>
-					<Link to="/learn/dsa-module-2" className="hover:underline">Data Structures &amp; Algorithms</Link>
 					<span>&gt;</span>
 					<span className="text-zinc-900 font-semibold">Problem: Sum of Two Numbers</span>
 				</div>
 			</div>
 
 			{/* 2. SUBHEADER: SEARCH & STUDENT PROFILE BAR */}
-			<div className="self-stretch bg-white/90 border-b border-neutral-200 backdrop-blur-xs px-6 lg:px-20 py-3.5 flex justify-between items-center shadow-xs sticky top-0 z-30">
+			<div className="self-stretch bg-oj-surface-alt/90 border-b border-neutral-200 backdrop-blur-xs px-6 lg:px-20 py-3.5 flex justify-between items-center shadow-xs sticky top-0 z-30">
 				<div className="max-w-[1608px] w-full mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
 					
 					{/* Breadcrumb path label */}
@@ -280,18 +280,22 @@ export const LessonProblemPreviewPage: React.FC = () => {
 						</div>
 
 						{/* Add discussion form */}
-						<form onSubmit={handleAddDiscussion} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-3">
+						<form onSubmit={handleAddDiscussion} className="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-2.5">
 							<textarea
 								rows={2}
+								maxLength={500}
 								value={newDiscussion}
 								onChange={(e) => setNewDiscussion(e.target.value)}
-								placeholder="Have a question or insight? Write here..."
+								placeholder="Have a question or insight? Write here (max 500 chars)..."
 								className="w-full p-3 bg-white border border-slate-200 rounded-lg text-xs text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 resize-none"
 							/>
-							<div className="flex justify-end">
+							<div className="flex justify-between items-center">
+								<span className="text-[11px] text-neutral-400">
+									{newDiscussion.length}/500
+								</span>
 								<button
 									type="submit"
-									disabled={!newDiscussion.trim()}
+									disabled={!newDiscussion.trim() || newDiscussion.length > 500}
 									className="px-4 py-1.5 bg-indigo-900 hover:bg-indigo-950 disabled:opacity-40 text-white rounded-lg text-xs font-semibold transition-colors cursor-pointer shadow-xs"
 								>
 									Post Comment

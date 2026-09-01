@@ -58,7 +58,11 @@ export const ProblemBuilderPage: React.FC = () => {
           passingScore: content.problemPassingScore || 100,
           timeLimitMs: content.problemTimeLimitMs || 1000,
           memoryLimitKb: content.problemMemoryLimitKb || 256000,
-          sampleTestcases: content.problemSampleTestcases || [{ input: '', output: '', explanation: '' }],
+          sampleTestcases: content.problemSampleTestcases?.map(tc => ({
+            input: tc.input || '',
+            output: tc.output || '',
+            explanation: tc.explanation || ''
+          })) || [{ input: '', output: '', explanation: '' }],
           tags: content.problemTags ? content.problemTags.join(', ') : ''
         });
       }
@@ -101,8 +105,11 @@ export const ProblemBuilderPage: React.FC = () => {
   const handleTestcaseChange = (index: number, field: 'input' | 'output' | 'explanation', value: string) => {
     setProblemForm(prev => {
       const newTestcases = [...prev.sampleTestcases];
+      const currentTc = newTestcases[index] || { input: '', output: '', explanation: '' };
       newTestcases[index] = {
-        ...newTestcases[index],
+        input: currentTc.input,
+        output: currentTc.output,
+        explanation: currentTc.explanation,
         [field]: value
       };
       return { ...prev, sampleTestcases: newTestcases };
@@ -200,7 +207,7 @@ export const ProblemBuilderPage: React.FC = () => {
 
   return (
     <div className="w-full min-h-screen bg-gray-50 flex flex-col font-['Inter'] antialiased">
-      <div className="w-full bg-gradient-to-r from-[#392C7D] to-purple-600 py-8 flex flex-col items-center justify-center gap-1">
+      <div className="w-full bg-gradient-to-r from-primary to-purple-600 py-8 flex flex-col items-center justify-center gap-1">
         <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight">Problem Builder</h1>
         <p className="text-[13px] font-medium text-white/70">Course Builder &rsaquo; Problem Editor</p>
       </div>
@@ -214,16 +221,16 @@ export const ProblemBuilderPage: React.FC = () => {
         <div className="flex-1 w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col gap-6">
           <div className="flex justify-between items-center border-b border-gray-100 pb-4">
             <div>
-              <h3 className="text-lg font-bold text-[#111827]">
+              <h3 className="text-lg font-bold text-zinc-900">
                 {isEditing ? `Edit Problem: ${problemForm.title}` : 'Create Coding Problem Activity'}
               </h3>
-              <p className="text-xs text-[#6B7280]">
+              <p className="text-xs text-neutral-500">
                 Add details for an online judge coding problem context, test cases, and constraints.
               </p>
             </div>
             <button
               onClick={() => navigate(`/teacher/courses/${courseId}/edit`)}
-              className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-[#111827] transition-all cursor-pointer"
+              className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-zinc-900 transition-all cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -233,103 +240,103 @@ export const ProblemBuilderPage: React.FC = () => {
             {/* Title & Slug */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-[#374151]">Problem Title</label>
+                <label className="text-[13px] font-semibold text-zinc-700">Problem Title</label>
                 <input
                   type="text"
                   placeholder="e.g., Two Sum"
                   value={problemForm.title}
                   onChange={(e) => handleTitleChange(e.target.value)}
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
-                    errors.title ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
+                    errors.title ? 'border-accent focus:border-accent' : 'border-gray-200'
                   }`}
                 />
-                {errors.title && <p className="text-[11px] text-[#FF4667] font-semibold">{errors.title}</p>}
+                {errors.title && <p className="text-[11px] text-accent font-semibold">{errors.title}</p>}
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-[#374151]">Problem Slug</label>
+                <label className="text-[13px] font-semibold text-zinc-700">Problem Slug</label>
                 <input
                   type="text"
                   placeholder="e.g., two-sum"
                   value={problemForm.slug}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, slug: e.target.value }))}
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
-                    errors.slug ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
+                    errors.slug ? 'border-accent focus:border-accent' : 'border-gray-200'
                   }`}
                 />
-                {errors.slug && <p className="text-[11px] text-[#FF4667] font-semibold">{errors.slug}</p>}
+                {errors.slug && <p className="text-[11px] text-accent font-semibold">{errors.slug}</p>}
               </div>
             </div>
 
             {/* Statement */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-semibold text-[#374151]">Problem Statement / Description</label>
+              <label className="text-[13px] font-semibold text-zinc-700">Problem Statement / Description</label>
               <textarea
                 rows={5}
                 placeholder="Detail the algorithm problem description..."
                 value={problemForm.statement}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, statement: e.target.value }))}
-                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
-                  errors.statement ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
+                  errors.statement ? 'border-accent focus:border-accent' : 'border-gray-200'
                 }`}
               />
-              {errors.statement && <p className="text-[11px] text-[#FF4667] font-semibold">{errors.statement}</p>}
+              {errors.statement && <p className="text-[11px] text-accent font-semibold">{errors.statement}</p>}
             </div>
 
             {/* Input & Output formats */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-[#374151]">Input Description</label>
+                <label className="text-[13px] font-semibold text-zinc-700">Input Description</label>
                 <textarea
                   rows={3}
                   placeholder="Describe the function arguments or stdin shape..."
                   value={problemForm.inputDescription}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, inputDescription: e.target.value }))}
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
-                    errors.inputDescription ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
+                    errors.inputDescription ? 'border-accent focus:border-accent' : 'border-gray-200'
                   }`}
                 />
-                {errors.inputDescription && <p className="text-[11px] text-[#FF4667] font-semibold">{errors.inputDescription}</p>}
+                {errors.inputDescription && <p className="text-[11px] text-accent font-semibold">{errors.inputDescription}</p>}
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-[#374151]">Output Description</label>
+                <label className="text-[13px] font-semibold text-zinc-700">Output Description</label>
                 <textarea
                   rows={3}
                   placeholder="Describe the returned value or stdout shape..."
                   value={problemForm.outputDescription}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, outputDescription: e.target.value }))}
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
-                    errors.outputDescription ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
+                    errors.outputDescription ? 'border-accent focus:border-accent' : 'border-gray-200'
                   }`}
                 />
-                {errors.outputDescription && <p className="text-[11px] text-[#FF4667] font-semibold">{errors.outputDescription}</p>}
+                {errors.outputDescription && <p className="text-[11px] text-accent font-semibold">{errors.outputDescription}</p>}
               </div>
             </div>
 
             {/* Constraints */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-semibold text-[#374151]">Constraints</label>
+              <label className="text-[13px] font-semibold text-zinc-700">Constraints</label>
               <textarea
                 rows={2}
                 placeholder="e.g., 2 <= nums.length <= 10^4"
                 value={problemForm.constraints}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, constraints: e.target.value }))}
-                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
-                  errors.constraints ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400 ${
+                  errors.constraints ? 'border-accent focus:border-accent' : 'border-gray-200'
                 }`}
               />
-              {errors.constraints && <p className="text-[11px] text-[#FF4667] font-semibold">{errors.constraints}</p>}
+              {errors.constraints && <p className="text-[11px] text-accent font-semibold">{errors.constraints}</p>}
             </div>
 
             {/* Metadata Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-[#374151]">Difficulty</label>
+                <label className="text-[13px] font-semibold text-zinc-700">Difficulty</label>
                 <select
                   value={problemForm.difficulty}
-                  onChange={(e) => setProblemForm(prev => ({ ...prev, difficulty: e.target.value as any }))}
-                  className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white cursor-pointer text-zinc-900"
+                  onChange={(e) => setProblemForm(prev => ({ ...prev, difficulty: e.target.value as 'EASY' | 'MEDIUM' | 'HARD' }))}
+                  className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white cursor-pointer text-zinc-900"
                 >
                   <option value="EASY">Easy</option>
                   <option value="MEDIUM">Medium</option>
@@ -338,72 +345,72 @@ export const ProblemBuilderPage: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-[#374151]">Passing Score</label>
+                <label className="text-[13px] font-semibold text-zinc-700">Passing Score</label>
                 <input
                   type="number"
                   value={problemForm.passingScore}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, passingScore: parseInt(e.target.value) || 0 }))}
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 ${
-                    errors.passingScore ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 ${
+                    errors.passingScore ? 'border-accent focus:border-accent' : 'border-gray-200'
                   }`}
                 />
-                {errors.passingScore && <p className="text-[11px] text-[#FF4667] font-semibold">{errors.passingScore}</p>}
+                {errors.passingScore && <p className="text-[11px] text-accent font-semibold">{errors.passingScore}</p>}
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-[#374151]">Time Limit (ms)</label>
+                <label className="text-[13px] font-semibold text-zinc-700">Time Limit (ms)</label>
                 <input
                   type="number"
                   value={problemForm.timeLimitMs}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, timeLimitMs: parseInt(e.target.value) || 0 }))}
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 ${
-                    errors.timeLimitMs ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 ${
+                    errors.timeLimitMs ? 'border-accent focus:border-accent' : 'border-gray-200'
                   }`}
                 />
-                {errors.timeLimitMs && <p className="text-[11px] text-[#FF4667] font-semibold">{errors.timeLimitMs}</p>}
+                {errors.timeLimitMs && <p className="text-[11px] text-accent font-semibold">{errors.timeLimitMs}</p>}
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-[#374151]">Memory Limit (KB)</label>
+                <label className="text-[13px] font-semibold text-zinc-700">Memory Limit (KB)</label>
                 <input
                   type="number"
                   value={problemForm.memoryLimitKb}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, memoryLimitKb: parseInt(e.target.value) || 0 }))}
-                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 ${
-                    errors.memoryLimitKb ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                  className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 ${
+                    errors.memoryLimitKb ? 'border-accent focus:border-accent' : 'border-gray-200'
                   }`}
                 />
-                {errors.memoryLimitKb && <p className="text-[11px] text-[#FF4667] font-semibold">{errors.memoryLimitKb}</p>}
+                {errors.memoryLimitKb && <p className="text-[11px] text-accent font-semibold">{errors.memoryLimitKb}</p>}
               </div>
             </div>
 
             {/* Tags */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-semibold text-[#374151]">Tags (comma separated)</label>
+              <label className="text-[13px] font-semibold text-zinc-700">Tags (comma separated)</label>
               <input
                 type="text"
                 placeholder="Array, Hash Table, Two Pointers"
                 value={problemForm.tags}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, tags: e.target.value }))}
-                className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
+                className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400"
               />
             </div>
 
             {/* Sample Testcases */}
             <div className="border-t border-gray-100 pt-5 space-y-4">
               <div className="flex justify-between items-center">
-                <h4 className="text-sm font-bold text-[#111827]">Sample Test Cases</h4>
+                <h4 className="text-sm font-bold text-zinc-900">Sample Test Cases</h4>
                 <button
                   type="button"
                   onClick={addSampleTestcase}
-                  className="px-3 py-1.5 bg-indigo-50 border border-indigo-100 text-[#392C7D] hover:bg-indigo-100 transition-all rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer"
+                  className="px-3 py-1.5 bg-indigo-50 border border-indigo-100 text-primary hover:bg-indigo-100 transition-all rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add Test Case
                 </button>
               </div>
 
               {errors.sampleTestcases && (
-                <p className="text-[11px] text-[#FF4667] font-semibold">{errors.sampleTestcases}</p>
+                <p className="text-[11px] text-accent font-semibold">{errors.sampleTestcases}</p>
               )}
 
               <div className="space-y-4">
@@ -417,42 +424,42 @@ export const ProblemBuilderPage: React.FC = () => {
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
 
-                    <span className="text-[11px] font-extrabold text-[#392C7D] bg-indigo-50 px-2.5 py-0.5 rounded-full">
+                    <span className="text-[11px] font-extrabold text-primary bg-indigo-50 px-2.5 py-0.5 rounded-full">
                       Test Case #{idx + 1}
                     </span>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[11px] font-semibold text-[#6B7280]">Input</label>
+                        <label className="text-[11px] font-semibold text-neutral-500">Input</label>
                         <textarea
                           rows={2}
                           value={tc.input}
                           placeholder="Standard Input values..."
                           onChange={(e) => handleTestcaseChange(idx, 'input', e.target.value)}
-                          className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 font-mono resize-none"
+                          className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-primary text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 font-mono resize-none"
                         />
                       </div>
 
                       <div className="flex flex-col gap-1.5">
-                        <label className="text-[11px] font-semibold text-[#6B7280]">Expected Output</label>
+                        <label className="text-[11px] font-semibold text-neutral-500">Expected Output</label>
                         <textarea
                           rows={2}
                           value={tc.output}
                           placeholder="Standard Output values..."
                           onChange={(e) => handleTestcaseChange(idx, 'output', e.target.value)}
-                          className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 font-mono resize-none"
+                          className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-primary text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 font-mono resize-none"
                         />
                       </div>
                     </div>
 
                     <div className="flex flex-col gap-1.5">
-                      <label className="text-[11px] font-semibold text-[#6B7280]">Explanation (Optional)</label>
+                      <label className="text-[11px] font-semibold text-neutral-500">Explanation (Optional)</label>
                       <textarea
                         rows={1}
                         value={tc.explanation}
                         placeholder="Why is this the expected output?"
                         onChange={(e) => handleTestcaseChange(idx, 'explanation', e.target.value)}
-                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-[#392C7D] text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 resize-none"
+                        className="w-full px-3 py-1.5 border border-gray-200 rounded-lg focus:outline-none focus:border-primary text-[13px] bg-white text-zinc-900 placeholder:text-neutral-400 resize-none"
                       />
                     </div>
                   </div>
@@ -465,14 +472,14 @@ export const ProblemBuilderPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => navigate(`/teacher/courses/${courseId}/edit`)}
-                className="px-5 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-[#374151] hover:bg-slate-50 transition-all cursor-pointer"
+                className="px-5 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-zinc-700 hover:bg-slate-50 transition-all cursor-pointer"
                 disabled={isSaving}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl bg-[#FF4667] text-white text-sm font-semibold hover:bg-[#e03d5b] transition-all shadow-sm cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent-hover transition-all shadow-sm cursor-pointer flex items-center gap-2 disabled:opacity-50"
                 disabled={isSaving}
               >
                 {isSaving ? (
