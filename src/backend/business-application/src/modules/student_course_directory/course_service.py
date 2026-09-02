@@ -2,7 +2,14 @@ from datetime import datetime, timezone
 
 from fastapi import HTTPException
 
-from src.models.base_model import LessonContentType
+from src.models.base_model import CourseStatus, LessonContentType
+from src.models.course_model import CourseModel
+from src.models.enrollment_model import EnrollmentModel
+from src.models.course_review_model import CourseReviewModel
+from src.models.section_model import SectionModel
+from src.models.lesson_model import LessonModel
+from sqlalchemy.orm import selectinload
+from sqlalchemy import select, or_, func
 from src.modules.student_course_directory.course_dto import (
     CourseCatalogResponse,
     CourseDetailResponse,
@@ -558,7 +565,6 @@ _MOCK_QUIZZES: dict[int, QuizResponse] = {
 
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_, func
 
 class CourseService:
     """
@@ -580,10 +586,6 @@ class CourseService:
         q: str | None,
         price_type: PriceType | None,
     ) -> CourseCatalogResponse:
-        from src.models.course_model import CourseModel
-        from src.models.base_model import CourseStatus
-        from src.models.enrollment_model import EnrollmentModel
-        from src.models.course_review_model import CourseReviewModel
         
         enrolled_count_sq = (
             select(func.count(EnrollmentModel.id))
@@ -668,25 +670,85 @@ class CourseService:
     # ------------------------------------------------------------------
 
     async def get_course_detail(self, slug: str) -> CourseDetailResponse:
-        course = next((c for c in _MOCK_COURSES if c.slug == slug), None)
-        if course is None:
+        from src.models.section_model import SectionModel
+        from src.models.lesson_model import LessonModel
+        from sqlalchemy.orm import selectinload
+
+        # Scalar subquery: total enrollments for this course.
+        # Source: https://docs.sqlalchemy.org/en/20/orm/queryguide/select.html#selecting-orm-entities
+        enrolled_count_sq = (
+            select(func.count(EnrollmentModel.id))
+            .where(EnrollmentModel.course_id == CourseModel.id)
+            .scalar_subquery()
+            .label("enrolled_count")
+        )
+
+        # Scalar subquery: average review rating, defaulting to 0.0 when no reviews exist.
+        rating_sq = (
+            select(func.coalesce(func.avg(CourseReviewModel.rating), 0.0))
+            .where(CourseReviewModel.course_id == CourseModel.id)
+            .scalar_subquery()
+            .label("rating")
+        )
+
+        # Load the course together with its sections to avoid a second round-trip.
+        # selectinload issues one extra SELECT per relationship, which is correct
+        # for collections. Source: https://docs.sqlalchemy.org/en/20/orm/queryguide/relationships.html#selectin-loading
+        stmt = (
+            select(CourseModel, enrolled_count_sq, rating_sq)
+            .where(
+                CourseModel.slug == slug,
+                CourseModel.status == CourseStatus.APPROVED,
+                CourseModel.deleted_at.is_(None),
+            )
+            .options(selectinload(CourseModel.sections))
+        )
+
+        row = (await self.db_session.execute(stmt)).first()
+        if row is None:
             raise HTTPException(status_code=404, detail="Course not found")
 
-        sections = _MOCK_COURSE_SECTIONS.get(slug, [])
+        course, enrolled_count, rating = row
+
+        # lesson_count per section: one scalar subquery per section is a separate DB call.
+        # Since sections are already loaded in memory, build counts with a single
+        # bulk query grouping by section_id to keep it to one extra round-trip.
+        section_ids = [s.id for s in course.sections]
+        lesson_count_map: dict[int, int] = {}
+        if section_ids:
+            count_rows = (
+                await self.db_session.execute(
+                    select(LessonModel.section_id, func.count(LessonModel.id).label("cnt"))
+                    .where(LessonModel.section_id.in_(section_ids))
+                    .group_by(LessonModel.section_id)
+                )
+            ).all()
+            lesson_count_map = {row.section_id: row.cnt for row in count_rows}
+
+        sections = [
+            SectionOverviewResponse(
+                id=s.id,
+                title=s.title,
+                position=s.position,
+                lesson_count=lesson_count_map.get(s.id, 0),
+            )
+            for s in sorted(course.sections, key=lambda s: s.position)
+        ]
+
+        c_price = float(course.price)
+        tags_list = [tag.strip() for tag in course.tags.split(",")] if course.tags else []
+
         return CourseDetailResponse(
             id=course.id,
             slug=course.slug,
             title=course.title,
-            description=(
-                f"Khoá học {course.title} cung cấp kiến thức nền tảng "
-                f"trong lĩnh vực {course.field}, phù hợp cho người mới bắt đầu."
-            ),
-            price=course.price,
-            price_type=course.price_type,
-            field=course.field,
-            tags=course.tags,
-            enrolled_count=course.enrolled_count,
-            rating=course.rating,
+            description=course.description or "",
+            price=c_price,
+            price_type=PriceType.FREE if c_price == 0 else PriceType.PAID,
+            field=course.field or "",
+            tags=tags_list,
+            enrolled_count=int(enrolled_count),
+            rating=float(rating),
             sections=sections,
         )
 
