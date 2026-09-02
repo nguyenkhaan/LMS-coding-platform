@@ -1,7 +1,7 @@
 ﻿import time
-
+import re 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
-
+from src.helpers.validate_file import validate_file
 from src.middlewares.role_middleware import require_role
 from src.models.base_model import Role
 from src.modules.teacher.teacher_problem.teacher_problem_dependency import (
@@ -12,6 +12,7 @@ from src.modules.teacher.teacher_problem.teacher_problem_dto import (
     ProblemView,
     ProblemWrite,
     TestcaseUploadResponse,
+    TestcaseView,
 )
 from src.modules.teacher.teacher_problem.teacher_problem_service import TeacherProblemService
 
@@ -47,27 +48,11 @@ async def update_problem(
 ):
     return await service.update_problem(teacher_id, problem_id, data)
 
-from src.cores.settings import MAX_TESTCASE_FILE_SIZE_MB
 
-MAX_FILE_SIZE = MAX_TESTCASE_FILE_SIZE_MB * 1024 * 1024
-ALLOWED_EXTENSIONS = [".txt", ".in", ".out"]
-ALLOWED_MIME_TYPES = ["text/plain"]
 
-def validate_file(file: UploadFile):
-    if not file:
-        raise HTTPException(status_code=400, detail="File is missing")
-    
-    filename = file.filename or ""
-    ext = ""
-    if "." in filename:
-        ext = "." + filename.rsplit(".", 1)[1].lower()
-        
-    if ext not in ALLOWED_EXTENSIONS and file.content_type not in ALLOWED_MIME_TYPES:
-        raise HTTPException(status_code=400, detail=f"Invalid file type for {filename}")
-        
-    if file.size and file.size > MAX_FILE_SIZE:
-        raise HTTPException(status_code=400, detail=f"File {filename} exceeds {MAX_TESTCASE_FILE_SIZE_MB}MB limit")
-        
+
+
+"""
 @router.post("/problems/{problem_id}/testcases/upload", response_model=TestcaseUploadResponse, status_code=status.HTTP_201_CREATED)
 async def upload_testcase(
     problem_id: int,
@@ -76,7 +61,7 @@ async def upload_testcase(
     score: float = Form(0.0),
     is_hidden: bool = Form(False),
     teacher_id: int = Depends(get_current_teacher_id),
-    service: TeacherProblemService = Depends(get_teacher_problem_service)
+    service: TeacherProblemService = Depends(get_teacher_problem_service) 
 ):
     if not input_file or not output_file:
         raise HTTPException(status_code=400, detail="Both input_file and output_file are required")
@@ -97,3 +82,16 @@ async def upload_testcase(
         score=score,
         is_hidden=is_hidden
     )
+"""
+@router.post("/problems/{problem_id}/testcases/upload" , response_model=TestcaseUploadResponse , status_code = status.HTTP_201_CREATED) 
+async def upload_testcase(
+    input: UploadFile = File(...),  
+    output: UploadFile = File(...), 
+    service : TeacherProblemService = Depends(get_teacher_problem_service)
+): 
+    validate_file(input , r'inp\d{2}') 
+    validate_file(output , r'out\d{2}')
+    
+    result = await service.upload_testcase(2 , 2 , 50 , True , input, output)
+    return result 
+    

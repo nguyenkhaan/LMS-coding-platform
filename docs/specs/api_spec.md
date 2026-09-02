@@ -328,7 +328,7 @@ Khi Student bắt đầu lại, attempt `IN_PROGRESS` trước đó của cùng 
 | `GET` | `/problems` | Public/User | `tag`, `difficulty`, `page`, `size` | `ProblemView[]`, tags và solved-state projection | Chỉ public/accessible problems |
 | `GET` | `/problems/{slug}` | Public/User | - | `ProblemView`, `ProblemTagView[]`, `LanguageView[]`, configs được phép | Không trả testcase file/raw hidden data |
 | `POST` | `/problems/{slug}/run` | Student | Transient `source_code`, `language_id`, `stdin?` | Transient run status/stdout/stderr/runtime/memory | Không tạo `submission` hay `submission_result_detail`; sandbox, rate limit; custom input không tạo completion |
-| `POST` | `/problems/{slug}/submit` | Student | `SubmissionWrite` không gồm problem/student/status/result fields | `SubmissionView` với `status: "PENDING"` | Access + language validation; enqueue idempotent job |
+| `POST` | `/problems/{slug}/submit` | Student | `SubmissionWrite` không gồm problem/student/status/result fields | `SubmissionView` với `status: "PENDING"` | Access + language validation; enqueue idempotent job; Judge trả progress theo từng testcase |
 | `GET` | `/submissions/{submission_id}` | Submission owner/Problem owner/Admin | - | Role-filtered `SubmissionView`, `SubmissionResultView[]` hoặc hidden summary projection | Hidden testcase chỉ trả aggregate được phép |
 | `GET` | `/problems/{slug}/submissions` | Student | `page`, `size` | Current Student `SubmissionView[]` | Owner only |
 | `POST` | `/teacher/problems` | Approved Teacher | `ProblemWrite` gồm `passing_score`, command `tag_ids[]`, `configs: ProblemConfigWrite[]` | `ProblemView`, tags, configs | `passing_score` là ngưỡng hoàn thành lesson; phải là số không âm; service chỉ cập nhật completion khi submission `ACCEPTED` đạt ngưỡng |
@@ -337,6 +337,8 @@ Khi Student bắt đầu lại, attempt `IN_PROGRESS` trước đó của cùng 
 | `GET` | `/teacher/courses/{course_id}/submissions` | Course owner | `problem_id?`, `student_id?`, `status?`, `page`, `size` | Authorized `SubmissionView[]` và result summary projections | Chỉ submission thuộc course/problem của Teacher |
 
 Judge result phải dùng các status: `PENDING`, `RUNNING`, `ACCEPTED`, `WRONG_ANSWER`, `TIME_LIMIT_EXCEEDED`, `MEMORY_LIMIT_EXCEEDED`, `RUNTIME_ERROR`, `COMPILE_ERROR`.
+
+Judge so khớp output testcase tuyệt đối theo byte UTF-8, bao gồm whitespace và newline cuối. Luồng Submit chạy testcase tuần tự và phát event progress theo đúng thứ tự (`RUNNING` → từng testcase đã chạy → kết quả terminal), với `sequence` tăng dần. Worker dừng ở testcase lỗi đầu tiên; chỉ khi toàn bộ testcase pass mới trả `ACCEPTED`. Event/projection gửi cho Student không được lộ raw input/output hoặc identifier của hidden testcase.
 
 ## 9. Checkout trực tiếp, PayOS và Enrollment
 
