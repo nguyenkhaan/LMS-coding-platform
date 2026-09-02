@@ -188,6 +188,7 @@ async def submission_result(
     try: 
         # Day cac thay doi xuong database 
         await db.flush()  
+        await db.commit() 
         await rabbitmq.publish(
             SUBMISSION_EXECUTION_QUEUE, 
             execution_request.model_dump_json().encode('utf-8')

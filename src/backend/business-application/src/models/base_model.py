@@ -83,7 +83,10 @@ class InterviewMessageSender(str, Enum):
     STUDENT = "STUDENT"
     SYSTEM = "SYSTEM"
 
-
+# Chua thuc hien chinh migration. Kiem trs trong migration version da co OUTPUT_LIMIT_EXCEED chua 
+# Neu chua co thi dung 2 lenh duoi them thu cong vao database 
+#SELECT enum_range(NULL::problemsubmissionstatus);
+#ALTER TYPE problemsubmissionstatus ADD VALUE 'OUTPUT_LIMIT_EXCEEDED';
 class ProblemSubmissionStatus(str, Enum):
     PENDING = "PENDING"
     RUNNING = "RUNNING"
@@ -93,7 +96,7 @@ class ProblemSubmissionStatus(str, Enum):
     MEMORY_LIMIT_EXCEEDED = "MEMORY_LIMIT_EXCEEDED"
     RUNTIME_ERROR = "RUNTIME_ERROR"
     COMPILE_ERROR = "COMPILE_ERROR"
-
+    OUTPUT_LIMIT_EXCEEDED = "OUTPUT_LIMIT_EXCEEDED"
 
 class PaymentStatus(str, Enum):
     PENDING = "PENDING"
