@@ -85,23 +85,13 @@ async def upload_testcase(
 """
 @router.post("/problems/{problem_id}/testcases/upload" , response_model=TestcaseUploadResponse , status_code = status.HTTP_201_CREATED) 
 async def upload_testcase(
-    file1: UploadFile = File(...),  
-    file2: UploadFile = File(...)
+    input: UploadFile = File(...),  
+    output: UploadFile = File(...), 
+    service : TeacherProblemService = Depends(get_teacher_problem_service)
 ): 
-    validate_file(file1 , r'inp\d{2}') 
-    validate_file(file2 , r'out\d{2}')
-    return TestcaseUploadResponse(
-        uploaded_count = 2,
-        message = "Uploaded successfully", 
-        testcases = [
-            TestcaseView(
-                id = 1, 
-                problem_id = 2, 
-                input_file = "Hello Fuck", 
-                output_file = "You",
-                score = 100, 
-                is_hidden = True 
-            )
-        ]
-
-    )
+    validate_file(input , r'inp\d{2}') 
+    validate_file(output , r'out\d{2}')
+    
+    result = await service.upload_testcase(2 , 2 , 50 , True , input, output)
+    return result 
+    
