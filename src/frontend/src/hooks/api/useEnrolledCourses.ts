@@ -22,7 +22,7 @@ export const useEnrolledCourses = () => {
 			const localEnrolled = JSON.parse(localStorage.getItem('local_enrolled_courses') || '[]');
 			const merged = [...data.items];
 
-			localEnrolled.forEach((localCourse: any) => {
+			localEnrolled.forEach((localCourse: EnrolledCourseItem) => {
 				if (!merged.some(c => c.slug === localCourse.slug || String(c.id) === String(localCourse.id))) {
 					merged.push(localCourse);
 				}

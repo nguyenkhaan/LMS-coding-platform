@@ -8,8 +8,10 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import { useAuthStore } from '@/features/auth/model/useAuthStore';
+import { Badge } from '@/components/ui/badge';
 
-export interface ProblemItem {
+interface ProblemItem {
   id: number;
   code: string;
   slug: string;
@@ -20,7 +22,7 @@ export interface ProblemItem {
   tags: string[];
 }
 
-export const MOCK_PROBLEMS: ProblemItem[] = [
+const MOCK_PROBLEMS: ProblemItem[] = [
   { id: 1, code: 'OJ-001', slug: 'two-sum', title: 'Two Sum', difficulty: 'Easy', acceptance: '49.2%', status: 'Solved', tags: ['Array', 'Hash Table'] },
   { id: 2, code: 'OJ-002', slug: 'add-two-numbers', title: 'Add Two Numbers', difficulty: 'Medium', acceptance: '39.7%', status: 'Solved', tags: ['Linked List', 'Math'] },
   { id: 3, code: 'OJ-003', slug: 'longest-substring-without-repeating-characters', title: 'Longest Substring Without Repeating Characters', difficulty: 'Medium', acceptance: '33.8%', status: 'Attempted', tags: ['Hash Table', 'String', 'Sliding Window'] },
@@ -37,6 +39,7 @@ export const MOCK_PROBLEMS: ProblemItem[] = [
 
 export function ProblemListPage() {
   const navigate = useNavigate();
+  const { user } = useAuthStore();
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -52,10 +55,11 @@ export function ProblemListPage() {
       const matchSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) || p.code.toLowerCase().includes(searchQuery.toLowerCase());
       const matchDiff = selectedDifficulty === 'All' || p.difficulty === selectedDifficulty;
       const matchTag = selectedTag === 'All' || p.tags.includes(selectedTag);
-      const matchStatus = selectedStatus === 'All' || p.status === selectedStatus;
+      const effectiveStatus = user ? p.status : 'Unsolved';
+      const matchStatus = selectedStatus === 'All' || effectiveStatus === selectedStatus;
       return matchSearch && matchDiff && matchTag && matchStatus;
     });
-  }, [searchQuery, selectedDifficulty, selectedTag, selectedStatus]);
+  }, [searchQuery, selectedDifficulty, selectedTag, selectedStatus, user]);
 
   const totalPages = Math.ceil(filteredProblems.length / itemsPerPage) || 1;
   const paginatedProblems = filteredProblems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -106,7 +110,7 @@ export function ProblemListPage() {
               <select
                 value={selectedDifficulty}
                 onChange={(e) => {
-                  setSelectedDifficulty(e.target.value as any);
+                  setSelectedDifficulty(e.target.value as 'All' | 'Easy' | 'Medium' | 'Hard');
                   setCurrentPage(1);
                 }}
                 className="px-4 py-2.5 bg-white rounded-lg border border-neutral-200 text-zinc-600 text-sm font-medium appearance-none pr-9 cursor-pointer shadow-sm hover:border-neutral-300 focus:outline-none"
@@ -145,7 +149,7 @@ export function ProblemListPage() {
               <select
                 value={selectedStatus}
                 onChange={(e) => {
-                  setSelectedStatus(e.target.value as any);
+                  setSelectedStatus(e.target.value as 'All' | 'Solved' | 'Attempted' | 'Unsolved');
                   setCurrentPage(1);
                 }}
                 className="px-4 py-2.5 bg-white rounded-lg border border-neutral-200 text-zinc-600 text-sm font-medium appearance-none pr-9 cursor-pointer shadow-sm hover:border-neutral-300 focus:outline-none"
@@ -165,7 +169,7 @@ export function ProblemListPage() {
         <div className="self-stretch bg-white rounded-xl border border-neutral-200 flex flex-col justify-start items-start overflow-hidden shadow-sm">
           
           {/* Table Header */}
-          <div className="self-stretch px-6 py-4 bg-gray-50 border-b border-neutral-200 flex items-center text-zinc-900 text-sm font-bold">
+          <div className="self-stretch px-6 py-4 bg-oj-surface-alt border-b border-neutral-200 flex items-center text-zinc-900 text-sm font-bold">
             <div className="w-20">#</div>
             <div className="flex-1">Title</div>
             <div className="w-40">Difficulty</div>
@@ -181,8 +185,8 @@ export function ProblemListPage() {
                 <div
                   key={prob.id}
                   onClick={() => navigate(`/practice/${prob.slug}`)}
-                  className={`self-stretch px-6 py-4 border-b border-neutral-100 flex items-center cursor-pointer transition-colors hover:bg-indigo-50/50 ${
-                    isEven ? 'bg-gray-50/60' : 'bg-white'
+                  className={`self-stretch px-6 py-4 border-b border-neutral-100 flex items-center cursor-pointer transition-colors hover:bg-oj-surface-hover ${
+                    isEven ? 'bg-oj-surface-alt' : 'bg-oj-surface'
                   }`}
                 >
                   {/* ID */}
@@ -197,22 +201,16 @@ export function ProblemListPage() {
                     </span>
                   </div>
 
-                  {/* Difficulty Badge */}
+                   {/* Difficulty Badge */}
                   <div className="w-40 flex items-center">
                     {prob.difficulty === 'Easy' && (
-                      <span className="px-3 py-1 bg-green-600 rounded-[20px] text-white text-xs font-semibold">
-                        Easy
-                      </span>
+                      <Badge variant="success">Easy</Badge>
                     )}
                     {prob.difficulty === 'Medium' && (
-                      <span className="px-3 py-1 bg-red-400 rounded-[20px] text-white text-xs font-semibold">
-                        Medium
-                      </span>
+                      <Badge variant="warning">Medium</Badge>
                     )}
                     {prob.difficulty === 'Hard' && (
-                      <span className="px-3 py-1 bg-red-500 rounded-[20px] text-white text-xs font-semibold">
-                        Hard
-                      </span>
+                      <Badge variant="error">Hard</Badge>
                     )}
                   </div>
 
@@ -223,20 +221,26 @@ export function ProblemListPage() {
 
                   {/* Status */}
                   <div className="w-40 flex items-center">
-                    {prob.status === 'Solved' && (
-                      <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Solved</span>
-                      </div>
-                    )}
-                    {prob.status === 'Attempted' && (
-                      <div className="flex items-center gap-1.5 text-red-400 text-sm font-medium">
-                        <AlertCircle className="w-3.5 h-3.5" />
-                        <span>Attempted</span>
-                      </div>
-                    )}
-                    {prob.status === 'Unsolved' && (
+                    {!user ? (
                       <span className="text-neutral-400 text-sm font-medium">—</span>
+                    ) : (
+                      <>
+                        {prob.status === 'Solved' && (
+                          <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Solved</span>
+                          </div>
+                        )}
+                        {prob.status === 'Attempted' && (
+                          <div className="flex items-center gap-1.5 text-red-400 text-sm font-medium">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            <span>Attempted</span>
+                          </div>
+                        )}
+                        {prob.status === 'Unsolved' && (
+                          <span className="text-neutral-400 text-sm font-medium">—</span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

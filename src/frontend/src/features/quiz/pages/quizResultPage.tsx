@@ -9,7 +9,14 @@ import {
   RotateCcw,
 } from 'lucide-react';
 
-const MOCK_QUIZ_QUESTIONS = [
+interface QuizQuestionResultItem {
+	id: number;
+	text: string;
+	codeBlock?: string;
+	options: { id: string; text: string }[];
+}
+
+const MOCK_QUIZ_QUESTIONS: QuizQuestionResultItem[] = [
 	{
 		id: 1,
 		text: 'What does the following program print?',
@@ -135,7 +142,7 @@ const MOCK_QUIZ_CORRECT_ANSWERS: Record<number, string> = {
 	10: 'b',
 };
 
-const BACKEND_QUIZ_QUESTIONS = [
+const BACKEND_QUIZ_QUESTIONS: QuizQuestionResultItem[] = [
 	{
 		id: 1,
 		text: "Python là ngôn ngữ lập trình thuộc loại nào?",
@@ -233,20 +240,20 @@ export const QuizResultPage: React.FC = () => {
                 Skill<span className="text-rose-500">Boost</span>
               </span>
             </Link>
-            <nav aria-label="Breadcrumb" className="hidden md:flex items-center gap-1 text-[13px] text-[#6B7280]">
+            <nav aria-label="Breadcrumb" className="hidden md:flex items-center gap-1 text-[13px] text-neutral-500">
               <ChevronRight className="w-3.5 h-3.5" />
-              <Link to="/courses" className="hover:text-[#392C7D] transition-colors">
+              <Link to="/courses" className="hover:text-primary transition-colors">
                 Courses
               </Link>
               <ChevronRight className="w-3.5 h-3.5" />
-              <span className="text-[#374151]">Classroom</span>
+              <span className="text-zinc-700">Classroom</span>
               <ChevronRight className="w-3.5 h-3.5" />
-              <span className="font-semibold text-[#392C7D]">Quiz Result</span>
+              <span className="font-semibold text-primary">Quiz Result</span>
             </nav>
           </div>
           <button
             onClick={handleBackToCourse}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-250 text-[13px] font-semibold text-[#374151] hover:bg-slate-50 hover:text-[#392C7D] hover:border-indigo-200 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-gray-250 text-[13px] font-semibold text-zinc-700 hover:bg-slate-50 hover:text-primary hover:border-indigo-200 transition-all cursor-pointer"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Back to Course</span>
@@ -259,10 +266,10 @@ export const QuizResultPage: React.FC = () => {
         {/* Score summary panel */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 flex flex-col items-center text-center gap-5">
           <div className="flex flex-col gap-1">
-            <span className="text-[12px] font-bold text-[#FF4667] uppercase tracking-wider">
+            <span className="text-[12px] font-bold text-accent uppercase tracking-wider">
               Quiz Completed
             </span>
-            <h1 className="text-[24px] font-extrabold text-[#111827]">
+            <h1 className="text-[24px] font-extrabold text-zinc-900">
               {quizId === '1' ? "Kiểm tra kiến thức Python cơ bản" : "Control Flow Quiz Results"}
             </h1>
           </div>
@@ -278,7 +285,7 @@ export const QuizResultPage: React.FC = () => {
               <circle 
                 cx="50" cy="50" r="42" 
                 className={`fill-none transition-all duration-1000 ${
-                  isPassed ? 'stroke-emerald-500' : 'stroke-[#FF4667]'
+                  isPassed ? 'stroke-emerald-500' : 'stroke-accent'
                 }`}
                 strokeWidth="10" 
                 strokeDasharray={`${2 * Math.PI * 42}`}
@@ -287,7 +294,7 @@ export const QuizResultPage: React.FC = () => {
               />
             </svg>
             <div className="absolute flex flex-col items-center justify-center">
-              <span className="text-3xl font-extrabold text-[#111827]">{scorePercent}%</span>
+              <span className="text-3xl font-extrabold text-zinc-900">{scorePercent}%</span>
               <span className="text-[11px] font-semibold text-neutral-500">Score</span>
             </div>
           </div>
@@ -309,7 +316,7 @@ export const QuizResultPage: React.FC = () => {
           {/* Stats grid */}
           <div className="w-full grid grid-cols-3 border-t border-gray-105 pt-6 mt-2 gap-4">
             <div className="flex flex-col items-center">
-              <span className="text-xl font-bold text-[#111827]">{totalQuestions}</span>
+              <span className="text-xl font-bold text-zinc-900">{totalQuestions}</span>
               <span className="text-xs text-neutral-500 font-semibold mt-0.5">Total Questions</span>
             </div>
             <div className="flex flex-col items-center border-x border-gray-105">
@@ -317,7 +324,7 @@ export const QuizResultPage: React.FC = () => {
               <span className="text-xs text-neutral-500 font-semibold mt-0.5">Correct</span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-xl font-bold text-[#FF4667]">{incorrectCount}</span>
+              <span className="text-xl font-bold text-accent">{incorrectCount}</span>
               <span className="text-xs text-neutral-500 font-semibold mt-0.5">Incorrect</span>
             </div>
           </div>
@@ -327,14 +334,14 @@ export const QuizResultPage: React.FC = () => {
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 font-semibold">
           <button
             onClick={handleBackToCourse}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#374151] hover:bg-slate-50 transition-all cursor-pointer w-full sm:w-auto justify-center"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-gray-200 text-[14px] text-zinc-700 hover:bg-slate-50 transition-all cursor-pointer w-full sm:w-auto justify-center"
           >
             <ArrowLeft className="w-4 h-4 text-neutral-500" />
             Back to Course
           </button>
           <button
             onClick={handleRetry}
-            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#392C7D] text-white text-[14px] hover:bg-[#392C7D]/95 transition-all shadow-sm cursor-pointer w-full sm:w-auto justify-center"
+            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white text-[14px] hover:bg-primary/95 transition-all shadow-sm cursor-pointer w-full sm:w-auto justify-center"
           >
             <RotateCcw className="w-4 h-4" />
             Retry Quiz
@@ -343,7 +350,7 @@ export const QuizResultPage: React.FC = () => {
 
         {/* Question by question results */}
         <div className="flex flex-col gap-4 mt-2">
-          <h2 className="text-lg font-bold text-[#111827] px-1">Question Review</h2>
+          <h2 className="text-lg font-bold text-zinc-900 px-1">Question Review</h2>
           {questions.map((q, idx) => {
             const userAnswer = userAnswers[q.id];
             const correctAnswer = correctAnswers[q.id];
@@ -358,7 +365,7 @@ export const QuizResultPage: React.FC = () => {
               >
                 {/* question label and status */}
                 <div className="flex justify-between items-center">
-                  <span className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider bg-slate-50 border border-gray-200 px-2 py-0.5 rounded-full">
+                  <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider bg-slate-50 border border-gray-200 px-2 py-0.5 rounded-full">
                     Question {idx + 1}
                   </span>
                   {isCorrect ? (
@@ -367,7 +374,7 @@ export const QuizResultPage: React.FC = () => {
                       Correct
                     </span>
                   ) : (
-                    <span className="text-xs font-bold text-[#FF4667] flex items-center gap-1">
+                    <span className="text-xs font-bold text-accent flex items-center gap-1">
                       <XCircle className="w-3.5 h-3.5" />
                       Incorrect
                     </span>
@@ -375,13 +382,13 @@ export const QuizResultPage: React.FC = () => {
                 </div>
 
                 {/* question text */}
-                <p className="text-[15px] font-semibold text-[#111827] leading-relaxed">
+                <p className="text-[15px] font-semibold text-zinc-900 leading-relaxed">
                   {q.text}
                 </p>
 
                 {/* code block if any */}
                 {q.codeBlock && (
-                  <pre className="bg-[#1e1e2e] text-[#cdd6f4] text-[13px] font-mono leading-relaxed rounded-xl p-4 overflow-x-auto whitespace-pre">
+                  <pre className="bg-slate-900 text-slate-100 text-[13px] font-mono leading-relaxed rounded-xl p-4 overflow-x-auto whitespace-pre">
                     <code>{q.codeBlock}</code>
                   </pre>
                 )}
@@ -398,7 +405,7 @@ export const QuizResultPage: React.FC = () => {
                     } else if (isSelected) {
                       cardClass += "border-rose-500 bg-rose-50/50 text-rose-950 font-medium";
                     } else {
-                      cardClass += "border-gray-200 bg-white text-[#374151]";
+                      cardClass += "border-gray-200 bg-white text-zinc-700";
                     }
 
                     return (

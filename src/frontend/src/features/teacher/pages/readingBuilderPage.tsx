@@ -81,7 +81,7 @@ export const ReadingBuilderPage: React.FC = () => {
 
   return (
     <div className="w-full min-h-screen bg-gray-50 flex flex-col font-['Inter'] antialiased">
-      <div className="w-full bg-gradient-to-r from-[#392C7D] to-purple-600 py-8 flex flex-col items-center justify-center gap-1">
+      <div className="w-full bg-gradient-to-r from-primary to-purple-600 py-8 flex flex-col items-center justify-center gap-1">
         <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight">Reading Builder</h1>
         <p className="text-[13px] font-medium text-white/70">Course Builder &rsaquo; Reading Editor</p>
       </div>
@@ -95,16 +95,16 @@ export const ReadingBuilderPage: React.FC = () => {
         <div className="flex-1 w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-6 flex flex-col gap-6">
           <div className="flex justify-between items-center border-b border-gray-100 pb-4">
             <div>
-              <h3 className="text-lg font-bold text-[#111827]">
+              <h3 className="text-lg font-bold text-zinc-900">
                 {isEditing ? `Edit Reading: ${title}` : 'Create Reading Activity'}
               </h3>
-              <p className="text-xs text-[#6B7280]">
+              <p className="text-xs text-neutral-500">
                 Write reading guides or instructional markdown files for your students.
               </p>
             </div>
             <button
               onClick={() => navigate(`/teacher/courses/${courseId}/edit`)}
-              className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-[#111827] transition-all cursor-pointer"
+              className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-zinc-900 transition-all cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -113,7 +113,7 @@ export const ReadingBuilderPage: React.FC = () => {
           <form onSubmit={handleSave} className="flex flex-col gap-5">
             {/* Title */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-semibold text-[#374151]">Reading Title</label>
+              <label className="text-[13px] font-semibold text-zinc-700">Reading Title</label>
               <input
                 type="text"
                 placeholder="e.g., Guide to Hash Map Collisions"
@@ -122,16 +122,16 @@ export const ReadingBuilderPage: React.FC = () => {
                   setTitle(e.target.value);
                   if (errors.title) setErrors(prev => ({ ...prev, title: '' }));
                 }}
-                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
-                  errors.title ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] bg-white text-zinc-900 placeholder:text-neutral-400 ${
+                  errors.title ? 'border-accent focus:border-accent' : 'border-gray-200'
                 }`}
               />
-              {errors.title && <p className="text-[11px] text-[#FF4667] font-semibold">{errors.title}</p>}
+              {errors.title && <p className="text-[11px] text-accent font-semibold">{errors.title}</p>}
             </div>
 
             {/* Reading Content */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-semibold text-[#374151]">Reading Content (Markdown supported)</label>
+              <label className="text-[13px] font-semibold text-zinc-700">Reading Content (Markdown supported)</label>
               <textarea
                 rows={12}
                 placeholder="Write your study notes, tutorial steps, or guides..."
@@ -140,11 +140,11 @@ export const ReadingBuilderPage: React.FC = () => {
                   setReadingContent(e.target.value);
                   if (errors.content) setErrors(prev => ({ ...prev, content: '' }));
                 }}
-                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-[#392C7D] text-[14px] font-mono bg-white text-zinc-900 placeholder:text-neutral-400 ${
-                  errors.content ? 'border-[#FF4667] focus:border-[#FF4667]' : 'border-gray-200'
+                className={`w-full px-3.5 py-2 border rounded-xl focus:outline-none focus:border-primary text-[14px] font-mono bg-white text-zinc-900 placeholder:text-neutral-400 ${
+                  errors.content ? 'border-accent focus:border-accent' : 'border-gray-200'
                 }`}
               />
-              {errors.content && <p className="text-[11px] text-[#FF4667] font-semibold">{errors.content}</p>}
+              {errors.content && <p className="text-[11px] text-accent font-semibold">{errors.content}</p>}
             </div>
 
             {/* Buttons */}
@@ -152,14 +152,14 @@ export const ReadingBuilderPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => navigate(`/teacher/courses/${courseId}/edit`)}
-                className="px-5 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-[#374151] hover:bg-slate-50 transition-all cursor-pointer"
+                className="px-5 py-2 rounded-xl border border-gray-200 text-sm font-semibold text-zinc-700 hover:bg-slate-50 transition-all cursor-pointer"
                 disabled={isSaving}
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl bg-[#FF4667] text-white text-sm font-semibold hover:bg-[#e03d5b] transition-all shadow-sm cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-accent text-white text-sm font-semibold hover:bg-accent-hover transition-all shadow-sm cursor-pointer flex items-center gap-2 disabled:opacity-50"
                 disabled={isSaving}
               >
                 {isSaving ? (

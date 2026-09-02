@@ -13,8 +13,8 @@ export const CourseCatalogCard: React.FC<CourseCardProps> = ({ course, isFav, to
 	return (
 		<div className="w-full h-full min-h-[360px] bg-white rounded-2xl border border-neutral-200 shadow-xs flex flex-col overflow-hidden relative group hover:shadow-lg transition-all duration-300">
 			{/* Image thumbnail placeholder */}
-			<div className="h-36 bg-gradient-to-tr from-[#392C7D] to-indigo-900 relative flex items-end justify-between p-3.5 select-none">
-				<span className="px-2 py-0.5 bg-[#FF4667] text-white text-[10px] font-semibold rounded-lg">
+			<div className="h-36 bg-gradient-to-tr from-primary to-indigo-900 relative flex items-end justify-between p-3.5 select-none">
+				<span className="px-2 py-0.5 bg-accent text-white text-[10px] font-semibold rounded-lg">
 					{course.category}
 				</span>
 				<span className="text-white text-[10px] font-semibold bg-white/20 backdrop-blur-xs px-2 py-0.5 rounded-lg">
@@ -29,14 +29,14 @@ export const CourseCatalogCard: React.FC<CourseCardProps> = ({ course, isFav, to
 					}}
 					className="absolute top-2.5 right-2.5 w-7 h-7 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-xs cursor-pointer active:scale-95 transition-transform"
 				>
-					<Heart className={`w-4 h-4 ${isFav ? 'fill-[#FF4667] text-[#FF4667]' : 'text-neutral-400'}`} />
+					<Heart className={`w-4 h-4 ${isFav ? 'fill-accent text-accent' : 'text-neutral-400'}`} />
 				</button>
 			</div>
 
 			{/* Details Section */}
 			<div className="p-4 flex flex-col flex-1 justify-between gap-2.5">
 				<div>
-					<h3 className="text-zinc-900 text-sm font-semibold leading-tight line-clamp-1 group-hover:text-[#392C7D] transition-colors">
+					<h3 className="text-zinc-900 text-sm font-semibold leading-tight line-clamp-1 group-hover:text-primary transition-colors">
 						{course.title}
 					</h3>
 					<p className="text-neutral-500 text-xs line-clamp-2 mt-1">
@@ -69,11 +69,12 @@ export const CourseCatalogCard: React.FC<CourseCardProps> = ({ course, isFav, to
 
 				{/* Purchase Row */}
 				<div className="flex justify-between items-center border-t border-slate-100 pt-3 mt-auto">
-					<span className="text-[#392C7D] text-sm font-bold">${course.price}</span>
-					<Link to={`/courses/${course.id}`}>
-						<button className="px-3 py-1 bg-[#392C7D] hover:bg-[#2b215c] text-white text-xs font-semibold rounded-lg transition-all cursor-pointer">
-							View course
-						</button>
+					<span className="text-primary text-sm font-bold">${course.price}</span>
+					<Link
+						to={`/courses/${course.id}`}
+						className="px-3 py-1 bg-primary hover:bg-primary-hover text-white text-xs font-semibold rounded-lg transition-all inline-block cursor-pointer"
+					>
+						View course
 					</Link>
 				</div>
 			</div>

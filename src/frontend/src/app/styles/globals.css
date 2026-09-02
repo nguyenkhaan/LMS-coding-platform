@@ -1,113 +1,53 @@
+@import './style.css';
 @import 'tailwindcss';
 
 @theme {
 	--font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
 	--font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
-	/* Centralized Design Tokens */
+	/* Semantic Design Tokens referencing style.css custom properties */
 	--color-primary: var(--color-primary);
 	--color-primary-hover: var(--color-primary-hover);
 	--color-secondary: var(--color-secondary);
+	--color-secondary-hover: var(--color-secondary-hover);
 	--color-accent: var(--color-accent);
+	--color-accent-hover: var(--color-accent-hover);
+
+	--color-warning: var(--color-warning);
+	--color-warning-amber: var(--color-warning-amber);
+	--color-success: var(--color-success);
+	--color-success-bright: var(--color-success-bright);
+	--color-error: var(--color-error);
 
 	--color-background: var(--color-background);
 	--color-surface: var(--color-surface);
+	--color-surface-soft: var(--color-surface-soft);
+	--color-surface-subtle: var(--color-surface-subtle);
 	--color-card: var(--color-card);
+
 	--color-text-primary: var(--color-text-primary);
 	--color-text-secondary: var(--color-text-secondary);
+	--color-text-muted: var(--color-text-muted);
+	--color-text-strong: var(--color-text-strong);
+
 	--color-border: var(--color-border);
+	--color-border-subtle: var(--color-border-subtle);
+	--color-border-strong: var(--color-border-strong);
 
-	/* Brand palette */
-	--color-brand-indigo: #392C7D;
-	--color-brand-indigo-dark: #2E3490;
-	--color-brand-violet: #5625E8;
-	--color-brand-coral: #FF4667;
-	--color-brand-orange: #FE893E;
-	--color-brand-purple: hsl(275, 90%, 60%);
-	--color-brand-cyan: hsl(190, 95%, 50%);
+	--color-oj-surface: var(--color-oj-surface);
+	--color-oj-surface-alt: var(--color-oj-surface-alt);
+	--color-oj-surface-hover: var(--color-oj-surface-hover);
 
-	/* Status */
-	--color-success: var(--color-success);
-	--color-success-bright: #03C95A;
-	--color-warning: var(--color-warning);
-	--color-error: var(--color-error);
+	--color-profile-surface: var(--color-profile-surface);
+	--color-profile-surface-border: var(--color-profile-surface-border);
+
+	--color-sec-blue-bg: var(--color-secondary-blue-bg);
+	--color-sec-blue-border: var(--color-secondary-blue-border);
+	--color-sec-blue-text: var(--color-secondary-blue-text);
+	--color-sec-blue-hover: var(--color-secondary-blue-hover);
 }
 
 @layer base {
-	:root {
-		/* Centralized Colors */
-		--color-primary: #392C7D;
-		--color-primary-hover: #2E3490;
-		--color-secondary: #5625E8;
-		--color-accent: #FF4667;
-		--color-success: #0FA05C;
-		--color-warning: #FFC107;
-		--color-error: #FB3748;
-
-		--color-background: #F4F6F9;
-		--color-surface: #FFFFFF;
-		--color-card: #FFFFFF;
-		--color-text-primary: #191919;
-		--color-text-secondary: #6D6D6D;
-		--color-border: #E7E7E7;
-
-		/* Surface */
-		--color-surface-subtle: #F4F6F9;
-		--color-surface-soft: #F8FAFC;
-
-		/* Text */
-		--color-text-strong: #151E37;
-		--color-text-muted: #90A1B9;
-
-		/* Border */
-		--color-border-blue: #E1E5EB;
-
-		/* HSL vars for backward compat */
-		--bg-main: 220 27% 97%;
-		--bg-card: 0 0% 100%;
-		--bg-muted: 213 27% 96%;
-		--border-color: 0 0% 91%;
-		--text-primary: 0 0% 10%;
-		--text-secondary: 0 0% 43%;
-		--text-muted: 213 22% 66%;
-	}
-
-	.dark {
-		/* Centralized Colors (Dark Mode) */
-		--color-primary: #818cf8; /* indigo-400 */
-		--color-primary-hover: #6366f1; /* indigo-500 */
-		--color-secondary: #a78bfa; /* violet-400 */
-		--color-accent: #f43f5e; /* rose-500 */
-		--color-success: #34d399; /* emerald-400 */
-		--color-warning: #fbbf24; /* amber-400 */
-		--color-error: #f87171; /* red-400 */
-
-		--color-background: #0f172a;
-		--color-surface: #0a0e1a;
-		--color-card: #0a0e1a;
-		--color-text-primary: #f8fafc;
-		--color-text-secondary: #cbd5e1;
-		--color-border: #334155;
-
-		/* HSL overrides */
-		--bg-main: 222 47% 11%;
-		--bg-card: 222 47% 6%;
-		--bg-muted: 223 47% 15%;
-		--border-color: 222 47% 20%;
-		--text-primary: 210 40% 98%;
-		--text-secondary: 215 20% 80%;
-		--text-muted: 215 15% 65%;
-
-		/* Standard overrides */
-		--color-surface-subtle: #0f172a;
-		--color-surface-soft: #1e293b;
-
-		--color-text-strong: #ffffff;
-		--color-text-muted: #94a3b8;
-
-		--color-border-blue: #1e293b;
-	}
-
 	body {
 		background-color: var(--color-surface-subtle);
 		color: var(--color-text-primary);

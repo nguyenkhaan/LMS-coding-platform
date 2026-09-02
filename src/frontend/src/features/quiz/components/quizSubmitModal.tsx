@@ -41,17 +41,17 @@ export const QuizSubmitModal: React.FC<QuizSubmitModalProps> = ({
 				<button
 					onClick={onCancel}
 					aria-label="Cancel submission"
-					className="absolute top-4 right-4 p-1.5 rounded-full text-[#6B7280] hover:bg-slate-100 transition-colors cursor-pointer"
+					className="absolute top-4 right-4 p-1.5 rounded-full text-neutral-500 hover:bg-slate-100 transition-colors cursor-pointer"
 				>
 					<X className="w-4 h-4" />
 				</button>
 
 				{/* Header */}
 				<div className="flex flex-col gap-1">
-					<h2 id="submit-modal-title" className="text-[20px] font-bold text-[#111827]">
+					<h2 id="submit-modal-title" className="text-[20px] font-bold text-zinc-900">
 						Submit Quiz
 					</h2>
-					<p className="text-[14px] text-[#374151]">
+					<p className="text-[14px] text-zinc-700">
 						Review your progress before submitting.
 					</p>
 				</div>
@@ -82,7 +82,7 @@ export const QuizSubmitModal: React.FC<QuizSubmitModalProps> = ({
 				</div>
 
 				{!allAnswered && (
-					<p className="text-[13px] text-[#6B7280] bg-slate-50 rounded-xl p-3 border border-slate-100">
+					<p className="text-[13px] text-neutral-500 bg-slate-50 rounded-xl p-3 border border-slate-100">
 						You can still go back and answer the remaining {unansweredCount} question{unansweredCount !== 1 ? 's' : ''} before submitting.
 					</p>
 				)}
@@ -91,13 +91,13 @@ export const QuizSubmitModal: React.FC<QuizSubmitModalProps> = ({
 				<div className="flex gap-3 pt-1">
 					<button
 						onClick={onCancel}
-						className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-[14px] font-semibold text-[#374151] hover:bg-slate-50 transition-all cursor-pointer"
+						className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-[14px] font-semibold text-zinc-700 hover:bg-slate-50 transition-all cursor-pointer"
 					>
 						Go back
 					</button>
 					<button
 						onClick={onConfirm}
-						className="flex-1 py-2.5 rounded-xl bg-[#FF4667] text-white text-[14px] font-semibold hover:bg-[#e03d5b] transition-all shadow-sm cursor-pointer"
+						className="flex-1 py-2.5 rounded-xl bg-accent text-white text-[14px] font-semibold hover:bg-accent-hover transition-all shadow-sm cursor-pointer"
 					>
 						Submit quiz
 					</button>

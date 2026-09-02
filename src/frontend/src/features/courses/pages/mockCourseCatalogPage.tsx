@@ -305,7 +305,7 @@ export function CourseCatalogPage() {
               {/* Sort By Select */}
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as any)}
+                onChange={(e) => setSortBy(e.target.value as 'newest' | 'rating' | 'popular')}
                 className="h-9 px-3 rounded-lg border border-neutral-200 bg-white text-zinc-800 text-xs font-medium focus:outline-none focus:border-indigo-900 shadow-2xs cursor-pointer"
               >
                 <option value="newest">Newly Published</option>
@@ -423,7 +423,7 @@ export function CourseCatalogPage() {
                         type="radio"
                         name="priceFilter"
                         checked={priceFilter === p.id}
-                        onChange={() => setPriceFilter(p.id as any)}
+                        onChange={() => setPriceFilter(p.id as 'all' | 'free' | 'paid')}
                         className="w-4 h-4 text-rose-500 focus:ring-rose-500 cursor-pointer"
                       />
                       <span>{p.label}</span>

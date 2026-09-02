@@ -7,15 +7,28 @@ interface CourseReviewFormProps {
 	slug?: string;
 }
 
+interface ReviewRecord {
+	id: number;
+	name: string;
+	initials: string;
+	verified: boolean;
+	time: string;
+	rating: number;
+	completedPercent: number;
+	comment: string;
+	helpfulCount: number;
+	isCurrentUser?: boolean;
+}
+
 export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({ slug = "python-foundations" }) => {
 	const navigate = useNavigate();
 	const { user } = useAuthStore();
 
 	// Load reviews from localStorage
 	const stored = localStorage.getItem(`course_reviews_${slug}`);
-	const reviews = stored ? JSON.parse(stored) : [];
+	const reviews: ReviewRecord[] = stored ? JSON.parse(stored) : [];
 	
-	const myReview = reviews.find((r: any) => r.isCurrentUser || (user && r.name === (user.fullName || user.email)));
+	const myReview = reviews.find((r: ReviewRecord) => r.isCurrentUser || (user && r.name === (user.fullName || user.email)));
 
 	const [rating, setRating] = useState<number>(myReview ? myReview.rating : 5);
 	const [comment, setComment] = useState<string>(myReview ? myReview.comment : "");
@@ -29,7 +42,7 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({ slug = "pyth
 		}
 
 		const storedReviews = localStorage.getItem(`course_reviews_${slug}`);
-		let reviewsList = storedReviews ? JSON.parse(storedReviews) : [];
+		let reviewsList: ReviewRecord[] = storedReviews ? JSON.parse(storedReviews) : [];
 
 		const userName = user ? (user.fullName || user.email) : "Current Student";
 		const userInitials = user 
@@ -38,12 +51,13 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({ slug = "pyth
 				: user.email.substring(0, 2).toUpperCase()) 
 			: "CS";
 
-		const existingIndex = reviewsList.findIndex((r: any) => r.isCurrentUser || r.name === userName);
+		const existingIndex = reviewsList.findIndex((r: ReviewRecord) => r.isCurrentUser || r.name === userName);
+		const existingItem = reviewsList[existingIndex];
 
-		if (existingIndex > -1) {
+		if (existingIndex > -1 && existingItem) {
 			// Update existing review
 			reviewsList[existingIndex] = {
-				...reviewsList[existingIndex],
+				...existingItem,
 				rating,
 				comment: comment.trim(),
 				time: "Just now",
@@ -52,7 +66,7 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({ slug = "pyth
 			alert("Review updated successfully!");
 		} else {
 			// Create new review
-			const newReview = {
+			const newReview: ReviewRecord = {
 				id: Date.now(),
 				name: userName,
 				initials: userInitials,
@@ -115,7 +129,7 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({ slug = "pyth
 						onChange={(e) => setComment(e.target.value)}
 						placeholder="Write your review here..."
 						maxLength={2000}
-						className="w-full h-44 p-4 rounded-xl border border-slate-200 focus:border-[#392C7D] focus:outline-hidden text-sm leading-relaxed transition-colors resize-none"
+						className="w-full h-44 p-4 rounded-xl border border-slate-200 focus:border-primary focus:outline-hidden text-sm leading-relaxed transition-colors resize-none"
 					/>
 					<span className="text-right text-xs font-semibold text-neutral-400 self-end">
 						{comment.length} / 2000
@@ -125,7 +139,7 @@ export const CourseReviewForm: React.FC<CourseReviewFormProps> = ({ slug = "pyth
 				{/* Submit Button */}
 				<button
 					type="submit"
-					className="w-full sm:w-fit px-8 py-3 bg-[#392C7D] text-white rounded-lg text-sm font-semibold hover:bg-[#392C7D]/90 shadow-sm transition-all cursor-pointer"
+					className="w-full sm:w-fit px-8 py-3 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-hover shadow-sm transition-all cursor-pointer"
 				>
 					Submit review
 				</button>

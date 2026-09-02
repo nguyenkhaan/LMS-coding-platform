@@ -1,5 +1,5 @@
 import { Problem } from '@/features/judge/model/problem';
-import { RunResult, JudgeSubmissionResult } from '../types.ts';
+import { RunResult, JudgeSubmissionResult, TestcaseResult } from '../types.ts';
 
 export const MOCK_PROBLEMS: Problem[] = [
 	{
@@ -95,6 +95,8 @@ export const judgeService = {
 	},
 
 	runCode: async (problemId: number, languageId: number, sourceCode: string, stdin: string): Promise<RunResult> => {
+		void languageId;
+		void sourceCode;
 		// Simulate network latency
 		await new Promise((r) => setTimeout(r, 600));
 
@@ -119,13 +121,15 @@ export const judgeService = {
 		};
 	},
 
-	submitCode: async (problemId: number, languageId: number, sourceCode: string): Promise<JudgeSubmissionResult> => {
+	submitCode: async (problemId: number, _languageId: number, _sourceCode: string): Promise<JudgeSubmissionResult> => {
+		void _languageId;
+		void _sourceCode;
 		await new Promise((r) => setTimeout(r, 1200));
 
 		const problem = MOCK_PROBLEMS.find((p) => p.id === problemId);
 		const passingScore = problem ? problem.passingScore : 100;
 
-		const testcases: any[] = [
+		const testcases: TestcaseResult[] = [
 			{
 				testcaseId: 1,
 				status: 'ACCEPTED',

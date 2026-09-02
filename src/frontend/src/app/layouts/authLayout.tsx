@@ -4,7 +4,7 @@ import { BookOpen } from 'lucide-react';
 
 export const AuthLayout: React.FC = () => {
   return (
-    <div className="min-h-screen w-full flex bg-slate-50 font-['Inter'] antialiased">
+    <div className="auth-layout min-h-screen w-full flex bg-slate-50 font-['Inter'] antialiased">
       {/* LEFT COLUMN: Figma Visual Design Illustration (Shared on Desktop) */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-tr from-rose-50 via-purple-50 to-indigo-50 border-r border-neutral-200/60 p-12 flex-col justify-between items-center relative overflow-hidden min-h-screen select-none">
         

@@ -143,10 +143,23 @@ export const QuizAttemptPage: React.FC = () => {
 	const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
 
 	const totalQuestions = MOCK_QUIZ.questions.length;
-	const currentQuestion = MOCK_QUIZ.questions[currentQuestionIndex];
+	const currentQuestion = MOCK_QUIZ.questions[currentQuestionIndex] || MOCK_QUIZ.questions[0]!;
 	const answeredSet = new Set(
 		Object.keys(answers).map((k) => Number(k))
 	);
+
+	const handleFinalSubmit = useCallback(() => {
+		setIsSubmitModalOpen(false);
+		toast.success(`Quiz submitted!`);
+		const targetQuizId = quizId || 'quiz-control-flow-01';
+		navigate(`/quiz/${targetQuizId}/result`, {
+			state: {
+				answers,
+				courseSlug,
+				lessonId
+			}
+		});
+	}, [answers, quizId, navigate, courseSlug, lessonId]);
 
 	// Countdown timer
 	useEffect(() => {
@@ -159,7 +172,7 @@ export const QuizAttemptPage: React.FC = () => {
 			setTimeRemaining((prev) => prev - 1);
 		}, 1000);
 		return () => clearInterval(id);
-	}, [timeRemaining]);
+	}, [timeRemaining, handleFinalSubmit]);
 
 	const handleSelectOption = useCallback(
 		(optionId: string) => {
@@ -193,19 +206,6 @@ export const QuizAttemptPage: React.FC = () => {
 		setIsSubmitModalOpen(true);
 	}, []);
 
-	const handleFinalSubmit = useCallback(() => {
-		setIsSubmitModalOpen(false);
-		toast.success(`Quiz submitted!`);
-		const targetQuizId = quizId || 'quiz-control-flow-01';
-		navigate(`/quiz/${targetQuizId}/result`, {
-			state: {
-				answers,
-				courseSlug,
-				lessonId
-			}
-		});
-	}, [answers, quizId, navigate, courseSlug, lessonId]);
-
 	const handleExit = useCallback(() => {
 		if (answeredSet.size > 0) {
 			toast.info('Your progress has been saved.');
@@ -227,14 +227,14 @@ export const QuizAttemptPage: React.FC = () => {
 			<div className="lg:hidden w-full max-w-[1296px] mx-auto px-4 pt-4">
 				<div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
 					<div className="grid grid-cols-10 gap-1.5">
-						{MOCK_QUIZ.questions.map((_, i) => {
+						{MOCK_QUIZ.questions.map((q, i) => {
 							const qNum = i + 1;
 							const isCurrent = qNum === currentQuestionIndex + 1;
-							const isAnswered = answeredSet.has(MOCK_QUIZ.questions[i].id);
+							const isAnswered = answeredSet.has(q.id);
 							let cls = 'w-full aspect-square rounded-lg text-[12px] font-semibold flex items-center justify-center border transition-all cursor-pointer ';
-							if (isCurrent) cls += 'bg-[#392C7D] text-white border-[#392C7D]';
+							if (isCurrent) cls += 'bg-primary text-white border-primary';
 							else if (isAnswered) cls += 'bg-emerald-50 text-emerald-700 border-emerald-200';
-							else cls += 'bg-slate-50 text-[#374151] border-gray-200';
+							else cls += 'bg-slate-50 text-zinc-700 border-gray-200';
 							return (
 								<button
 									key={qNum}
@@ -285,13 +285,13 @@ export const QuizAttemptPage: React.FC = () => {
 				<div className="flex gap-3">
 					<button
 						onClick={handleSaveAndExit}
-						className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-[14px] font-semibold text-[#374151] hover:bg-slate-50 transition-all cursor-pointer"
+						className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-[14px] font-semibold text-zinc-700 hover:bg-slate-50 transition-all cursor-pointer"
 					>
 						Save and exit
 					</button>
 					<button
 						onClick={handleSubmitRequest}
-						className="flex-1 py-3 rounded-xl bg-[#FF4667] text-white text-[14px] font-semibold hover:bg-[#e03d5b] transition-all cursor-pointer"
+						className="flex-1 py-3 rounded-xl bg-accent text-white text-[14px] font-semibold hover:bg-accent-hover transition-all cursor-pointer"
 					>
 						Submit quiz
 					</button>

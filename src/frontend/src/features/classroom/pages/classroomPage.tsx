@@ -18,6 +18,16 @@ import { toast } from 'sonner';
 import { useCourseStore } from '@/features/courses/model/useCourseStore';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 
+interface RawLessonContent {
+  quizDescription?: string;
+  quizQuestions?: Array<{ points?: number }>;
+  problemDifficulty?: string;
+  problemTags?: string[];
+  problemStatement?: string;
+  problemConstraints?: string;
+  problemSlug?: string;
+}
+
 interface LessonItem {
   id: string;
   title: string;
@@ -25,7 +35,7 @@ interface LessonItem {
   path: string;
   isCompleted: boolean;
   isActive: boolean;
-  rawContent?: unknown;
+  rawContent?: RawLessonContent;
 }
 
 interface CommentMessage {
@@ -39,11 +49,11 @@ interface CommentMessage {
 }
 
 const INITIAL_LESSONS: LessonItem[] = [
-  { id: 1, title: 'Hash tables from scratch', type: 'Reading', path: '/learn/dsa-module-2', isCompleted: true, isActive: false },
-  { id: 2, title: 'Collision strategies', type: 'Reading', path: '/learn/dsa-module-2', isCompleted: true, isActive: false },
-  { id: 3, title: 'Two-pointer patterns', type: 'Reading', path: '/learn/dsa-module-2', isCompleted: false, isActive: true },
-  { id: 4, title: 'Two-pointer practice problem', type: 'Problem', path: '/classroom/lesson/problem-preview', isCompleted: false, isActive: false },
-  { id: 5, title: 'Lesson review & quiz', type: 'Quiz', path: '/quiz/quiz-control-flow-01/preview', isCompleted: false, isActive: false }
+  { id: '1', title: 'Hash tables from scratch', type: 'Reading', path: '/learn/dsa-module-2', isCompleted: true, isActive: false },
+  { id: '2', title: 'Collision strategies', type: 'Reading', path: '/learn/dsa-module-2', isCompleted: true, isActive: false },
+  { id: '3', title: 'Two-pointer patterns', type: 'Reading', path: '/learn/dsa-module-2', isCompleted: false, isActive: true },
+  { id: '4', title: 'Two-pointer practice problem', type: 'Problem', path: '/classroom/lesson/problem-preview', isCompleted: false, isActive: false },
+  { id: '5', title: 'Lesson review & quiz', type: 'Quiz', path: '/quiz/quiz-control-flow-01/preview', isCompleted: false, isActive: false }
 ];
 
 const INITIAL_COMMENTS: CommentMessage[] = [
@@ -118,7 +128,7 @@ export function ClassroomPage() {
             path: `/learn/${courseSlug}`,
             isCompleted: false,
             isActive: isTarget,
-            rawContent: les
+            rawContent: les as unknown as RawLessonContent
           });
         }
       });
@@ -141,7 +151,7 @@ export function ClassroomPage() {
     }
   }, [activeLessonId]);
 
-  const activeLesson = lessons.find((l) => l.isActive) || lessons[0];
+  const activeLesson = lessons.find((l) => l.isActive) || lessons[0] || INITIAL_LESSONS[0]!;
   const courseTitle = currentCourse ? currentCourse.title : "Data Structures & Algorithms";
   const subtitleInfo = currentCourse 
     ? `${currentCourse.field} · ${activeLesson.title}`
@@ -204,7 +214,7 @@ export function ClassroomPage() {
     <div className="w-full min-h-screen bg-gray-50 flex flex-col justify-start items-start font-['Inter'] antialiased">
       
       {/* 1. HERO BANNER */}
-      <div className="self-stretch px-6 lg:px-20 py-14 bg-gradient-to-r from-red-100 via-sky-100 to-blue-100 flex flex-col justify-center items-center gap-3 text-center border-b border-neutral-200/60 font-['Inter']">
+      <div className="self-stretch px-6 lg:px-20 py-14 bg-gradient-to-r from-red-50 via-sky-50 to-blue-100 flex flex-col justify-center items-center gap-3 text-center border-b border-neutral-200/60 font-['Inter']">
         <h1 className="text-zinc-900 text-4xl font-extrabold tracking-tight">Workspace</h1>
         <div className="opacity-80 text-zinc-700 text-sm font-medium flex items-center gap-2">
           <Link to="/dashboard" className="hover:underline">Dashboard</Link>
@@ -223,7 +233,7 @@ export function ClassroomPage() {
       </div>
 
       {/* 2. SUBHEADER: SEARCH & STUDENT PROFILE BAR */}
-      <div className="self-stretch bg-white/90 border-b border-neutral-200 backdrop-blur-xs px-6 lg:px-20 py-3.5 flex justify-between items-center shadow-xs font-['Inter']">
+      <div className="self-stretch bg-oj-surface-alt/90 border-b border-neutral-200 backdrop-blur-xs px-6 lg:px-20 py-3.5 flex justify-between items-center shadow-xs font-['Inter']">
         <div className="max-w-[1608px] w-full mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
           
           {/* Search bar */}
@@ -346,15 +356,15 @@ export function ClassroomPage() {
               <section className="space-y-2 pt-2 border-t border-neutral-100">
                 <h3 className="text-zinc-900 text-lg font-bold">4. Complexity &amp; Resource Evaluation</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  <div className="p-3.5 bg-emerald-50/60 rounded-xl border border-emerald-200">
-                    <span className="text-xs font-bold text-emerald-800 uppercase tracking-wide">Time Complexity</span>
-                    <p className="text-emerald-950 font-bold text-lg font-mono mt-1">O(N)</p>
-                    <p className="text-neutral-600 text-xs mt-0.5">Each element in the array is evaluated at most once as pointers converge.</p>
+                  <div className="p-4 bg-profile-surface rounded-xl border border-profile-surface-border shadow-2xs">
+                    <span className="text-xs font-bold text-indigo-900 uppercase tracking-wide">Time Complexity</span>
+                    <p className="text-indigo-900 font-extrabold text-lg font-mono mt-1">O(N)</p>
+                    <p className="text-neutral-600 text-xs mt-1">Each element in the array is evaluated at most once as pointers converge.</p>
                   </div>
-                  <div className="p-3.5 bg-sky-50/60 rounded-xl border border-sky-200">
-                    <span className="text-xs font-bold text-sky-800 uppercase tracking-wide">Space Complexity</span>
-                    <p className="text-sky-950 font-bold text-lg font-mono mt-1">O(1)</p>
-                    <p className="text-neutral-600 text-xs mt-0.5">Operates in-place utilizing only two constant auxiliary pointer variables.</p>
+                  <div className="p-4 bg-profile-surface rounded-xl border border-profile-surface-border shadow-2xs">
+                    <span className="text-xs font-bold text-indigo-900 uppercase tracking-wide">Space Complexity</span>
+                    <p className="text-indigo-900 font-extrabold text-lg font-mono mt-1">O(1)</p>
+                    <p className="text-neutral-600 text-xs mt-1">Operates in-place utilizing only two constant auxiliary pointer variables.</p>
                   </div>
                 </div>
               </section>
@@ -633,21 +643,29 @@ export function ClassroomPage() {
               })}
             </div>
 
-            <form onSubmit={handleSendComment} className="p-3 border-t border-neutral-200 flex items-center gap-2 bg-white font-['Inter']">
-              <input
-                type="text"
-                value={inputMsg}
-                onChange={(e) => setInputMsg(e.target.value)}
-                placeholder="Write a comment or question…"
-                className="flex-1 px-3 py-2 bg-slate-50 rounded-[10px] border border-neutral-200 text-xs text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900"
-              />
-              <button
-                type="submit"
-                disabled={!inputMsg.trim()}
-                className="w-8 h-8 bg-indigo-900 hover:bg-indigo-950 disabled:opacity-40 text-white rounded-[10px] flex items-center justify-center transition-colors cursor-pointer shrink-0"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
+            <form onSubmit={handleSendComment} className="p-3 border-t border-neutral-200 flex flex-col gap-1.5 bg-white font-['Inter']">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  maxLength={300}
+                  value={inputMsg}
+                  onChange={(e) => setInputMsg(e.target.value)}
+                  placeholder="Write a comment or question (max 300 chars)…"
+                  className="flex-1 px-3 py-2 bg-slate-50 rounded-[10px] border border-neutral-200 text-xs text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900"
+                />
+                <button
+                  type="submit"
+                  disabled={!inputMsg.trim() || inputMsg.length > 300}
+                  className="w-8 h-8 bg-indigo-900 hover:bg-indigo-950 disabled:opacity-40 text-white rounded-[10px] flex items-center justify-center transition-colors cursor-pointer shrink-0"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              {inputMsg.length > 200 && (
+                <span className="text-[10px] text-neutral-400 text-right">
+                  {inputMsg.length}/300
+                </span>
+              )}
             </form>
           </div>
 

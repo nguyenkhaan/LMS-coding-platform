@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -5,10 +6,20 @@ from fastapi import HTTPException
 from sqlalchemy.dialects import postgresql
 
 from src.models.base_model import LessonContentType
+from src.models.course_model import CourseModel
+from src.models.course_moderation_review_model import CourseModerationReviewModel
 from src.models.lesson_content_model import LessonContentModel
 from src.models.section_model import SectionModel
-from src.modules.teacher.teacher_dto import SectionWriteRequest
-from src.modules.teacher.teacher_service import TeacherService
+from src.modules.teacher.teacher_course.teacher_course_service import (
+    TeacherCourseService,
+)
+from src.modules.teacher.teacher_curriculum.teacher_curriculum_dto import (
+    SectionWriteRequest,
+)
+from src.modules.teacher.teacher_curriculum.teacher_curriculum_service import (
+    TeacherService,
+)
+from src.modules.teacher.teacher_quiz.teacher_quiz_service import TeacherQuizService
 
 
 @pytest.mark.asyncio
@@ -84,3 +95,44 @@ async def test_delete_lesson_content_with_comments_returns_a_specific_conflict()
     assert error.value.status_code == 409
     assert error.value.detail == "Cannot delete lesson content that has comments"
     session.delete.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_quiz_lesson_ownership_uses_the_database() -> None:
+    session = Mock()
+    session.scalar = AsyncMock(return_value=9)
+    service = TeacherQuizService(session)
+
+    await service._require_owned_lesson(lesson_id=4, teacher_id=9)
+
+    session.scalar.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_course_moderation_history_is_owner_scoped_and_paginated() -> None:
+    course = CourseModel(id=3, teacher_id=9, slug="course-3")
+    review = CourseModerationReviewModel(
+        id=4,
+        course_id=3,
+        reviewed_note="Ready for review",
+        approved_at=None,
+        submitted_at=datetime(2026, 9, 1, tzinfo=UTC),
+    )
+    result = Mock()
+    result.scalars.return_value.all.return_value = [review]
+    session = Mock()
+    session.scalar = AsyncMock(side_effect=[course, 1])
+    session.execute = AsyncMock(return_value=result)
+    service = TeacherCourseService(session)
+
+    response = await service.get_course_moderation_history(
+        teacher_id=9,
+        course_id=3,
+        page=1,
+        size=20,
+    )
+
+    assert response.total_items == 1
+    assert response.total_pages == 1
+    assert response.items[0].id == 4
+    assert response.items[0].reviewed_note == "Ready for review"
