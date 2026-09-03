@@ -113,9 +113,13 @@ export const ReadingBuilderPage: React.FC = () => {
           <form onSubmit={handleSave} className="flex flex-col gap-5">
             {/* Title */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-semibold text-zinc-700">Reading Title</label>
+              <div className="flex justify-between items-center">
+                <label className="text-[13px] font-semibold text-zinc-700">Reading Title</label>
+                <span className="text-[11px] font-medium text-neutral-400">{title.length} / 150</span>
+              </div>
               <input
                 type="text"
+                maxLength={150}
                 placeholder="e.g., Guide to Hash Map Collisions"
                 value={title}
                 onChange={(e) => {
@@ -131,9 +135,13 @@ export const ReadingBuilderPage: React.FC = () => {
 
             {/* Reading Content */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-semibold text-zinc-700">Reading Content (Markdown supported)</label>
+              <div className="flex justify-between items-center">
+                <label className="text-[13px] font-semibold text-zinc-700">Reading Content (Markdown supported)</label>
+                <span className="text-[11px] font-medium text-neutral-400">{readingContent.length} / 10000</span>
+              </div>
               <textarea
                 rows={12}
+                maxLength={10000}
                 placeholder="Write your study notes, tutorial steps, or guides..."
                 value={readingContent}
                 onChange={(e) => {

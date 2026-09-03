@@ -644,10 +644,14 @@ export function BecomeTeacherPage() {
             <div className="flex flex-col gap-2">
               <label className="text-zinc-800 text-sm font-semibold flex items-center justify-between">
                 <span>Instructor Bio *</span>
-                {!isFieldEditable(false) && <Lock className="w-3.5 h-3.5 text-neutral-400" />}
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-medium text-neutral-400">{formData.bio.length} / 1000</span>
+                  {!isFieldEditable(false) && <Lock className="w-3.5 h-3.5 text-neutral-400" />}
+                </div>
               </label>
               <textarea
                 rows={3}
+                maxLength={1000}
                 disabled={!isFieldEditable(false)}
                 value={formData.bio}
                 onChange={(e) => handleInputChange('bio', e.target.value)}
@@ -1024,10 +1028,14 @@ export function BecomeTeacherPage() {
           <div className="flex flex-col gap-2">
             <label className="text-zinc-800 text-sm font-semibold flex items-center justify-between">
               <span>Education Degrees &amp; Certifications *</span>
-              {!isFieldEditable(false) && <Lock className="w-3.5 h-3.5 text-neutral-400" />}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-medium text-neutral-400">{formData.educationEntries.length} / 500</span>
+                {!isFieldEditable(false) && <Lock className="w-3.5 h-3.5 text-neutral-400" />}
+              </div>
             </label>
             <textarea
               rows={2}
+              maxLength={500}
               disabled={!isFieldEditable(false)}
               value={formData.educationEntries}
               onChange={(e) => handleInputChange('educationEntries', e.target.value)}
@@ -1040,10 +1048,14 @@ export function BecomeTeacherPage() {
           <div className="flex flex-col gap-2">
             <label className="text-zinc-800 text-sm font-semibold flex items-center justify-between">
               <span>Teaching &amp; Mentorship Experience *</span>
-              {!isFieldEditable(false) && <Lock className="w-3.5 h-3.5 text-neutral-400" />}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] font-medium text-neutral-400">{formData.teachingExperience.length} / 1000</span>
+                {!isFieldEditable(false) && <Lock className="w-3.5 h-3.5 text-neutral-400" />}
+              </div>
             </label>
             <textarea
               rows={2}
+              maxLength={1000}
               disabled={!isFieldEditable(false)}
               value={formData.teachingExperience}
               onChange={(e) => handleInputChange('teachingExperience', e.target.value)}
@@ -1186,9 +1198,13 @@ export function BecomeTeacherPage() {
 
         {/* SECTION 5: MOTIVATION */}
         <div className="w-full p-6 sm:p-7 bg-white rounded-3xl border border-neutral-200 shadow-sm flex flex-col gap-4">
-          <h2 className="text-zinc-900 text-xl sm:text-2xl font-bold tracking-tight">Motivation</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-zinc-900 text-xl sm:text-2xl font-bold tracking-tight">Motivation</h2>
+            <span className="text-[11px] font-medium text-neutral-400">{formData.motivation.length} / 1000</span>
+          </div>
           <textarea
             rows={3}
+            maxLength={1000}
             disabled={!isFieldEditable(false)}
             value={formData.motivation}
             onChange={(e) => handleInputChange('motivation', e.target.value)}

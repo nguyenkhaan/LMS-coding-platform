@@ -185,9 +185,13 @@ export const StudentSettingsPage: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-xs font-bold text-text-secondary">Bio / Summary</label>
+                <div className="flex justify-between items-center">
+                  <label className="text-xs font-bold text-text-secondary">Bio / Summary</label>
+                  <span className="text-[11px] font-medium text-neutral-400">{profile.bio.length} / 500</span>
+                </div>
                 <textarea
                   rows={4}
+                  maxLength={500}
                   value={profile.bio}
                   onChange={(e) => handleChange('bio', e.target.value)}
                   className={`${inputClass} resize-none`}

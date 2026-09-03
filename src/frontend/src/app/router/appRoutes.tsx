@@ -147,19 +147,24 @@ export const AppRoutes: React.FC = () => {
 					<Route path="/instructors/:instructorId" element={<InstructorDetailPage />} />
 					<Route path="/instructor/detail" element={<InstructorDetailPage />} />
 
-					{/* Practice & Submissions */}
-					<Route path="/practice" element={<ProblemListPage />} />
-					<Route path="/submissions" element={<StudentHistoryPage />} />
-					<Route path="/practice/history" element={<StudentHistoryPage />} />
-
 					{/* AI Mock Interview Setup */}
 					<Route path="/interview" element={<InterviewSetupPage />} />
 
 					<Route path="/unauthorized" element={<UnauthorizedPage />} />
 				</Route>
 
-				{/* ── STANDALONE WORKSPACES (no shared layout) ── */}
-				<Route path="/practice/:problemSlug" element={<OJWorkspacePage />} />
+				{/* ── PROTECTED ONLINE JUDGE (OJ) & SUBMISSIONS ROUTES (STUDENT, TEACHER, ADMIN ONLY) ── */}
+				<Route element={<RoleGuard allowedRoles={['STUDENT', 'TEACHER', 'ADMIN']} />}>
+					<Route element={<MainLayout />}>
+						<Route path="/practice" element={<ProblemListPage />} />
+						<Route path="/submissions" element={<StudentHistoryPage />} />
+						<Route path="/practice/history" element={<StudentHistoryPage />} />
+						<Route path="/oj" element={<Navigate to="/practice" replace />} />
+						<Route path="/oj/*" element={<Navigate to="/practice" replace />} />
+					</Route>
+					{/* Standalone OJ Workspace */}
+					<Route path="/practice/:problemSlug" element={<OJWorkspacePage />} />
+				</Route>
 
 				{/* Protected standalone quiz attempt/result workspaces */}
 				<Route element={<RoleGuard allowedRoles={['STUDENT', 'TEACHER', 'ADMIN']} />}>

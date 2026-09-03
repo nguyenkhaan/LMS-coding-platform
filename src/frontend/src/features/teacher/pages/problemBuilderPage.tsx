@@ -270,9 +270,13 @@ export const ProblemBuilderPage: React.FC = () => {
 
             {/* Statement */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-semibold text-zinc-700">Problem Statement / Description</label>
+              <div className="flex justify-between items-center">
+                <label className="text-[13px] font-semibold text-zinc-700">Problem Statement / Description</label>
+                <span className="text-[11px] font-medium text-neutral-400">{problemForm.statement.length} / 10000</span>
+              </div>
               <textarea
                 rows={5}
+                maxLength={10000}
                 placeholder="Detail the algorithm problem description..."
                 value={problemForm.statement}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, statement: e.target.value }))}
@@ -286,9 +290,13 @@ export const ProblemBuilderPage: React.FC = () => {
             {/* Input & Output formats */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-zinc-700">Input Description</label>
+                <div className="flex justify-between items-center">
+                  <label className="text-[13px] font-semibold text-zinc-700">Input Description</label>
+                  <span className="text-[11px] font-medium text-neutral-400">{problemForm.inputDescription.length} / 2000</span>
+                </div>
                 <textarea
                   rows={3}
+                  maxLength={2000}
                   placeholder="Describe the function arguments or stdin shape..."
                   value={problemForm.inputDescription}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, inputDescription: e.target.value }))}
@@ -300,9 +308,13 @@ export const ProblemBuilderPage: React.FC = () => {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-semibold text-zinc-700">Output Description</label>
+                <div className="flex justify-between items-center">
+                  <label className="text-[13px] font-semibold text-zinc-700">Output Description</label>
+                  <span className="text-[11px] font-medium text-neutral-400">{problemForm.outputDescription.length} / 2000</span>
+                </div>
                 <textarea
                   rows={3}
+                  maxLength={2000}
                   placeholder="Describe the returned value or stdout shape..."
                   value={problemForm.outputDescription}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, outputDescription: e.target.value }))}
@@ -316,9 +328,13 @@ export const ProblemBuilderPage: React.FC = () => {
 
             {/* Constraints */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-semibold text-zinc-700">Constraints</label>
+              <div className="flex justify-between items-center">
+                <label className="text-[13px] font-semibold text-zinc-700">Constraints</label>
+                <span className="text-[11px] font-medium text-neutral-400">{problemForm.constraints.length} / 2000</span>
+              </div>
               <textarea
                 rows={2}
+                maxLength={2000}
                 placeholder="e.g., 2 <= nums.length <= 10^4"
                 value={problemForm.constraints}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, constraints: e.target.value }))}

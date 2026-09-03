@@ -103,6 +103,7 @@ export const ResetPasswordPage: React.FC = () => {
               id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
+              maxLength={128}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
@@ -130,6 +131,7 @@ export const ResetPasswordPage: React.FC = () => {
               id="confirmPassword"
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
+              maxLength={128}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isLoading}

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useGoogleLogin } from '@react-oauth/google';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { Role } from '@/features/auth/model/auth';
+import { oauthService } from '@/features/auth/services/oauthService';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +20,29 @@ export const LoginPage: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setIsLoading(true);
+      const ok = await oauthService.loginWithGoogle(tokenResponse.access_token);
+      setIsLoading(false);
+      if (ok) {
+        navigate(intendedDestination || '/student/dashboard');
+      }
+    },
+    onError: () => {
+      toast.error('Google Sign-In failed or was cancelled.');
+    },
+  });
+
+  const handleFacebookLogin = async () => {
+    setIsLoading(true);
+    const ok = await oauthService.loginWithFacebook();
+    setIsLoading(false);
+    if (ok) {
+      navigate(intendedDestination || '/student/dashboard');
+    }
+  };
 
   React.useEffect(() => {
     const remembered = localStorage.getItem('auth_remembered_email');
@@ -126,27 +151,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  // Mock social login handlers
-  const handleSocialLogin = (platform: string) => {
-    toast.info(`Signing in with ${platform} (Mocked)...`);
-    setIsLoading(true);
-    setTimeout(() => {
-      setAuth(
-        {
-          id: 4,
-          email: `social.user@${platform.toLowerCase()}.com`,
-          fullName: `Social ${platform} Learner`,
-          roles: ['STUDENT'],
-          accountStatus: 'ACTIVE',
-        },
-        'mock-jwt-access-token'
-      );
-      toast.success(`Successfully signed in with ${platform}!`);
-      navigate('/student/dashboard');
-      setIsLoading(false);
-    }, 800);
-  };
-
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
@@ -177,6 +181,7 @@ export const LoginPage: React.FC = () => {
               id="email"
               type="text"
               placeholder="name@example.com"
+              maxLength={100}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
@@ -198,6 +203,7 @@ export const LoginPage: React.FC = () => {
               id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
+              maxLength={128}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
@@ -262,7 +268,7 @@ export const LoginPage: React.FC = () => {
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
-          onClick={() => handleSocialLogin('Google')}
+          onClick={() => googleLogin()}
           disabled={isLoading}
           className="flex items-center justify-center gap-2 py-2 bg-neutral-100 hover:bg-neutral-200 rounded-full text-xs font-semibold text-neutral-700 transition-colors cursor-pointer"
         >
@@ -288,7 +294,7 @@ export const LoginPage: React.FC = () => {
         </button>
         <button
           type="button"
-          onClick={() => handleSocialLogin('Facebook')}
+          onClick={handleFacebookLogin}
           disabled={isLoading}
           className="flex items-center justify-center gap-2 py-2 bg-neutral-100 hover:bg-neutral-200 rounded-full text-xs font-semibold text-neutral-700 transition-colors cursor-pointer"
         >

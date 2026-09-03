@@ -223,10 +223,14 @@ export const QuizBuilderPage: React.FC = () => {
           <form onSubmit={handleSave} className="flex flex-col gap-5">
             {/* Title */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-semibold text-zinc-700">Quiz Title</label>
+              <div className="flex justify-between items-center">
+                <label className="text-[13px] font-semibold text-zinc-700">Quiz Title</label>
+                <span className="text-[11px] font-medium text-neutral-400">{title.length} / 150</span>
+              </div>
               <input
                 type="text"
-                placeholder="e.g., Module 1 Checkpoint Quiz"
+                maxLength={150}
+                placeholder="e.g., Module 1 Checkpoint: Data Structures"
                 value={title}
                 onChange={(e) => {
                   setTitle(e.target.value);
@@ -241,9 +245,13 @@ export const QuizBuilderPage: React.FC = () => {
 
             {/* Description */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[13px] font-semibold text-zinc-700">Quiz Description</label>
+              <div className="flex justify-between items-center">
+                <label className="text-[13px] font-semibold text-zinc-700">Quiz Description</label>
+                <span className="text-[11px] font-medium text-neutral-400">{quizDescription.length} / 1000</span>
+              </div>
               <textarea
                 rows={3}
+                maxLength={1000}
                 placeholder="Describe the topics covered in this checkpoint..."
                 value={quizDescription}
                 onChange={(e) => {

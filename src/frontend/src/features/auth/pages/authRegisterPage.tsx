@@ -92,6 +92,7 @@ export const RegisterPage: React.FC = () => {
               id="fullName"
               type="text"
               placeholder="Ronald Richard"
+              maxLength={100}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               disabled={isLoading}
@@ -111,6 +112,7 @@ export const RegisterPage: React.FC = () => {
               id="email"
               type="text"
               placeholder="name@example.com"
+              maxLength={100}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}
@@ -130,6 +132,7 @@ export const RegisterPage: React.FC = () => {
               id="password"
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
+              maxLength={128}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
@@ -157,6 +160,7 @@ export const RegisterPage: React.FC = () => {
               id="confirmPassword"
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
+              maxLength={128}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={isLoading}

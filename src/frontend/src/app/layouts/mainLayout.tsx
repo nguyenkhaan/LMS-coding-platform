@@ -186,6 +186,7 @@ export const MainLayout: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search courses..."
+                maxLength={100}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9 pr-3.5 py-1.5 border border-neutral-200 rounded-[40px] text-xs font-semibold focus:outline-none focus:border-primary transition-all bg-white text-zinc-900 w-24 lg:w-32 xl:w-44 focus:w-52"

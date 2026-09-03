@@ -705,10 +705,14 @@ export const CourseBuilderPage: React.FC = () => {
 
                 {/* Description */}
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="course-description" className="text-[13px] font-semibold text-zinc-700">Description</label>
+                  <div className="flex justify-between items-center">
+                    <label htmlFor="course-description" className="text-[13px] font-semibold text-zinc-700">Description</label>
+                    <span className="text-[11px] font-medium text-neutral-400">{metadata.description.length} / 5000</span>
+                  </div>
                   <textarea
                     id="course-description"
                     rows={4}
+                    maxLength={5000}
                     value={metadata.description}
                     onChange={(e) => setMetadata(prev => ({ ...prev, description: e.target.value }))}
                     className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:outline-none focus:border-primary text-[14px] resize-none bg-white text-zinc-900 placeholder:text-neutral-400"
@@ -1044,9 +1048,13 @@ export const CourseBuilderPage: React.FC = () => {
 
           {/* Row 2: Problem Statement */}
           <div className="space-y-1">
-            <label className="text-[13px] font-semibold text-zinc-700">Problem Statement / Description</label>
+            <div className="flex justify-between items-center">
+              <label className="text-[13px] font-semibold text-zinc-700">Problem Statement / Description</label>
+              <span className="text-[11px] font-medium text-neutral-400">{problemForm.statement.length} / 10000</span>
+            </div>
             <textarea
               rows={4}
+              maxLength={10000}
               placeholder="Describe the problem, input format requirements, examples, etc. Supports Markdown."
               value={problemForm.statement}
               onChange={(e) => setProblemForm(prev => ({ ...prev, statement: e.target.value }))}
@@ -1060,9 +1068,13 @@ export const CourseBuilderPage: React.FC = () => {
           {/* Row 3: Input & Output Formats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-[13px] font-semibold text-zinc-700">Input Format Description</label>
+              <div className="flex justify-between items-center">
+                <label className="text-[13px] font-semibold text-zinc-700">Input Format Description</label>
+                <span className="text-[11px] font-medium text-neutral-400">{problemForm.inputDescription.length} / 2000</span>
+              </div>
               <textarea
                 rows={3}
+                maxLength={2000}
                 placeholder="Describe the shape/constraints of the input data."
                 value={problemForm.inputDescription}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, inputDescription: e.target.value }))}
@@ -1074,9 +1086,13 @@ export const CourseBuilderPage: React.FC = () => {
             </div>
 
             <div className="space-y-1">
-              <label className="text-[13px] font-semibold text-zinc-700">Output Format Description</label>
+              <div className="flex justify-between items-center">
+                <label className="text-[13px] font-semibold text-zinc-700">Output Format Description</label>
+                <span className="text-[11px] font-medium text-neutral-400">{problemForm.outputDescription.length} / 2000</span>
+              </div>
               <textarea
                 rows={3}
+                maxLength={2000}
                 placeholder="Describe the expected returned value or stdout format."
                 value={problemForm.outputDescription}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, outputDescription: e.target.value }))}
@@ -1090,9 +1106,13 @@ export const CourseBuilderPage: React.FC = () => {
 
           {/* Row 4: Constraints */}
           <div className="space-y-1">
-            <label className="text-[13px] font-semibold text-zinc-700">Constraints</label>
+            <div className="flex justify-between items-center">
+              <label className="text-[13px] font-semibold text-zinc-700">Constraints</label>
+              <span className="text-[11px] font-medium text-neutral-400">{problemForm.constraints.length} / 2000</span>
+            </div>
             <textarea
               rows={2}
+              maxLength={2000}
               placeholder="e.g., 1 <= N <= 10^5, Array elements are integers."
               value={problemForm.constraints}
               onChange={(e) => setProblemForm(prev => ({ ...prev, constraints: e.target.value }))}

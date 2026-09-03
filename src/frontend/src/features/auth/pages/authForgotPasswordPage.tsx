@@ -99,6 +99,7 @@ export const ForgotPasswordPage: React.FC = () => {
               id="email"
               type="text"
               placeholder="name@example.com"
+              maxLength={100}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isLoading}

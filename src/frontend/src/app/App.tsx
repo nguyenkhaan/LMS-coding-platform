@@ -1,6 +1,7 @@
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'sonner';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AppRoutes } from './router/appRoutes.tsx';
 
 const queryClient = new QueryClient({
@@ -13,13 +14,17 @@ const queryClient = new QueryClient({
 	}
 });
 
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'demo-google-client-id';
+
 export default function App() {
 	return (
 		<QueryClientProvider client={queryClient}>
-			<BrowserRouter>
-				<AppRoutes />
-				<Toaster position="top-right" richColors />
-			</BrowserRouter>
+			<GoogleOAuthProvider clientId={googleClientId}>
+				<BrowserRouter>
+					<AppRoutes />
+					<Toaster position="top-right" richColors />
+				</BrowserRouter>
+			</GoogleOAuthProvider>
 		</QueryClientProvider>
 	);
 }
