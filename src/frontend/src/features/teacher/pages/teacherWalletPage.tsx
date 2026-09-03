@@ -235,7 +235,7 @@ export const TeacherWalletPage: React.FC = () => {
                     </label>
                     <div className="relative">
                       <span className="absolute left-3.5 top-2.5 text-neutral-500 font-semibold">$</span>
-                      <input
+                      <input maxLength={100}
                         type="number"
                         id="amount"
                         step="0.01"

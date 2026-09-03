@@ -31,7 +31,7 @@ export const CourseCatalogFilters: React.FC<SidebarFiltersProps> = ({
 			<div className="flex flex-col gap-1.5">
 				<span className="text-zinc-900 text-xs font-semibold">Search Course</span>
 				<div className="relative">
-					<input
+					<input maxLength={100}
 						type="text"
 						value={search}
 						onChange={(e) => setSearch(e.target.value)}

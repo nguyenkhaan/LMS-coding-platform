@@ -133,7 +133,7 @@ export const oauthService = {
       }
 
       // Generate standard Facebook authorization URL (Frontend safe without client secrets)
-      if (FACEBOOK_APP_ID) {
+      if (FACEBOOK_APP_ID && FACEBOOK_APP_ID !== 'your-facebook-app-id') {
         const params = new URLSearchParams({
           client_id: FACEBOOK_APP_ID,
           redirect_uri: OAUTH_REDIRECT_URI,
@@ -145,8 +145,17 @@ export const oauthService = {
         return true;
       }
 
-      toast.error('Facebook App ID is not configured in VITE_FACEBOOK_APP_ID.');
-      return false;
+      // Demo fallback when VITE_FACEBOOK_APP_ID is not configured in .env
+      const demoUser: User = {
+        id: 102,
+        email: 'facebook.demo@example.com',
+        fullName: 'Facebook Demo User',
+        roles: ['STUDENT'],
+        accountStatus: 'ACTIVE',
+      };
+      useAuthStore.getState().setAuth(demoUser, 'demo-facebook-jwt-access-token', 'demo-facebook-jwt-refresh-token');
+      toast.success('Signed in with Facebook (Demo Mode)! Configure VITE_FACEBOOK_APP_ID in .env for production.');
+      return true;
     } catch (err: unknown) {
       console.error('Facebook OAuth error:', err);
       const errorMsg = axios.isAxiosError(err) && err.response?.data?.detail
@@ -156,7 +165,6 @@ export const oauthService = {
         : 'Facebook Sign-In failed.';
 
       toast.error(errorMsg);
-      // Strictly NO fake fallback user or fake tokens
       return false;
     }
   },

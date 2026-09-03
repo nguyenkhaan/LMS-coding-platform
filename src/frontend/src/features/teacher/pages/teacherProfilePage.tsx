@@ -233,7 +233,7 @@ export const TeacherProfilePage: React.FC = () => {
                   <ProfileField label='Headline' value={isEditing ? '' : profile.headline} />
                   {isEditing && (
                     <div className='sm:col-start-2 -mt-4'>
-                      <input
+                      <input maxLength={100}
                         type='text'
                         value={draft.headline}
                         onChange={(e) => handleDraftChange('headline', e.target.value)}
@@ -248,7 +248,7 @@ export const TeacherProfilePage: React.FC = () => {
                     <ProfileField label='Email' value={isEditing ? '' : profile.email} />
                   </div>
                   {isEditing && (
-                    <input
+                    <input maxLength={100}
                       type='email'
                       value={draft.email}
                       onChange={(e) => handleDraftChange('email', e.target.value)}
@@ -262,7 +262,7 @@ export const TeacherProfilePage: React.FC = () => {
                     <ProfileField label='Phone' value={isEditing ? '' : profile.phone} />
                   </div>
                   {isEditing && (
-                    <input
+                    <input maxLength={100}
                       type='tel'
                       value={draft.phone}
                       onChange={(e) => handleDraftChange('phone', e.target.value)}

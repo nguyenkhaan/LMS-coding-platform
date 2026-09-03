@@ -134,7 +134,7 @@ export const StudentSettingsPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-text-secondary">First Name</label>
-                  <input
+                  <input maxLength={100}
                     type="text"
                     value={profile.firstName}
                     onChange={(e) => handleChange('firstName', e.target.value)}
@@ -144,7 +144,7 @@ export const StudentSettingsPage: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-text-secondary">Last Name</label>
-                  <input
+                  <input maxLength={100}
                     type="text"
                     value={profile.lastName}
                     onChange={(e) => handleChange('lastName', e.target.value)}
@@ -157,7 +157,7 @@ export const StudentSettingsPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-text-secondary">Phone Contact</label>
-                  <input
+                  <input maxLength={100}
                     type="text"
                     value={profile.phoneNumber}
                     onChange={(e) => handleChange('phoneNumber', e.target.value)}
@@ -166,7 +166,7 @@ export const StudentSettingsPage: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-text-secondary">Date of Birth</label>
-                  <input
+                  <input maxLength={100}
                     type="text"
                     value={profile.dob}
                     onChange={(e) => handleChange('dob', e.target.value)}
@@ -175,7 +175,7 @@ export const StudentSettingsPage: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-text-secondary">Age</label>
-                  <input
+                  <input maxLength={100}
                     type="text"
                     value={profile.age}
                     onChange={(e) => handleChange('age', e.target.value)}

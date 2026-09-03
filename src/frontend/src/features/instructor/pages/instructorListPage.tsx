@@ -284,7 +284,7 @@ export const InstructorListPage: React.FC = () => {
 
 						{/* Search Input */}
 						<div className="relative w-full sm:w-56">
-							<input
+							<input maxLength={100}
 								type="text"
 								value={searchTerm}
 								onChange={(e) => setSearchTerm(e.target.value)}

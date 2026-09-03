@@ -350,7 +350,7 @@ export function StudentHistoryPage() {
             {/* Search Input */}
             <div className="flex-1 min-w-[240px] px-3.5 py-2 bg-white rounded-[10px] border border-neutral-200 flex items-center gap-2.5 shadow-2xs">
               <Search className="w-4 h-4 text-neutral-400 shrink-0" />
-              <input
+              <input maxLength={100}
                 type="text"
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
@@ -396,7 +396,7 @@ export function StudentHistoryPage() {
               {/* Date Input */}
               <div className="px-3 py-2 bg-white rounded-[10px] border border-neutral-200 flex items-center gap-2 shadow-2xs text-sm text-zinc-700">
                 <Calendar className="w-4 h-4 text-neutral-400" />
-                <input
+                <input maxLength={100}
                   type="date"
                   value={dateFilter}
                   onChange={(e) => { setDateFilter(e.target.value); setCurrentPage(1); }}

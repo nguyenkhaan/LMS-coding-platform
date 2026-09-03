@@ -158,7 +158,7 @@ export const TeacherSettingsPage: React.FC = () => {
               
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold text-zinc-700">Headline / Short Bio</label>
-                <input
+                <input maxLength={100}
                   type="text"
                   value={profile.headline}
                   onChange={(e) => handleChange('headline', e.target.value)}
@@ -170,7 +170,7 @@ export const TeacherSettingsPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-zinc-700">Email (Public Address)</label>
-                  <input
+                  <input maxLength={100}
                     type="email"
                     value={profile.email}
                     onChange={(e) => handleChange('email', e.target.value)}
@@ -180,7 +180,7 @@ export const TeacherSettingsPage: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-zinc-700">Phone Contact</label>
-                  <input
+                  <input maxLength={100}
                     type="text"
                     value={profile.phone}
                     onChange={(e) => handleChange('phone', e.target.value)}
@@ -192,7 +192,7 @@ export const TeacherSettingsPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-zinc-700">Years of Teaching Experience</label>
-                  <input
+                  <input maxLength={100}
                     type="number"
                     value={profile.yearsOfExperience}
                     onChange={(e) => handleChange('yearsOfExperience', Number(e.target.value))}
@@ -205,7 +205,7 @@ export const TeacherSettingsPage: React.FC = () => {
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-zinc-700">Expertise Tags (Press Enter to add)</label>
                   <div className="flex flex-col gap-2">
-                    <input
+                    <input maxLength={100}
                       type="text"
                       placeholder="e.g. Docker, Vue, Java"
                       value={expertiseInput}
@@ -239,7 +239,7 @@ export const TeacherSettingsPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-zinc-700">GitHub Profile URL</label>
-                  <input
+                  <input maxLength={100}
                     type="url"
                     value={profile.githubUrl}
                     onChange={(e) => handleChange('githubUrl', e.target.value)}
@@ -249,7 +249,7 @@ export const TeacherSettingsPage: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-zinc-700">LinkedIn Profile URL</label>
-                  <input
+                  <input maxLength={100}
                     type="url"
                     value={profile.linkedinUrl}
                     onChange={(e) => handleChange('linkedinUrl', e.target.value)}
@@ -259,7 +259,7 @@ export const TeacherSettingsPage: React.FC = () => {
                 </div>
                 <div className="flex flex-col gap-1.5">
                   <label className="text-xs font-bold text-zinc-700">Personal Website</label>
-                  <input
+                  <input maxLength={100}
                     type="url"
                     value={profile.websiteUrl}
                     onChange={(e) => handleChange('websiteUrl', e.target.value)}

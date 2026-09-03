@@ -85,15 +85,14 @@ export const CourseCatalogPage: React.FC = () => {
 				</div>
 
 				{/* Search Input Box */}
-				<div className="w-full md:max-w-md">
 					<Input
+						maxLength={100}
 						placeholder="Tìm kiếm khóa học hoặc từ khóa..."
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
 						iconPrefix={<Search className="w-4 h-4 text-slate-400" />}
 						className="shadow-xs"
 					/>
-				</div>
 			</div>
 
 			{/* Filters & Actions Panel */}

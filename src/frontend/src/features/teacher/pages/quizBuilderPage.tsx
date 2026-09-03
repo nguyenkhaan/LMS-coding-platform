@@ -300,7 +300,7 @@ export const QuizBuilderPage: React.FC = () => {
                       </span>
                       <div className="flex items-center gap-2">
                         <label className="text-xs font-semibold text-neutral-500">Points:</label>
-                        <input
+                        <input maxLength={100}
                           type="number"
                           value={q.points}
                           onChange={(e) => handlePointsChange(qIdx, parseInt(e.target.value) || 0)}
@@ -312,7 +312,7 @@ export const QuizBuilderPage: React.FC = () => {
                     {/* Question Text */}
                     <div className="flex flex-col gap-1.5">
                       <label className="text-[12px] font-semibold text-zinc-700">Question Text</label>
-                      <input
+                      <input maxLength={100}
                         type="text"
                         placeholder="e.g., What is the output of print(2 ** 3)?"
                         value={q.questionText}
@@ -340,7 +340,7 @@ export const QuizBuilderPage: React.FC = () => {
                               >
                                 <Check className="w-3.5 h-3.5" />
                               </button>
-                              <input
+                              <input maxLength={100}
                                 type="text"
                                 placeholder={`Option ${String.fromCharCode(65 + cIdx)}`}
                                 value={choice}

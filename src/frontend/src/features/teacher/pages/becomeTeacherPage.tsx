@@ -549,7 +549,7 @@ export function BecomeTeacherPage() {
                   <span>Display name *</span>
                   {!isFieldEditable(false) && <Lock className="w-3.5 h-3.5 text-neutral-400" />}
                 </label>
-                <input
+                <input maxLength={100}
                   type="text"
                   disabled={!isFieldEditable(false)}
                   value={formData.displayName}
@@ -564,7 +564,7 @@ export function BecomeTeacherPage() {
                   <span>Professional Headline *</span>
                   {!isFieldEditable(false) && <Lock className="w-3.5 h-3.5 text-neutral-400" />}
                 </label>
-                <input
+                <input maxLength={100}
                   type="text"
                   disabled={!isFieldEditable(false)}
                   value={formData.headline}
@@ -599,7 +599,7 @@ export function BecomeTeacherPage() {
                   ))}
                   {isFieldEditable(false) && (
                     <div className="flex items-center gap-1.5 flex-1 min-w-[120px]">
-                      <input
+                      <input maxLength={100}
                         type="text"
                         value={formData.newTagInput}
                         onChange={(e) => handleInputChange('newTagInput', e.target.value)}
@@ -629,7 +629,7 @@ export function BecomeTeacherPage() {
                   <span>Years of Industry Experience *</span>
                   {!isFieldEditable(false) && <Lock className="w-3.5 h-3.5 text-neutral-400" />}
                 </label>
-                <input
+                <input maxLength={100}
                   type="number"
                   disabled={!isFieldEditable(false)}
                   value={formData.yearsOfExperience}
@@ -667,7 +667,7 @@ export function BecomeTeacherPage() {
                   <Code2 className="w-3.5 h-3.5 text-zinc-800" />
                   <span>GitHub URL (Optional)</span>
                 </label>
-                <input
+                <input maxLength={100}
                   type="url"
                   disabled={!isFieldEditable(false)}
                   value={formData.githubUrl}
@@ -682,7 +682,7 @@ export function BecomeTeacherPage() {
                   <Share2 className="w-3.5 h-3.5 text-sky-700" />
                   <span>LinkedIn URL (Optional)</span>
                 </label>
-                <input
+                <input maxLength={100}
                   type="url"
                   disabled={!isFieldEditable(false)}
                   value={formData.linkedinUrl}
@@ -697,7 +697,7 @@ export function BecomeTeacherPage() {
                   <Globe className="w-3.5 h-3.5 text-indigo-700" />
                   <span>Portfolio Website (Optional)</span>
                 </label>
-                <input
+                <input maxLength={100}
                   type="url"
                   disabled={!isFieldEditable(false)}
                   value={formData.websiteUrl}
@@ -732,7 +732,7 @@ export function BecomeTeacherPage() {
                 <span>Legal full name (As in CCCD/Passport) *</span>
                 {!isFieldEditable(true) && <Lock className="w-3.5 h-3.5 text-neutral-400" />}
               </label>
-              <input
+              <input maxLength={100}
                 type="text"
                 disabled={!isFieldEditable(true)}
                 value={formData.legalFullName}
@@ -748,7 +748,7 @@ export function BecomeTeacherPage() {
                 <span>Date of birth *</span>
                 {!isFieldEditable(true) && <Lock className="w-3.5 h-3.5 text-neutral-400" />}
               </label>
-              <input
+              <input maxLength={100}
                 type="date"
                 disabled={!isFieldEditable(true)}
                 value={formData.dateOfBirth}
@@ -763,7 +763,7 @@ export function BecomeTeacherPage() {
                 <span>Identity number (CCCD/Passport) *</span>
                 {!isFieldEditable(true) && <Lock className="w-3.5 h-3.5 text-neutral-400" />}
               </label>
-              <input
+              <input maxLength={100}
                 type="text"
                 disabled={!isFieldEditable(true)}
                 value={formData.identityNumber}

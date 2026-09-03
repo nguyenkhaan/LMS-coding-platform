@@ -21,7 +21,13 @@ export const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const googleLogin = useGoogleLogin({
+  const hasConfiguredGoogle = Boolean(
+    import.meta.env.VITE_GOOGLE_CLIENT_ID &&
+    import.meta.env.VITE_GOOGLE_CLIENT_ID !== 'demo-google-client-id' &&
+    import.meta.env.VITE_GOOGLE_CLIENT_ID.includes('.apps.googleusercontent.com')
+  );
+
+  const googleOAuthLogin = useGoogleLogin({
     flow: 'auth-code',
     onSuccess: async (codeResponse) => {
       setIsLoading(true);
@@ -35,6 +41,24 @@ export const LoginPage: React.FC = () => {
       toast.error('Google Sign-In failed or was cancelled.');
     },
   });
+
+  const handleGoogleLogin = () => {
+    if (hasConfiguredGoogle) {
+      googleOAuthLogin();
+    } else {
+      // Demo fallback when VITE_GOOGLE_CLIENT_ID is not configured in .env
+      const demoUser = {
+        id: 101,
+        email: 'google.demo@example.com',
+        fullName: 'Google Demo Learner',
+        roles: ['STUDENT'] as Role[],
+        accountStatus: 'ACTIVE' as const,
+      };
+      setAuth(demoUser, 'demo-google-jwt-access-token', 'demo-google-jwt-refresh-token');
+      toast.success('Signed in with Google (Demo Mode)! Configure VITE_GOOGLE_CLIENT_ID in .env for production.');
+      navigate(intendedDestination || '/student/dashboard');
+    }
+  };
 
   const handleFacebookLogin = async () => {
     setIsLoading(true);
@@ -269,7 +293,7 @@ export const LoginPage: React.FC = () => {
       <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
-          onClick={() => googleLogin()}
+          onClick={handleGoogleLogin}
           disabled={isLoading}
           className="flex items-center justify-center gap-2 py-2 bg-neutral-100 hover:bg-neutral-200 rounded-full text-xs font-semibold text-neutral-700 transition-colors cursor-pointer"
         >

@@ -241,7 +241,7 @@ export const ProblemBuilderPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-semibold text-zinc-700">Problem Title</label>
-                <input
+                <input maxLength={100}
                   type="text"
                   placeholder="e.g., Two Sum"
                   value={problemForm.title}
@@ -255,7 +255,7 @@ export const ProblemBuilderPage: React.FC = () => {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-semibold text-zinc-700">Problem Slug</label>
-                <input
+                <input maxLength={100}
                   type="text"
                   placeholder="e.g., two-sum"
                   value={problemForm.slug}
@@ -362,7 +362,7 @@ export const ProblemBuilderPage: React.FC = () => {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-semibold text-zinc-700">Passing Score</label>
-                <input
+                <input maxLength={100}
                   type="number"
                   value={problemForm.passingScore}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, passingScore: parseInt(e.target.value) || 0 }))}
@@ -375,7 +375,7 @@ export const ProblemBuilderPage: React.FC = () => {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-semibold text-zinc-700">Time Limit (ms)</label>
-                <input
+                <input maxLength={100}
                   type="number"
                   value={problemForm.timeLimitMs}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, timeLimitMs: parseInt(e.target.value) || 0 }))}
@@ -388,7 +388,7 @@ export const ProblemBuilderPage: React.FC = () => {
 
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-semibold text-zinc-700">Memory Limit (KB)</label>
-                <input
+                <input maxLength={100}
                   type="number"
                   value={problemForm.memoryLimitKb}
                   onChange={(e) => setProblemForm(prev => ({ ...prev, memoryLimitKb: parseInt(e.target.value) || 0 }))}
@@ -403,7 +403,7 @@ export const ProblemBuilderPage: React.FC = () => {
             {/* Tags */}
             <div className="flex flex-col gap-1.5">
               <label className="text-[13px] font-semibold text-zinc-700">Tags (comma separated)</label>
-              <input
+              <input maxLength={100}
                 type="text"
                 placeholder="Array, Hash Table, Two Pointers"
                 value={problemForm.tags}

@@ -90,7 +90,7 @@ export function ProblemListPage() {
           {/* Search Input */}
           <div className="w-full md:w-96 px-4 py-2.5 bg-white rounded-lg border border-neutral-200 flex items-center gap-2.5 shadow-sm">
             <Search className="w-4 h-4 text-neutral-400 shrink-0" />
-            <input
+            <input maxLength={100}
               type="text"
               value={searchQuery}
               onChange={(e) => {

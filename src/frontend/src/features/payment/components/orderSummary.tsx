@@ -70,7 +70,7 @@ export const OrderSummary: React.FC = () => {
 
         {/* Promo code input row */}
         <div className="flex gap-2 items-center">
-          <Input 
+          <Input maxLength={30} 
             value={discountCode} 
             onChange={e => setDiscountCode(e.target.value)} 
             placeholder="Discount code" 

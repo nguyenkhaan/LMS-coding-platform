@@ -157,6 +157,13 @@ export const AppRoutes: React.FC = () => {
 					<Route path="/oj" element={<Navigate to="/practice" replace />} />
 					<Route path="/oj/*" element={<Navigate to="/practice" replace />} />
 
+					{/* Classroom Preview & Workspace (Accessible by guests & students) */}
+					<Route path="/learn/:courseSlug" element={<ClassroomPage />} />
+					<Route path="/classroom/workspace" element={<ClassroomPage />} />
+					<Route path="/classroom/lesson/problem-preview" element={<LessonProblemPreviewPage />} />
+					<Route path="/classroom/problem-preview" element={<LessonProblemPreviewPage />} />
+					<Route path="/prog01" element={<LessonProblemPreviewPage />} />
+
 					<Route path="/unauthorized" element={<UnauthorizedPage />} />
 				</Route>
 
@@ -188,13 +195,6 @@ export const AppRoutes: React.FC = () => {
 						<Route path="/favorites" element={<StudentFavoritesPage />} />
 						<Route path="/student/history" element={<StudentHistoryPage />} />
 						<Route path="/student/settings" element={<StudentSettingsPage />} />
-
-						{/* Classroom Workspace */}
-						<Route path="/learn/:courseSlug" element={<ClassroomPage />} />
-						<Route path="/classroom/workspace" element={<ClassroomPage />} />
-						<Route path="/classroom/lesson/problem-preview" element={<LessonProblemPreviewPage />} />
-						<Route path="/classroom/problem-preview" element={<LessonProblemPreviewPage />} />
-						<Route path="/prog01" element={<LessonProblemPreviewPage />} />
 
 						{/* Payment */}
 						<Route path="/checkout/:courseId" element={<CheckoutPage />} />

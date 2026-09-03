@@ -666,7 +666,7 @@ export const CourseBuilderPage: React.FC = () => {
                 {/* Title */}
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="course-title" className="text-[13px] font-semibold text-zinc-700">Course Title</label>
-                  <input
+                  <input maxLength={100}
                     type="text"
                     id="course-title"
                     value={metadata.title}
@@ -678,7 +678,7 @@ export const CourseBuilderPage: React.FC = () => {
                 {/* Slug */}
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="course-slug" className="text-[13px] font-semibold text-zinc-700">Course Slug</label>
-                  <input
+                  <input maxLength={100}
                     type="text"
                     id="course-slug"
                     value={metadata.slug}
@@ -724,7 +724,7 @@ export const CourseBuilderPage: React.FC = () => {
                   <label htmlFor="course-price" className="text-[13px] font-semibold text-zinc-700">Course Price (USD)</label>
                   <div className="relative">
                     <span className="absolute left-3.5 top-2 text-neutral-500 font-semibold">$</span>
-                    <input
+                    <input maxLength={100}
                       type="number"
                       id="course-price"
                       value={metadata.price}
@@ -1019,7 +1019,7 @@ export const CourseBuilderPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
               <label className="text-[13px] font-semibold text-zinc-700">Problem Title</label>
-              <input
+              <input maxLength={100}
                 type="text"
                 placeholder="e.g., Reverse a Linked List"
                 value={problemForm.title}
@@ -1033,7 +1033,7 @@ export const CourseBuilderPage: React.FC = () => {
             
             <div className="space-y-1">
               <label className="text-[13px] font-semibold text-zinc-700">Problem Slug</label>
-              <input
+              <input maxLength={100}
                 type="text"
                 placeholder="e.g., reverse-linked-list"
                 value={problemForm.slug}
@@ -1140,7 +1140,7 @@ export const CourseBuilderPage: React.FC = () => {
 
             <div className="space-y-1">
               <label className="text-[13px] font-semibold text-zinc-700">Passing Score</label>
-              <input
+              <input maxLength={100}
                 type="number"
                 value={problemForm.passingScore}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, passingScore: parseInt(e.target.value) || 0 }))}
@@ -1153,7 +1153,7 @@ export const CourseBuilderPage: React.FC = () => {
 
             <div className="space-y-1">
               <label className="text-[13px] font-semibold text-zinc-700">Time Limit (ms)</label>
-              <input
+              <input maxLength={100}
                 type="number"
                 value={problemForm.timeLimitMs}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, timeLimitMs: parseInt(e.target.value) || 0 }))}
@@ -1166,7 +1166,7 @@ export const CourseBuilderPage: React.FC = () => {
 
             <div className="space-y-1">
               <label className="text-[13px] font-semibold text-zinc-700">Memory Limit (KB)</label>
-              <input
+              <input maxLength={100}
                 type="number"
                 value={problemForm.memoryLimitKb}
                 onChange={(e) => setProblemForm(prev => ({ ...prev, memoryLimitKb: parseInt(e.target.value) || 0 }))}
@@ -1181,7 +1181,7 @@ export const CourseBuilderPage: React.FC = () => {
           {/* Row 6: Tags */}
           <div className="space-y-1">
             <label className="text-[13px] font-semibold text-zinc-700">Tags (comma separated)</label>
-            <input
+            <input maxLength={100}
               type="text"
               placeholder="e.g., Array, Two Pointers, Dynamic Programming"
               value={problemForm.tags}

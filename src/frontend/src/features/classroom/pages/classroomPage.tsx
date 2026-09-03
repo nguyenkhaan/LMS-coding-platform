@@ -239,7 +239,7 @@ export function ClassroomPage() {
           {/* Search bar */}
           <div className="w-full sm:w-96 px-3.5 py-2 bg-slate-50 rounded-[10px] border border-neutral-200 flex items-center gap-2.5 shadow-2xs">
             <Search className="w-4 h-4 text-neutral-400 shrink-0" />
-            <input
+            <input maxLength={100}
               type="text"
               value={courseSearch}
               onChange={(e) => setCourseSearch(e.target.value)}

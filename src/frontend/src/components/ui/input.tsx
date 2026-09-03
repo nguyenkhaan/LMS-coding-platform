@@ -1,12 +1,12 @@
-import React, { InputHTMLAttributes, forwardRef } from 'react';
+import { InputHTMLAttributes, forwardRef, ReactNode } from 'react';
 import { cn } from '@/lib/cn';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 	label?: string;
 	error?: string;
 	hint?: string;
-	iconPrefix?: React.ReactNode;
-	iconSuffix?: React.ReactNode;
+	iconPrefix?: ReactNode;
+	iconSuffix?: ReactNode;
 	showCounter?: boolean;
 }
 

@@ -15,28 +15,15 @@ import {
   Smartphone,
   Mail,
   ShieldCheck,
-  GraduationCap,
-  FileText,
-  Lock
+  FileText
 } from 'lucide-react';
 import { NotificationDropdown } from '@/features/notification/components/notificationDropdown';
-import { GuestLockModal } from '@/components/common/guestLockModal';
-
 export const MainLayout: React.FC = () => {
   const { user, isAuthenticated, logout } = useAuthStore();
   const { theme, toggleTheme } = useThemeStore();
   const location = useLocation();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [guestLockConfig, setGuestLockConfig] = useState<{ isOpen: boolean; featureName: string; redirectPath: string }>({
-    isOpen: false,
-    featureName: 'Online Judge',
-    redirectPath: '/practice',
-  });
-
-  const openGuestLock = (featureName: string, redirectPath: string) => {
-    setGuestLockConfig({ isOpen: true, featureName, redirectPath });
-  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -225,25 +212,6 @@ export const MainLayout: React.FC = () => {
 
             {isAuthenticated && user ? (
               <div className="flex items-center gap-1.5 xl:gap-2.5">
-                {user.roles.includes('TEACHER') && (
-                  location.pathname.startsWith('/teacher') ? (
-                    <Link
-                      to="/dashboard"
-                      className="px-2 xl:px-3.5 py-1.5 rounded-[40px] border border-indigo-900 text-indigo-900 text-xs font-semibold hover:bg-indigo-50 transition-colors flex items-center gap-1 xl:gap-1.5"
-                    >
-                      <User className="w-3.5 h-3.5" />
-                      Switch to Student
-                    </Link>
-                  ) : (
-                    <Link
-                      to="/teacher/dashboard"
-                      className="px-2 xl:px-3.5 py-1.5 rounded-[40px] border border-indigo-900 text-indigo-900 text-xs font-semibold hover:bg-indigo-50 transition-colors flex items-center gap-1 xl:gap-1.5"
-                    >
-                      <GraduationCap className="w-3.5 h-3.5" />
-                      Teacher Portal
-                    </Link>
-                  )
-                )}
                 {user.roles.includes('ADMIN') && (
                   <Link
                     to="/admin/verifications"
@@ -348,26 +316,8 @@ export const MainLayout: React.FC = () => {
             <h3 className="text-white text-lg font-bold">For Student</h3>
             <ul className="flex flex-col gap-3.5 text-white/70 text-sm font-normal">
               <li><Link to="/dashboard" className="hover:text-white transition-colors">Appointments</Link></li>
-              <li>
-                {isAuthenticated ? (
-                  <Link to="/submissions" className="hover:text-white transition-colors">Submission History</Link>
-                ) : (
-                  <button type="button" onClick={() => openGuestLock('Online Judge', '/submissions')} className="hover:text-white transition-colors cursor-pointer flex items-center gap-1">
-                    <span>Submission History</span>
-                    <Lock className="w-3 h-3 text-amber-400" />
-                  </button>
-                )}
-              </li>
-              <li>
-                {isAuthenticated ? (
-                  <Link to="/interview" className="hover:text-white transition-colors">AI Mock Interview</Link>
-                ) : (
-                  <button type="button" onClick={() => openGuestLock('AI Mock Interview', '/interview')} className="hover:text-white transition-colors cursor-pointer flex items-center gap-1">
-                    <span>AI Mock Interview</span>
-                    <Lock className="w-3 h-3 text-amber-400" />
-                  </button>
-                )}
-              </li>
+              <li><Link to="/submissions" className="hover:text-white transition-colors">Submission History</Link></li>
+              <li><Link to="/interview" className="hover:text-white transition-colors">AI Mock Interview</Link></li>
               <li><Link to="/login" className="hover:text-white transition-colors">Login</Link></li>
               <li><Link to="/register" className="hover:text-white transition-colors">Register</Link></li>
             </ul>
@@ -380,6 +330,7 @@ export const MainLayout: React.FC = () => {
               <div className="p-1.5 bg-white rounded-lg flex items-center gap-2">
                 <input
                   type="email"
+                  maxLength={100}
                   placeholder="Enter your email"
                   className="flex-1 pl-2.5 text-zinc-900 text-sm placeholder:text-neutral-500 focus:outline-none"
                 />
@@ -419,15 +370,6 @@ export const MainLayout: React.FC = () => {
           </div>
         </div>
       </footer>
-
-      {/* Reusable Sign-In Required Modal for Locked Features */}
-      <GuestLockModal
-        isOpen={guestLockConfig.isOpen}
-        onClose={() => setGuestLockConfig((prev) => ({ ...prev, isOpen: false }))}
-        featureName={guestLockConfig.featureName}
-        redirectPath={guestLockConfig.redirectPath}
-      />
-
     </div>
   );
 };
