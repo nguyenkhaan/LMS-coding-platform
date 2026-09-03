@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
+from fastapi.responses import JSONResponse
+from src.cores.settings import FRONTEND_CHECKOUT_URL
 
 from src.models.base_model import CourseStatus, LessonContentType
 from src.models.course_model import CourseModel
@@ -756,18 +758,59 @@ class CourseService:
     # Endpoint 3 — POST /courses/{slug}/enroll  → 201
     # ------------------------------------------------------------------
 
-    async def enroll_course(self, slug: str, user_id: int) -> EnrollResponse:
-        course = next((c for c in _MOCK_COURSES if c.slug == slug), None)
-        if course is None:
+    async def enroll_course(self, slug: str, user_id: int) -> EnrollResponse | JSONResponse:
+        from sqlalchemy import select
+        from decimal import Decimal
+
+        # Find course by slug
+        stmt = select(CourseModel).where(
+            CourseModel.slug == slug,
+            CourseModel.status == CourseStatus.APPROVED,
+            CourseModel.deleted_at.is_(None),
+        )
+        course = (await self.db_session.execute(stmt)).scalar_one_or_none()
+        if not course:
             raise HTTPException(status_code=404, detail="Course not found")
 
-        if course.price_type == PriceType.PAID:
-            return EnrollResponse(
-                status=EnrollStatus.PENDING_PAYMENT,
-                checkout_url=f"https://pay.cloudian.dev/checkout/{slug}",
+        # Check existing enrollment
+        enroll_stmt = select(EnrollmentModel).where(
+            EnrollmentModel.student_id == user_id,
+            EnrollmentModel.course_id == course.id,
+        )
+        existing = (await self.db_session.execute(enroll_stmt)).scalar_one_or_none()
+        
+        c_price = float(course.price)
+        is_free = c_price == 0
+
+        if existing:
+            # According to api_spec.md, return 400 with ALREADY_ENROLLED error envelope
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "message": "Course enrollment",
+                    "error_code": "ALREADY_ENROLLED",
+                    "details": [
+                        { "field": "course_id", "reason": "duplicate enrollment" }
+                    ]
+                }
             )
 
-        return EnrollResponse(status=EnrollStatus.ENROLLED, checkout_url=None)
+        # Insert real enrollment row
+        enrollment = EnrollmentModel(
+            student_id=user_id,
+            course_id=course.id,
+            status=EnrollStatus.ENROLLED.value if is_free else EnrollStatus.PENDING_PAYMENT.value
+        )
+        self.db_session.add(enrollment)
+        await self.db_session.commit()
+
+        if is_free:
+            return EnrollResponse(status=EnrollStatus.ENROLLED, checkout_url=None)
+        else:
+            return EnrollResponse(
+                status=EnrollStatus.PENDING_PAYMENT,
+                checkout_url=f"{FRONTEND_CHECKOUT_URL}/{slug}",
+            )
 
     # ------------------------------------------------------------------
     # Endpoint 4 — GET /student/courses
