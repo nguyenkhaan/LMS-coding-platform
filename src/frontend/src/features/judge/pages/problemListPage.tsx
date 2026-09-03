@@ -144,23 +144,25 @@ export function ProblemListPage() {
               <ChevronDown className="w-3.5 h-3.5 text-neutral-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             </div>
 
-            {/* Status Filter */}
-            <div className="relative">
-              <select
-                value={selectedStatus}
-                onChange={(e) => {
-                  setSelectedStatus(e.target.value as 'All' | 'Solved' | 'Attempted' | 'Unsolved');
-                  setCurrentPage(1);
-                }}
-                className="px-4 py-2.5 bg-white rounded-lg border border-neutral-200 text-zinc-600 text-sm font-medium appearance-none pr-9 cursor-pointer shadow-sm hover:border-neutral-300 focus:outline-none"
-              >
-                <option value="All">All Status</option>
-                <option value="Solved">Solved</option>
-                <option value="Attempted">Attempted</option>
-                <option value="Unsolved">Unsolved</option>
-              </select>
-              <ChevronDown className="w-3.5 h-3.5 text-neutral-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-            </div>
+            {/* Status Filter (Authenticated users with history) */}
+            {user && (
+              <div className="relative">
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => {
+                    setSelectedStatus(e.target.value as 'All' | 'Solved' | 'Attempted' | 'Unsolved');
+                    setCurrentPage(1);
+                  }}
+                  className="px-4 py-2.5 bg-white rounded-lg border border-neutral-200 text-zinc-600 text-sm font-medium appearance-none pr-9 cursor-pointer shadow-sm hover:border-neutral-300 focus:outline-none"
+                >
+                  <option value="All">All Status</option>
+                  <option value="Solved">Solved</option>
+                  <option value="Attempted">Attempted</option>
+                  <option value="Unsolved">Unsolved</option>
+                </select>
+                <ChevronDown className="w-3.5 h-3.5 text-neutral-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            )}
 
           </div>
         </div>

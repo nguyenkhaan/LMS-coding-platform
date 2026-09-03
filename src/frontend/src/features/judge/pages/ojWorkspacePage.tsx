@@ -592,25 +592,43 @@ export function OJWorkspacePage() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center gap-2.5">
-            <button
-              onClick={handleRunCode}
-              disabled={isRunning || isSubmitting}
-              className="px-4 py-1.5 bg-white hover:bg-slate-50 rounded-md border border-indigo-900 text-indigo-900 text-sm font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
-            >
-              <Play className="w-3.5 h-3.5 fill-indigo-900 text-indigo-900" />
-              {isRunning ? 'Running...' : 'Run Code'}
-            </button>
+          {user ? (
+            <div className="flex items-center gap-2.5">
+              <button
+                onClick={handleRunCode}
+                disabled={isRunning || isSubmitting}
+                className="px-4 py-1.5 bg-white hover:bg-slate-50 rounded-md border border-indigo-900 text-indigo-900 text-sm font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                <Play className="w-3.5 h-3.5 fill-indigo-900 text-indigo-900" />
+                {isRunning ? 'Running...' : 'Run Code'}
+              </button>
 
-            <button
-              onClick={handleSubmitCode}
-              disabled={isRunning || isSubmitting}
-              className="px-5 py-1.5 bg-rose-500 hover:bg-rose-600 rounded-md text-white text-sm font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-sm shadow-rose-500/20 cursor-pointer"
-            >
-              <Check className="w-3.5 h-3.5 stroke-[3]" />
-              {isSubmitting ? 'Judging...' : 'Submit Code'}
-            </button>
-          </div>
+              <button
+                onClick={handleSubmitCode}
+                disabled={isRunning || isSubmitting}
+                className="px-5 py-1.5 bg-rose-500 hover:bg-rose-600 rounded-md text-white text-sm font-semibold flex items-center gap-1.5 transition-colors disabled:opacity-50 shadow-sm shadow-rose-500/20 cursor-pointer"
+              >
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
+                {isSubmitting ? 'Judging...' : 'Submit Code'}
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                to="/login"
+                state={{ from: { pathname: `/practice/${problemSlug}` } }}
+                className="px-3.5 py-1.5 bg-indigo-900 hover:bg-indigo-950 text-white rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
+              >
+                Log In
+              </Link>
+              <Link
+                to="/register"
+                className="px-3.5 py-1.5 bg-white hover:bg-slate-50 border border-neutral-300 text-zinc-700 rounded-md text-xs font-semibold transition-colors"
+              >
+                Register
+              </Link>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-6">
@@ -870,6 +888,33 @@ export function OJWorkspacePage() {
                 }}
               />
             </div>
+
+            {/* LeetCode-style Bottom Bar for Guest Mode */}
+            {!user && (
+              <div className="bg-gray-950 border-t border-gray-800 px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Lock className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span>
+                    <strong className="text-white font-semibold">Log in or register</strong> to run test cases and submit your code.
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Link
+                    to="/login"
+                    state={{ from: { pathname: `/practice/${problemSlug}` } }}
+                    className="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-md transition-colors shadow-xs"
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    to="/register"
+                    className="px-3 py-1 bg-gray-800 hover:bg-gray-700 text-slate-200 font-medium rounded-md transition-colors border border-gray-700"
+                  >
+                    Register
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Bottom: Test Cases / Output / Console Panel */}

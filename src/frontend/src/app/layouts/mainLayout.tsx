@@ -134,134 +134,61 @@ export const MainLayout: React.FC = () => {
               Instructors
             </Link>
 
-            {/* Practice (OJ) - with Submenu & Visual Lock for Guests */}
+            {/* Practice (OJ) - with Submenu */}
             <div className="relative group py-2">
-              {isAuthenticated ? (
-                <Link
-                  to="/practice"
-                  className={`flex items-center gap-1 text-sm font-medium transition-colors ${
-                    location.pathname.startsWith('/practice') || location.pathname.startsWith('/submissions')
-                      ? 'text-indigo-900 font-semibold'
-                      : 'text-zinc-900 hover:text-indigo-900'
-                  }`}
-                >
-                  <span>Practice (OJ)</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-neutral-400 group-hover:text-indigo-900 group-hover:rotate-180 transition-transform duration-200" />
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => openGuestLock('Online Judge', '/practice')}
-                  className={`flex items-center gap-1.5 text-sm font-medium transition-colors cursor-pointer ${
-                    location.pathname.startsWith('/practice') || location.pathname.startsWith('/submissions')
-                      ? 'text-indigo-900 font-semibold'
-                      : 'text-zinc-900 hover:text-indigo-900'
-                  }`}
-                >
-                  <span>Practice (OJ)</span>
-                  <span title="Sign in required to access Online Judge">
-                    <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                  </span>
-                  <ChevronDown className="w-3.5 h-3.5 text-neutral-400 group-hover:text-indigo-900 group-hover:rotate-180 transition-transform duration-200" />
-                </button>
-              )}
+              <Link
+                to="/practice"
+                className={`flex items-center gap-1 text-sm font-medium transition-colors ${
+                  location.pathname.startsWith('/practice') || location.pathname.startsWith('/submissions')
+                    ? 'text-indigo-900 font-semibold'
+                    : 'text-zinc-900 hover:text-indigo-900'
+                }`}
+              >
+                <span>Practice (OJ)</span>
+                <ChevronDown className="w-3.5 h-3.5 text-neutral-400 group-hover:text-indigo-900 group-hover:rotate-180 transition-transform duration-200" />
+              </Link>
 
               {/* Practice Dropdown Menu */}
               <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform translate-y-2 group-hover:translate-y-0 z-50">
                 <div className="w-72 bg-white rounded-2xl border border-neutral-200 shadow-xl p-2 flex flex-col gap-1">
-                  {isAuthenticated ? (
-                    <>
-                      <Link
-                        to="/practice"
-                        className="p-2.5 rounded-xl hover:bg-indigo-50/70 flex items-start gap-3 transition-colors"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-900 flex items-center justify-center shrink-0">
-                          <Code2 className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <span className="text-sm font-semibold text-zinc-900 block">Problem List</span>
-                          <span className="text-xs text-neutral-400">Explore 100+ coding challenges</span>
-                        </div>
-                      </Link>
+                  <Link
+                    to="/practice"
+                    className="p-2.5 rounded-xl hover:bg-indigo-50/70 flex items-start gap-3 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-900 flex items-center justify-center shrink-0">
+                      <Code2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-sm font-semibold text-zinc-900 block">Problem List</span>
+                      <span className="text-xs text-neutral-400">Explore 100+ coding challenges</span>
+                    </div>
+                  </Link>
 
-                      <Link
-                        to="/submissions"
-                        className="p-2.5 rounded-xl hover:bg-indigo-50/70 flex items-start gap-3 transition-colors"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
-                          <FileText className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <span className="text-sm font-semibold text-zinc-900 block">Submission History</span>
-                          <span className="text-xs text-neutral-400">Review past verdicts, code &amp; stats</span>
-                        </div>
-                      </Link>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => openGuestLock('Online Judge', '/practice')}
-                        className="w-full p-2.5 rounded-xl hover:bg-indigo-50/70 flex items-start gap-3 transition-colors text-left cursor-pointer"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-200/50">
-                          <Lock className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <span className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
-                            Problem List
-                            <Lock className="w-3 h-3 text-amber-500" />
-                          </span>
-                          <span className="text-xs text-neutral-400">Explore 100+ coding challenges (Locked)</span>
-                        </div>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => openGuestLock('Online Judge', '/submissions')}
-                        className="w-full p-2.5 rounded-xl hover:bg-indigo-50/70 flex items-start gap-3 transition-colors text-left cursor-pointer"
-                      >
-                        <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-200/50">
-                          <Lock className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <span className="text-sm font-semibold text-zinc-900 flex items-center gap-1.5">
-                            Submission History
-                            <Lock className="w-3 h-3 text-amber-500" />
-                          </span>
-                          <span className="text-xs text-neutral-400">Review past verdicts &amp; code (Locked)</span>
-                        </div>
-                      </button>
-                    </>
-                  )}
+                  <Link
+                    to="/submissions"
+                    className="p-2.5 rounded-xl hover:bg-indigo-50/70 flex items-start gap-3 transition-colors"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                      <FileText className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-sm font-semibold text-zinc-900 block">Submission History</span>
+                      <span className="text-xs text-neutral-400">Review past verdicts, code &amp; stats</span>
+                    </div>
+                  </Link>
                 </div>
               </div>
             </div>
 
             {/* AI Interview */}
-            {isAuthenticated ? (
-              <Link
-                to="/interview"
-                className={`text-sm font-medium transition-colors ${
-                  location.pathname.startsWith('/interview') ? 'text-indigo-900 font-semibold' : 'text-zinc-900 hover:text-indigo-900'
-                }`}
-              >
-                AI Interview
-              </Link>
-            ) : (
-              <button
-                type="button"
-                onClick={() => openGuestLock('AI Mock Interview', '/interview')}
-                className={`flex items-center gap-1.5 text-sm font-medium transition-colors cursor-pointer ${
-                  location.pathname.startsWith('/interview') ? 'text-indigo-900 font-semibold' : 'text-zinc-900 hover:text-indigo-900'
-                }`}
-              >
-                <span>AI Interview</span>
-                <span title="Sign in required to access AI Mock Interview">
-                  <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                </span>
-              </button>
-            )}
+            <Link
+              to="/interview"
+              className={`text-sm font-medium transition-colors ${
+                location.pathname.startsWith('/interview') ? 'text-indigo-900 font-semibold' : 'text-zinc-900 hover:text-indigo-900'
+              }`}
+            >
+              AI Interview
+            </Link>
           </nav>
 
           {/* Actions (Search + Notifications + User profile) */}
