@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { BookOpen, ChevronDown, ChevronUp, PlayCircle, HelpCircle, FileText, Lock } from 'lucide-react';
+import { useAuthStore } from '@/features/auth/model/useAuthStore';
 
 interface ContentItem {
 	id: number;
@@ -23,6 +24,7 @@ interface SectionItem {
 }
 
 export const CourseCurriculum: React.FC = () => {
+	const { isAuthenticated } = useAuthStore();
 	const sections: SectionItem[] = [
 		{
 			id: 1,
@@ -192,7 +194,8 @@ export const CourseCurriculum: React.FC = () => {
 																		<PlayCircle className="w-4 h-4 text-indigo-600 group-hover:scale-110 transition-transform" />
 																		<span>{content.title}</span>
 																	</div>
-																	<span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-900 font-bold uppercase tracking-wider">
+																	<span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-900 font-bold uppercase tracking-wider flex items-center gap-1">
+																		{!isAuthenticated && <Lock className="w-3 h-3 text-amber-500" />}
 																		Solve &rarr;
 																	</span>
 																</Link>

@@ -9,7 +9,8 @@ import {
   Shield,
   Clock,
   ArrowRight,
-  Bot
+  Bot,
+  Lock
 } from 'lucide-react';
 
 const TOPICS = [
@@ -50,28 +51,30 @@ export function InterviewSetupPage() {
       {/* 2. MAIN SETUP CONTENT (Conditionally Rendered by Auth State) */}
       <div className="self-stretch max-w-5xl mx-auto w-full px-6 pt-8 pb-10">
         {!isAuthenticated ? (
-          /* Guest State: Prompt to Log In / Register — No Interview Setup DOM */
+          /* Guest State: Prompt to Log In / Register with Lock UX */
           <div className="bg-white rounded-3xl border border-neutral-200 shadow-sm p-12 lg:p-16 flex flex-col items-center justify-center text-center gap-6">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-900 flex items-center justify-center shadow-2xs">
-              <Bot className="w-8 h-8" />
+            <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200/60 text-amber-600 flex items-center justify-center shadow-2xs relative">
+              <Bot className="w-8 h-8 opacity-40" />
+              <Lock className="w-6 h-6 text-amber-600 absolute" />
             </div>
 
             <div className="max-w-md flex flex-col gap-2">
-              <h2 className="text-zinc-900 text-2xl font-extrabold tracking-tight">
-                Log in to access AI Mock Interview
+              <h2 className="text-zinc-900 text-2xl font-extrabold tracking-tight flex items-center justify-center gap-2">
+                <span>Sign In Required for AI Mock Interview</span>
+                <Lock className="w-5 h-5 text-amber-500" />
               </h2>
               <p className="text-neutral-500 text-sm leading-relaxed">
-                AI Mock Interview is available for registered students. Please log in or create an account to start your interactive AI technical interview session.
+                SkillBoost AI Technical Mock Interview sessions, adaptive question generation, realtime score evaluation, and session transcripts are exclusively available to registered members. Please sign in or create an account to start your interview.
               </p>
             </div>
 
             <div className="flex flex-wrap items-center justify-center gap-3.5 pt-2">
               <Link
                 to="/login"
-                state={{ from: '/interview' }}
-                className="px-6 py-2.5 bg-indigo-900 hover:bg-indigo-950 text-white text-sm font-bold rounded-xl shadow-md transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+                state={{ from: { pathname: '/interview' } }}
+                className="px-6 py-2.5 bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold rounded-xl shadow-md shadow-rose-500/20 transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
               >
-                <span>Log In</span>
+                <span>Sign In to Continue</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link

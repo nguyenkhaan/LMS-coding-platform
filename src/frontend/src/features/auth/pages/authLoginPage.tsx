@@ -22,9 +22,10 @@ export const LoginPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
+    flow: 'auth-code',
+    onSuccess: async (codeResponse) => {
       setIsLoading(true);
-      const ok = await oauthService.loginWithGoogle(tokenResponse.access_token);
+      const ok = await oauthService.loginWithGoogle(codeResponse.code);
       setIsLoading(false);
       if (ok) {
         navigate(intendedDestination || '/student/dashboard');
