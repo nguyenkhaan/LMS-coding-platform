@@ -13,6 +13,7 @@ from src.modules.teacher.teacher_problem.teacher_problem_dto import (
     ProblemWrite,
     TestcaseUploadResponse,
     TestcaseView,
+    UploadTestcase,
 )
 from src.modules.teacher.teacher_problem.teacher_problem_service import TeacherProblemService
 
@@ -85,13 +86,16 @@ async def upload_testcase(
 """
 @router.post("/problems/{problem_id}/testcases/upload" , response_model=TestcaseUploadResponse , status_code = status.HTTP_201_CREATED) 
 async def upload_testcase(
+    problem_id : int, 
+    data : UploadTestcase, 
     input: UploadFile = File(...),  
     output: UploadFile = File(...), 
-    service : TeacherProblemService = Depends(get_teacher_problem_service)
+    service : TeacherProblemService = Depends(get_teacher_problem_service),
+    user = Depends(require_role(Role.TEACHER))
 ): 
     validate_file(input , r'inp\d{2}') 
     validate_file(output , r'out\d{2}')
-    
-    result = await service.upload_testcase(2 , 2 , 50 , True , input, output)
+    teacher_id = int(user.get('sub')) 
+    result = await service.upload_testcase(teacher_id , int(problem_id) , data.score , data.is_hidden , input, output)
     return result 
     

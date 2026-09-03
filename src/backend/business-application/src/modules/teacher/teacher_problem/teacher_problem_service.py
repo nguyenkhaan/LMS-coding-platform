@@ -180,7 +180,7 @@ class TeacherProblemService:
     """
     # Note tien hanh tao them cac du lieu de gui chung voi cai nay, tam thoi chugn ta se mock 
     # cac gia tri problem_id, is_hidden, score, teacher_id .... 
-    async def upload_testcase(self, teacher_id : int, problem_id : int, score: int, is_hidden: bool, input_file: UploadFile , output_file : UploadFile): 
+    async def upload_testcase(self, teacher_id : int, problem_id : int, score: float, is_hidden: bool, input_file: UploadFile , output_file : UploadFile): 
         try: 
             # kiem tra xem co dung la teacher voi id nay co the upload testcase cho model nay khong. Tam thoi chua trien khai 
             # Tam thoi chung ta se tien hanh gan cung 
