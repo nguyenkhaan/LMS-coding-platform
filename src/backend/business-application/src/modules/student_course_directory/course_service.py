@@ -10,8 +10,9 @@ from src.models.enrollment_model import EnrollmentModel
 from src.models.course_review_model import CourseReviewModel
 from src.models.section_model import SectionModel
 from src.models.lesson_model import LessonModel
+from src.models.lesson_content_progress_model import LessonContentProgressModel
 from sqlalchemy.orm import selectinload
-from sqlalchemy import select, or_, func
+from sqlalchemy import select, or_, func, delete
 from src.modules.student_course_directory.course_dto import (
     CourseCatalogResponse,
     CourseDetailResponse,
@@ -899,8 +900,36 @@ class CourseService:
     # ------------------------------------------------------------------
 
     async def unenroll_course(self, slug: str, user_id: int) -> UnenrollResponse:
-        course = next((c for c in _MOCK_COURSES if c.slug == slug), None)
-        if course is None:
+        # Check if course exists
+        course_stmt = select(CourseModel).where(CourseModel.slug == slug)
+        course = (await self.db_session.execute(course_stmt)).scalar_one_or_none()
+        if not course:
             raise HTTPException(status_code=404, detail="Course not found")
+
+        # Check if enrollment exists
+        enroll_stmt = select(EnrollmentModel).where(
+            EnrollmentModel.student_id == user_id,
+            EnrollmentModel.course_id == course.id,
+        )
+        enrollment = (await self.db_session.execute(enroll_stmt)).scalar_one_or_none()
+        
+        if not enrollment:
+            # Tra api_spec.md: Không có api_spec cho endpoint unenroll.
+            # Trả về 404 vì resource (enrollment) không tồn tại cho student này.
+            raise HTTPException(status_code=404, detail="Enrollment not found")
+
+        # Hard delete: No "unenrolled" status in EnrollStatus.
+        # TODO: confirm with product/leader whether unenroll should hard-delete progress data or preserve history - api_spec.md doesn't define this endpoint.
+        # Must delete LessonContentProgressModel first to avoid foreign key violation.
+        del_progress_stmt = delete(LessonContentProgressModel).where(
+            LessonContentProgressModel.enrollment_id == enrollment.id
+        )
+        await self.db_session.execute(del_progress_stmt)
+        
+        del_enrollment_stmt = delete(EnrollmentModel).where(
+            EnrollmentModel.id == enrollment.id
+        )
+        await self.db_session.execute(del_enrollment_stmt)
+        await self.db_session.commit()
 
         return UnenrollResponse(message=f"Successfully unenrolled from course '{course.title}'")

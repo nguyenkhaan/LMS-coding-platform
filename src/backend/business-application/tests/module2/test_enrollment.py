@@ -98,11 +98,14 @@ class TestEnrollCourse:
 
 class TestUnenrollCourse:
     
-    MOCK_FREE_SLUG = "nhap-mon-lap-trinh-python"
-    MOCK_UNKNOWN_SLUG = "khoa-hoc-khong-ton-tai"
+    # We use actual seeded course slugs
+    FREE_SLUG = "python-fundamentals"
+    PAID_SLUG = "advanced-algorithms"
+    UNKNOWN_SLUG = "khoa-hoc-khong-ton-tai"
 
     def test_unenroll_course_returns_200_for_existing_slug(self, client):
-        response = client.post(f"/api/courses/{self.MOCK_FREE_SLUG}/unenroll")
+        # By default, client uses sub=1 (student) which is enrolled in python-fundamentals
+        response = client.post(f"/api/courses/{self.FREE_SLUG}/unenroll")
 
         assert response.status_code == 200
         body = response.json()
@@ -111,14 +114,14 @@ class TestUnenrollCourse:
         assert len(body["message"]) > 0
 
     def test_unenroll_course_message_contains_course_title(self, client):
-        response = client.post(f"/api/courses/{self.MOCK_FREE_SLUG}/unenroll")
+        response = client.post(f"/api/courses/{self.FREE_SLUG}/unenroll")
 
         assert response.status_code == 200
-        # Service returns: "Successfully unenrolled from course '<title>'"
         assert "Successfully unenrolled" in response.json()["message"]
+        assert "Python Fundamentals" in response.json()["message"]
 
     def test_unenroll_course_returns_404_for_unknown_slug(self, client):
-        response = client.post(f"/api/courses/{self.MOCK_UNKNOWN_SLUG}/unenroll")
+        response = client.post(f"/api/courses/{self.UNKNOWN_SLUG}/unenroll")
 
         assert response.status_code == 404
         body = response.json()
@@ -126,7 +129,24 @@ class TestUnenrollCourse:
         assert "detail" in body
         assert body["code"] == 404
 
+    def test_unenroll_course_returns_404_if_not_enrolled(self, client):
+        from src.app import app
+        from src.middlewares.auth_middleware import get_current_user
+        
+        # Override with teacher (id=2) who is NOT enrolled in the courses
+        app.dependency_overrides[get_current_user] = lambda: {"sub": 2, "email": "teacher@gmail.com", "roles": ["student"]}
+        
+        response = client.post(f"/api/courses/{self.FREE_SLUG}/unenroll")
+        
+        # We expect a 404 because the enrollment doesn't exist
+        assert response.status_code == 404
+        assert "Enrollment not found" in response.json()["detail"]
+        
+        # Restore override
+        app.dependency_overrides.pop(get_current_user, None)
+        app.dependency_overrides[get_current_user] = lambda: {"sub": 1, "email": "student@gmail.com", "roles": ["student"]}
+
     def test_unenroll_course_returns_401_without_auth(self, unauth_client):
-        response = unauth_client.post(f"/api/courses/{self.MOCK_FREE_SLUG}/unenroll")
+        response = unauth_client.post(f"/api/courses/{self.FREE_SLUG}/unenroll")
 
         assert response.status_code == 401
