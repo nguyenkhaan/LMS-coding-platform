@@ -159,7 +159,9 @@ export const MainLayout: React.FC = () => {
                   }`}
                 >
                   <span>Practice (OJ)</span>
-                  <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" title="Sign in required to access Online Judge" />
+                  <span title="Sign in required to access Online Judge">
+                    <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  </span>
                   <ChevronDown className="w-3.5 h-3.5 text-neutral-400 group-hover:text-indigo-900 group-hover:rotate-180 transition-transform duration-200" />
                 </button>
               )}
@@ -255,7 +257,9 @@ export const MainLayout: React.FC = () => {
                 }`}
               >
                 <span>AI Interview</span>
-                <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" title="Sign in required to access AI Mock Interview" />
+                <span title="Sign in required to access AI Mock Interview">
+                  <Lock className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                </span>
               </button>
             )}
           </nav>
