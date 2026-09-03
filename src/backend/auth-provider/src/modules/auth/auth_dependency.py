@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.db import get_async_db_session
 from src.modules.auth.auth_service import AuthService
 from src.modules.auth.session_service import SessionService
-from src.cores.redis import redis_client
 from src.modules.auth.jwt.jwt_service import JwtService
 from src.services.email_client import SMTPClient
 

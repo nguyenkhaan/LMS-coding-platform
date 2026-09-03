@@ -1,4 +1,3 @@
-# Nho dung skill clean-comments de xoa di cac comment do AI tao ra **Quantrong** 
 from enum import Enum
 from datetime import datetime
 from typing import Optional
@@ -141,6 +140,9 @@ class QuizQuestionResponse(BaseModel):
 class QuizResponse(BaseModel):
     id: int
     title: str
+    # Teacher-configured pass threshold (0–10 scale, matches quiz.passing_score in DB).
+    # Kept in this response so submit_quiz can compare without a second DB lookup.
+    passing_score: float
     questions: list[QuizQuestionResponse]
     model_config = ConfigDict(from_attributes=True)
 

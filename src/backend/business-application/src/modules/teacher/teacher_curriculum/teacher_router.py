@@ -2,10 +2,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path
 
+from src.middlewares.auth_middleware import UserPayload
 from src.middlewares.role_middleware import require_role
 from src.models.base_model import Role
-from src.modules.teacher.teacher_dependency import get_teacher_service
-from src.modules.teacher.teacher_dto import (
+from src.modules.teacher.teacher_curriculum.teacher_curriculum_dependency import (
+    get_teacher_service,
+)
+from src.modules.teacher.teacher_curriculum.teacher_curriculum_dto import (
     CurriculumReorderRequest,
     CurriculumReorderResponse,
     LessonContentBindRequest,
@@ -23,12 +26,14 @@ from src.modules.teacher.teacher_dto import (
     SectionView,
     SectionWriteRequest,
 )
-from src.modules.teacher.teacher_service import TeacherService
+from src.modules.teacher.teacher_curriculum.teacher_curriculum_service import (
+    TeacherService,
+)
 
 
-router = APIRouter(prefix="/teacher", tags=["Teacher Curriculum Builder"])
+router = APIRouter(tags=["Teacher Curriculum Builder"])
 
-TeacherUser = Annotated[dict, Depends(require_role(Role.TEACHER))]
+TeacherUser = Annotated[UserPayload, Depends(require_role(Role.TEACHER))]
 TeacherServiceDependency = Annotated[TeacherService, Depends(get_teacher_service)]
 
 

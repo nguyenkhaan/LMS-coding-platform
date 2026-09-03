@@ -14,16 +14,17 @@ dependencies = [
     "pwdlib[argon2]>=0.3.0",
     "python-dotenv>=1.2.2",
     "python-multipart>=0.0.32",
-    "redis>=8.0.1",
     "uvicorn>=0.50.2",
     "sqlalchemy[asyncio]>=2.0.51",
     "upstash-redis>=1.7.0",
     "grpcio>=1.83.0",
     "grpcio-tools>=1.83.0",
     "aio-pika>=9.0.0",
+    "minio>=7.2.20",
 ]
 
 [dependency-groups]
 dev = [
     "mypy-protobuf>=5.1.0",
+    "pytest-asyncio>=1.4.0",
 ]

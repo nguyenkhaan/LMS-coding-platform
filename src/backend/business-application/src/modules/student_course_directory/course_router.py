@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Query
 
-from src.middlewares.auth_middleware import get_current_user
+from src.middlewares.auth_middleware import UserPayload, get_current_user
 from src.modules.student_course_directory.course_dependency import get_course_service
 from src.modules.student_course_directory.course_dto import (
     CourseCatalogResponse,
@@ -53,11 +53,9 @@ async def get_course_detail(
 @router.post("/{slug}/enroll", response_model=EnrollResponse, status_code=201)
 async def enroll_course(
     slug: Annotated[str, Path()],
-    user: dict = Depends(get_current_user),
+    user: UserPayload = Depends(get_current_user),
     service: CourseService = Depends(get_course_service),
 ) -> EnrollResponse:
-    # payload from get_current_user: {"sub": int, "email": str, "roles": list}
-    # "sub" is already cast to int by auth_middleware.py (line 36: user_id = int(sub))
     user_id: int | None = user.get("sub", None)
     if not user_id:
         raise HTTPException(
@@ -74,10 +72,9 @@ async def enroll_course(
 @router.post("/{slug}/unenroll", response_model=UnenrollResponse, status_code=200)
 async def unenroll_course(
     slug: Annotated[str, Path()],
-    user: dict = Depends(get_current_user),
+    user: UserPayload = Depends(get_current_user),
     service: CourseService = Depends(get_course_service),
 ) -> UnenrollResponse:
-    # payload from get_current_user: {"sub": int, "email": str, "roles": list}
     user_id: int | None = user.get("sub", None)
     if not user_id:
         raise HTTPException(

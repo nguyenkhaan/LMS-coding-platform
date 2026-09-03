@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI , APIRouter
 from fastapi.middleware.cors import CORSMiddleware
-
+from src.minio.minio_handler import MinioHandler
 from src.consumers.submission_execution_consumer import process_submission_execution_request
 from src.messaging.rabbitmq_manager import RabbitMQManager
 from src.bases.constants.submission_queues import SUBMISSION_EXECUTION_QUEUE
@@ -12,11 +12,13 @@ async def lifespan(app : FastAPI):
     rabbitmq_manager = RabbitMQManager(
         url = RABBITMQ_URL
     )  
+    minio_handler = MinioHandler() 
     await rabbitmq_manager.connect()
     async def handle_submission_execution_request(submission_execution_request):
         await process_submission_execution_request(
             submission_execution_request,
-            rabbitmq_manager
+            rabbitmq_manager, 
+            minio_handler
         )
     await rabbitmq_manager.consume(
         SUBMISSION_EXECUTION_QUEUE,

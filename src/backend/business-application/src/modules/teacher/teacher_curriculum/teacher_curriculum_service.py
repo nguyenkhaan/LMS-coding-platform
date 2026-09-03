@@ -14,7 +14,7 @@ from src.models.problem_model import ProblemModel
 from src.models.quiz_model import QuizModel
 from src.models.reading_content_model import ReadingContentModel
 from src.models.section_model import SectionModel
-from src.modules.teacher.teacher_dto import (
+from src.modules.teacher.teacher_curriculum.teacher_curriculum_dto import (
     CurriculumItemType,
     CurriculumReorderRequest,
     CurriculumReorderResponse,
@@ -172,9 +172,9 @@ class TeacherService:
             )
             self.db_session.add(new_section)
 
-            await self.db_session.flush() # Dong bo du lieu xuong database
+            await self.db_session.flush()
             await self.db_session.commit()
-            await self.db_session.refresh(new_section) # Tai du lieu len
+            await self.db_session.refresh(new_section)
 
             return SectionView(
                 id = new_section.id,
@@ -184,7 +184,6 @@ class TeacherService:
             )
         except Exception as e:
             await self.db_session.rollback()
-            print("Create course section error:" , e)
             raise
 
     async def update_course_section(self, section_id: int, teacher_id: int, data: SectionUpdateRequest) -> SectionView:
@@ -206,7 +205,6 @@ class TeacherService:
                     status_code = 404,
                     detail = "Course not found"
                 )
-            #$ Cap nhat title
             if data.title is not None:
                 result.title = data.title
             if data.position is not None:
@@ -228,13 +226,8 @@ class TeacherService:
                 position = result.position,
                 course_id = result.course_id
             )
-            # neu chi lay 1 phan thi no chi la gia tri. Khong phai object nen khong the thuc hien viec update
-            # .sclar(): Tra ve cot dau tien, row dau tien cua du lieu.  Neu nhu select ca object thi no se tra ve chinh object do (rat tien loi)/ Khong su dung them .all() hay .first() nua
-            # .scalars(): Tra ve cot dau tien
-            # .all(), .first(): Tra ve toan bo dong va dong dau tien thoi
-        except Exception  as e:
+        except Exception as e:
             await self.db_session.rollback()
-            print("Update section error: " , e)
             raise
 
     async def delete_course_section(self, section_id: int, teacher_id: int) -> MessageResponse:
@@ -266,7 +259,6 @@ class TeacherService:
             return MessageResponse(message="Section deleted")
         except Exception as e:
             await self.db_session.rollback()
-            print("Delete section error:", e)
             raise e
 
     async def create_lesson(self, section_id: int, teacher_id: int, data: LessonWriteRequest) -> LessonView:
@@ -305,7 +297,6 @@ class TeacherService:
             return LessonView.model_validate(lesson)
         except Exception as e:
             await self.db_session.rollback()
-            print("Create lesson error:", e)
             raise e
 
     async def update_lesson(self, lesson_id: int, teacher_id: int, data: LessonUpdateRequest) -> LessonView:
@@ -351,7 +342,6 @@ class TeacherService:
             return LessonView.model_validate(lesson)
         except Exception as e:
             await self.db_session.rollback()
-            print("Update lesson error:", e)
             raise e
 
     async def delete_lesson(self, lesson_id: int, teacher_id: int) -> MessageResponse:
@@ -388,7 +378,6 @@ class TeacherService:
             return MessageResponse(message="Lesson deleted")
         except Exception as e:
             await self.db_session.rollback()
-            print("Delete lesson error:", e)
             raise e
 
     async def create_reading_content(self, lesson_id: int, teacher_id: int, data: ReadingContentCreateRequest) -> ReadingContentCreateResponse:
@@ -437,7 +426,6 @@ class TeacherService:
             )
         except Exception as e:
             await self.db_session.rollback()
-            print("Create reading content error:", e)
             raise e
 
     async def update_reading_content(self, lesson_content_id: int, teacher_id: int, data: ReadingContentUpdateRequest) -> ReadingContentView:
@@ -480,7 +468,6 @@ class TeacherService:
             return ReadingContentView.model_validate(reading)
         except Exception as e:
             await self.db_session.rollback()
-            print("Update reading content error:", e)
             raise e
 
     async def bind_lesson_content(self, lesson_id: int, teacher_id: int, data: LessonContentBindRequest) -> LessonContentView:
@@ -542,7 +529,6 @@ class TeacherService:
             ) from e
         except Exception as e:
             await self.db_session.rollback()
-            print("Bind lesson content error:", e)
             raise
 
     async def update_lesson_content(self, lesson_content_id: int, teacher_id: int, data: LessonContentUpdateRequest) -> LessonContentView:
@@ -609,7 +595,6 @@ class TeacherService:
             ) from e
         except Exception as e:
             await self.db_session.rollback()
-            print("Update lesson content error:", e)
             raise
 
     async def delete_lesson_content(self, lesson_content_id: int, teacher_id: int) -> MessageResponse:
@@ -666,7 +651,6 @@ class TeacherService:
             ) from e
         except Exception as e:
             await self.db_session.rollback()
-            print("Delete lesson content error:", e)
             raise e
 
     async def reorder_curriculum(self, course_id: int, teacher_id: int, data: CurriculumReorderRequest) -> CurriculumReorderResponse:
@@ -777,5 +761,4 @@ class TeacherService:
             ) from e
         except Exception as e:
             await self.db_session.rollback()
-            print("Reorder curriculum error:", e)
             raise e

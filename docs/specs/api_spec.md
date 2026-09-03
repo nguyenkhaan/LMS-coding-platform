@@ -102,6 +102,7 @@ Các mô tả rút gọn trong bảng route như `CourseView`, `PaymentTransacti
 
 | DTO | Bảng nguồn | Request fields được phép | Stored fields trong response | Field không trả hoặc projection |
 |---|---|---|---|---|
+| `UserIdentityMe`  | `user` | Give Jwt Token in header | `roles,email,account_status` | `id, email, password. more personal information` |
 | `RegisterRequest` / `UserView` | `user` | `full_name`, `address`, `email`, `password` | `id`, `full_name`, `address`, `email`, `avatar_url`, `active`, `account_status`, `created_at`, `updated_at` | Hash `password` trước khi ghi; không trả `password`, `refresh_token`; `status` là legacy và không dùng làm account contract |
 | `UserRoleView` | `user_role` | Admin command nhận `roles[]`; service tạo/xóa row | `id`, `user_id`, `role` | `capabilities` là projection từ role + application |
 | `UserIdentityInternal` | `user_identity` | Google callback nhận transient `credential_code`; provider identity do server lấy từ token đã xác minh | `id`, `user_id`, `provider`, `provider_id`, `created_at`, `updated_at` | Chỉ dùng nội bộ Auth Provider; không trả `provider_id` trong token response và không lưu provider access/ID token |
@@ -205,7 +206,8 @@ Các route trong mục này dùng base URL `http://localhost:4001/api/auth`.
 
 | Method | Route | Actor | Request | Response chính | Quy tắc |
 |---|---|---|---|---|---|
-| `GET` | `/users/me` | User đăng nhập | - | `UserView`, `UserRoleView[]`, `StudentProfileView?`, `TeacherProfileView?`, application status và `capabilities` projection | Chỉ current user; `can_teach=true` chỉ khi application `APPROVED` |
+| `GET` | `/users/me` | User đăng nhập | - | `UserIdentityMe` | Chỉ trả về một số thông tin cơ bản của user, sử dụng cho việc xác thực |
+| `GET` | `/users/me/profile` | User profile | - | `StudentProfileView` | Trả về thông tin tài khoản student |
 | `PUT` | `/users/me/profile` | User đăng nhập | `StudentProfileWrite` | `StudentProfileView` | Không sửa role/account status/user khác |
 | `PUT` | `/users/me/teacher-profile` | User đăng nhập | `TeacherProfileWrite` | `TeacherProfileView` | `PENDING` khóa profile; `DRAFT`/`REJECTED`/`APPROVED` được sửa các field profile đã liệt kê. `APPROVED` không mở khóa các identity/document field của application; profile không tự cấp Teacher capability |
 | `GET` | `/admin/users` | Admin | `q`, `role`, `account_status`, `page`, `size` | `UserView[]`, `UserRoleView[]` và capability projections | Không trả password/token/CCCD |
@@ -326,7 +328,7 @@ Khi Student bắt đầu lại, attempt `IN_PROGRESS` trước đó của cùng 
 | `GET` | `/problems` | Public/User | `tag`, `difficulty`, `page`, `size` | `ProblemView[]`, tags và solved-state projection | Chỉ public/accessible problems |
 | `GET` | `/problems/{slug}` | Public/User | - | `ProblemView`, `ProblemTagView[]`, `LanguageView[]`, configs được phép | Không trả testcase file/raw hidden data |
 | `POST` | `/problems/{slug}/run` | Student | Transient `source_code`, `language_id`, `stdin?` | Transient run status/stdout/stderr/runtime/memory | Không tạo `submission` hay `submission_result_detail`; sandbox, rate limit; custom input không tạo completion |
-| `POST` | `/problems/{slug}/submit` | Student | `SubmissionWrite` không gồm problem/student/status/result fields | `SubmissionView` với `status: "PENDING"` | Access + language validation; enqueue idempotent job |
+| `POST` | `/problems/{slug}/submit` | Student | `SubmissionWrite` không gồm problem/student/status/result fields | `SubmissionView` với `status: "PENDING"` | Access + language validation; enqueue idempotent job; Judge trả progress theo từng testcase |
 | `GET` | `/submissions/{submission_id}` | Submission owner/Problem owner/Admin | - | Role-filtered `SubmissionView`, `SubmissionResultView[]` hoặc hidden summary projection | Hidden testcase chỉ trả aggregate được phép |
 | `GET` | `/problems/{slug}/submissions` | Student | `page`, `size` | Current Student `SubmissionView[]` | Owner only |
 | `POST` | `/teacher/problems` | Approved Teacher | `ProblemWrite` gồm `passing_score`, command `tag_ids[]`, `configs: ProblemConfigWrite[]` | `ProblemView`, tags, configs | `passing_score` là ngưỡng hoàn thành lesson; phải là số không âm; service chỉ cập nhật completion khi submission `ACCEPTED` đạt ngưỡng |
@@ -335,6 +337,8 @@ Khi Student bắt đầu lại, attempt `IN_PROGRESS` trước đó của cùng 
 | `GET` | `/teacher/courses/{course_id}/submissions` | Course owner | `problem_id?`, `student_id?`, `status?`, `page`, `size` | Authorized `SubmissionView[]` và result summary projections | Chỉ submission thuộc course/problem của Teacher |
 
 Judge result phải dùng các status: `PENDING`, `RUNNING`, `ACCEPTED`, `WRONG_ANSWER`, `TIME_LIMIT_EXCEEDED`, `MEMORY_LIMIT_EXCEEDED`, `RUNTIME_ERROR`, `COMPILE_ERROR`.
+
+Judge so khớp output testcase tuyệt đối theo byte UTF-8, bao gồm whitespace và newline cuối. Luồng Submit chạy testcase tuần tự và phát event progress theo đúng thứ tự (`RUNNING` → từng testcase đã chạy → kết quả terminal), với `sequence` tăng dần. Worker dừng ở testcase lỗi đầu tiên; chỉ khi toàn bộ testcase pass mới trả `ACCEPTED`. Event/projection gửi cho Student không được lộ raw input/output hoặc identifier của hidden testcase.
 
 ## 9. Checkout trực tiếp, PayOS và Enrollment
 
