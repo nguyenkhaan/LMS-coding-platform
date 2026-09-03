@@ -56,3 +56,7 @@ class TestcaseUploadResponse(BaseModel):
     uploaded_count: int
     message: str
     testcases: list[TestcaseView]
+
+class UploadTestcase(BaseModel): 
+    is_hidden: bool = True 
+    score : float = 0.0 
