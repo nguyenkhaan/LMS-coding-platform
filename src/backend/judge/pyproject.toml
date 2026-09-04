@@ -12,6 +12,7 @@ dependencies = [
     "alembic>=1.19.1",
     "asyncpg>=0.31.0",
     "fastapi>=0.141.1",
+    "minio>=7.2.20",
     "pydantic>=2.13.4",
     "python-dotenv>=1.2.2",
     "rich>=15.0.0",

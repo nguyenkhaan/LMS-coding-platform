@@ -21,3 +21,9 @@ DATABASE_URL = get_env_var(
 )
 
 RABBITMQ_URL = get_env_var('RABBITMQ_URL')
+# MINIO 
+MINIO_URL = get_env_var('MINIO_URL')
+MINIO_ACCESS_KEY = get_env_var('MINIO_ACCESS_KEY')
+MINIO_SECRET_KEY = get_env_var('MINIO_SECRET_KEY')
+MINIO_BUCKET_NAME = get_env_var('MINIO_BUCKET_NAME')
+MINIO_PORT = get_env_var('MINIO_PORT')

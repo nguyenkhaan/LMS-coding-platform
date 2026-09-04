@@ -1,8 +1,7 @@
 import time
-
+import re 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
-
-from src.cores.settings import S3_BUCKET_NAME
+from src.helpers.validate_file import validate_file
 from src.middlewares.role_middleware import require_role
 from src.models.base_model import Role
 from src.modules.teacher.teacher_problem.teacher_problem_dependency import (
@@ -13,6 +12,8 @@ from src.modules.teacher.teacher_problem.teacher_problem_dto import (
     ProblemView,
     ProblemWrite,
     TestcaseUploadResponse,
+    TestcaseView,
+    UploadTestcase,
 )
 from src.modules.teacher.teacher_problem.teacher_problem_service import TeacherProblemService
 
@@ -48,53 +49,23 @@ async def update_problem(
 ):
     return await service.update_problem(teacher_id, problem_id, data)
 
-from src.cores.settings import MAX_TESTCASE_FILE_SIZE_MB
 
-MAX_FILE_SIZE = MAX_TESTCASE_FILE_SIZE_MB * 1024 * 1024
-ALLOWED_EXTENSIONS = [".txt", ".in", ".out"]
-ALLOWED_MIME_TYPES = ["text/plain"]
 
-def validate_file(file: UploadFile):
-    if not file:
-        raise HTTPException(status_code=400, detail="File is missing")
-    
-    filename = file.filename or ""
-    ext = ""
-    if "." in filename:
-        ext = "." + filename.rsplit(".", 1)[1].lower()
-        
-    if ext not in ALLOWED_EXTENSIONS and file.content_type not in ALLOWED_MIME_TYPES:
-        raise HTTPException(status_code=400, detail=f"Invalid file type for {filename}")
-        
-    if file.size and file.size > MAX_FILE_SIZE:
-        raise HTTPException(status_code=400, detail=f"File {filename} exceeds {MAX_TESTCASE_FILE_SIZE_MB}MB limit")
-        
-@router.post("/problems/{problem_id}/testcases/upload", response_model=TestcaseUploadResponse, status_code=status.HTTP_201_CREATED)
+
+
+
+@router.post("/problems/{problem_id}/testcases/upload" , response_model=TestcaseUploadResponse , status_code = status.HTTP_201_CREATED) 
 async def upload_testcase(
-    problem_id: int,
-    input_file: UploadFile | None = File(None),
-    output_file: UploadFile | None = File(None),
-    score: float = Form(0.0),
-    is_hidden: bool = Form(False),
-    teacher_id: int = Depends(get_current_teacher_id),
-    service: TeacherProblemService = Depends(get_teacher_problem_service)
-):
-    if not input_file or not output_file:
-        raise HTTPException(status_code=400, detail="Both input_file and output_file are required")
-        
-    validate_file(input_file)
-    validate_file(output_file)
+    problem_id : int, 
+    data : UploadTestcase, 
+    input: UploadFile = File(...),  
+    output: UploadFile = File(...), 
+    service : TeacherProblemService = Depends(get_teacher_problem_service),
+    user = Depends(require_role(Role.TEACHER))
+): 
+    validate_file(input , r'inp\d{2}') 
+    validate_file(output , r'out\d{2}')
+    teacher_id = int(user.get('sub')) 
+    result = await service.upload_testcase(teacher_id , int(problem_id) , data.score , data.is_hidden , input, output)
+    return result 
     
-    # TODO: replace with real S3 upload once integration is ready
-    ts = int(time.time())
-    mock_input_key = f"s3://{S3_BUCKET_NAME}/problems/{problem_id}/tc_{ts}_in.txt"
-    mock_output_key = f"s3://{S3_BUCKET_NAME}/problems/{problem_id}/tc_{ts}_out.txt"
-    
-    return await service.upload_testcase(
-        teacher_id=teacher_id,
-        problem_id=problem_id,
-        input_file=mock_input_key,
-        output_file=mock_output_key,
-        score=score,
-        is_hidden=is_hidden
-    )
