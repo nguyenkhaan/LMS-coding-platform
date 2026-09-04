@@ -58,7 +58,7 @@ from src.middlewares.auth_middleware import get_current_user
 SEED_STUDENT = {
     "sub": 1,
     "email": "student@gmail.com",
-    "roles": ["student"],
+    "roles": ["STUDENT"],
 }
 
 # Convenience constants used in test assertions
