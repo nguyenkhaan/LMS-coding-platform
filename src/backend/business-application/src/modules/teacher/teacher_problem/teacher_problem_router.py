@@ -57,7 +57,7 @@ async def update_problem(
 @router.post("/problems/{problem_id}/testcases/upload" , response_model=TestcaseUploadResponse , status_code = status.HTTP_201_CREATED) 
 async def upload_testcase(
     problem_id : int, 
-    data : UploadTestcase, 
+    data : UploadTestcase = Depends(), 
     input: UploadFile = File(...),  
     output: UploadFile = File(...), 
     service : TeacherProblemService = Depends(get_teacher_problem_service),

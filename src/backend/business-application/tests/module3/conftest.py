@@ -86,6 +86,17 @@ def mock_external_services(monkeypatch):
     monkeypatch.setattr("src.app.RabbitMQManager.connect", AsyncMock())
     monkeypatch.setattr("src.app.RabbitMQManager.consume", AsyncMock())
     monkeypatch.setattr("src.app.RabbitMQManager.close", AsyncMock())
+    
+    # Mock MinioHandler to avoid real S3 operations failing due to missing buckets in test environment
+    from unittest.mock import MagicMock
+    mock_minio = MagicMock()
+    mock_minio.put_object.return_value = {
+        'bucket_name': 'lms',
+        'file_name': 'mocked_file_name.txt',
+        'url': 'http://localhost:9000/lms/mocked_file_name.txt'
+    }
+    monkeypatch.setattr("src.services.minio.minio_handler.MinioHandler.put_object", mock_minio.put_object)
+    
     yield
 
 from httpx import AsyncClient, ASGITransport

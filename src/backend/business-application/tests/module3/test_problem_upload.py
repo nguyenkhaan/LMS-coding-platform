@@ -1,10 +1,9 @@
 import pytest
 import io
 
-async def test_teacher_problem_testcase_upload_uses_s3_mock(client):
+async def test_teacher_problem_testcase_upload_uses_minio(client):
     """
-    Test that uploading testcase files uses the S3_BUCKET_NAME env var and
-    inserts into TestcaseModel properly.
+    Test that uploading testcase files uses MinIO and inserts into TestcaseModel properly.
     """
     # 1. Create a Problem
     res = await client.post(
@@ -31,19 +30,19 @@ async def test_teacher_problem_testcase_upload_uses_s3_mock(client):
 
     # 2. Upload testcase
     # Must use multipart/form-data with files and form fields
-    form_data = {
+    params = {
         "score": "10",
         "is_hidden": "true"
     }
     
     files = {
-        "input_file": ("in.txt", io.BytesIO(b"input data"), "text/plain"),
-        "output_file": ("out.txt", io.BytesIO(b"output data"), "text/plain")
+        "input": ("inp01.txt", io.BytesIO(b"input data"), "text/plain"),
+        "output": ("out01.txt", io.BytesIO(b"output data"), "text/plain")
     }
 
     res = await client.post(
         f"/api/teacher/problems/{problem_id}/testcases/upload",
-        data=form_data,
+        params=params,
         files=files
     )
     
@@ -58,9 +57,6 @@ async def test_teacher_problem_testcase_upload_uses_s3_mock(client):
     assert testcase["score"] == 10
     assert testcase["is_hidden"] is True
     
-    # We set S3_BUCKET_NAME=TESTCASE_BUCKET_PLACEHOLDER in .env.example
-    # Note: Since the test runs with local loaded .env, it might be the placeholder or mock-bucket depending on settings.py default
-    # But it should DEFINITELY start with s3://
-    assert testcase["input_file"].startswith("s3://")
-    assert "/problems/" in testcase["input_file"]
-    assert "tc_" in testcase["input_file"]
+    # Assert Minio response properties based on mock
+    assert testcase["input_file"] == "mocked_file_name.txt"
+    assert testcase["output_file"] == "mocked_file_name.txt"
