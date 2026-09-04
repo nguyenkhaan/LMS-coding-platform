@@ -1,7 +1,8 @@
-﻿import time
+import time
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 
+from src.cores.settings import S3_BUCKET_NAME
 from src.middlewares.role_middleware import require_role
 from src.models.base_model import Role
 from src.modules.teacher.teacher_problem.teacher_problem_dependency import (
@@ -84,10 +85,10 @@ async def upload_testcase(
     validate_file(input_file)
     validate_file(output_file)
     
-    # Mock upload by generating fake object keys
+    # TODO: replace with real S3 upload once integration is ready
     ts = int(time.time())
-    mock_input_key = f"s3://mock-bucket/problems/{problem_id}/tc_{ts}_in.txt"
-    mock_output_key = f"s3://mock-bucket/problems/{problem_id}/tc_{ts}_out.txt"
+    mock_input_key = f"s3://{S3_BUCKET_NAME}/problems/{problem_id}/tc_{ts}_in.txt"
+    mock_output_key = f"s3://{S3_BUCKET_NAME}/problems/{problem_id}/tc_{ts}_out.txt"
     
     return await service.upload_testcase(
         teacher_id=teacher_id,
