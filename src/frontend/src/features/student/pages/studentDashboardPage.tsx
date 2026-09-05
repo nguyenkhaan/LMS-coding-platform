@@ -408,14 +408,6 @@ export function StudentDashboardPage() {
                   </div>
                 </div>
 
-                {/* View All Button */}
-                <button
-                  onClick={() => navigate('/submissions')}
-                  className="w-full mt-1 py-2.5 bg-indigo-900 hover:bg-indigo-950 text-white rounded-xl text-sm font-semibold transition-colors cursor-pointer shadow-2xs text-center"
-                >
-                  View All
-                </button>
-
               </div>
             </div>
 
