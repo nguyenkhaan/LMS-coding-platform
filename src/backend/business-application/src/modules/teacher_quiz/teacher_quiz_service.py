@@ -18,12 +18,43 @@ from src.modules.teacher_course.teacher_course_service import TeacherCourseServi
 class TeacherQuizService:
     def __init__(self, db: AsyncSession):
         self.db = db
-        self.course_service = TeacherCourseService()
+        self.course_service = TeacherCourseService(self.db)
+
+    async def _verify_lesson_ownership(self, lesson_id: int, teacher_id: int):
+        from sqlalchemy import select
+        from src.models.lesson_model import LessonModel
+        from src.models.section_model import SectionModel
+        from src.models.course_model import CourseModel
+        from src.models.base_model import CourseStatus
+        
+        stmt = select(LessonModel).where(LessonModel.id == lesson_id)
+        lesson = (await self.db.execute(stmt)).scalar_one_or_none()
+        if not lesson:
+            raise HTTPException(status_code=404, detail="LESSON_NOT_FOUND")
+            
+        stmt = select(SectionModel).where(SectionModel.id == lesson.section_id)
+        section = (await self.db.execute(stmt)).scalar_one_or_none()
+        if not section:
+            raise HTTPException(status_code=404, detail="SECTION_NOT_FOUND")
+            
+        stmt = select(CourseModel).where(
+            CourseModel.id == section.course_id,
+            CourseModel.deleted_at.is_(None)
+        )
+        course = (await self.db.execute(stmt)).scalar_one_or_none()
+        if not course:
+            raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+            
+        if course.teacher_id != teacher_id:
+            raise HTTPException(status_code=403, detail="FORBIDDEN")
+            
+        if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
+            raise HTTPException(status_code=409, detail="INVALID_STATE")
 
     async def create_quiz(self, teacher_id: int, lesson_id: int, data: TeacherCourseQuizCreateRequest) -> TeacherCourseQuizCreateResponse:
         # Verify ownership using Task 1 pattern
         # Quiz creation/editing is intentionally NOT restricted by course status (unlike sections/lessons) - confirmed with team lead, since teachers may need to fix quiz content even after course is published.
-        self.course_service._get_lesson_or_404(lesson_id, teacher_id)
+        await self._verify_lesson_ownership(lesson_id, teacher_id)
         
         # Atomic creation
         new_quiz = QuizModel(
@@ -74,7 +105,7 @@ class TeacherQuizService:
             raise HTTPException(status_code=404, detail="QUIZ_NOT_FOUND")
             
         # Verify ownership
-        self.course_service._get_lesson_or_404(lesson_content.lesson_id, teacher_id)
+        await self._verify_lesson_ownership(lesson_content.lesson_id, teacher_id)
         
         # Get quiz
         quiz_stmt = select(QuizModel).where(QuizModel.id == quiz_id)
@@ -113,7 +144,7 @@ class TeacherQuizService:
             raise HTTPException(status_code=404, detail="QUIZ_NOT_FOUND")
             
         # Verify ownership
-        self.course_service._get_lesson_or_404(lesson_content.lesson_id, teacher_id)
+        await self._verify_lesson_ownership(lesson_content.lesson_id, teacher_id)
         
         # Check if quiz exists
         quiz_stmt = select(QuizModel).where(QuizModel.id == quiz_id)
