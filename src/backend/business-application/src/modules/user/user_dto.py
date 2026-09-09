@@ -48,6 +48,25 @@ class UpdateTeacherProfile(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class TeacherProfileView(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    user_id: int
+    avatar_url: str | None = None
+    headline: str | None = None
+    expertise_tags: str | None = None
+    years_of_experience: int | None = None
+    education_entries: str | None = None
+    experience_entries: str | None = None
+    github_url: str | None = None
+    linkedin_url: str | None = None
+    website_url: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
 class UserRoleView(BaseModel):
     id: int
     user_id: int
