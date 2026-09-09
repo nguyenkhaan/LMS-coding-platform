@@ -80,6 +80,8 @@ app.add_middleware(
 )
 v1_router = APIRouter(prefix="/api")
 
+from src.modules.teacher_application.teacher_application_route import router as teacher_application_router, admin_router as admin_teacher_application_router
+
 v1_router.include_router(health_router)
 v1_router.include_router(course_directory_router)
 v1_router.include_router(submission_router)
@@ -87,6 +89,8 @@ v1_router.include_router(lesson_comment_router)
 v1_router.include_router(teacher_router)
 v1_router.include_router(user_router)
 v1_router.include_router(admin_router)
+v1_router.include_router(teacher_application_router)
+v1_router.include_router(admin_teacher_application_router)
 v1_router.include_router(payment_router)
 v1_router.include_router(payment_admin_router)
 
