@@ -18,11 +18,11 @@ class MinioHandler():
             secure=False,
         )
     def presigned_get_object(self, bucket_name, object_name):
-        # Request URL expired after 7 days
+        # Never persist this URL; callers generate it only after authorization.
         url = self.client.presigned_get_object(
             bucket_name=bucket_name,
             object_name=object_name,
-            expires=timedelta(days=7)
+            expires=timedelta(minutes=15)
         )
         return url
 
@@ -50,12 +50,16 @@ class MinioHandler():
                 length=-1,
                 part_size=10 * 1024 * 1024
             )
-            url = self.presigned_get_object(bucket_name=self.bucket_name, object_name=object_name)
             data_file = {
                 'bucket_name': self.bucket_name,
                 'file_name': object_name,
-                'url': url
             }
             return data_file
         except Exception as e:
             raise Exception(e)
+
+    def remove_object(self, object_name):
+        self.client.remove_object(
+            bucket_name=self.bucket_name,
+            object_name=object_name,
+        )

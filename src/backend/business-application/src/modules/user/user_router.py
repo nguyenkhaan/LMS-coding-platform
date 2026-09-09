@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 
 from src.modules.user.user_dto import (
     AdminUserListQuery,
+    TeacherProfileView,
     UpdateStudentProfile,
     UpdateTeacherProfile,
     UpdateUserAccountStatus,
@@ -58,10 +59,20 @@ async def update_student_profile(
     id = user.get('sub')
     return await user_service.update_student_profile(id, data)
 
+
+@router.post('/me/teacher-profile', response_model=TeacherProfileView, status_code=201)
+async def create_teacher_profile(
+    data: UpdateTeacherProfile,
+    user=Depends(require_role(Role.STUDENT)),
+    user_service: UserService = Depends(get_user_service),
+) -> TeacherProfileView:
+    return await user_service.create_teacher_profile(user['sub'], data)
+
+
 @router.put('/me/teacher-profile') 
 async def update_teacher_profile(
     data : UpdateTeacherProfile,
-    user = Depends(require_role(Role.TEACHER)),
+    user = Depends(get_current_user),
     user_service : UserService = Depends(get_user_service)
 ): 
     id = user.get('sub')

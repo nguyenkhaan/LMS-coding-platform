@@ -30,6 +30,7 @@ from src.modules.user.user_dto import (
     UserIdentityMe,
     UserRoleView,
     UserView,
+    TeacherProfileView,
 )
 class UserService: 
     def __init__(self, db_session : AsyncSession): 
@@ -55,6 +56,38 @@ class UserService:
             user_id=user_role.user_id,
             role=user_role.role,
         )
+
+    async def create_teacher_profile(
+        self,
+        user_id: int,
+        data: UpdateTeacherProfile,
+    ) -> TeacherProfileView:
+        try:
+            if await self.db_session.get(UserModel, user_id) is None:
+                raise HTTPException(status_code=404, detail="User not found")
+            if await self.db_session.get(TeacherProfileModel, user_id) is not None:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Teacher profile already exists",
+                )
+
+            profile = TeacherProfileModel(
+                user_id=user_id,
+                **data.model_dump(exclude_none=True),
+            )
+            self.db_session.add(profile)
+            await self.db_session.commit()
+            await self.db_session.refresh(profile)
+            return TeacherProfileView.model_validate(profile)
+        except HTTPException:
+            await self.db_session.rollback()
+            raise
+        except SQLAlchemyError as exc:
+            await self.db_session.rollback()
+            raise HTTPException(
+                status_code=503,
+                detail="Unable to create teacher profile right now",
+            ) from exc
 
     @staticmethod
     def _get_capabilities(
