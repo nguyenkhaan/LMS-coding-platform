@@ -139,7 +139,6 @@
     const errorBox = document.getElementById("error-message");
     const successBox = document.getElementById("success-message");
     const submitBtn = document.getElementById("submit-btn");
-    const BACKEND_URL = 'http://localhost:4001'
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
@@ -152,7 +151,10 @@
         try {
             const formData = new FormData(form);
             console.log("Hello") 
-            const response = await fetch(`/api/auth/login`, {
+            // The login screen can be served directly by auth-provider or
+            // through the gateway. Posting to the current path supports both
+            // forms without hard-coding either host.
+            const response = await fetch(window.location.pathname, {
                 method: "POST",
                 body: formData
             });

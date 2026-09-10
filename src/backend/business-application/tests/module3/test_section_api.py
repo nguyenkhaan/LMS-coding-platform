@@ -1,4 +1,4 @@
-import pytest
+﻿import pytest
 from fastapi.testclient import TestClient
 
 from src.app import app
@@ -87,3 +87,4 @@ def test_delete_section_success():
     # Ensure it's deleted by trying to update it
     response2 = client.put(f"/api/teacher/sections/{section_id}", json={"title": "New", "position": 2})
     assert response2.status_code == 404
+

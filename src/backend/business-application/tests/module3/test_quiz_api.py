@@ -1,4 +1,4 @@
-import pytest
+﻿import pytest
 from httpx import ASGITransport, AsyncClient
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
@@ -387,3 +387,4 @@ async def test_update_quiz_questions_submission_safe():
     
     assert saved_sub is not None
     assert saved_sub.score == 10.0
+

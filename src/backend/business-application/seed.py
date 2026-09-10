@@ -58,7 +58,7 @@ from src.models.problem_config_model import ProblemConfigModel
 from src.models.problem_model import ProblemModel
 from src.models.problem_tag_mapping_model import ProblemTagMappingModel
 from src.models.problem_tag_model import ProblemTagModel
-from src.models.quiz_enrollment_model import QuizEnrollmentModel
+
 from src.models.quiz_attempt_model import QuizAttemptModel
 from src.models.quiz_model import QuizModel
 from src.models.quiz_option_model import QuizOptionModel
@@ -414,8 +414,8 @@ async def seed_learning_and_commerce(
 ) -> dict[str, Any]:
     teacher = users["teacher"]
     student = users["student"]
-    free_enrollment = EnrollmentModel(student_id=student.id, course_id=graph["free_course"].id, status="active", enrolled_at=seed_time - timedelta(days=5))
-    paid_enrollment = EnrollmentModel(student_id=student.id, course_id=graph["paid_course"].id, status="active", enrolled_at=seed_time - timedelta(days=2))
+    free_enrollment = EnrollmentModel(student_id=student.id, course_id=graph["free_course"].id, status="ENROLLED", enrolled_at=seed_time - timedelta(days=5))
+    paid_enrollment = EnrollmentModel(student_id=student.id, course_id=graph["paid_course"].id, status="ENROLLED", enrolled_at=seed_time - timedelta(days=2))
     session.add_all([free_enrollment, paid_enrollment])
     await session.flush()
     session.add_all(
@@ -424,7 +424,6 @@ async def seed_learning_and_commerce(
             LessonContentProgressModel(enrollment_id=free_enrollment.id, lesson_content_id=graph["contents"]["quiz"].id, completed=True, completed_at=seed_time - timedelta(days=4)),
             LessonContentProgressModel(enrollment_id=free_enrollment.id, lesson_content_id=graph["contents"]["problem"].id, completed=True, completed_at=seed_time - timedelta(days=3)),
             LessonContentProgressModel(enrollment_id=paid_enrollment.id, lesson_content_id=graph["contents"]["paid"].id, completed=False),
-            QuizEnrollmentModel(quiz_id=quiz.id, student_id=student.id, enrolled_at=seed_time - timedelta(days=4)),
             CourseFavoriteModel(student_id=student.id, course_id=graph["free_course"].id, created_at=seed_time - timedelta(days=5)),
             CourseReviewModel(course_id=graph["free_course"].id, student_id=student.id, rating=Decimal("5"), content="Clear explanations and useful practice.", created_at=seed_time - timedelta(days=2), updated_at=seed_time - timedelta(days=1)),
         ]
@@ -443,7 +442,7 @@ async def seed_learning_and_commerce(
         QuizSubmissionModel(
             quiz_attempt_id=quiz_attempt.id,
             score=Decimal("100"),
-            answers='{"variables": "no_constant_keyword", "list_length": "4"}',
+            answers='{"1": 2, "2": 4}',
             submitted_at=seed_time - timedelta(days=4),
         )
     )

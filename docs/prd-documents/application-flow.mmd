@@ -55,26 +55,26 @@ sequenceDiagram
     participant PayOS as PayOS
 
     Student->>FE: Open course catalog
-    FE->>API: GET /api/v1/courses?page=&size=&q=&price_type=
+    FE->>API: GET /api/courses?page=&size=&q=&price_type=
     API->>DB: Query published courses
     API-->>FE: Paginated course list
     FE-->>Student: Render catalog cards + filters
 
     Student->>FE: Open course detail
-    FE->>API: GET /api/v1/courses/{slug}
+    FE->>API: GET /api/courses/{slug}
     API->>DB: Load course + sections + lessons
     API-->>FE: Course detail payload
     FE-->>Student: Render curriculum and CTA
 
     alt free course
         Student->>FE: Click enroll
-        FE->>API: POST /api/v1/courses/{slug}/enroll
+        FE->>API: POST /api/courses/{slug}/enroll
         API->>DB: Create enrollment
         API-->>FE: ENROLLED
         FE-->>Student: Show "Vào học ngay"
     else paid course
         Student->>FE: Click buy
-        FE->>API: POST /api/v1/payments/payos/create
+        FE->>API: POST /api/payments/payos/create
         API->>DB: Create transaction=PENDING
         API->>PayOS: Create checkout link
         PayOS-->>API: payos_link + qrcode
@@ -103,19 +103,19 @@ sequenceDiagram
     participant DB as PostgreSQL
 
     Student->>FE: Open classroom lesson
-    FE->>API: GET /api/v1/student/courses/{slug}/study
+    FE->>API: GET /api/student/courses/{slug}/study
     API->>DB: Load sections, lessons, lesson contents, progress
     API-->>FE: Curriculum + current content state
     FE-->>Student: Render sidebar + main content
 
     Student->>FE: Open lesson comments
-    FE->>API: GET /api/v1/lesson-contents/{id}/comments
+    FE->>API: GET /api/lesson-contents/{id}/comments
     API->>DB: Load top-level comments + replies
     API-->>FE: Comment tree
     FE-->>Student: Render thread
 
     Student->>FE: Post comment
-    FE->>API: POST /api/v1/lesson-contents/{id}/comment
+    FE->>API: POST /api/lesson-contents/{id}/comment
     API->>DB: Validate lesson content and parent_id
     API->>DB: Insert comment
     API-->>FE: Created comment
@@ -123,7 +123,7 @@ sequenceDiagram
 
     alt reading complete
         Student->>FE: Click complete
-        FE->>API: POST /api/v1/student/progress/lesson-content/{id}/complete
+        FE->>API: POST /api/student/progress/lesson-content/{id}/complete
         API->>DB: Upsert lesson_content_progress
         API-->>FE: completion state
         FE-->>Student: Mark as completed
@@ -144,7 +144,7 @@ sequenceDiagram
     participant Redis as Redis
 
     TeacherCandidate->>FE: Submit teacher registration form
-    FE->>API: POST /api/v1/teacher-register
+    FE->>API: POST /api/teacher-register
     API->>DB: Validate duplicate pending/approved request
     API->>DB: Insert teacher_register=PENDING
     API->>Redis: Queue verification notification/job
@@ -152,13 +152,13 @@ sequenceDiagram
     FE-->>TeacherCandidate: Show submitted state
 
     Admin->>FE: Open review dashboard
-    FE->>API: GET /api/v1/admin/teacher-registers
+    FE->>API: GET /api/admin/teacher-registers
     API->>DB: Load pending applications
     API-->>FE: Review list
     FE-->>Admin: Render compare panel
 
     Admin->>FE: Approve / reject request
-    FE->>API: PUT /api/v1/admin/teacher-registers/{id}
+    FE->>API: PUT /api/admin/teacher-registers/{id}
     API->>DB: Update register status
     alt approve
         API->>DB: Insert TEACHER role
@@ -182,7 +182,7 @@ sequenceDiagram
     participant Judge as Judge Service
 
     Student->>FE: Submit code
-    FE->>API: POST /api/v1/problems/{slug}/submit
+    FE->>API: POST /api/problems/{slug}/submit
     API->>DB: Create submission=PENDING
     API->>Judge: Dispatch job with code, language, testcases
     Judge->>Judge: Compile/run inside sandbox
@@ -207,21 +207,21 @@ sequenceDiagram
     participant DB as PostgreSQL
 
     Student->>FE: Start interview
-    FE->>API: POST /api/v1/interviews/sessions
+    FE->>API: POST /api/interviews/sessions
     API->>DB: Create interview_session
     API-->>FE: session_id + first_question
     FE-->>Student: Render chat UI
 
     loop chat turns
         Student->>FE: Send answer
-        FE->>API: POST /api/v1/interviews/sessions/{sessionId}/chat
+        FE->>API: POST /api/interviews/sessions/{sessionId}/chat
         API->>DB: Persist interview_message
         API-->>FE: next AI question / stream event
         FE-->>Student: Append chat bubble + loading state
     end
 
     Student->>FE: Finish session
-    FE->>API: GET /api/v1/interviews/sessions/{sessionId}/report
+    FE->>API: GET /api/interviews/sessions/{sessionId}/report
     API->>DB: Load transcript and report
     API-->>FE: report payload
     FE-->>Student: Render score + strengths + weaknesses

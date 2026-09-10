@@ -21,7 +21,7 @@ Trước tiên, hãy đảm bảo bạn đã chạy `rabbitmq` trong docker. Cũ
 - `business-application` sẽ chạy ở `http://localhost:4000`, `judge-service` sẽ chạy ở `http://localhost:4002`  
 
 - Mở 1 terminal mới, copy lệnh curl bên dưới để tiến hành đăng ký một hàng chờ với SSE 
-`curl -N "http://localhost:4000/api/v1/submission/1/events""`
+`curl -N "http://localhost:4000/api/submission/1/events""`
 
 Bạn sẽ thấy Terminal dừng lại không truyền nữa. Connection giữa client và `business-application` đã được giữ nhờ cơ chế SSE 
 
@@ -32,14 +32,14 @@ Bạn sẽ thấy Terminal dừng lại không truyền nữa. Connection giữa
 ### Bước 3. Chạy code 
 - Mở API docs của business-application: `http://localhost:4000/docs`
 
-- Chạy API route: (POST) /api/v1/submission/{submission_id}/result với submission_id = 1 (do mock...) 
+- Chạy API route: (POST) /api/submission/{submission_id}/result với submission_id = 1 (do mock...) 
 
-- Hãy bấm vào `Try It out` trên API docs, đồng thời quan sát Terminal mà bạn đang gọi: `curl -N http://localhost:4000/api/v1/submission/1/events` ở **Bước 1**; 
+- Hãy bấm vào `Try It out` trên API docs, đồng thời quan sát Terminal mà bạn đang gọi: `curl -N http://localhost:4000/api/submission/1/events` ở **Bước 1**; 
 
 - SSE sẽ lần lượt đẩy dữ liệu sang bên cho client với giao diện Terminal như bên dưới: 
 
 ```bash 
-cloud@cloud ~/w/p/L/s/b/judge (dev)> curl -N "http://localhost:4000/api/v1/submission/1/events"
+cloud@cloud ~/w/p/L/s/b/judge (dev)> curl -N "http://localhost:4000/api/submission/1/events"
 event: submission_result
 data: {"submission_id": 1, "status": "pending"}
 

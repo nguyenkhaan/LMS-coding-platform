@@ -1,4 +1,4 @@
-import pytest
+﻿import pytest
 from httpx import ASGITransport, AsyncClient
 from src.models.base_model import CourseStatus
 from src.app import app
@@ -173,3 +173,4 @@ async def test_get_submissions_invalid_status(setup_course_submissions):
     
     resp = await client.get(f"/api/teacher/courses/{course_id}/submissions?status=INVALID_STATUS")
     assert resp.status_code == 422
+

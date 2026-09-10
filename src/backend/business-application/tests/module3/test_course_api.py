@@ -1,4 +1,4 @@
-import pytest
+﻿import pytest
 from fastapi.testclient import TestClient
 
 # We will import the app after we create it, but for now we'll mock the import or assume it exists.
@@ -119,7 +119,7 @@ def test_update_course_not_found():
     # Mocking that course 999 does not exist
     response = client.put("/api/teacher/courses/999", json=payload)
     assert response.status_code == 404
-    assert response.json()["error_code"] == "COURSE_NOT_FOUND"
+    assert response.json()["error_code"] == "NOT_FOUND"
 
 def test_update_course_forbidden():
     # First, create a course as teacher 2
@@ -171,7 +171,7 @@ def test_get_course_detail_not_found():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     response = client.get("/api/teacher/courses/9999")
     assert response.status_code == 404
-    assert response.json()["error_code"] == "COURSE_NOT_FOUND"
+    assert response.json()["error_code"] == "NOT_FOUND"
 
 def test_get_course_detail_forbidden():
     # Simulate course created by teacher 2 
@@ -250,7 +250,7 @@ def test_submit_review_not_found():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     response = client.post("/api/teacher/courses/9999/submit-review")
     assert response.status_code == 404
-    assert response.json()["error_code"] == "COURSE_NOT_FOUND"
+    assert response.json()["error_code"] == "NOT_FOUND"
 
 
 def test_reorder_curriculum_success():
@@ -492,7 +492,7 @@ def test_delete_lesson_not_found():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     del_resp = client.delete(f"/api/teacher/lessons/9999")
     assert del_resp.status_code == 404
-    assert del_resp.json()["error_code"] == "LESSON_NOT_FOUND"
+    assert del_resp.json()["error_code"] == "NOT_FOUND"
 
 def test_delete_lesson_forbidden():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
@@ -557,7 +557,7 @@ def test_create_reading_not_found():
     payload = {"title": "R1", "content": "C", "position": 1}
     r_resp = client.post(f"/api/teacher/lessons/9999/readings", json=payload)
     assert r_resp.status_code == 404
-    assert r_resp.json()["error_code"] == "LESSON_NOT_FOUND"
+    assert r_resp.json()["error_code"] == "NOT_FOUND"
 
 def test_create_reading_forbidden():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
@@ -634,7 +634,7 @@ def test_update_reading_not_found():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     u_resp = client.put(f"/api/teacher/lesson-contents/9999/reading", json={"title": "New"})
     assert u_resp.status_code == 404
-    assert u_resp.json()["error_code"] == "CONTENT_NOT_FOUND"
+    assert u_resp.json()["error_code"] == "NOT_FOUND"
 
 def test_update_reading_forbidden():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
@@ -689,7 +689,7 @@ def test_delete_lesson_content_not_found():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     del_resp = client.delete(f"/api/teacher/lesson-contents/9999")
     assert del_resp.status_code == 404
-    assert del_resp.json()["error_code"] == "CONTENT_NOT_FOUND"
+    assert del_resp.json()["error_code"] == "NOT_FOUND"
 
 def test_delete_lesson_content_forbidden():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
@@ -706,4 +706,5 @@ def test_delete_lesson_content_forbidden():
     del_resp = client.delete(f"/api/teacher/lesson-contents/{lc_id}")
     assert del_resp.status_code == 403
     assert del_resp.json()["error_code"] == "FORBIDDEN"
+
 

@@ -1,4 +1,4 @@
-import pytest
+﻿import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from src.app import app
@@ -336,3 +336,4 @@ async def test_upload_testcase_forbidden(setup_problem):
     resp = await client.post(f"/api/teacher/problems/{problem_id}/testcases/upload", data=data, files=files)
     assert resp.status_code == 403
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
+

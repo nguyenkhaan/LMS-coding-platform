@@ -116,6 +116,44 @@ the frontend submits that token and the new password to `POST /api/auth/verify-p
 
 ---
 
+## Email & Message Queue Setup (BE-1.2)
+
+The Auth Provider uses an async SMTP client to send emails (integrated with Mailpit for local testing) and a robust RabbitMQ connection manager (`aio-pika`) that declares required queues (`submission_queue`, `transcode_queue`, `email_queue`) on startup.
+
+### Environment Variables
+Add the following to your `.env` file:
+```env
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_USER=
+SMTP_PASSWORD=
+SMTP_USE_TLS=false
+SMTP_FROM=noreply@lms.local
+RABBITMQ_URL=amqp://guest:guest@localhost/
+```
+
+### Running Tests & Verification
+
+**1. Unit Tests:**
+To run the full test suite including the SMTP and RabbitMQ mocks:
+```bash
+uv run pytest tests -v
+```
+
+**2. SMTP Integration Test (AC1):**
+Requires Mailpit running locally (SMTP port 1025, UI port 8025). This script sends a text and an HTML email:
+```bash
+uv run python scripts/test_send_email_mailpit.py
+```
+
+**3. RabbitMQ Integration Test (AC2):**
+Requires a local RabbitMQ instance running via Docker. This script connects and verifies all 3 queues are declared successfully:
+```bash
+uv run python scripts/test_rabbitmq_ping.py
+```
+
+---
+
 ## API Endpoints
 
 Once running, you can explore the interactive API docs:

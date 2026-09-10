@@ -1,4 +1,6 @@
-import os
+﻿import os
+
+# Default env vars for testing (union from both branches)
 os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://user:pass@localhost:5432/db")
 os.environ.setdefault("VERIFY_REGISTER_SECRET", "test-secret")
 os.environ.setdefault("AUTH_PROVIDER_URL", "http://localhost:4001")
@@ -6,11 +8,17 @@ os.environ.setdefault("UPSTASH_REDIS_REST_URL", "http://localhost")
 os.environ.setdefault("UPSTASH_REDIS_REST_TOKEN", "test-token")
 os.environ.setdefault("RABBITMQ_URL", "amqp://guest:guest@localhost:5672//")
 
+# MinIO defaults from staging-dev .env
+os.environ.setdefault("MINIO_URL", "localhost:9000")
+os.environ.setdefault("MINIO_ROOT_USER", "minioadmin")
+os.environ.setdefault("MINIO_ROOT_PASSWORD", "minioadmin")
+
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from src.db import Base, get_async_db_session
 from src.app import app
+from contextlib import asynccontextmanager
 
 # Create in-memory SQLite for tests
 engine = create_async_engine(
@@ -39,10 +47,11 @@ async def setup_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
-from contextlib import asynccontextmanager
+
 @pytest.fixture(autouse=True)
 def mock_lifespan(monkeypatch):
     @asynccontextmanager
     async def mock_lifespan_context(app):
         yield
     monkeypatch.setattr(app.router, "lifespan_context", mock_lifespan_context)
+

@@ -1,4 +1,4 @@
-import pytest
+﻿import pytest
 from fastapi.testclient import TestClient
 from src.app import app
 from src.middlewares.auth_middleware import get_current_user
@@ -90,3 +90,4 @@ def test_cascade_delete_section():
     # Since we don't have get lesson API, we assume success from 200.
     pass# Verify content is deleted
     assert client.put(f"/api/teacher/lesson-contents/{content_id}", json={"content_type": "QUIZ", "content_data": {}}).status_code == 404
+

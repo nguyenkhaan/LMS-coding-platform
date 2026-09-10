@@ -53,7 +53,10 @@ async def create_lesson_content_comment(
         payload=payload,
     )
 
-
+# submission, disscussion trong Online judge
+# Bỏ đi thời gian trong trang Online Judge 
+# Thêm topic vào bên trong AI interview để bắt đầu 
+# 
 @router.delete(
     "/comments/{comment_id}",
     response_model=DeleteCommentResponse,

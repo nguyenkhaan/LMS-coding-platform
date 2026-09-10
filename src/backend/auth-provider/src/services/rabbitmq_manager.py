@@ -15,27 +15,25 @@ from src.cores import settings
 
 
 def async_retry(func: Callable[..., Awaitable[Any]]) -> Callable[..., Awaitable[Any]]:
+    """A decorator that retries an async function up to 5 times with exponential backoff."""
     @wraps(func)
     async def wrapper(*args, **kwargs):
         delay = 1
-        last_error = None
 
         for attempt in range(5):
             try:
                 return await func(*args, **kwargs)
-            except Exception as exc:
-                last_error = exc
+            except Exception:
                 if attempt == 4:
                     raise 
                 await asyncio.sleep(delay)
                 delay *= 2
-
-        if last_error is not None: 
-            raise last_error
     return wrapper
 
 
 class RabbitMQManager:
+    """Manages robust connections and queue declarations for RabbitMQ."""
+
     def __init__(self):
         self.url = settings.RABBITMQ_URL
         self.connection: AbstractRobustConnection | None = None
@@ -44,6 +42,7 @@ class RabbitMQManager:
 
     @async_retry
     async def connect(self) -> None:
+        """Establishes a robust connection to RabbitMQ and declares required queues."""
         self.connection = await aio_pika.connect_robust(self.url)
         self.channel = await self.connection.channel()
 
@@ -61,9 +60,11 @@ class RabbitMQManager:
         )
 
     async def publish(self, queue_name: str, message: bytes) -> None:
+        """Publishes a persistent message to the specified declared queue."""
         if self.channel is None:
             await self.connect()
 
+        # The check below is redundant but kept for type safety.
         if self.channel is None:
             raise RuntimeError("RabbitMQ channel has not been initialized")
 
@@ -76,6 +77,7 @@ class RabbitMQManager:
         )
 
     async def close(self) -> None:
+        """Closes the active channel and connection gracefully."""
         if self.channel is not None and not self.channel.is_closed:
             await self.channel.close()
 

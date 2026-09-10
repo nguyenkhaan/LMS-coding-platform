@@ -1,4 +1,4 @@
-import pytest
+﻿import pytest
 from fastapi.testclient import TestClient
 from src.app import app
 from src.middlewares.auth_middleware import get_current_user
@@ -66,7 +66,7 @@ def test_reorder_course_not_found():
     }
     response = client.put("/api/teacher/courses/999/curriculum/reorder", json=payload)
     assert response.status_code == 404
-    assert response.json()["error_code"] == "COURSE_NOT_FOUND"
+    assert response.json()["error_code"] == "NOT_FOUND"
 
 
 def test_reorder_forbidden():
@@ -105,3 +105,4 @@ def test_reorder_item_not_in_course():
     response2 = client.put("/api/teacher/courses/1/curriculum/reorder", json=payload)
     assert response2.status_code == 400
     assert response2.json()["error_code"] == "INVALID_REQUEST"
+

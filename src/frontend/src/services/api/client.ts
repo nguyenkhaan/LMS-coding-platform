@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 
-const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:4001/api/v1';
-const BUSINESS_API_URL = import.meta.env.VITE_BUSINESS_API_URL || 'http://localhost:4000/api/v1';
+const AUTH_API_URL = import.meta.env.VITE_AUTH_API_URL || 'http://localhost:4001/api';
+const BUSINESS_API_URL = import.meta.env.VITE_BUSINESS_API_URL || 'http://localhost:4000/api';
 
 const createApiClient = (baseURL: string): AxiosInstance => {
 	const client = axios.create({

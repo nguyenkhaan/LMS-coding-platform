@@ -7,6 +7,8 @@ from src.cores import settings
 
 
 class SMTPClient:
+    """A client for sending emails via SMTP, running synchronously in a background thread."""
+
     def __init__(self):
         self.smtp_host = settings.SMTP_HOST
         self.smtp_port = settings.SMTP_PORT
@@ -22,7 +24,6 @@ class SMTPClient:
         msg["Subject"] = subject
         msg.set_content(body)
 
-        # If html is provided, attach as an alternative representation.
         if html is not None:
             msg.add_alternative(html, subtype="html")
 
@@ -30,12 +31,11 @@ class SMTPClient:
 
     def _send_sync(self, to: str, subject: str, body: str, html: str | None = None) -> None:
         msg = self._build_message(to=to, subject=subject, body=body, html=html)
-
         context = ssl.create_default_context()
+
         with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
             server.ehlo()
 
-            # STARTTLS upgrades the connection before authentication.
             if self.smtp_use_tls:
                 server.starttls(context=context)
                 server.ehlo()
@@ -46,6 +46,6 @@ class SMTPClient:
             server.send_message(msg)
 
     async def send_email(self, to: str, subject: str, body: str, html: str | None = None) -> None:
-        # smtplib is blocking; run it off the event loop.
+        """Sends an email asynchronously by offloading blocking SMTP operations to a thread."""
         await asyncio.to_thread(self._send_sync, to, subject, body, html)
 

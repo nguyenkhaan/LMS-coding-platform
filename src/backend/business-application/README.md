@@ -93,7 +93,7 @@ Once running, you can explore the interactive API docs:
 
 ### Key Endpoints
 
-- `GET /api/v1/health` - Check health status of the database and application.
-- `GET /api/v1/auth/profile` - Retrieve profiles for authenticated users.
+- `GET /api/health` - Check health status of the database and application.
+- `GET /api/auth/profile` - Retrieve profiles for authenticated users.
 - Various CRUD endpoints for quizzes, questions, tags, and interview sessions.
 - **Module 3: Teacher Course & Curriculum Creator** - Endpoints for managing courses, sections, lessons, and content (`/api/v1/teacher/*`).
