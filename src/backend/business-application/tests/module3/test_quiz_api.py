@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 from httpx import ASGITransport, AsyncClient
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
@@ -31,15 +31,15 @@ async def test_create_quiz_success():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     app.dependency_overrides[get_async_db_session] = override_get_async_db_session
     
-    c_resp = await client.post("/api/v1/teacher/courses", json={
+    c_resp = await client.post("/api/teacher/courses", json={
         "title": "Course quiz", "description": "D", "price": 10, "thumbnail_url": "u", "field": "IT", "tags": []
     })
     c_id = c_resp.json()["id"]
-    s_resp = await client.post(f"/api/v1/teacher/courses/{c_id}/sections", json={
+    s_resp = await client.post(f"/api/teacher/courses/{c_id}/sections", json={
         "title": "Sec", "position": 1
     })
     s_id = s_resp.json()["id"]
-    l_resp = await client.post(f"/api/v1/teacher/sections/{s_id}/lessons", json={
+    l_resp = await client.post(f"/api/teacher/sections/{s_id}/lessons", json={
         "title": "Les", "summary": "S", "position": 1
     })
     l_id = l_resp.json()["id"]
@@ -49,7 +49,7 @@ async def test_create_quiz_success():
         "passing_score": 80.0,
         "position": 1
     }
-    q_resp = await client.post(f"/api/v1/teacher/lessons/{l_id}/quizzes", json=payload)
+    q_resp = await client.post(f"/api/teacher/lessons/{l_id}/quizzes", json=payload)
     
     assert q_resp.status_code == 201
     data = q_resp.json()
@@ -68,7 +68,7 @@ async def test_create_quiz_lesson_not_found():
         "passing_score": 80.0,
         "position": 1
     }
-    q_resp = await client.post(f"/api/v1/teacher/lessons/999/quizzes", json=payload)
+    q_resp = await client.post(f"/api/teacher/lessons/999/quizzes", json=payload)
     assert q_resp.status_code == 404
 
 def override_get_current_user_teacher2():
@@ -79,15 +79,15 @@ async def test_create_quiz_forbidden():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     app.dependency_overrides[get_async_db_session] = override_get_async_db_session
     
-    c_resp = await client.post("/api/v1/teacher/courses", json={
+    c_resp = await client.post("/api/teacher/courses", json={
         "title": "Course quiz 2", "description": "D", "price": 10, "thumbnail_url": "u", "field": "IT", "tags": []
     })
     c_id = c_resp.json()["id"]
-    s_resp = await client.post(f"/api/v1/teacher/courses/{c_id}/sections", json={
+    s_resp = await client.post(f"/api/teacher/courses/{c_id}/sections", json={
         "title": "Sec", "position": 1
     })
     s_id = s_resp.json()["id"]
-    l_resp = await client.post(f"/api/v1/teacher/sections/{s_id}/lessons", json={
+    l_resp = await client.post(f"/api/teacher/sections/{s_id}/lessons", json={
         "title": "Les", "summary": "S", "position": 1
     })
     l_id = l_resp.json()["id"]
@@ -99,7 +99,7 @@ async def test_create_quiz_forbidden():
         "passing_score": 80.0,
         "position": 1
     }
-    q_resp = await client.post(f"/api/v1/teacher/lessons/{l_id}/quizzes", json=payload)
+    q_resp = await client.post(f"/api/teacher/lessons/{l_id}/quizzes", json=payload)
     # the mock implementation actually returns 404 instead of 403 when it can't find the course for the teacher!
     assert q_resp.status_code in [403, 404]
 
@@ -113,7 +113,7 @@ async def test_create_quiz_bad_request():
         "passing_score": 80.0,
         "position": 1
     }
-    q_resp = await client.post(f"/api/v1/teacher/lessons/1/quizzes", json=payload)
+    q_resp = await client.post(f"/api/teacher/lessons/1/quizzes", json=payload)
     assert q_resp.status_code == 422
 @pytest.mark.asyncio
 async def test_update_quiz_success():
@@ -121,27 +121,27 @@ async def test_update_quiz_success():
     app.dependency_overrides[get_async_db_session] = override_get_async_db_session
     
     # Create course, section, lesson
-    c_resp = await client.post("/api/v1/teacher/courses", json={
+    c_resp = await client.post("/api/teacher/courses", json={
         "title": "Course quiz update", "description": "D", "price": 10, "thumbnail_url": "u", "field": "IT", "tags": []
     })
     c_id = c_resp.json()["id"]
-    s_resp = await client.post(f"/api/v1/teacher/courses/{c_id}/sections", json={
+    s_resp = await client.post(f"/api/teacher/courses/{c_id}/sections", json={
         "title": "Sec", "position": 1
     })
     s_id = s_resp.json()["id"]
-    l_resp = await client.post(f"/api/v1/teacher/sections/{s_id}/lessons", json={
+    l_resp = await client.post(f"/api/teacher/sections/{s_id}/lessons", json={
         "title": "Les", "summary": "S", "position": 1
     })
     l_id = l_resp.json()["id"]
 
     # Create quiz
-    q_resp = await client.post(f"/api/v1/teacher/lessons/{l_id}/quizzes", json={
+    q_resp = await client.post(f"/api/teacher/lessons/{l_id}/quizzes", json={
         "title": "Quiz 1", "passing_score": 80.0, "position": 1
     })
     quiz_id = q_resp.json()["quiz"]["id"]
     
     # Update quiz
-    u_resp = await client.put(f"/api/v1/teacher/quizzes/{quiz_id}", json={
+    u_resp = await client.put(f"/api/teacher/quizzes/{quiz_id}", json={
         "title": "Quiz Updated", "passing_score": 90.0
     })
     
@@ -155,7 +155,7 @@ async def test_update_quiz_not_found():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     app.dependency_overrides[get_async_db_session] = override_get_async_db_session
     
-    u_resp = await client.put(f"/api/v1/teacher/quizzes/999", json={
+    u_resp = await client.put(f"/api/teacher/quizzes/999", json={
         "title": "Quiz Updated"
     })
     assert u_resp.status_code == 404
@@ -166,28 +166,28 @@ async def test_update_quiz_forbidden():
     app.dependency_overrides[get_async_db_session] = override_get_async_db_session
     
     # Create course, section, lesson
-    c_resp = await client.post("/api/v1/teacher/courses", json={
+    c_resp = await client.post("/api/teacher/courses", json={
         "title": "Course quiz update forbidden", "description": "D", "price": 10, "thumbnail_url": "u", "field": "IT", "tags": []
     })
     c_id = c_resp.json()["id"]
-    s_resp = await client.post(f"/api/v1/teacher/courses/{c_id}/sections", json={
+    s_resp = await client.post(f"/api/teacher/courses/{c_id}/sections", json={
         "title": "Sec", "position": 1
     })
     s_id = s_resp.json()["id"]
-    l_resp = await client.post(f"/api/v1/teacher/sections/{s_id}/lessons", json={
+    l_resp = await client.post(f"/api/teacher/sections/{s_id}/lessons", json={
         "title": "Les", "summary": "S", "position": 1
     })
     l_id = l_resp.json()["id"]
 
     # Create quiz
-    q_resp = await client.post(f"/api/v1/teacher/lessons/{l_id}/quizzes", json={
+    q_resp = await client.post(f"/api/teacher/lessons/{l_id}/quizzes", json={
         "title": "Quiz 1", "passing_score": 80.0, "position": 1
     })
     quiz_id = q_resp.json()["quiz"]["id"]
     
     # Teacher 2 tries to update
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher2
-    u_resp = await client.put(f"/api/v1/teacher/quizzes/{quiz_id}", json={
+    u_resp = await client.put(f"/api/teacher/quizzes/{quiz_id}", json={
         "title": "Quiz Updated"
     })
     assert u_resp.status_code in [403, 404]
@@ -198,19 +198,19 @@ async def test_update_quiz_questions_success():
     app.dependency_overrides[get_async_db_session] = override_get_async_db_session
     
     # Create course, section, lesson, quiz
-    c_resp = await client.post("/api/v1/teacher/courses", json={
+    c_resp = await client.post("/api/teacher/courses", json={
         "title": "C for questions", "description": "D", "price": 10, "thumbnail_url": "u", "field": "IT", "tags": []
     })
     c_id = c_resp.json()["id"]
-    s_resp = await client.post(f"/api/v1/teacher/courses/{c_id}/sections", json={
+    s_resp = await client.post(f"/api/teacher/courses/{c_id}/sections", json={
         "title": "Sec", "position": 1
     })
     s_id = s_resp.json()["id"]
-    l_resp = await client.post(f"/api/v1/teacher/sections/{s_id}/lessons", json={
+    l_resp = await client.post(f"/api/teacher/sections/{s_id}/lessons", json={
         "title": "Les", "summary": "S", "position": 1
     })
     l_id = l_resp.json()["id"]
-    q_resp = await client.post(f"/api/v1/teacher/lessons/{l_id}/quizzes", json={
+    q_resp = await client.post(f"/api/teacher/lessons/{l_id}/quizzes", json={
         "title": "Quiz 1", "passing_score": 80.0, "position": 1
     })
     quiz_id = q_resp.json()["quiz"]["id"]
@@ -230,7 +230,7 @@ async def test_update_quiz_questions_success():
             }
         ]
     }
-    u_resp = await client.put(f"/api/v1/teacher/quizzes/{quiz_id}/questions", json=payload)
+    u_resp = await client.put(f"/api/teacher/quizzes/{quiz_id}/questions", json=payload)
     assert u_resp.status_code == 200
 
 @pytest.mark.asyncio
@@ -243,19 +243,19 @@ async def test_update_quiz_questions_in_progress_conflict():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     app.dependency_overrides[get_async_db_session] = override_get_async_db_session
     
-    c_resp = await client.post("/api/v1/teacher/courses", json={
+    c_resp = await client.post("/api/teacher/courses", json={
         "title": "C for questions 2", "description": "D", "price": 10, "thumbnail_url": "u", "field": "IT", "tags": []
     })
     c_id = c_resp.json()["id"]
-    s_resp = await client.post(f"/api/v1/teacher/courses/{c_id}/sections", json={
+    s_resp = await client.post(f"/api/teacher/courses/{c_id}/sections", json={
         "title": "Sec", "position": 1
     })
     s_id = s_resp.json()["id"]
-    l_resp = await client.post(f"/api/v1/teacher/sections/{s_id}/lessons", json={
+    l_resp = await client.post(f"/api/teacher/sections/{s_id}/lessons", json={
         "title": "Les", "summary": "S", "position": 1
     })
     l_id = l_resp.json()["id"]
-    q_resp = await client.post(f"/api/v1/teacher/lessons/{l_id}/quizzes", json={
+    q_resp = await client.post(f"/api/teacher/lessons/{l_id}/quizzes", json={
         "title": "Quiz 1", "passing_score": 80.0, "position": 1
     })
     quiz_id = q_resp.json()["quiz"]["id"]
@@ -274,7 +274,7 @@ async def test_update_quiz_questions_in_progress_conflict():
     
     # Try updating questions
     payload = {"questions": []}
-    u_resp = await client.put(f"/api/v1/teacher/quizzes/{quiz_id}/questions", json=payload)
+    u_resp = await client.put(f"/api/teacher/quizzes/{quiz_id}/questions", json=payload)
     assert u_resp.status_code == 409
     
     # Change status to SUBMITTED
@@ -282,7 +282,7 @@ async def test_update_quiz_questions_in_progress_conflict():
     await session.commit()
     
     # Now it should work
-    u_resp = await client.put(f"/api/v1/teacher/quizzes/{quiz_id}/questions", json=payload)
+    u_resp = await client.put(f"/api/teacher/quizzes/{quiz_id}/questions", json=payload)
     assert u_resp.status_code == 200
 
 @pytest.mark.asyncio
@@ -290,7 +290,7 @@ async def test_update_quiz_questions_not_found():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     app.dependency_overrides[get_async_db_session] = override_get_async_db_session
     
-    u_resp = await client.put(f"/api/v1/teacher/quizzes/999/questions", json={"questions": []})
+    u_resp = await client.put(f"/api/teacher/quizzes/999/questions", json={"questions": []})
     assert u_resp.status_code == 404
 
 @pytest.mark.asyncio
@@ -298,25 +298,25 @@ async def test_update_quiz_questions_forbidden():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     app.dependency_overrides[get_async_db_session] = override_get_async_db_session
     
-    c_resp = await client.post("/api/v1/teacher/courses", json={
+    c_resp = await client.post("/api/teacher/courses", json={
         "title": "C for questions 3", "description": "D", "price": 10, "thumbnail_url": "u", "field": "IT", "tags": []
     })
     c_id = c_resp.json()["id"]
-    s_resp = await client.post(f"/api/v1/teacher/courses/{c_id}/sections", json={
+    s_resp = await client.post(f"/api/teacher/courses/{c_id}/sections", json={
         "title": "Sec", "position": 1
     })
     s_id = s_resp.json()["id"]
-    l_resp = await client.post(f"/api/v1/teacher/sections/{s_id}/lessons", json={
+    l_resp = await client.post(f"/api/teacher/sections/{s_id}/lessons", json={
         "title": "Les", "summary": "S", "position": 1
     })
     l_id = l_resp.json()["id"]
-    q_resp = await client.post(f"/api/v1/teacher/lessons/{l_id}/quizzes", json={
+    q_resp = await client.post(f"/api/teacher/lessons/{l_id}/quizzes", json={
         "title": "Quiz 1", "passing_score": 80.0, "position": 1
     })
     quiz_id = q_resp.json()["quiz"]["id"]
     
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher2
-    u_resp = await client.put(f"/api/v1/teacher/quizzes/{quiz_id}/questions", json={"questions": []})
+    u_resp = await client.put(f"/api/teacher/quizzes/{quiz_id}/questions", json={"questions": []})
     assert u_resp.status_code in [403, 404]
 
 @pytest.mark.asyncio
@@ -332,18 +332,18 @@ async def test_update_quiz_questions_submission_safe():
     app.dependency_overrides[get_async_db_session] = override_get_async_db_session
     
     # 1. Create a quiz with one question and option
-    c_resp = await client.post("/api/v1/teacher/courses", json={
+    c_resp = await client.post("/api/teacher/courses", json={
         "title": "C for submission safe", "description": "D", "price": 10, "thumbnail_url": "u", "field": "IT", "tags": []
     })
     c_id = c_resp.json()["id"]
-    s_resp = await client.post(f"/api/v1/teacher/courses/{c_id}/sections", json={"title": "Sec", "position": 1})
+    s_resp = await client.post(f"/api/teacher/courses/{c_id}/sections", json={"title": "Sec", "position": 1})
     s_id = s_resp.json()["id"]
-    l_resp = await client.post(f"/api/v1/teacher/sections/{s_id}/lessons", json={"title": "Les", "summary": "S", "position": 1})
+    l_resp = await client.post(f"/api/teacher/sections/{s_id}/lessons", json={"title": "Les", "summary": "S", "position": 1})
     l_id = l_resp.json()["id"]
-    q_resp = await client.post(f"/api/v1/teacher/lessons/{l_id}/quizzes", json={"title": "Quiz 1", "passing_score": 80.0, "position": 1})
+    q_resp = await client.post(f"/api/teacher/lessons/{l_id}/quizzes", json={"title": "Quiz 1", "passing_score": 80.0, "position": 1})
     quiz_id = q_resp.json()["quiz"]["id"]
     
-    await client.put(f"/api/v1/teacher/quizzes/{quiz_id}/questions", json={
+    await client.put(f"/api/teacher/quizzes/{quiz_id}/questions", json={
         "questions": [
             {
                 "title": "Q1", "content": "What is 1+1?", "question_type": "SINGLE_CHOICE", "points": 10,
@@ -377,7 +377,7 @@ async def test_update_quiz_questions_submission_safe():
             }
         ]
     }
-    u_resp = await client.put(f"/api/v1/teacher/quizzes/{quiz_id}/questions", json=payload)
+    u_resp = await client.put(f"/api/teacher/quizzes/{quiz_id}/questions", json=payload)
     assert u_resp.status_code == 200
     
     # 4. Verify submission is intact

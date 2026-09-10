@@ -85,7 +85,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["Authorization" , "Content-Type"],
 )
-v1_router = APIRouter(prefix="/api/v1")
+v1_router = APIRouter(prefix="/api")
 
 v1_router.include_router(health_router)
 v1_router.include_router(student_router)

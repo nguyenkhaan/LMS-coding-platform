@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 from httpx import ASGITransport, AsyncClient
 from src.models.base_model import CourseStatus
 from src.app import app
@@ -109,7 +109,7 @@ client = AsyncClient(transport=ASGITransport(app=app), base_url='http://test')
 async def test_get_submissions_success(setup_course_submissions):
     course_id = setup_course_submissions["course_id"]
     
-    resp = await client.get(f"/api/v1/teacher/courses/{course_id}/submissions?page=1&size=10")
+    resp = await client.get(f"/api/teacher/courses/{course_id}/submissions?page=1&size=10")
     assert resp.status_code == 200
     data = resp.json()
     assert data["total_items"] == 2
@@ -120,7 +120,7 @@ async def test_get_submissions_filter_student(setup_course_submissions):
     course_id = setup_course_submissions["course_id"]
     student5 = setup_course_submissions["student5"]
     
-    resp = await client.get(f"/api/v1/teacher/courses/{course_id}/submissions?student_id={student5}")
+    resp = await client.get(f"/api/teacher/courses/{course_id}/submissions?student_id={student5}")
     assert resp.status_code == 200
     assert resp.json()["total_items"] == 1
     assert resp.json()["items"][0]["student_id"] == student5
@@ -129,7 +129,7 @@ async def test_get_submissions_filter_student(setup_course_submissions):
 async def test_get_submissions_filter_invalid_student(setup_course_submissions):
     course_id = setup_course_submissions["course_id"]
     
-    resp = await client.get(f"/api/v1/teacher/courses/{course_id}/submissions?student_id=999")
+    resp = await client.get(f"/api/teacher/courses/{course_id}/submissions?student_id=999")
     assert resp.status_code == 200
     assert resp.json()["total_items"] == 0
     assert len(resp.json()["items"]) == 0
@@ -139,13 +139,13 @@ async def test_get_submissions_filter_invalid_problem(setup_course_submissions):
     course_id = setup_course_submissions["course_id"]
     prob2_id = setup_course_submissions["prob2_id"]
     
-    resp = await client.get(f"/api/v1/teacher/courses/{course_id}/submissions?problem_id={prob2_id}")
+    resp = await client.get(f"/api/teacher/courses/{course_id}/submissions?problem_id={prob2_id}")
     assert resp.status_code == 200
     assert resp.json()["total_items"] == 0
 
 @pytest.mark.asyncio
 async def test_get_submissions_not_found():
-    resp = await client.get("/api/v1/teacher/courses/9999/submissions")
+    resp = await client.get("/api/teacher/courses/9999/submissions")
     assert resp.status_code == 404
 
 @pytest.mark.asyncio
@@ -156,7 +156,7 @@ async def test_get_submissions_forbidden(setup_course_submissions):
         return {"sub": "99", "roles": [Role.TEACHER]}
     app.dependency_overrides[get_current_user] = override_teacher2
     
-    resp = await client.get(f"/api/v1/teacher/courses/{course_id}/submissions")
+    resp = await client.get(f"/api/teacher/courses/{course_id}/submissions")
     assert resp.status_code == 403
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
 
@@ -164,12 +164,12 @@ async def test_get_submissions_forbidden(setup_course_submissions):
 async def test_get_submissions_pagination_max_size(setup_course_submissions):
     course_id = setup_course_submissions["course_id"]
     
-    resp = await client.get(f"/api/v1/teacher/courses/{course_id}/submissions?size=1000")
+    resp = await client.get(f"/api/teacher/courses/{course_id}/submissions?size=1000")
     assert resp.status_code == 422
 
 @pytest.mark.asyncio
 async def test_get_submissions_invalid_status(setup_course_submissions):
     course_id = setup_course_submissions["course_id"]
     
-    resp = await client.get(f"/api/v1/teacher/courses/{course_id}/submissions?status=INVALID_STATUS")
+    resp = await client.get(f"/api/teacher/courses/{course_id}/submissions?status=INVALID_STATUS")
     assert resp.status_code == 422

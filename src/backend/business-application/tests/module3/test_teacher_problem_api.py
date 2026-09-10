@@ -43,7 +43,7 @@ async def setup_db():
 
 @pytest.mark.asyncio
 async def test_get_problem_tags_success():
-    resp = await client.get("/api/v1/teacher/problem-tags")
+    resp = await client.get("/api/teacher/problem-tags")
     assert resp.status_code == 200
     data = resp.json()
     assert len(data) == 2
@@ -56,7 +56,7 @@ async def test_get_problem_tags_forbidden():
         return {"sub": "3", "roles": [Role.STUDENT]}
         
     app.dependency_overrides[get_current_user] = override_get_current_user_student
-    resp = await client.get("/api/v1/teacher/problem-tags")
+    resp = await client.get("/api/teacher/problem-tags")
     assert resp.status_code == 403
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
 @pytest.mark.asyncio
@@ -81,7 +81,7 @@ async def test_create_problem_success():
         ]
     }
     
-    resp = await client.post("/api/v1/teacher/problems", json=payload)
+    resp = await client.post("/api/teacher/problems", json=payload)
     assert resp.status_code == 201
     data = resp.json()
     assert data["title"] == "Two Sum"
@@ -102,7 +102,7 @@ async def test_create_problem_invalid_tag():
         "tag_ids": [999]
     }
     
-    resp = await client.post("/api/v1/teacher/problems", json=payload)
+    resp = await client.post("/api/teacher/problems", json=payload)
     assert resp.status_code == 400
     assert "tag_ids are invalid" in resp.json()["message"]
 
@@ -112,7 +112,7 @@ async def test_create_problem_forbidden():
         return {"sub": "3", "roles": [Role.STUDENT]}
     app.dependency_overrides[get_current_user] = override_get_current_user_student
     
-    resp = await client.post("/api/v1/teacher/problems", json={"title": "Test", "slug": "test", "statement": "test", "difficulty": "EASY", "passing_score": 100})
+    resp = await client.post("/api/teacher/problems", json={"title": "Test", "slug": "test", "statement": "test", "difficulty": "EASY", "passing_score": 100})
     assert resp.status_code == 403
 from sqlalchemy import select
 from src.models.problem_model import ProblemModel
@@ -153,7 +153,7 @@ async def test_update_problem_success(setup_problem):
         "configs": []
     }
     
-    resp = await client.put(f"/api/v1/teacher/problems/{problem_id}", json=payload)
+    resp = await client.put(f"/api/teacher/problems/{problem_id}", json=payload)
     assert resp.status_code == 200
     data = resp.json()
     assert data["title"] == "New Title"
@@ -173,7 +173,7 @@ async def test_update_problem_mapping_cleared(setup_problem):
         "configs": []
     }
     
-    resp = await client.put(f"/api/v1/teacher/problems/{problem_id}", json=payload)
+    resp = await client.put(f"/api/teacher/problems/{problem_id}", json=payload)
     assert resp.status_code == 200
     
     async with TestingSessionLocal() as session:
@@ -197,7 +197,7 @@ async def test_update_problem_invalid_tag(setup_problem):
         "configs": []
     }
     
-    resp = await client.put(f"/api/v1/teacher/problems/{problem_id}", json=payload)
+    resp = await client.put(f"/api/teacher/problems/{problem_id}", json=payload)
     assert resp.status_code == 400
     assert "tag_ids are invalid" in resp.json()["message"]
 
@@ -213,7 +213,7 @@ async def test_update_problem_not_found():
         "configs": []
     }
     
-    resp = await client.put(f"/api/v1/teacher/problems/9999", json=payload)
+    resp = await client.put(f"/api/teacher/problems/9999", json=payload)
     assert resp.status_code == 404
 
 @pytest.mark.asyncio
@@ -234,7 +234,7 @@ async def test_update_problem_forbidden(setup_problem):
         "configs": []
     }
     
-    resp = await client.put(f"/api/v1/teacher/problems/{problem_id}", json=payload)
+    resp = await client.put(f"/api/teacher/problems/{problem_id}", json=payload)
     assert resp.status_code == 403
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
 import io
@@ -255,7 +255,7 @@ async def test_upload_testcase_success(setup_problem):
         "is_hidden": True
     }
     
-    resp = await client.post(f"/api/v1/teacher/problems/{problem_id}/testcases/upload", data=data, files=files)
+    resp = await client.post(f"/api/teacher/problems/{problem_id}/testcases/upload", data=data, files=files)
     assert resp.status_code == 201
     res_data = resp.json()
     assert res_data["uploaded_count"] == 1
@@ -273,7 +273,7 @@ async def test_upload_testcase_invalid_type(setup_problem):
     }
     data = {"score": 10.0, "is_hidden": True}
     
-    resp = await client.post(f"/api/v1/teacher/problems/{problem_id}/testcases/upload", data=data, files=files)
+    resp = await client.post(f"/api/teacher/problems/{problem_id}/testcases/upload", data=data, files=files)
     assert resp.status_code == 400
     assert "Invalid file type" in resp.json()["message"]
 
@@ -287,7 +287,7 @@ async def test_upload_testcase_missing_file(setup_problem):
     }
     data = {"score": 10.0, "is_hidden": True}
     
-    resp = await client.post(f"/api/v1/teacher/problems/{problem_id}/testcases/upload", data=data, files=files)
+    resp = await client.post(f"/api/teacher/problems/{problem_id}/testcases/upload", data=data, files=files)
     assert resp.status_code == 400
     assert "Both input_file and output_file are required" in resp.json()["message"]
 
@@ -304,7 +304,7 @@ async def test_upload_testcase_too_large(setup_problem):
     }
     data = {"score": 10.0, "is_hidden": True}
     
-    resp = await client.post(f"/api/v1/teacher/problems/{problem_id}/testcases/upload", data=data, files=files)
+    resp = await client.post(f"/api/teacher/problems/{problem_id}/testcases/upload", data=data, files=files)
     assert resp.status_code == 400
     assert "exceeds" in resp.json()["message"]
 
@@ -316,7 +316,7 @@ async def test_upload_testcase_not_found():
     }
     data = {"score": 10.0, "is_hidden": True}
     
-    resp = await client.post(f"/api/v1/teacher/problems/9999/testcases/upload", data=data, files=files)
+    resp = await client.post(f"/api/teacher/problems/9999/testcases/upload", data=data, files=files)
     assert resp.status_code == 404
 
 @pytest.mark.asyncio
@@ -333,6 +333,6 @@ async def test_upload_testcase_forbidden(setup_problem):
     }
     data = {"score": 10.0, "is_hidden": True}
     
-    resp = await client.post(f"/api/v1/teacher/problems/{problem_id}/testcases/upload", data=data, files=files)
+    resp = await client.post(f"/api/teacher/problems/{problem_id}/testcases/upload", data=data, files=files)
     assert resp.status_code == 403
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
