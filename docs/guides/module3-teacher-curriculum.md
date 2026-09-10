@@ -13,9 +13,10 @@ This document describes the current implementation state of the Teacher Course C
 - **Tests**: 52/53 passing for the core API (`test_course_api.py`, `test_section_api.py`, `test_lesson_api.py`).
 
 ### Task 2: Quiz Management
-- **Status**: **BROKEN** (Pending Migration/Fixes).
-- **Issue**: The `TeacherQuizService` currently initializes `TeacherCourseService` without passing a database session (`db`). It still uses the legacy `_get_lesson_or_404` helper, which points to the old in-memory mock dictionary (`_lessons`). Because Task 1 now creates lessons in the real database, the quiz service cannot find them, resulting in `404 Not Found`. 
-- **Tests**: Currently, 7 out of 12 tests fail in `test_quiz_api.py` due to this mismatch.
+- **Status**: **Fixed and Fully Functional**. 
+- **Details**: `TeacherQuizService` now uses the real DB via a dedicated ownership check (`_verify_lesson_ownership`).
+- **Business Rule Note**: Quiz creation/editing KHÔNG bị chặn bởi course status (không bị lỗi 409 INVALID_STATE ngay cả khi course đã published). Đây là quyết định đã "confirmed with team lead" trước đây (được ghi nhận trong comment tại `teacher_quiz_service.py::create_quiz`), và quy định này KHÔNG có mặt trong `api_spec.md`.
+- **Tests**: 12/12 tests pass in `test_quiz_api.py`.
 
 ### Task 3: Teacher Problem Management
 - **Status**: 5 endpoints implemented. No changes made during the recent DB migration.
@@ -30,7 +31,18 @@ Currently, the system is configured to **BLOCK** the deletion of a section if it
 
 However, the original test suite (`test_cascade_delete_section`) was designed to expect a **Cascade-Delete** behavior (deleting a section automatically deletes all its lessons and their contents, returning `200 OK`). 
 
-The test has been reverted to its original state (expecting `200 OK`) and is currently the ONLY failing test in the core curriculum suite (52/53 passing). We are pending a decision from the team leader on whether to implement cascade-delete in the database/service layer or officially change the business logic to block it.
+The test has been reverted to its original state (expecting `200 OK`) and is currently the ONLY failing test in the entire module suite. 
+
+**Official Spec Evidence**: `api_spec.md` mới nhất trên `origin/dev` (commit `f4db17c`) CŨNG xác nhận đây là điểm chưa chốt: nguyên văn spec ghi `"Cascade/content policy phải được duyệt"`. Đây không phải giả định của dev team module3, mà là trạng thái pending chính thức trong spec.
+
+**Tổng số test Module 3 hiện tại:** **92/93 passing** (chỉ có 1 lỗi duy nhất là `test_cascade_delete_section` do đang đợi quyết định).
+
+---
+
+## Ghi chú ngoài phạm vi Module 3
+Qua việc rà soát `api_spec.md` mới nhất trên `origin/dev` (commit `f4db17c`), có một số thay đổi nhỏ không ảnh hưởng đến Module 3 nhưng cần lưu ý cho các module khác:
+- **Judge progress**: Ở endpoint `POST /problems/{slug}/submit`, spec bổ sung rule: "Judge trả progress theo từng testcase". Output testcase sẽ so khớp tuyệt đối theo byte UTF-8.
+- **PayOS webhook**: Bổ sung mới hoàn toàn Section 9 về Checkout trực tiếp và webhook PayOS.
 
 ---
 
@@ -40,8 +52,8 @@ The test has been reverted to its original state (expecting `200 OK`) and is cur
 - Ensure PostgreSQL is running.
 - **Bypass RabbitMQ**: For local development, RabbitMQ checks can be bypassed. Ensure you do not commit any bypassing code in your final PR.
 
-### 2. API Prefix Mismatch
-- The current implementation routes might use `/api/v1` in some places and `/api` in others. Pay attention to the prefix differences between the backend code and the frontend client. (Rebase needed if this was fixed in `main`).
+### 2. API Prefix
+- All routes use the `/api` prefix (no `/v1`). This was synced with `origin/dev` in commit `7635158`, matching the change made to the rest of the codebase in commit `3f9aad5` (24/08/2026).
 
 ### 3. Authentication (Obtaining JWT Token)
 To test the Teacher API, you must obtain a valid JWT token representing a teacher user.
@@ -64,16 +76,16 @@ To test the Teacher API, you must obtain a valid JWT token representing a teache
 2. Navigate to [http://localhost:4000/docs](http://localhost:4000/docs) in your browser.
 3. Click the **Authorize** button and input your Bearer token.
 4. Test the endpoints sequentially:
-   - **POST** `/api/v1/teacher/courses` to create a course.
-   - **POST** `/api/v1/teacher/courses/{course_id}/sections` to create a section.
-   - **POST** `/api/v1/teacher/sections/{section_id}/lessons` to create a lesson.
-   - **POST** `/api/v1/teacher/lessons/{lesson_id}/contents` to add reading content.
-   - **PUT** `/api/v1/teacher/courses/{course_id}/curriculum/reorder` to reorder items.
+   - **POST** `/api/teacher/courses` to create a course.
+   - **POST** `/api/teacher/courses/{course_id}/sections` to create a section.
+   - **POST** `/api/teacher/sections/{section_id}/lessons` to create a lesson.
+   - **POST** `/api/teacher/lessons/{lesson_id}/readings` to add reading content.
+   - **PUT** `/api/teacher/courses/{course_id}/curriculum/reorder` to reorder items.
 
 Example `curl` for creating a course:
 ```bash
-curl -X POST "http://localhost:4000/api/v1/teacher/courses" \\
-     -H "Authorization: Bearer YOUR_JWT_TOKEN" \\
-     -H "Content-Type: application/json" \\
+curl -X POST "http://localhost:4000/api/teacher/courses" \
+     -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+     -H "Content-Type: application/json" \
      -d '{"title": "My New Course", "description": "Course description", "price": 0, "field": "IT", "tags": []}'
 ```

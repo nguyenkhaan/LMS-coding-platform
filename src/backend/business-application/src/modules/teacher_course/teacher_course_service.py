@@ -55,6 +55,21 @@ class TeacherCourseService:
     def __init__(self, db=None):
         self.db = db
 
+    def _parse_tags_safe(self, tags_raw: str | None) -> list[str]:
+        """
+        Safely parse tags from DB.
+        Backward-compat with seed data (e.g. course 1,2,3 from seed.py:364-378)
+        where tags were stored as comma-separated strings (e.g. 'python,basics')
+        instead of JSON arrays ('["python", "basics"]').
+        """
+        if not tags_raw:
+            return []
+        import json
+        try:
+            return json.loads(tags_raw)
+        except json.JSONDecodeError:
+            return [t.strip() for t in tags_raw.split(',') if t.strip()]
+
     from pydantic import BaseModel
     def _partial_update(self, record: dict, data: BaseModel) -> dict:
         updates = data.model_dump(exclude_unset=True, exclude_none=True)
@@ -108,7 +123,7 @@ class TeacherCourseService:
                 price=c.price,
                 thumbnail_url=c.thumbnail_url,
                 field=c.field,
-                tags=json.loads(c.tags) if c.tags else [],
+                tags=self._parse_tags_safe(c.tags),
                 status=c.status,
                 teacher_id=c.teacher_id,
                 created_at=c.created_at.isoformat() if c.created_at else None,
@@ -151,7 +166,7 @@ class TeacherCourseService:
             price=new_course.price,
             thumbnail_url=new_course.thumbnail_url,
             field=new_course.field,
-            tags=json.loads(new_course.tags) if new_course.tags else [],
+            tags=self._parse_tags_safe(new_course.tags),
             status=new_course.status,
             teacher_id=new_course.teacher_id,
             created_at=new_course.created_at.isoformat() if new_course.created_at else None,
@@ -197,7 +212,7 @@ class TeacherCourseService:
                 price=db_course.price,
                 thumbnail_url=db_course.thumbnail_url,
                 field=db_course.field,
-                tags=json.loads(db_course.tags) if db_course.tags else [],
+                tags=self._parse_tags_safe(db_course.tags),
                 status=db_course.status,
                 teacher_id=db_course.teacher_id,
                 created_at=db_course.created_at.isoformat() if db_course.created_at else None,
@@ -233,7 +248,7 @@ class TeacherCourseService:
             price=db_course.price,
             thumbnail_url=db_course.thumbnail_url,
             field=db_course.field,
-            tags=json.loads(db_course.tags) if db_course.tags else [],
+            tags=self._parse_tags_safe(db_course.tags),
             status=db_course.status,
             teacher_id=db_course.teacher_id,
             created_at=db_course.created_at.isoformat() if db_course.created_at else None,
@@ -271,7 +286,7 @@ class TeacherCourseService:
             price=db_course.price,
             thumbnail_url=db_course.thumbnail_url,
             field=db_course.field,
-            tags=json.loads(db_course.tags) if db_course.tags else [],
+            tags=self._parse_tags_safe(db_course.tags),
             status=db_course.status,
             teacher_id=db_course.teacher_id,
             created_at=db_course.created_at.isoformat() if db_course.created_at else None,
