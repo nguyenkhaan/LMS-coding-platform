@@ -37,14 +37,13 @@ from src.modules.teacher_application.teacher_application_route import (
 )
 from src.modules.payment.payment_router import router as payment_router
 from src.modules.payment.payment_admin_router import router as payment_admin_router
-
-# 5. MODULE 3: TEACHER COURSE & CURRICULUM ROUTERS (Bản xịn của chúng ta)
-from src.modules.teacher_quiz.teacher_quiz_router import teacher_lesson_quizzes_router, teacher_quizzes_router
-from src.modules.teacher_course.teacher_course_router import (
-    teacher_course_router,
-    teacher_sections_router,
-    teacher_lessons_router,
-    teacher_lesson_contents_router,
+from src.modules.user.user_router import admin_router, router as user_router
+from src.modules.submission.submission_route import router as submission_router
+from src.modules.student import router as student_router
+from src.modules.teacher import router as teacher_router
+from src.services.rabbitmq.rabbitmq_manager import RabbitMQManager
+from src.services.rabbitmq.submission_execution_result_consumer import (
+    handle_submission_execution_result,
 )
 from src.modules.teacher_problem.teacher_problem_router import teacher_problem_router
 
@@ -100,6 +99,7 @@ v1_router = APIRouter(prefix="/api")
 # Core/Shared
 v1_router.include_router(health_router)
 v1_router.include_router(submission_router)
+v1_router.include_router(student_router)
 v1_router.include_router(lesson_comment_router)
 
 # Course Catalog
