@@ -21,6 +21,9 @@ from src.modules.user.user_router import admin_router, router as user_router
 from src.modules.submission.submission_route import router as submission_router
 from src.modules.student import router as student_router
 from src.modules.teacher import router as teacher_router
+from src.modules.teacher.teacher_course.admin.admin_router import (
+    router as admin_course_router,
+)
 from src.services.rabbitmq.rabbitmq_manager import RabbitMQManager
 from src.services.rabbitmq.submission_execution_result_consumer import (
     handle_submission_execution_result,
@@ -89,6 +92,7 @@ v1_router.include_router(submission_router)
 v1_router.include_router(student_router)
 v1_router.include_router(lesson_comment_router)
 v1_router.include_router(teacher_router)
+v1_router.include_router(admin_course_router)
 v1_router.include_router(user_router)
 v1_router.include_router(admin_router)
 v1_router.include_router(teacher_application_router)

@@ -1,8 +1,8 @@
-"""initial updated database
+"""recreate database schema
 
-Revision ID: 92f8db616d58
+Revision ID: caff2b982d14
 Revises: 
-Create Date: 2026-08-17 20:01:40.119295
+Create Date: 2026-09-11 21:48:54.361041
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '92f8db616d58'
+revision: str = 'caff2b982d14'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -71,7 +71,7 @@ def upgrade() -> None:
     op.create_table('audit_log',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
-    sa.Column('action', sa.Enum('JOIN', 'INTERVIEW', 'TEACHER_APPLICATION_REVIEW', 'COURSE_MODERATION', 'PAYMENT_WEBHOOK', 'PAYOUT_REVIEW', 'ACCOUNT_STATUS_UPDATE', name='auditaction'), nullable=False),
+    sa.Column('action', sa.Enum('JOIN', 'INTERVIEW', 'TEACHER_APPLICATION_VIEW', 'TEACHER_APPLICATION_REVIEW', 'COURSE_MODERATION', 'PAYMENT_WEBHOOK', 'PAYOUT_REVIEW', 'ACCOUNT_STATUS_UPDATE', 'ROLE_UPDATE', name='auditaction'), nullable=False),
     sa.Column('target_type', sa.String(), nullable=True),
     sa.Column('target_id', sa.Integer(), nullable=True),
     sa.Column('note', sa.Text(), nullable=True),
@@ -91,9 +91,14 @@ def upgrade() -> None:
     sa.Column('thumbnail_url', sa.String(), nullable=True),
     sa.Column('price', sa.Numeric(precision=12, scale=2), nullable=False),
     sa.Column('status', sa.Enum('DRAFT', 'PENDING_REVIEW', 'APPROVED', 'REJECTED', 'ARCHIVED', name='coursestatus'), nullable=False),
+    sa.Column('submitted_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('reviewed_by', sa.Integer(), nullable=True),
+    sa.Column('reviewed_note', sa.Text(), nullable=True),
+    sa.Column('reviewed_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['reviewed_by'], ['user.id'], name=op.f('fk_courses_reviewed_by_user')),
     sa.ForeignKeyConstraint(['teacher_id'], ['user.id'], name=op.f('fk_courses_teacher_id_user')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_courses')),
     sa.UniqueConstraint('slug', name=op.f('uq_courses_slug'))
@@ -146,16 +151,20 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id', name=op.f('pk_problem')),
     sa.UniqueConstraint('slug', name=op.f('uq_problem_slug'))
     )
-    op.create_table('quiz_enrollment',
+    op.create_table('quiz_attempt',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('quiz_id', sa.Integer(), nullable=False),
     sa.Column('student_id', sa.Integer(), nullable=False),
-    sa.Column('enrolled_at', sa.DateTime(timezone=True), nullable=False),
-    sa.ForeignKeyConstraint(['quiz_id'], ['quizzes.id'], name=op.f('fk_quiz_enrollment_quiz_id_quizzes')),
-    sa.ForeignKeyConstraint(['student_id'], ['user.id'], name=op.f('fk_quiz_enrollment_student_id_user')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_quiz_enrollment')),
-    sa.UniqueConstraint('quiz_id', 'student_id', name=op.f('uq_quiz_enrollment_quiz_id'))
+    sa.Column('attempt_no', sa.Integer(), nullable=False),
+    sa.Column('status', sa.Enum('IN_PROGRESS', 'SUBMITTED', 'ABANDONED', name='quizattemptstatus'), nullable=False),
+    sa.Column('started_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('submitted_at', sa.DateTime(timezone=True), nullable=True),
+    sa.ForeignKeyConstraint(['quiz_id'], ['quizzes.id'], name=op.f('fk_quiz_attempt_quiz_id_quizzes')),
+    sa.ForeignKeyConstraint(['student_id'], ['user.id'], name=op.f('fk_quiz_attempt_student_id_user')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_quiz_attempt')),
+    sa.UniqueConstraint('quiz_id', 'student_id', 'attempt_no', name='uq_quiz_attempt_quiz_student_number')
     )
+    op.create_index('ix_quiz_attempt_student_quiz_status', 'quiz_attempt', ['student_id', 'quiz_id', 'status'], unique=False)
     op.create_table('quiz_questions',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('quiz_id', sa.Integer(), nullable=False),
@@ -165,19 +174,6 @@ def upgrade() -> None:
     sa.Column('points', sa.Numeric(), nullable=False),
     sa.ForeignKeyConstraint(['quiz_id'], ['quizzes.id'], name=op.f('fk_quiz_questions_quiz_id_quizzes')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_quiz_questions'))
-    )
-    op.create_table('quiz_submission',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('quiz_id', sa.Integer(), nullable=False),
-    sa.Column('student_id', sa.Integer(), nullable=False),
-    sa.Column('attempt_no', sa.Integer(), nullable=False),
-    sa.Column('score', sa.Numeric(), nullable=False),
-    sa.Column('answers', sa.Text(), nullable=True),
-    sa.Column('submitted_at', sa.DateTime(timezone=True), nullable=False),
-    sa.ForeignKeyConstraint(['quiz_id'], ['quizzes.id'], name=op.f('fk_quiz_submission_quiz_id_quizzes')),
-    sa.ForeignKeyConstraint(['student_id'], ['user.id'], name=op.f('fk_quiz_submission_student_id_user')),
-    sa.PrimaryKeyConstraint('id', name=op.f('pk_quiz_submission')),
-    sa.UniqueConstraint('quiz_id', 'student_id', 'attempt_no', name=op.f('uq_quiz_submission_quiz_id'))
     )
     op.create_table('student_daily_activity',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -218,6 +214,19 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], name=op.f('fk_teacher_profile_user_id_user')),
     sa.PrimaryKeyConstraint('user_id', name=op.f('pk_teacher_profile'))
     )
+    op.create_table('user_identity',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('provider', sa.String(), nullable=False),
+    sa.Column('provider_id', sa.String(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], name=op.f('fk_user_identity_user_id_user')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_user_identity')),
+    sa.UniqueConstraint('provider', 'provider_id', name='uq_user_identity_provider_provider_id'),
+    sa.UniqueConstraint('user_id', 'provider', name='uq_user_identity_user_provider')
+    )
+    op.create_index('ix_user_identity_user_id', 'user_identity', ['user_id'], unique=False)
     op.create_table('user_role',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
@@ -251,10 +260,14 @@ def upgrade() -> None:
     op.create_table('course_moderation_review',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('course_id', sa.Integer(), nullable=False),
+    sa.Column('status', sa.Enum('DRAFT', 'PENDING_REVIEW', 'APPROVED', 'REJECTED', 'ARCHIVED', name='coursestatus'), nullable=False),
     sa.Column('reviewed_note', sa.Text(), nullable=True),
+    sa.Column('reviewed_by', sa.Integer(), nullable=True),
+    sa.Column('reviewed_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('approved_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('submitted_at', sa.DateTime(timezone=True), nullable=False),
     sa.ForeignKeyConstraint(['course_id'], ['courses.id'], name=op.f('fk_course_moderation_review_course_id_courses')),
+    sa.ForeignKeyConstraint(['reviewed_by'], ['user.id'], name=op.f('fk_course_moderation_review_reviewed_by_user')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_course_moderation_review'))
     )
     op.create_table('course_review',
@@ -349,6 +362,16 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['question_id'], ['quiz_questions.id'], name=op.f('fk_quiz_options_question_id_quiz_questions')),
     sa.PrimaryKeyConstraint('id', name=op.f('pk_quiz_options'))
     )
+    op.create_table('quiz_submission',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('quiz_attempt_id', sa.Integer(), nullable=False),
+    sa.Column('score', sa.Numeric(), nullable=False),
+    sa.Column('answers', sa.Text(), nullable=True),
+    sa.Column('submitted_at', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['quiz_attempt_id'], ['quiz_attempt.id'], name=op.f('fk_quiz_submission_quiz_attempt_id_quiz_attempt')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_quiz_submission')),
+    sa.UniqueConstraint('quiz_attempt_id', name=op.f('uq_quiz_submission_quiz_attempt_id'))
+    )
     op.create_table('sections',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('course_id', sa.Integer(), nullable=False),
@@ -364,7 +387,7 @@ def upgrade() -> None:
     sa.Column('student_id', sa.Integer(), nullable=False),
     sa.Column('language_id', sa.Integer(), nullable=False),
     sa.Column('source_code', sa.Text(), nullable=False),
-    sa.Column('status', sa.Enum('PENDING', 'RUNNING', 'ACCEPTED', 'WRONG_ANSWER', 'TIME_LIMIT_EXCEEDED', 'MEMORY_LIMIT_EXCEEDED', 'RUNTIME_ERROR', 'COMPILE_ERROR', name='problemsubmissionstatus'), nullable=False),
+    sa.Column('status', sa.Enum('PENDING', 'RUNNING', 'ACCEPTED', 'WRONG_ANSWER', 'TIME_LIMIT_EXCEEDED', 'MEMORY_LIMIT_EXCEEDED', 'RUNTIME_ERROR', 'COMPILE_ERROR', 'OUTPUT_LIMIT_EXCEEDED', name='problemsubmissionstatus'), nullable=False),
     sa.Column('score', sa.Numeric(), nullable=True),
     sa.Column('runtime_ms', sa.Numeric(), nullable=True),
     sa.Column('memory_kb', sa.Numeric(), nullable=True),
@@ -445,7 +468,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('submission_id', sa.Integer(), nullable=False),
     sa.Column('testcase_id', sa.Integer(), nullable=False),
-    sa.Column('status', sa.Enum('PENDING', 'RUNNING', 'ACCEPTED', 'WRONG_ANSWER', 'TIME_LIMIT_EXCEEDED', 'MEMORY_LIMIT_EXCEEDED', 'RUNTIME_ERROR', 'COMPILE_ERROR', name='problemsubmissionstatus'), nullable=False),
+    sa.Column('status', sa.Enum('PENDING', 'RUNNING', 'ACCEPTED', 'WRONG_ANSWER', 'TIME_LIMIT_EXCEEDED', 'MEMORY_LIMIT_EXCEEDED', 'RUNTIME_ERROR', 'COMPILE_ERROR', 'OUTPUT_LIMIT_EXCEEDED', name='problemsubmissionstatus'), nullable=False),
     sa.Column('runtime_ms', sa.Numeric(), nullable=True),
     sa.Column('memory_kb', sa.Numeric(), nullable=True),
     sa.ForeignKeyConstraint(['submission_id'], ['submission.id'], name=op.f('fk_submission_result_detail_submission_id_submission')),
@@ -492,6 +515,23 @@ def upgrade() -> None:
     sa.UniqueConstraint('lesson_id', 'content_type', 'content_id', name='uq_lesson_content_lesson_type_content'),
     sa.UniqueConstraint('lesson_id', 'position', name='uq_lesson_content_lesson_position')
     )
+    op.create_table('comment',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('lesson_content_id', sa.Integer(), nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('parent_id', sa.Integer(), nullable=True),
+    sa.Column('content', sa.Text(), nullable=False),
+    sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
+    sa.ForeignKeyConstraint(['lesson_content_id'], ['lesson_content.id'], name=op.f('fk_comment_lesson_content_id_lesson_content')),
+    sa.ForeignKeyConstraint(['parent_id'], ['comment.id'], name=op.f('fk_comment_parent_id_comment'), ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['user.id'], name=op.f('fk_comment_user_id_user')),
+    sa.PrimaryKeyConstraint('id', name=op.f('pk_comment'))
+    )
+    op.create_index('ix_comment_lesson_content_created_at', 'comment', ['lesson_content_id', 'created_at'], unique=False)
+    op.create_index('ix_comment_parent_id', 'comment', ['parent_id'], unique=False)
+    op.create_index('ix_comment_user_id', 'comment', ['user_id'], unique=False)
     op.create_table('lesson_content_progress',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('enrollment_id', sa.Integer(), nullable=False),
@@ -510,6 +550,10 @@ def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_table('lesson_content_progress')
+    op.drop_index('ix_comment_user_id', table_name='comment')
+    op.drop_index('ix_comment_parent_id', table_name='comment')
+    op.drop_index('ix_comment_lesson_content_created_at', table_name='comment')
+    op.drop_table('comment')
     op.drop_table('lesson_content')
     op.drop_table('wallet_ledger')
     op.drop_table('teacher_register_history')
@@ -520,6 +564,7 @@ def downgrade() -> None:
     op.drop_table('teacher_register')
     op.drop_table('submission')
     op.drop_table('sections')
+    op.drop_table('quiz_submission')
     op.drop_table('quiz_options')
     op.drop_table('problem_tag_mapping')
     op.drop_table('problem_config')
@@ -532,12 +577,14 @@ def downgrade() -> None:
     op.drop_table('course_favorite')
     op.drop_table('wallet')
     op.drop_table('user_role')
+    op.drop_index('ix_user_identity_user_id', table_name='user_identity')
+    op.drop_table('user_identity')
     op.drop_table('teacher_profile')
     op.drop_table('student_profile')
     op.drop_table('student_daily_activity')
-    op.drop_table('quiz_submission')
     op.drop_table('quiz_questions')
-    op.drop_table('quiz_enrollment')
+    op.drop_index('ix_quiz_attempt_student_quiz_status', table_name='quiz_attempt')
+    op.drop_table('quiz_attempt')
     op.drop_table('problem')
     op.drop_table('notification')
     op.drop_table('interview_session')

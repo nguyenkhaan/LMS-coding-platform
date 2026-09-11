@@ -10,6 +10,7 @@ from src.models.base_model import (
     CourseStatus,
     LessonContentType,
     ProblemSubmissionStatus,
+    utc_now,
 )
 from src.models.course_model import CourseModel
 from src.models.course_moderation_review_model import CourseModerationReviewModel
@@ -194,6 +195,11 @@ class TeacherCourseService:
             tags=json.loads(db_course.tags) if db_course.tags else [],
             status=db_course.status,
             teacher_id=db_course.teacher_id,
+            submitted_at=(
+                db_course.submitted_at.isoformat()
+                if db_course.submitted_at
+                else None
+            ),
             created_at=db_course.created_at.isoformat() if db_course.created_at else None,
             updated_at=db_course.updated_at.isoformat() if db_course.updated_at else None,
             slug=db_course.slug,
@@ -259,7 +265,19 @@ class TeacherCourseService:
         if db_course.status not in (CourseStatus.DRAFT, CourseStatus.REJECTED):
             raise HTTPException(status_code=409, detail="INVALID_STATE")
             
+        submitted_at = utc_now()
         db_course.status = CourseStatus.PENDING_REVIEW
+        db_course.submitted_at = submitted_at
+        db_course.reviewed_by = None
+        db_course.reviewed_note = None
+        db_course.reviewed_at = None
+        self.db.add(
+            CourseModerationReviewModel(
+                course_id=db_course.id,
+                status=CourseStatus.PENDING_REVIEW,
+                submitted_at=submitted_at,
+            )
+        )
         await self.db.commit()
         await self.db.refresh(db_course)
         
@@ -273,6 +291,11 @@ class TeacherCourseService:
             tags=json.loads(db_course.tags) if db_course.tags else [],
             status=db_course.status,
             teacher_id=db_course.teacher_id,
+            submitted_at=(
+                db_course.submitted_at.isoformat()
+                if db_course.submitted_at
+                else None
+            ),
             created_at=db_course.created_at.isoformat() if db_course.created_at else None,
             updated_at=db_course.updated_at.isoformat() if db_course.updated_at else None,
             slug=db_course.slug,
