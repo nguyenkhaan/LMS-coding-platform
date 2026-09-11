@@ -235,8 +235,6 @@ Giá trị legacy `AGREE/REJECT` không phải input hợp lệ của API.
 | `GET` | `/admin/teacher-applications/{application_id}` | Admin | - | Authorized `TeacherApplicationView`, `TeacherProfileView`, `TeacherApplicationHistoryView[]` | Access phải được audit nếu chứa PII nhạy cảm |
 | `POST` | `/admin/teacher-applications/{application_id}/review` | Admin | Command `decision: "APPROVED" \| "REJECTED"`, `note` | `TeacherApplicationView`, `TeacherApplicationHistoryView` | `decision` map sang status; `note` map vào application/history; chỉ `PENDING`; atomic capability effect + notification + audit |
 
-`POST /teacher-applications/me/resubmit` không phải route canonical. FE dùng cùng `/submit` sau khi application `REJECTED` đã được sửa.
-
 ## 6. Catalog, Favorite, Course Review và Course Moderation
 
 Course `APPROVED` là course public/bán được duy nhất. `PUBLISHED` chỉ là legacy migration value; `ARCHIVED` ẩn khỏi catalog mới nhưng Student đã enrollment vẫn truy cập được.

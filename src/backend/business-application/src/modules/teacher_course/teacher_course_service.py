@@ -1,26 +1,23 @@
 import logging
-
 logger = logging.getLogger(__name__)
+from datetime import UTC
 
 from fastapi import HTTPException
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.base_model import (
     CourseStatus,
     LessonContentType,
     ProblemSubmissionStatus,
+    utc_now,
 )
 from src.models.course_model import CourseModel
-from src.models.course_moderation_review_model import CourseModerationReviewModel
 from src.models.lesson_content_model import LessonContentModel
 from src.models.lesson_model import LessonModel
 from src.models.reading_content_model import ReadingContentModel
 from src.models.section_model import SectionModel
 from src.models.submission_model import SubmissionModel
-from src.modules.teacher.teacher_course.teacher_course_dto import (
-    CourseModerationHistoryResponse,
-    CourseModerationView,
+from src.modules.teacher_course.teacher_course_dto import (
     SubmissionListResponse,
     SubmissionView,
     TeacherCourseCreateRequest,
@@ -44,9 +41,70 @@ from src.modules.teacher.teacher_course.teacher_course_dto import (
     TeacherCourseUpdateRequest,
 )
 
+_courses: dict[int, dict[str, object]] = {}
+_sections: dict[int, dict[str, object]] = {}
+_readings: dict[int, dict[str, object]] = {}
+_reading_id_counter = 1
+_lessons: dict[int, dict[str, object]] = {}
+_contents: dict[int, dict[str, object]] = {}
+_course_id_counter = 1
+_section_id_counter = 1
+_lesson_id_counter = 1
+_content_id_counter = 1
+
 class TeacherCourseService:
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db=None):
         self.db = db
+
+    def _parse_tags_safe(self, tags_raw: str | None) -> list[str]:
+        """
+        Safely parse tags from DB.
+        Backward-compat with seed data (e.g. course 1,2,3 from seed.py:364-378)
+        where tags were stored as comma-separated strings (e.g. 'python,basics')
+        instead of JSON arrays ('["python", "basics"]').
+        """
+        if not tags_raw:
+            return []
+        import json
+        try:
+            return json.loads(tags_raw)
+        except json.JSONDecodeError:
+            return [t.strip() for t in tags_raw.split(',') if t.strip()]
+
+    from pydantic import BaseModel
+    def _partial_update(self, record: dict, data: BaseModel) -> dict:
+        updates = data.model_dump(exclude_unset=True, exclude_none=True)
+        record.update(updates)
+        return record
+
+    def _get_course_or_404(self, course_id: int, teacher_id: int) -> dict:
+        course = _courses.get(course_id)
+        if not course:
+            raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
+        if course["teacher_id"] != teacher_id:
+            raise HTTPException(status_code=403, detail="FORBIDDEN")
+        return course
+
+    def _get_section_or_404(self, section_id: int, teacher_id: int) -> dict:
+        section = _sections.get(section_id)
+        if not section:
+            raise HTTPException(status_code=404, detail="SECTION_NOT_FOUND")
+        self._get_course_or_404(section["course_id"], teacher_id)
+        return section
+
+    def _get_lesson_or_404(self, lesson_id: int, teacher_id: int) -> dict:
+        lesson = _lessons.get(lesson_id)
+        if not lesson:
+            raise HTTPException(status_code=404, detail="LESSON_NOT_FOUND")
+        self._get_section_or_404(lesson["section_id"], teacher_id)
+        return lesson
+
+    def _get_content_or_404(self, content_id: int, teacher_id: int) -> dict:
+        content = _contents.get(content_id)
+        if not content:
+            raise HTTPException(status_code=404, detail="CONTENT_NOT_FOUND")
+        self._get_lesson_or_404(content["lesson_id"], teacher_id)
+        return content
 
     async def get_teacher_courses(self, teacher_id: int) -> list[TeacherCourseResponse]:
         import json
@@ -66,7 +124,7 @@ class TeacherCourseService:
                 price=c.price,
                 thumbnail_url=c.thumbnail_url,
                 field=c.field,
-                tags=json.loads(c.tags) if c.tags else [],
+                tags=self._parse_tags_safe(c.tags),
                 status=c.status,
                 teacher_id=c.teacher_id,
                 created_at=c.created_at.isoformat() if c.created_at else None,
@@ -109,7 +167,7 @@ class TeacherCourseService:
             price=new_course.price,
             thumbnail_url=new_course.thumbnail_url,
             field=new_course.field,
-            tags=json.loads(new_course.tags) if new_course.tags else [],
+            tags=self._parse_tags_safe(new_course.tags),
             status=new_course.status,
             teacher_id=new_course.teacher_id,
             created_at=new_course.created_at.isoformat() if new_course.created_at else None,
@@ -155,7 +213,7 @@ class TeacherCourseService:
                 price=db_course.price,
                 thumbnail_url=db_course.thumbnail_url,
                 field=db_course.field,
-                tags=json.loads(db_course.tags) if db_course.tags else [],
+                tags=self._parse_tags_safe(db_course.tags),
                 status=db_course.status,
                 teacher_id=db_course.teacher_id,
                 created_at=db_course.created_at.isoformat() if db_course.created_at else None,
@@ -191,9 +249,14 @@ class TeacherCourseService:
             price=db_course.price,
             thumbnail_url=db_course.thumbnail_url,
             field=db_course.field,
-            tags=json.loads(db_course.tags) if db_course.tags else [],
+            tags=self._parse_tags_safe(db_course.tags),
             status=db_course.status,
             teacher_id=db_course.teacher_id,
+            submitted_at=(
+                db_course.submitted_at.isoformat()
+                if db_course.submitted_at
+                else None
+            ),
             created_at=db_course.created_at.isoformat() if db_course.created_at else None,
             updated_at=db_course.updated_at.isoformat() if db_course.updated_at else None,
             slug=db_course.slug,
@@ -201,50 +264,9 @@ class TeacherCourseService:
             currency="USD"
         )
 
-    async def get_course_moderation_history(
-        self,
-        teacher_id: int,
-        course_id: int,
-        page: int,
-        size: int,
-    ) -> CourseModerationHistoryResponse:
-        course = await self.db.scalar(
-            select(CourseModel).where(
-                CourseModel.id == course_id,
-                CourseModel.deleted_at.is_(None),
-            )
-        )
-        if course is None:
-            raise HTTPException(status_code=404, detail="COURSE_NOT_FOUND")
-        if course.teacher_id != teacher_id:
-            raise HTTPException(status_code=403, detail="FORBIDDEN")
-
-        filters = [CourseModerationReviewModel.course_id == course_id]
-        total_items = await self.db.scalar(
-            select(func.count()).select_from(CourseModerationReviewModel).where(*filters)
-        ) or 0
-        reviews = (
-            await self.db.execute(
-                select(CourseModerationReviewModel)
-                .where(*filters)
-                .order_by(
-                    CourseModerationReviewModel.submitted_at.desc(),
-                    CourseModerationReviewModel.id.desc(),
-                )
-                .offset((page - 1) * size)
-                .limit(size)
-            )
-        ).scalars().all()
-
-        return CourseModerationHistoryResponse(
-            total_items=total_items,
-            total_pages=(total_items + size - 1) // size,
-            current_page=page,
-            items=[CourseModerationView.model_validate(review) for review in reviews],
-        )
-
     async def submit_course_review(self, teacher_id: int, course_id: int) -> TeacherCourseResponse:
         import json
+        from datetime import datetime, UTC
         stmt = select(CourseModel).where(
             CourseModel.id == course_id,
             CourseModel.deleted_at.is_(None)
@@ -259,7 +281,19 @@ class TeacherCourseService:
         if db_course.status not in (CourseStatus.DRAFT, CourseStatus.REJECTED):
             raise HTTPException(status_code=409, detail="INVALID_STATE")
             
+        submitted_at = utc_now()
         db_course.status = CourseStatus.PENDING_REVIEW
+        db_course.submitted_at = submitted_at
+        db_course.reviewed_by = None
+        db_course.reviewed_note = None
+        db_course.reviewed_at = None
+        self.db.add(
+            CourseModerationReviewModel(
+                course_id=db_course.id,
+                status=CourseStatus.PENDING_REVIEW,
+                submitted_at=submitted_at,
+            )
+        )
         await self.db.commit()
         await self.db.refresh(db_course)
         
@@ -270,15 +304,35 @@ class TeacherCourseService:
             price=db_course.price,
             thumbnail_url=db_course.thumbnail_url,
             field=db_course.field,
-            tags=json.loads(db_course.tags) if db_course.tags else [],
+            tags=self._parse_tags_safe(db_course.tags),
             status=db_course.status,
             teacher_id=db_course.teacher_id,
+            submitted_at=(
+                db_course.submitted_at.isoformat()
+                if db_course.submitted_at
+                else None
+            ),
             created_at=db_course.created_at.isoformat() if db_course.created_at else None,
             updated_at=db_course.updated_at.isoformat() if db_course.updated_at else None,
             slug=db_course.slug,
             rating=0.0,
             currency="USD"
         )
+
+    @classmethod
+    def _reset_mock_data(cls):
+        global _course_id_counter, _section_id_counter, _lesson_id_counter, _content_id_counter, _reading_id_counter
+        _courses.clear()
+        _sections.clear()
+        _lessons.clear()
+        _contents.clear()
+        _readings.clear()
+        _course_id_counter = 1
+        _section_id_counter = 1
+        _lesson_id_counter = 1
+        _content_id_counter = 1
+        _reading_id_counter = 1
+
     async def create_section(self, teacher_id: int, course_id: int, data: TeacherCourseSectionCreateRequest) -> TeacherCourseSectionResponse:
         try:
             course = await self.db.scalar(
@@ -316,7 +370,7 @@ class TeacherCourseService:
                 id=new_section.id,
                 course_id=new_section.course_id,
                 title=new_section.title,
-                position=new_section.position,
+                order=new_section.position,
             )
         except HTTPException:
             raise
@@ -361,7 +415,7 @@ class TeacherCourseService:
             return TeacherCourseSectionResponse(
                 id=db_section.id,
                 title=db_section.title,
-                position=db_section.position,
+                order=db_section.position,
                 course_id=db_section.course_id
             )
         except HTTPException:
@@ -443,7 +497,7 @@ class TeacherCourseService:
             return TeacherCourseLessonResponse(
                 id=new_lesson.id,
                 title=new_lesson.title,
-                position=new_lesson.position,
+                order=new_lesson.position,
                 section_id=new_lesson.section_id
             )
         except HTTPException:
@@ -463,8 +517,6 @@ class TeacherCourseService:
                 
             section_stmt = select(SectionModel).where(SectionModel.id == db_lesson.section_id)
             db_section = (await self.db.execute(section_stmt)).scalar_one_or_none()
-            if db_section is None:
-                raise HTTPException(status_code=404, detail="SECTION_NOT_FOUND")
             
             course_stmt = select(CourseModel).where(
                 CourseModel.id == db_section.course_id,
@@ -492,7 +544,8 @@ class TeacherCourseService:
             return TeacherCourseLessonResponse(
                 id=db_lesson.id,
                 title=db_lesson.title,
-                position=db_lesson.position,
+                summary=db_lesson.summary,
+                order=db_lesson.position,
                 section_id=db_lesson.section_id
             )
         except HTTPException:
@@ -511,8 +564,6 @@ class TeacherCourseService:
                 
             section_stmt = select(SectionModel).where(SectionModel.id == db_lesson.section_id)
             db_section = (await self.db.execute(section_stmt)).scalar_one_or_none()
-            if db_section is None:
-                raise HTTPException(status_code=404, detail="SECTION_NOT_FOUND")
             
             course_stmt = select(CourseModel).where(
                 CourseModel.id == db_section.course_id,
@@ -551,8 +602,6 @@ class TeacherCourseService:
             
         section_stmt = select(SectionModel).where(SectionModel.id == db_lesson.section_id)
         db_section = (await self.db.execute(section_stmt)).scalar_one_or_none()
-        if db_section is None:
-            raise HTTPException(status_code=404, detail="SECTION_NOT_FOUND")
         
         course_stmt = select(CourseModel).where(
             CourseModel.id == db_section.course_id,
@@ -576,7 +625,7 @@ class TeacherCourseService:
         
         db_lesson_content = LessonContentModel(
             lesson_id=lesson_id,
-            content_type=LessonContentType.READING,
+            content_type="READING",
             content_id=db_reading.id,
             position=data.order
         )
@@ -587,22 +636,22 @@ class TeacherCourseService:
         await self.db.refresh(db_lesson_content)
         
         return TeacherCourseReadingCreateResponse(
-            reading_content=TeacherCourseReadingResponse(
-                id=db_reading.id,
-                title=db_reading.title,
-                content=db_reading.content,
-                created_at=db_reading.created_at.isoformat() + "Z" if db_reading.created_at else None,
-                updated_at=db_reading.updated_at.isoformat() + "Z" if db_reading.updated_at else None,
-            ),
-            lesson_content=TeacherCourseLessonContentResponse(
-                id=db_lesson_content.id,
-                lesson_id=db_lesson_content.lesson_id,
-                content_type=db_lesson_content.content_type,
-                content_id=db_lesson_content.content_id,
-                media_url=db_lesson_content.media_url,
-                position=db_lesson_content.position,
-                created_at=db_lesson_content.created_at.isoformat() + "Z" if db_lesson_content.created_at else None,
-            ),
+            reading_content={
+                "id": db_reading.id,
+                "title": db_reading.title,
+                "content": db_reading.content,
+                "created_at": db_reading.created_at.isoformat() + "Z" if db_reading.created_at else None,
+                "updated_at": db_reading.updated_at.isoformat() + "Z" if db_reading.updated_at else None
+            },
+            lesson_content={
+                "id": db_lesson_content.id,
+                "lesson_id": db_lesson_content.lesson_id,
+                "content_type": db_lesson_content.content_type.value if hasattr(db_lesson_content.content_type, 'value') else db_lesson_content.content_type,
+                "content_id": db_lesson_content.content_id,
+                "media_url": db_lesson_content.media_url,
+                "order": db_lesson_content.position,
+                "created_at": db_lesson_content.created_at.isoformat() + "Z" if db_lesson_content.created_at else None
+            }
         )
 
     async def create_lesson_content(self, teacher_id: int, lesson_id: int, data: TeacherCourseLessonContentCreateRequest) -> TeacherCourseLessonContentResponse:
@@ -613,8 +662,6 @@ class TeacherCourseService:
             
         section_stmt = select(SectionModel).where(SectionModel.id == db_lesson.section_id)
         db_section = (await self.db.execute(section_stmt)).scalar_one_or_none()
-        if db_section is None:
-            raise HTTPException(status_code=404, detail="SECTION_NOT_FOUND")
         
         course_stmt = select(CourseModel).where(
             CourseModel.id == db_section.course_id,
@@ -631,7 +678,7 @@ class TeacherCourseService:
             
         db_lesson_content = LessonContentModel(
             lesson_id=lesson_id,
-            content_type=LessonContentType(data.content_type),
+            content_type=data.content_type,
             content_id=data.content_id,
             media_url=data.media_url,
             position=data.order
@@ -644,10 +691,10 @@ class TeacherCourseService:
         return TeacherCourseLessonContentResponse(
             id=db_lesson_content.id,
             lesson_id=db_lesson_content.lesson_id,
-            content_type=db_lesson_content.content_type,
+            content_type=db_lesson_content.content_type.value if hasattr(db_lesson_content.content_type, 'value') else db_lesson_content.content_type,
             content_id=db_lesson_content.content_id,
             media_url=db_lesson_content.media_url,
-            position=db_lesson_content.position,
+            order=db_lesson_content.position,
             created_at=db_lesson_content.created_at.isoformat() + "Z" if db_lesson_content.created_at else None
         )
 
@@ -684,7 +731,7 @@ class TeacherCourseService:
         if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
             raise HTTPException(status_code=409, detail="INVALID_STATE")
             
-        ctype = db_lesson_content.content_type
+        ctype = db_lesson_content.content_type.value if hasattr(db_lesson_content.content_type, 'value') else db_lesson_content.content_type
         if ctype != "READING":
             raise HTTPException(status_code=400, detail="INVALID_REQUEST")
             
@@ -756,10 +803,10 @@ class TeacherCourseService:
         return TeacherCourseLessonContentResponse(
             id=db_lesson_content.id,
             lesson_id=db_lesson_content.lesson_id,
-            content_type=db_lesson_content.content_type,
+            content_type=db_lesson_content.content_type.value if hasattr(db_lesson_content.content_type, 'value') else db_lesson_content.content_type,
             content_id=db_lesson_content.content_id,
             media_url=db_lesson_content.media_url,
-            position=db_lesson_content.position,
+            order=db_lesson_content.position,
             created_at=db_lesson_content.created_at.isoformat() + "Z" if getattr(db_lesson_content, 'created_at', None) else None
         )
 
@@ -796,7 +843,7 @@ class TeacherCourseService:
         if course.status not in [CourseStatus.DRAFT, CourseStatus.REJECTED]:
             raise HTTPException(status_code=409, detail="INVALID_STATE")
             
-        ctype = db_lesson_content.content_type
+        ctype = db_lesson_content.content_type.value if hasattr(db_lesson_content.content_type, 'value') else db_lesson_content.content_type
         
         if ctype == "READING":
             reading_stmt = select(ReadingContentModel).where(ReadingContentModel.id == db_lesson_content.content_id)
@@ -922,7 +969,7 @@ class TeacherCourseService:
                         id=s.id,
                         course_id=s.course_id,
                         title=s.title,
-                        position=s.position
+                        order=s.position
                     ) for s in sorted(sections, key=lambda item: item.position)
                 ],
                 lessons=[
@@ -930,17 +977,17 @@ class TeacherCourseService:
                         id=l.id,
                         section_id=l.section_id,
                         title=l.title,
-                        position=l.position
+                        order=l.position
                     ) for l in sorted(lessons, key=lambda item: (item.section_id, item.position))
                 ],
                 lesson_contents=[
                     TeacherCourseLessonContentResponse(
                         id=c.id,
                         lesson_id=c.lesson_id,
-                        content_type=c.content_type,
+                        content_type=c.content_type.value if hasattr(c.content_type, 'value') else c.content_type,
                         content_id=c.content_id,
                         media_url=c.media_url,
-                        position=c.position,
+                        order=c.position,
                         created_at=c.created_at.isoformat() + "Z" if getattr(c, 'created_at', None) else None
                     ) for c in sorted(lesson_contents, key=lambda item: (item.lesson_id, item.position))
                 ]

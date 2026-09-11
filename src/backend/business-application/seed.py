@@ -360,49 +360,105 @@ async def seed_problem(session: Any, refs: dict[str, Any], teacher: UserModel, s
     return {"problem": problem, "submission": submission}
 
 
-async def seed_courses_and_curriculum(session: Any, teacher: UserModel, quiz: QuizModel, problem: ProblemModel, seed_time: datetime) -> dict[str, Any]:
+async def seed_courses_and_curriculum(
+    session: Any,
+    teacher: UserModel,
+    admin: UserModel,
+    quiz: QuizModel,
+    problem: ProblemModel,
+    seed_time: datetime,
+) -> dict[str, Any]:
     free_course = CourseModel(
         title="Python Fundamentals", teacher_id=teacher.id, slug="python-fundamentals", field="Programming", tags="python,basics",
         description="A practical starter course for new Python learners.", thumbnail_url="https://example.com/courses/python-fundamentals.png",
-        price=Decimal("0.00"), status=CourseStatus.APPROVED, created_at=seed_time - timedelta(days=12), updated_at=seed_time - timedelta(days=2),
+        price=Decimal("0.00"), status=CourseStatus.APPROVED, submitted_at=seed_time - timedelta(days=11), reviewed_by=admin.id,
+        reviewed_note="Approved for publication.", reviewed_at=seed_time - timedelta(days=10),
+        created_at=seed_time - timedelta(days=12), updated_at=seed_time - timedelta(days=2),
     )
     paid_course = CourseModel(
         title="Advanced Algorithms", teacher_id=teacher.id, slug="advanced-algorithms", field="Computer Science", tags="algorithms,data-structures",
         description="A paid course for deeper algorithm practice.", thumbnail_url="https://example.com/courses/advanced-algorithms.png",
-        price=Decimal("29.90"), status=CourseStatus.APPROVED, created_at=seed_time - timedelta(days=8), updated_at=seed_time - timedelta(days=1),
+        price=Decimal("29.90"), status=CourseStatus.APPROVED, submitted_at=seed_time - timedelta(days=7), reviewed_by=admin.id,
+        reviewed_note="Curriculum and pricing are valid.", reviewed_at=seed_time - timedelta(days=6),
+        created_at=seed_time - timedelta(days=8), updated_at=seed_time - timedelta(days=1),
     )
     draft_course = CourseModel(
         title="AI Interview Lab", teacher_id=teacher.id, slug="ai-interview-lab", field="Career", tags="interview,ai",
         description="A draft course for interview preparation.", thumbnail_url="https://example.com/courses/ai-interview-lab.png",
         price=Decimal("19.90"), status=CourseStatus.DRAFT, created_at=seed_time - timedelta(days=3), updated_at=seed_time - timedelta(days=3),
     )
-    session.add_all([free_course, paid_course, draft_course])
+    pending_course = CourseModel(
+        title="FastAPI Production Patterns", teacher_id=teacher.id, slug="fastapi-production-patterns", field="Backend", tags="python,fastapi",
+        description="A complete pending course for testing the Admin moderation queue.", thumbnail_url="https://example.com/courses/fastapi-production.png",
+        price=Decimal("39.90"), status=CourseStatus.PENDING_REVIEW, submitted_at=seed_time - timedelta(days=1),
+        created_at=seed_time - timedelta(days=4), updated_at=seed_time - timedelta(days=1),
+    )
+    rejected_course = CourseModel(
+        title="Legacy Python Patterns", teacher_id=teacher.id, slug="legacy-python-patterns", field="Programming", tags="python,legacy",
+        description="A rejected course used to test moderation history and resubmission.", thumbnail_url=None,
+        price=Decimal("14.90"), status=CourseStatus.REJECTED, submitted_at=seed_time - timedelta(days=6), reviewed_by=admin.id,
+        reviewed_note="Please replace outdated examples before resubmitting.", reviewed_at=seed_time - timedelta(days=5),
+        created_at=seed_time - timedelta(days=9), updated_at=seed_time - timedelta(days=5),
+    )
+    archived_course = CourseModel(
+        title="Python 2 Migration", teacher_id=teacher.id, slug="python-2-migration", field="Programming", tags="python,migration",
+        description="An archived course retained for already-enrolled students.", thumbnail_url=None,
+        price=Decimal("9.90"), status=CourseStatus.ARCHIVED, submitted_at=seed_time - timedelta(days=20), reviewed_by=admin.id,
+        reviewed_note="Archived because the course is no longer maintained.", reviewed_at=seed_time - timedelta(days=4),
+        created_at=seed_time - timedelta(days=24), updated_at=seed_time - timedelta(days=4),
+    )
+    session.add_all([free_course, paid_course, draft_course, pending_course, rejected_course, archived_course])
     await session.flush()
-    session.add(CourseModerationReviewModel(course_id=free_course.id, reviewed_note="Approved for publication.", approved_at=seed_time - timedelta(days=10), submitted_at=seed_time - timedelta(days=11)))
+    session.add_all(
+        [
+            CourseModerationReviewModel(course_id=free_course.id, status=CourseStatus.PENDING_REVIEW, submitted_at=seed_time - timedelta(days=11)),
+            CourseModerationReviewModel(course_id=free_course.id, status=CourseStatus.APPROVED, reviewed_note="Approved for publication.", reviewed_by=admin.id, reviewed_at=seed_time - timedelta(days=10), approved_at=seed_time - timedelta(days=10), submitted_at=seed_time - timedelta(days=11)),
+            CourseModerationReviewModel(course_id=paid_course.id, status=CourseStatus.APPROVED, reviewed_note="Curriculum and pricing are valid.", reviewed_by=admin.id, reviewed_at=seed_time - timedelta(days=6), approved_at=seed_time - timedelta(days=6), submitted_at=seed_time - timedelta(days=7)),
+            CourseModerationReviewModel(course_id=pending_course.id, status=CourseStatus.PENDING_REVIEW, submitted_at=seed_time - timedelta(days=1)),
+            CourseModerationReviewModel(course_id=rejected_course.id, status=CourseStatus.REJECTED, reviewed_note="Please replace outdated examples before resubmitting.", reviewed_by=admin.id, reviewed_at=seed_time - timedelta(days=5), submitted_at=seed_time - timedelta(days=6)),
+            CourseModerationReviewModel(course_id=archived_course.id, status=CourseStatus.ARCHIVED, reviewed_note="Archived because the course is no longer maintained.", reviewed_by=admin.id, reviewed_at=seed_time - timedelta(days=4), submitted_at=seed_time - timedelta(days=20)),
+        ]
+    )
     intro_section = SectionModel(course_id=free_course.id, title="Getting Started", position=0)
     practice_section = SectionModel(course_id=free_course.id, title="Practice", position=1)
     paid_section = SectionModel(course_id=paid_course.id, title="Core Concepts", position=0)
-    session.add_all([intro_section, practice_section, paid_section])
+    pending_section = SectionModel(course_id=pending_course.id, title="Production Setup", position=0)
+    archived_section = SectionModel(course_id=archived_course.id, title="Migration Guide", position=0)
+    session.add_all([intro_section, practice_section, paid_section, pending_section, archived_section])
     await session.flush()
     intro_lesson = LessonModel(section_id=intro_section.id, title="Welcome to Python", summary="Course introduction and setup.", score=Decimal("10"), position=0, created_at=seed_time - timedelta(days=11), updated_at=seed_time - timedelta(days=11))
     quiz_lesson = LessonModel(section_id=intro_section.id, title="Python Basics Quiz", summary="Check foundational knowledge.", score=Decimal("20"), position=1, created_at=seed_time - timedelta(days=10), updated_at=seed_time - timedelta(days=10))
     problem_lesson = LessonModel(section_id=practice_section.id, title="Two Sum Practice", summary="Solve a classic array problem.", score=Decimal("30"), position=0, created_at=seed_time - timedelta(days=9), updated_at=seed_time - timedelta(days=9))
     paid_lesson = LessonModel(section_id=paid_section.id, title="Algorithm Thinking", summary="A reading lesson for the paid course.", score=Decimal("15"), position=0, created_at=seed_time - timedelta(days=7), updated_at=seed_time - timedelta(days=7))
-    session.add_all([intro_lesson, quiz_lesson, problem_lesson, paid_lesson])
+    pending_lesson = LessonModel(section_id=pending_section.id, title="Deploying FastAPI", summary="Production deployment overview.", score=Decimal("15"), position=0, created_at=seed_time - timedelta(days=3), updated_at=seed_time - timedelta(days=1))
+    archived_lesson = LessonModel(section_id=archived_section.id, title="Migration Overview", summary="Migrating legacy Python applications.", score=Decimal("10"), position=0, created_at=seed_time - timedelta(days=23), updated_at=seed_time - timedelta(days=4))
+    session.add_all([intro_lesson, quiz_lesson, problem_lesson, paid_lesson, pending_lesson, archived_lesson])
     await session.flush()
     intro_reading = ReadingContentModel(title="Why Python is a good starter language", content="Python is readable, has a large ecosystem, and is great for automation.", created_at=seed_time - timedelta(days=11), updated_at=seed_time - timedelta(days=11))
     paid_reading = ReadingContentModel(title="Algorithm basics", content="Look for patterns, reduce the problem, and test edge cases.", created_at=seed_time - timedelta(days=7), updated_at=seed_time - timedelta(days=7))
-    session.add_all([intro_reading, paid_reading])
+    pending_reading = ReadingContentModel(title="FastAPI deployment checklist", content="Validate configuration, migrations, health checks, and observability.", created_at=seed_time - timedelta(days=3), updated_at=seed_time - timedelta(days=1))
+    archived_reading = ReadingContentModel(title="Migration checklist", content="Upgrade syntax, dependencies, tests, and runtime configuration.", created_at=seed_time - timedelta(days=23), updated_at=seed_time - timedelta(days=4))
+    session.add_all([intro_reading, paid_reading, pending_reading, archived_reading])
     await session.flush()
     contents = {
         "intro": LessonContentModel(lesson_id=intro_lesson.id, content_type=LessonContentType.READING, content_id=intro_reading.id, position=0, created_at=seed_time - timedelta(days=11)),
         "quiz": LessonContentModel(lesson_id=quiz_lesson.id, content_type=LessonContentType.QUIZ, content_id=quiz.id, position=0, created_at=seed_time - timedelta(days=10)),
         "problem": LessonContentModel(lesson_id=problem_lesson.id, content_type=LessonContentType.PROBLEM, content_id=problem.id, position=0, created_at=seed_time - timedelta(days=9)),
         "paid": LessonContentModel(lesson_id=paid_lesson.id, content_type=LessonContentType.READING, content_id=paid_reading.id, position=0, created_at=seed_time - timedelta(days=7)),
+        "pending": LessonContentModel(lesson_id=pending_lesson.id, content_type=LessonContentType.READING, content_id=pending_reading.id, position=0, created_at=seed_time - timedelta(days=3)),
+        "archived": LessonContentModel(lesson_id=archived_lesson.id, content_type=LessonContentType.READING, content_id=archived_reading.id, position=0, created_at=seed_time - timedelta(days=23)),
     }
     session.add_all(contents.values())
     await session.flush()
-    return {"free_course": free_course, "paid_course": paid_course, "contents": contents}
+    return {
+        "free_course": free_course,
+        "paid_course": paid_course,
+        "draft_course": draft_course,
+        "pending_course": pending_course,
+        "rejected_course": rejected_course,
+        "archived_course": archived_course,
+        "contents": contents,
+    }
 
 
 async def seed_learning_and_commerce(
@@ -416,7 +472,8 @@ async def seed_learning_and_commerce(
     student = users["student"]
     free_enrollment = EnrollmentModel(student_id=student.id, course_id=graph["free_course"].id, status="ENROLLED", enrolled_at=seed_time - timedelta(days=5))
     paid_enrollment = EnrollmentModel(student_id=student.id, course_id=graph["paid_course"].id, status="ENROLLED", enrolled_at=seed_time - timedelta(days=2))
-    session.add_all([free_enrollment, paid_enrollment])
+    archived_enrollment = EnrollmentModel(student_id=student.id, course_id=graph["archived_course"].id, status="ENROLLED", enrolled_at=seed_time - timedelta(days=15))
+    session.add_all([free_enrollment, paid_enrollment, archived_enrollment])
     await session.flush()
     session.add_all(
         [
@@ -424,6 +481,7 @@ async def seed_learning_and_commerce(
             LessonContentProgressModel(enrollment_id=free_enrollment.id, lesson_content_id=graph["contents"]["quiz"].id, completed=True, completed_at=seed_time - timedelta(days=4)),
             LessonContentProgressModel(enrollment_id=free_enrollment.id, lesson_content_id=graph["contents"]["problem"].id, completed=True, completed_at=seed_time - timedelta(days=3)),
             LessonContentProgressModel(enrollment_id=paid_enrollment.id, lesson_content_id=graph["contents"]["paid"].id, completed=False),
+            LessonContentProgressModel(enrollment_id=archived_enrollment.id, lesson_content_id=graph["contents"]["archived"].id, completed=True, completed_at=seed_time - timedelta(days=14)),
             CourseFavoriteModel(student_id=student.id, course_id=graph["free_course"].id, created_at=seed_time - timedelta(days=5)),
             CourseReviewModel(course_id=graph["free_course"].id, student_id=student.id, rating=Decimal("5"), content="Clear explanations and useful practice.", created_at=seed_time - timedelta(days=2), updated_at=seed_time - timedelta(days=1)),
         ]
@@ -530,7 +588,7 @@ async def seed_database() -> None:
             refs = await seed_reference_data(session)
             quiz = await seed_quiz(session, seed_time)
             problem_data = await seed_problem(session, refs, users["teacher"], users["student"], seed_time)
-            graph = await seed_courses_and_curriculum(session, users["teacher"], quiz, problem_data["problem"], seed_time)
+            graph = await seed_courses_and_curriculum(session, users["teacher"], users["admin"], quiz, problem_data["problem"], seed_time)
             commerce_data = await seed_learning_and_commerce(session, users, quiz, graph, seed_time)
             await seed_activity_and_communication(
                 session,

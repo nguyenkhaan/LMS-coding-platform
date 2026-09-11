@@ -48,7 +48,9 @@ class UserModel(TimestampMixin, Base):
     )
     student_profile: Mapped["StudentProfileModel | None"] = relationship(back_populates="user", uselist=False)
     teacher_profile: Mapped["TeacherProfileModel | None"] = relationship(back_populates="user", uselist=False)
-    teaching_courses: Mapped[list["CourseModel"]] = relationship(back_populates="teacher")
+    teaching_courses: Mapped[list["CourseModel"]] = relationship(
+        back_populates="teacher", foreign_keys="[CourseModel.teacher_id]"
+    )
     authored_problems: Mapped[list["ProblemModel"]] = relationship(back_populates="teacher")
     enrollments: Mapped[list["EnrollmentModel"]] = relationship(back_populates="student")
     quiz_attempts: Mapped[list["QuizAttemptModel"]] = relationship(

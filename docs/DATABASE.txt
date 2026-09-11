@@ -228,6 +228,10 @@ Table courses {
   thumbnail_url string
   price decimal // NOT NULL; default: 0; USD scale: 2.
   status CourseStatus // NOT NULL; default: DRAFT
+  submitted_at datetime
+  reviewed_by integer // FK user.id
+  reviewed_note string
+  reviewed_at datetime
   created_at datetime // NOT NULL; default: lambda
   updated_at datetime // NOT NULL; default: lambda
   deleted_at datetime
@@ -237,7 +241,10 @@ Table courses {
 Table course_moderation_review {
   id integer PK
   course_id integer // NOT NULL; FK courses.id
+  status CourseStatus // NOT NULL; default: PENDING_REVIEW
   reviewed_note string
+  reviewed_by integer // FK user.id
+  reviewed_at datetime
   approved_at datetime 
   submitted_at datetime // NOT NULL; default: lambda
 }

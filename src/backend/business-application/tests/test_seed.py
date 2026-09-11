@@ -46,7 +46,12 @@ async def test_seed_helpers_cover_every_registered_table() -> None:
         session, references, users["teacher"], users["student"], seed_time
     )
     curriculum = await seed.seed_courses_and_curriculum(
-        session, users["teacher"], quiz, problem_data["problem"], seed_time
+        session,
+        users["teacher"],
+        users["admin"],
+        quiz,
+        problem_data["problem"],
+        seed_time,
     )
     commerce = await seed.seed_learning_and_commerce(
         session, users, quiz, curriculum, seed_time
@@ -66,3 +71,35 @@ async def test_seed_helpers_cover_every_registered_table() -> None:
         if hasattr(record, "__tablename__")
     }
     assert seeded_tables == set(Base.metadata.tables)
+
+    courses = [
+        record for record in session.records if record.__tablename__ == "courses"
+    ]
+    assert {course.status for course in courses} == set(seed.CourseStatus)
+    pending_course = next(
+        course for course in courses if course.status == seed.CourseStatus.PENDING_REVIEW
+    )
+    assert pending_course.submitted_at is not None
+    assert pending_course.reviewed_by is None
+
+    moderation_history = [
+        record
+        for record in session.records
+        if record.__tablename__ == "course_moderation_review"
+    ]
+    assert {review.status for review in moderation_history} >= {
+        seed.CourseStatus.PENDING_REVIEW,
+        seed.CourseStatus.APPROVED,
+        seed.CourseStatus.REJECTED,
+        seed.CourseStatus.ARCHIVED,
+    }
+    assert all(
+        review.reviewed_by is not None and review.reviewed_at is not None
+        for review in moderation_history
+        if review.status
+        in {
+            seed.CourseStatus.APPROVED,
+            seed.CourseStatus.REJECTED,
+            seed.CourseStatus.ARCHIVED,
+        }
+    )
