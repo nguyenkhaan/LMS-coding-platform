@@ -19,6 +19,7 @@ from src.modules.payment.payment_router import router as payment_router
 from src.modules.payment.payment_admin_router import router as payment_admin_router
 from src.modules.user.user_router import admin_router, router as user_router
 from src.modules.submission.submission_route import router as submission_router
+from src.modules.student import router as student_router
 from src.modules.teacher import router as teacher_router
 from src.services.rabbitmq.rabbitmq_manager import RabbitMQManager
 from src.services.rabbitmq.submission_execution_result_consumer import (
@@ -85,6 +86,7 @@ from src.modules.teacher_application.teacher_application_route import router as 
 v1_router.include_router(health_router)
 v1_router.include_router(course_directory_router)
 v1_router.include_router(submission_router)
+v1_router.include_router(student_router)
 v1_router.include_router(lesson_comment_router)
 v1_router.include_router(teacher_router)
 v1_router.include_router(user_router)
