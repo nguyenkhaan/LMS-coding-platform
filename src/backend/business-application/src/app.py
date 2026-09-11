@@ -1,54 +1,61 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, APIRouter
-from fastapi.middleware.cors import CORSMiddleware
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
 import logging
 
+from fastapi import APIRouter, FastAPI
+from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from src.bases.constants.submission_queues import SUBMISSION_EXECUTION_RESULT_QUEUE
 from src.cores.settings import RABBITMQ_URL
 from src.grpc.client import AuthGrpcClient
 from src.jwk_service import PublicKeyService
-from src.services.sse.sse_manager import SSEManager
-from src.services.rabbitmq.rabbitmq_manager import RabbitMQManager
-from src.services.rabbitmq.submission_execution_result_consumer import handle_submission_execution_result
-from src.bases.constants.submission_queues import SUBMISSION_EXECUTION_RESULT_QUEUE
-
-logger = logging.getLogger(__name__)
-
-# 1. CORE & SHARED ROUTERS
-from src.modules.health.health_router import router as health_router
-from src.modules.submission.submission_route import router as submission_router
-from src.modules.lesson_comment.lesson_comment_router import router as lesson_comment_router
-
-# 2. COURSE CATALOG ROUTER (staging-dev — Catalog, Instructor, Favorite, Review)
-from src.modules.course_directory.course_directory_router import router as course_directory_router
-
-# 3. STUDENT ROUTERS (khôi phục — Study Mode, Enroll/Unenroll, Quiz Attempt)
-from src.modules.student_course_directory.course_router import router as course_router
-from src.modules.student_course_directory.student_router import router as student_router
-
-# 4. ADMIN, PAYMENT & USER ROUTERS (staging-dev)
-from src.modules.user.user_router import admin_router, router as user_router
-from src.modules.teacher_application.teacher_application_route import (
-    router as teacher_application_router,
-    admin_router as admin_teacher_application_router,
+from src.modules.course_directory.course_directory_router import (
+    router as course_directory_router,
 )
-from src.modules.payment.payment_router import router as payment_router
+from src.modules.health.health_router import router as health_router
+from src.modules.lesson_comment.lesson_comment_router import (
+    router as lesson_comment_router,
+)
 from src.modules.payment.payment_admin_router import router as payment_admin_router
-from src.modules.user.user_router import admin_router, router as user_router
+from src.modules.payment.payment_router import router as payment_router
+from src.modules.student import router as student_learning_router
+from src.modules.student_course_directory.course_router import (
+    router as course_enrollment_router,
+)
 from src.modules.submission.submission_route import router as submission_router
-from src.modules.student import router as student_router
-from src.modules.teacher import router as teacher_router
+from src.modules.teacher_application.teacher_application_route import (
+    admin_router as admin_teacher_application_router,
+    router as teacher_application_router,
+)
 from src.modules.teacher.teacher_course.admin.admin_router import (
     router as admin_course_router,
+)
+from src.modules.teacher_course.teacher_course_router import (
+    teacher_course_router,
+    teacher_lesson_contents_router,
+    teacher_lessons_router,
+    teacher_sections_router,
+)
+from src.modules.teacher_problem.teacher_problem_router import teacher_problem_router
+from src.modules.teacher_quiz.teacher_quiz_router import (
+    teacher_lesson_quizzes_router,
+    teacher_quizzes_router,
+)
+from src.modules.user.user_router import (
+    admin_router as admin_user_router,
+    router as user_router,
 )
 from src.services.rabbitmq.rabbitmq_manager import RabbitMQManager
 from src.services.rabbitmq.submission_execution_result_consumer import (
     handle_submission_execution_result,
 )
-from src.modules.teacher_problem.teacher_problem_router import teacher_problem_router
+from src.services.sse.sse_manager import SSEManager
+
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -99,33 +106,18 @@ app.add_middleware(
 
 v1_router = APIRouter(prefix="/api")
 
-# Core/Shared
 v1_router.include_router(health_router)
-v1_router.include_router(submission_router)
-v1_router.include_router(student_router)
-v1_router.include_router(lesson_comment_router)
-<<<<<<< HEAD
-v1_router.include_router(teacher_router)
-v1_router.include_router(admin_course_router)
-=======
-
-# Course Catalog
 v1_router.include_router(course_directory_router)
-
-# Student
-v1_router.include_router(course_router)
-v1_router.include_router(student_router)
-
-# Admin, User, Payment
->>>>>>> 3b65e25ac4940ad293807794d332b9434aaee9bc
+v1_router.include_router(course_enrollment_router)
+v1_router.include_router(student_learning_router)
 v1_router.include_router(user_router)
-v1_router.include_router(admin_router)
+v1_router.include_router(admin_user_router)
 v1_router.include_router(teacher_application_router)
 v1_router.include_router(admin_teacher_application_router)
 v1_router.include_router(payment_router)
 v1_router.include_router(payment_admin_router)
-
-# Module 3
+v1_router.include_router(lesson_comment_router)
+v1_router.include_router(submission_router)
 v1_router.include_router(teacher_course_router)
 v1_router.include_router(teacher_sections_router)
 v1_router.include_router(teacher_lessons_router)
@@ -133,6 +125,7 @@ v1_router.include_router(teacher_lesson_contents_router)
 v1_router.include_router(teacher_lesson_quizzes_router)
 v1_router.include_router(teacher_quizzes_router)
 v1_router.include_router(teacher_problem_router)
+v1_router.include_router(admin_course_router)
 
 app.include_router(v1_router)
 
