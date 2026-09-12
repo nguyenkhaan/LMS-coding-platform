@@ -1,7 +1,9 @@
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from src.models.base_model import PaymentStatus
-
+from src.models.base_model import LessonContentType
+from enum import Enum 
+from typing import Optional
 class PaymentTransactionView(BaseModel):
     transaction_code: str = Field(
         ...,

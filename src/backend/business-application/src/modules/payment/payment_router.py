@@ -1,12 +1,13 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Path, status, Header
+from fastapi import APIRouter, Depends, HTTPException, Path, status, Header
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.db import get_db_session
 from src.middlewares.auth_middleware import UserPayload, get_current_user
 from src.modules.payment.payment_dto import (
     CancelTransactionResponse,
+    EnrollmentView,
     PaymentTransactionView,
     PayOSWebhookRequest,
     TransactionStatusResponse,
@@ -16,19 +17,19 @@ from src.modules.payment.payment_service import PaymentService
 router = APIRouter(
     tags=["Payments"],
 )
-
+course_router = APIRouter(
+    tags = ["Payments"], 
+    prefix = "/courses"
+)
 
 def get_payment_service(
     db: AsyncSession = Depends(get_db_session),
 ) -> PaymentService:
     return PaymentService(db)
 
-
-# ---------------------------------------------------------------------------
-# Endpoint 1: POST /courses/{course_id}/checkout
-# ---------------------------------------------------------------------------
-@router.post(
-    "/courses/{course_id}/checkout",
+# API related to courses (/courses)
+@course_router.post(
+    "/{course_id}/checkout",
     response_model=PaymentTransactionView,
     status_code=status.HTTP_201_CREATED,
     summary="Khởi tạo đơn thanh toán VietQR qua PayOS",
@@ -46,9 +47,19 @@ async def create_payos_payment(
     )
 
 
-# ---------------------------------------------------------------------------
-# Endpoint 2: POST /payments/payos/webhook
-# ---------------------------------------------------------------------------
+@course_router.post("/{slug}/enroll")
+async def enroll_course(
+    slug: Annotated[str, Path()],
+    user: dict = Depends(get_current_user),
+    service: PaymentService = Depends(get_payment_service),
+) -> EnrollmentView:
+    user_id: int | None = user.get("sub", None)
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid user id in authorization token")
+    return await service.enroll_course(slug, user_id)
+
+router.include_router(course_router)
+
 @router.post(
     "/payments/payos/webhook",
     status_code=status.HTTP_200_OK,

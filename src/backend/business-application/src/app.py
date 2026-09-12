@@ -22,9 +22,6 @@ from src.modules.lesson_comment.lesson_comment_router import (
 from src.modules.payment.payment_admin_router import router as payment_admin_router
 from src.modules.payment.payment_router import router as payment_router
 from src.modules.student import router as student_learning_router
-from src.modules.student_course_directory.course_router import (
-    router as course_enrollment_router,
-)
 from src.modules.submission.submission_route import router as submission_router
 from src.modules.teacher_application.teacher_application_route import (
     admin_router as admin_teacher_application_router,
@@ -108,7 +105,6 @@ v1_router = APIRouter(prefix="/api")
 
 v1_router.include_router(health_router)
 v1_router.include_router(course_directory_router)
-v1_router.include_router(course_enrollment_router)
 v1_router.include_router(student_learning_router)
 v1_router.include_router(user_router)
 v1_router.include_router(admin_user_router)

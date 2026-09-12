@@ -32,7 +32,7 @@ from src.modules.payment.payment_dto import (
 from src.services.payos.payos_client import payos_client
 from src.helpers.exchange_rate import get_usd_to_vnd_rate
 from sqlalchemy import func
-
+from datetime import datetime 
 logger = logging.getLogger(__name__)
 
 class PaymentService:
@@ -376,7 +376,7 @@ class PaymentService:
                 id=item.id,
                 student_id=item.student_id,
                 course_id=item.course_id,
-                status=item.status,
+                status=str(item.status),
                 enrolled_at=item.enrolled_at,
                 completed_at=None
             ))
@@ -384,5 +384,15 @@ class PaymentService:
         return PaginatedEnrollmentView(
             data=data,
             pagination={"page": page, "size": size, "total": total}
+        )
+    async def enroll_course(self, slug : str, user_id : int): 
+            # only mock data 
+        return EnrollmentView(
+            id = 12,
+            student_id  = 12, 
+            course_id = 12, 
+            status = "PAID", 
+            enrolled_at = datetime(2026, 9, 12, 8, 30, 0), 
+            completed_at = None 
         )
 
