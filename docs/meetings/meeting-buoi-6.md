@@ -1,23 +1,20 @@
 # NỘI DUNG BUỔI HỌP 
 
-## 1. Thực hiện Manual Testing và tiếp tục bổ sung các API còn thiếu 
+## 1. Thực hiện Manual Testing
 **Hnhi** 
 - Thực hiện manual testing cho các API mới phát hiện lỗi 
     + Teacher course / admin 
     + Student / student_course: Tìm cụm từ `Test Student 123`. 
 
-- Bị thiếu API: POST /courses/{slug}/enroll. Thực hiện copy từ student_course_directory vào bên trong module payment để đông bộ với tài liệu api_spec.md 
-
-**Đức** 
-- API payment hiện tại phần route + response chưa được khớp so với yêu cầu của tài liệu. 
-
+## 2. Triển khai các API còn thiếu 
 **An** 
 - Triển khai các API còn lại trên oddo
 
 ## 2. Thực hiện nối API từ FE vào bên trong BE 
+- Xem chi tiết các function slices bên trong file: `api-connect.md`
+- Thực hiện nối API cho `FR001`
 - Đăng ký / Đăng nhập -> Đăng xuất: **Thảo Nguyên**
 - Râu ria liên quan tới auth: **Trâm Anh** 
-
 
 - Thực hiện nối API cho phần Xác thực tài khoản và phân quyền dự án. 
     + Hướng dẫn mọi người thao tác API với Backend => Research cách thức để nối API cho hệ thống SSO 
@@ -26,5 +23,3 @@
 
     + Nối các API liên quan đến Authentication khác: Forgot password, forgot email... 
 - Kéo giao diện từ bên FE về cho phần auth service (Kéo được hay không thôi?)
-
-- Đường link: http://localhost:8025
