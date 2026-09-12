@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 from fastapi.testclient import TestClient
 
 from src.app import app
@@ -6,18 +6,22 @@ from src.middlewares.auth_middleware import get_current_user
 
 client = TestClient(app)
 
+
 def override_get_current_user_teacher():
     return {"sub": "1", "roles": ["TEACHER"]}
+
 
 def override_get_current_user_student():
     return {"sub": "2", "roles": ["STUDENT"]}
 
+
 @pytest.fixture(autouse=True)
 def setup_teardown():
     # Reset mock data before each test
-    from src.modules.teacher_course.teacher_course_service import TeacherCourseService
+    from src.modules.courses.authoring.service import TeacherCourseService
+
     TeacherCourseService._reset_mock_data()
-    
+
     # Pre-create a course for teacher 1
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     payload = {
@@ -25,7 +29,7 @@ def setup_teardown():
         "description": "Desc",
         "price": 100,
         "field": "IT",
-        "tags": ["test"]
+        "tags": ["test"],
     }
     client.post("/api/teacher/courses", json=payload)
     yield
@@ -41,6 +45,7 @@ def test_create_section_success():
     assert response.json()["title"] == "Introduction"
     assert "id" in response.json()
 
+
 def test_create_section_forbidden():
     app.dependency_overrides[get_current_user] = override_get_current_user_student
     payload = {"title": "Introduction", "position": 1}
@@ -48,16 +53,20 @@ def test_create_section_forbidden():
     assert response.status_code == 403
     assert response.json()["error_code"] == "FORBIDDEN"
 
+
 def test_create_section_course_not_found():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     payload = {"title": "Introduction", "position": 1}
     response = client.post("/api/teacher/courses/999/sections", json=payload)
     assert response.status_code == 404
 
+
 def test_update_section_success():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
     # Create section first
-    create_resp = client.post("/api/teacher/courses/1/sections", json={"title": "Old", "position": 1})
+    create_resp = client.post(
+        "/api/teacher/courses/1/sections", json={"title": "Old", "position": 1}
+    )
     section_id = create_resp.json()["id"]
 
     # Update section
@@ -67,24 +76,33 @@ def test_update_section_success():
     assert response.json()["title"] == "New Title"
     assert response.json()["position"] == 2
 
+
 def test_update_section_forbidden():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
-    create_resp = client.post("/api/teacher/courses/1/sections", json={"title": "Old", "position": 1})
+    create_resp = client.post(
+        "/api/teacher/courses/1/sections", json={"title": "Old", "position": 1}
+    )
     section_id = create_resp.json()["id"]
 
     app.dependency_overrides[get_current_user] = override_get_current_user_student
-    response = client.put(f"/api/teacher/sections/{section_id}", json={"title": "New", "position": 2})
+    response = client.put(
+        f"/api/teacher/sections/{section_id}", json={"title": "New", "position": 2}
+    )
     assert response.status_code == 403
+
 
 def test_delete_section_success():
     app.dependency_overrides[get_current_user] = override_get_current_user_teacher
-    create_resp = client.post("/api/teacher/courses/1/sections", json={"title": "Old", "position": 1})
+    create_resp = client.post(
+        "/api/teacher/courses/1/sections", json={"title": "Old", "position": 1}
+    )
     section_id = create_resp.json()["id"]
 
     response = client.delete(f"/api/teacher/sections/{section_id}")
     assert response.status_code == 200
 
     # Ensure it's deleted by trying to update it
-    response2 = client.put(f"/api/teacher/sections/{section_id}", json={"title": "New", "position": 2})
+    response2 = client.put(
+        f"/api/teacher/sections/{section_id}", json={"title": "New", "position": 2}
+    )
     assert response2.status_code == 404
-

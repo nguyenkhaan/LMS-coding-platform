@@ -12,11 +12,11 @@ from src.models.lesson_content_model import LessonContentModel
 from src.models.lesson_content_progress_model import LessonContentProgressModel
 from src.models.lesson_model import LessonModel
 from src.models.section_model import SectionModel
-from src.modules.student.student_course.student_course_dependency import (
+from src.modules.courses.learning.dependencies import (
     get_current_student_id,
     get_student_course_service,
 )
-from src.modules.student.student_course.student_course_service import StudentService
+from src.modules.courses.learning.service import StudentService
 
 
 def test_student_course_routes_are_registered() -> None:
@@ -24,9 +24,10 @@ def test_student_course_routes_are_registered() -> None:
 
     assert "get" in paths["/api/student/courses"]
     assert "get" in paths["/api/student/courses/{slug}/study"]
-    assert "post" in paths[
-        "/api/student/progress/lesson-contents/{lesson_content_id}/complete"
-    ]
+    assert (
+        "post"
+        in paths["/api/student/progress/lesson-contents/{lesson_content_id}/complete"]
+    )
     assert "get" in paths["/api/student/progress"]
 
 

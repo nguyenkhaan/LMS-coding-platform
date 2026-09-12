@@ -1,24 +1,23 @@
+from typing import Any
+
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jwt import ExpiredSignatureError, InvalidTokenError
 
-from src.bases.enums.jwt_enum import TokenType
 from src.jwk_service import PublicKeyService
-from src.modules.auth.jwt.jwt_service import JwtService
 
 security = HTTPBearer(auto_error=False)
 
 
 async def require_login(
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
-):
-
+) -> dict[str, Any]:
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authorization header is required",
         )
-
 
     if credentials.scheme.lower() != "bearer":
         raise HTTPException(
@@ -37,27 +36,18 @@ async def require_login(
     public_key = PublicKeyService.get()
 
     try:
-        payload = JwtService.verify_token(
-            token=token,
-            secret_key=public_key,
-            algorithm="RS256",
-        )
-        print(payload) 
-        return {
-            **payload, 
-            "sub" : int(payload.get('sub'))
-        }
-
-    except ExpiredSignatureError as e: 
-        print("Verify Token error: " , e) 
+        payload = jwt.decode(token, public_key, algorithms=["RS256"])
+        subject = payload.get("sub")
+        if subject is None:
+            raise InvalidTokenError("Token subject is missing")
+        return {**payload, "sub": int(subject)}
+    except ExpiredSignatureError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Access token has expired",
-        )
-
-    except InvalidTokenError as e: 
-        print("Verify Token error: " , e) 
+        ) from exc
+    except (InvalidTokenError, TypeError, ValueError) as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid access token",
-        )
+        ) from exc

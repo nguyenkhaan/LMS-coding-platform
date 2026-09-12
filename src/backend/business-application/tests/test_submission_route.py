@@ -7,12 +7,14 @@ from src.models.language_model import LanguageModel
 from src.models.problem_model import ProblemModel
 from src.models.submission_model import SubmissionModel
 from src.modules.submission.submission_contracts import CreateSubmissionRequest
-from src.modules.submission.submission_route import create_submission
+from src.modules.submission.router import create_submission
 
 
 @pytest.mark.asyncio
 async def test_create_submission_persists_pending_submission() -> None:
-    problem = ProblemModel(id=7, teacher_id=2, title="Two Sum", slug="two-sum", statement="...")
+    problem = ProblemModel(
+        id=7, teacher_id=2, title="Two Sum", slug="two-sum", statement="..."
+    )
     language = LanguageModel(id=3, name="Python", is_active=True)
     db = Mock()
     db.get = AsyncMock(return_value=problem)
