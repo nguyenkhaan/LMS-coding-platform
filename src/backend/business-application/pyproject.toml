@@ -35,3 +35,13 @@ asyncio_mode = "auto"
 [tool.ruff.lint]
 extend-ignore = ["B008"]
 
+[tool.mypy]
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = ["grpc", "grpc.*"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["src.grpc.generated.*"]
+ignore_errors = true

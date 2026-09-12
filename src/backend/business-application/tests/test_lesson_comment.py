@@ -8,11 +8,11 @@ from sqlalchemy.dialects import postgresql
 from src.app import app
 from src.models.comment_model import CommentModel
 from src.models.course_model import CourseModel
-from src.modules.lesson_comment.lesson_comment_dto import (
+from src.modules.lesson_comments.dto import (
     COMMENT_TOMBSTONE,
     CommentWrite,
 )
-from src.modules.lesson_comment.lesson_comment_service import LessonCommentService
+from src.modules.lesson_comments.service import LessonCommentService
 
 
 def test_comment_write_trims_content_and_removes_control_characters() -> None:

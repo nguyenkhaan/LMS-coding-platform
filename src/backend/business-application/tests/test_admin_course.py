@@ -11,11 +11,11 @@ from src.models.base_model import CourseStatus, NotificationType
 from src.models.course_model import CourseModel
 from src.models.course_moderation_review_model import CourseModerationReviewModel
 from src.models.notification_model import NotificationModel
-from src.modules.teacher.teacher_course.admin.admin_dto import (
+from src.modules.courses.moderation.dto import (
     CourseArchiveRequest,
     CourseReviewRequest,
 )
-from src.modules.teacher.teacher_course.admin.admin_service import AdminCourseService
+from src.modules.courses.moderation.service import AdminCourseService
 
 
 def course(status: CourseStatus) -> CourseModel:
@@ -115,9 +115,7 @@ async def test_archive_records_history_and_audit() -> None:
     assert response.data.status == CourseStatus.ARCHIVED
     records = session.add_all.call_args.args[0]
     moderation = next(
-        record
-        for record in records
-        if isinstance(record, CourseModerationReviewModel)
+        record for record in records if isinstance(record, CourseModerationReviewModel)
     )
     assert moderation.status == CourseStatus.ARCHIVED
     assert any(isinstance(record, AuditLogModel) for record in records)

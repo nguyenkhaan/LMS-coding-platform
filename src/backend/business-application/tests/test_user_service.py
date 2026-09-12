@@ -11,15 +11,17 @@ from src.models.student_profile_model import StudentProfileModel
 from src.models.teacher_profile_model import TeacherProfileModel
 from src.models.teacher_register_model import TeacherRegisterModel
 from src.models.user_model import UserModel
-from src.modules.user.user_dto import (
+from src.modules.users.admin_dto import (
     AdminUserListQuery,
-    UpdateStudentProfile,
-    UpdateTeacherProfile,
     UpdateUserAccountStatus,
-    UpdateUserPersonal,
     UpdateUserRoles,
 )
-from src.modules.user.user_service import UserService
+from src.modules.users.profile_dto import (
+    UpdateStudentProfile,
+    UpdateTeacherProfile,
+    UpdateUserPersonal,
+)
+from src.modules.users.service import UserService
 
 
 @pytest.mark.asyncio
@@ -85,7 +87,9 @@ async def test_update_personal_information_rejects_an_empty_update() -> None:
 
 
 @pytest.mark.asyncio
-async def test_update_personal_information_returns_not_found_for_a_missing_user() -> None:
+async def test_update_personal_information_returns_not_found_for_a_missing_user() -> (
+    None
+):
     query_result = Mock()
     query_result.scalar_one_or_none.return_value = None
     session = Mock()
@@ -105,7 +109,9 @@ async def test_update_personal_information_returns_not_found_for_a_missing_user(
 
 
 @pytest.mark.asyncio
-async def test_update_personal_information_maps_database_errors_to_service_unavailable() -> None:
+async def test_update_personal_information_maps_database_errors_to_service_unavailable() -> (
+    None
+):
     session = Mock()
     session.execute = AsyncMock(side_effect=SQLAlchemyError())
     session.rollback = AsyncMock()
@@ -158,7 +164,9 @@ async def test_update_student_profile_updates_only_allowed_fields() -> None:
 
 
 @pytest.mark.asyncio
-async def test_update_student_profile_maps_database_errors_to_service_unavailable() -> None:
+async def test_update_student_profile_maps_database_errors_to_service_unavailable() -> (
+    None
+):
     session = Mock()
     session.execute = AsyncMock(side_effect=SQLAlchemyError())
     session.rollback = AsyncMock()
@@ -278,7 +286,9 @@ async def test_get_admin_users_returns_redacted_users_with_capabilities() -> Non
 
 
 @pytest.mark.asyncio
-async def test_banning_a_user_revokes_the_refresh_token_and_writes_an_audit_log() -> None:
+async def test_banning_a_user_revokes_the_refresh_token_and_writes_an_audit_log() -> (
+    None
+):
     timestamp = datetime.now(UTC)
     user = UserModel(
         id=2,
@@ -317,7 +327,9 @@ async def test_banning_a_user_revokes_the_refresh_token_and_writes_an_audit_log(
 
 
 @pytest.mark.asyncio
-async def test_update_user_roles_replaces_roles_and_does_not_grant_teaching_capability() -> None:
+async def test_update_user_roles_replaces_roles_and_does_not_grant_teaching_capability() -> (
+    None
+):
     user = UserModel(id=2, full_name="Teacher", email="teacher@example.com")
     user.roles = [UserRoleModel(id=10, user_id=2, role=Role.STUDENT)]
     user.teacher_profile = TeacherProfileModel(user_id=2)
