@@ -1,9 +1,26 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Lock, Eye, EyeOff, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import { Lock, Eye, EyeOff, AlertCircle, CheckCircle2, KeyRound } from 'lucide-react';
 import { toast } from 'sonner';
+import { authApiServices } from '@/services/api/client';
 
 export const ResetPasswordPage: React.FC = () => {
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+
+  // Extract reset code from search param (?code=...) or hash (#code=...)
+  const getInitialCode = (): string => {
+    const queryCode = searchParams.get('code');
+    if (queryCode) return queryCode;
+    if (location.hash) {
+      const hashParams = new URLSearchParams(location.hash.substring(1));
+      const hashCode = hashParams.get('code');
+      if (hashCode) return hashCode;
+    }
+    return '';
+  };
+
+  const [code, setCode] = useState(getInitialCode);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -12,6 +29,10 @@ export const ResetPasswordPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const validateForm = () => {
+    if (!code.trim()) {
+      setErrorMessage('Reset code is required. Please check your email link.');
+      return false;
+    }
     if (!password) {
       setErrorMessage('New password is required.');
       return false;
@@ -36,14 +57,15 @@ export const ResetPasswordPage: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
+      const res = await authApiServices.resetPassword(code.trim(), password);
       setIsSuccess(true);
-      toast.success('Password successfully reset!');
-    } catch {
-      setErrorMessage('Failed to reset password. Token may have expired.');
-      toast.error('An error occurred.');
+      toast.success(res.message || 'Password successfully reset!');
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'response' in err && (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+        ? (err as { response: { data: { detail: string } } }).response.data.detail
+        : 'Failed to reset password. Token may have expired.';
+      setErrorMessage(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -92,6 +114,25 @@ export const ResetPasswordPage: React.FC = () => {
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {/* Reset Code Field (shown if not preset or editable) */}
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="code" className="text-xs font-semibold text-neutral-700">
+            Reset Verification Code <span className="text-rose-500">*</span>
+          </label>
+          <div className="relative">
+            <KeyRound className="absolute left-3 top-2.5 w-4 h-4 text-neutral-400" />
+            <input
+              id="code"
+              type="text"
+              placeholder="Paste reset code from email"
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              disabled={isLoading}
+              className="w-full pl-9 pr-4 py-2 bg-white border border-neutral-200 rounded-xl text-sm text-zinc-900 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-indigo-900 focus:border-indigo-900 disabled:opacity-50 transition-colors"
+            />
+          </div>
+        </div>
+
         {/* New Password */}
         <div className="flex flex-col gap-1.5">
           <label htmlFor="password" className="text-xs font-semibold text-neutral-700">

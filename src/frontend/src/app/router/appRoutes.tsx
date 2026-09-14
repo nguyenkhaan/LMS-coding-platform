@@ -10,6 +10,7 @@ import { LoginPage } from '@/features/auth/pages/authLoginPage';
 import { RegisterPage } from '@/features/auth/pages/authRegisterPage';
 import { ForgotPasswordPage } from '@/features/auth/pages/authForgotPasswordPage';
 import { ResetPasswordPage } from '@/features/auth/pages/authResetPasswordPage';
+import { ConfirmEmailPage } from '@/features/auth/pages/authConfirmEmailPage';
 
 // Courses Pages
 import { CourseCatalogPage } from '@/features/courses/pages/courseCatalogPage';
@@ -47,6 +48,7 @@ import { QuizBuilderPage } from '@/features/teacher/pages/quizBuilderPage';
 // Admin Pages
 import CourseApprovalReviewPage from '@/features/admin/pages/adminCourseApprovalReviewPage';
 import { AdminVerificationsPage } from '@/features/admin/pages/adminVerificationsPage';
+import { AdminUsersPage } from '@/features/admin/pages/adminUsersPage';
 
 // Student Pages
 import { StudentDashboardPage } from '@/features/student/pages/studentDashboardPage';
@@ -127,6 +129,7 @@ export const AppRoutes: React.FC = () => {
 					<Route path="/register" element={<RegisterPage />} />
 					<Route path="/forgot-password" element={<ForgotPasswordPage />} />
 					<Route path="/reset-password" element={<ResetPasswordPage />} />
+					<Route path="/confirm-email-change" element={<ConfirmEmailPage />} />
 				</Route>
 
 				{/* ── PUBLIC BROWSEABLE ROUTES (MainLayout with header + footer) ── */}
@@ -239,13 +242,14 @@ export const AppRoutes: React.FC = () => {
 
 				{/* ── ADMIN PROTECTED PANEL ── */}
 				<Route element={<RoleGuard allowedRoles={['ADMIN']} />}>
+					<Route path="/admin/users" element={<AdminUsersPage />} />
 					<Route path="/admin/courses" element={<CourseApprovalReviewPage />} />
 					<Route path="/admin/course-review/:courseId" element={<CourseApprovalReviewPage />} />
 					<Route path="/admin/verifications" element={<AdminVerificationsPage />} />
 					<Route path="/admin/teachers" element={<AdminVerificationsPage />} />
 					{/* Admin root redirects */}
-					<Route path="/admin" element={<Navigate to="/admin/verifications" replace />} />
-					<Route path="/admin/dashboard" element={<Navigate to="/admin/verifications" replace />} />
+					<Route path="/admin" element={<Navigate to="/admin/users" replace />} />
+					<Route path="/admin/dashboard" element={<Navigate to="/admin/users" replace />} />
 				</Route>
 				<Route path="*" element={<NotFoundPage />} />
 			</Routes>

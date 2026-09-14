@@ -16,6 +16,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
 	const isTeacherActive = pathname.includes('/admin/verifications') || pathname.includes('/admin/teachers');
 	const isCourseActive = pathname.includes('/admin/courses') || pathname.includes('/admin/course-review');
+	const isUserActive = pathname.includes('/admin/users');
 
 	return (
 		<aside className="w-full lg:w-72 shrink-0 flex flex-col gap-6">
@@ -31,7 +32,22 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 				</div>
 
 				<div className="flex flex-col gap-1.5 pt-1">
-					{/* 1. Teacher Registration Review */}
+					{/* 1. User Management */}
+					<Link
+						to="/admin/users"
+						className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
+							isUserActive
+								? 'bg-indigo-900 text-white shadow-xs'
+								: 'text-zinc-700 hover:bg-slate-50 hover:text-indigo-900'
+						}`}
+					>
+						<div className="flex items-center gap-3">
+							<Users className={`w-4 h-4 ${isUserActive ? 'text-white' : 'text-neutral-400'}`} />
+							<span>User Management</span>
+						</div>
+					</Link>
+
+					{/* 2. Teacher Registration Review */}
 					<Link
 						to="/admin/verifications"
 						className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
@@ -55,7 +71,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 						)}
 					</Link>
 
-					{/* 2. Course Approval Review */}
+					{/* 3. Course Approval Review */}
 					<Link
 						to="/admin/courses"
 						className={`flex items-center justify-between px-3.5 py-3 rounded-xl text-sm font-semibold transition-all cursor-pointer ${

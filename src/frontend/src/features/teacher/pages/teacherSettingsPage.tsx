@@ -4,6 +4,7 @@ import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { SiteHeader } from '../../../components/common/siteHeader.tsx';
 import { SiteFooter } from '../../../components/common/siteFooter.tsx';
 import { TeacherSidebar } from '../components/teacherSidebar.tsx';
+import { userApiServices } from '@/services/api/client';
 import { toast } from 'sonner';
 import { Settings, Save, RefreshCw } from 'lucide-react';
 
@@ -77,14 +78,47 @@ export const TeacherSettingsPage: React.FC = () => {
     }));
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
+
+    const payload = {
+      avatar_url: profile.avatarUrl || undefined,
+      headline: profile.headline || undefined,
+      expertise_tags: profile.expertiseTags.join(',') || undefined,
+      years_of_experience: profile.yearsOfExperience,
+      github_url: profile.githubUrl || undefined,
+      linkedin_url: profile.linkedinUrl || undefined,
+      website_url: profile.websiteUrl || undefined,
+      email: profile.email || undefined,
+      phone: profile.phone || undefined,
+    };
+
+    try {
+      await userApiServices.updateTeacherProfile(payload);
       localStorage.setItem('teacher_profile_settings', JSON.stringify(profile));
-      setLoading(false);
       toast.success('Teacher settings updated successfully!');
-    }, 800);
+    } catch (err: any) {
+      const status = err.response?.status;
+      const detail = err.response?.data?.detail;
+
+      if (status === 404) {
+        // Teacher profile not found -> try creating initial profile (POST)
+        try {
+          await userApiServices.createTeacherProfile(payload);
+          localStorage.setItem('teacher_profile_settings', JSON.stringify(profile));
+          toast.success('Teacher profile created and saved successfully!');
+        } catch (postErr: any) {
+          toast.error(postErr.response?.data?.detail || 'Failed to create teacher profile.');
+        }
+      } else if (status === 409) {
+        toast.error('Teacher profile cannot be updated while moderation registration is pending.');
+      } else {
+        toast.error(detail || 'Failed to update teacher profile settings.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancel = () => {

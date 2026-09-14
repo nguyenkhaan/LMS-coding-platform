@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { authApiServices } from '@/services/api/client';
 
 export const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -31,14 +32,15 @@ export const ForgotPasswordPage: React.FC = () => {
     setErrorMessage(null);
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
+      const res = await authApiServices.forgotPassword(email.trim());
       setIsSuccess(true);
-      toast.success('Password reset link has been sent!');
-    } catch {
-      setErrorMessage('Failed to send reset link. Please try again.');
-      toast.error('An error occurred.');
+      toast.success(res.message || 'Password reset link has been sent!');
+    } catch (err: unknown) {
+      const msg = err && typeof err === 'object' && 'response' in err && (err as { response?: { data?: { detail?: string } } }).response?.data?.detail
+        ? (err as { response: { data: { detail: string } } }).response.data.detail
+        : 'Failed to send reset link. Please try again.';
+      setErrorMessage(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
