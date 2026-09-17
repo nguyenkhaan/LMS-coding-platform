@@ -96,4 +96,5 @@ Once running, you can explore the interactive API docs:
 - `GET /api/health` - Check health status of the database and application.
 - `GET /api/auth/profile` - Retrieve profiles for authenticated users.
 - Various CRUD endpoints for quizzes, questions, tags, and interview sessions.
-- **Module 3: Teacher Course & Curriculum Creator** - Endpoints for managing courses, sections, lessons, and content (`/api/v1/teacher/*`).
+- **Module 3: Teacher Course & Curriculum Creator** - Endpoints for managing courses, sections, lessons, and content (`/api/teacher/*`).
+- **Module 10: Quiz Authoring & Attempt** - 7 endpoints implemented (3 for Teacher: create quiz, update quiz metadata, update questions; 4 for Student: start attempt, get attempt detail, submit attempt, list attempts). Grading is synchronous (no RabbitMQ/SSE). Uses all-or-nothing scoring, and submissions are idempotent.
