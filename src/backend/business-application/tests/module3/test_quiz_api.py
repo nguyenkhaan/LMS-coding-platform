@@ -1,4 +1,4 @@
-﻿import pytest
+import pytest
 from httpx import ASGITransport, AsyncClient
 from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
@@ -387,4 +387,76 @@ async def test_update_quiz_questions_submission_safe():
     
     assert saved_sub is not None
     assert saved_sub.score == 10.0
+
+
+@pytest.mark.asyncio
+async def test_create_quiz_invalid_dates():
+    app.dependency_overrides[get_current_user] = override_get_current_user_teacher
+    app.dependency_overrides[get_async_db_session] = override_get_async_db_session
+    
+    # Needs a lesson ID, but since validation happens at Pydantic level, 
+    # we can just use dummy 999. It will fail at 422 before 404.
+    resp = await client.post("/api/teacher/lessons/999/quizzes", json={
+        "title": "Quiz",
+        "passing_score": 80.0,
+        "position": 1,
+        "start_date": "2026-10-10T10:00:00Z",
+        "end_date": "2026-10-10T10:00:00Z"
+    })
+    assert resp.status_code == 422
+    assert "strictly after start_date" in resp.text
+
+@pytest.mark.asyncio
+async def test_update_quiz_extra_fields():
+    app.dependency_overrides[get_current_user] = override_get_current_user_teacher
+    app.dependency_overrides[get_async_db_session] = override_get_async_db_session
+    
+    resp = await client.put("/api/teacher/quizzes/999", json={
+        "title": "Quiz",
+        "extra_field": "hacker"
+    })
+    assert resp.status_code == 422
+    assert "Extra inputs are not permitted" in resp.text
+
+@pytest.mark.asyncio
+async def test_update_quiz_questions_negative_points():
+    app.dependency_overrides[get_current_user] = override_get_current_user_teacher
+    app.dependency_overrides[get_async_db_session] = override_get_async_db_session
+    
+    resp = await client.put("/api/teacher/quizzes/999/questions", json={
+        "questions": [{
+            "content": "Q", "question_type": "SINGLE_CHOICE", "points": -5,
+            "options": [{"content": "A", "is_correct": True}]
+        }]
+    })
+    assert resp.status_code == 422
+    assert "cannot be negative" in resp.text
+
+@pytest.mark.asyncio
+async def test_update_quiz_questions_no_correct_option():
+    app.dependency_overrides[get_current_user] = override_get_current_user_teacher
+    app.dependency_overrides[get_async_db_session] = override_get_async_db_session
+    
+    resp = await client.put("/api/teacher/quizzes/999/questions", json={
+        "questions": [{
+            "content": "Q", "question_type": "SINGLE_CHOICE", "points": 10,
+            "options": [{"content": "A", "is_correct": False}]
+        }]
+    })
+    assert resp.status_code == 422
+    assert "at least one correct option" in resp.text
+
+@pytest.mark.asyncio
+async def test_update_quiz_questions_empty_options():
+    app.dependency_overrides[get_current_user] = override_get_current_user_teacher
+    app.dependency_overrides[get_async_db_session] = override_get_async_db_session
+    
+    resp = await client.put("/api/teacher/quizzes/999/questions", json={
+        "questions": [{
+            "content": "Q", "question_type": "SINGLE_CHOICE", "points": 10,
+            "options": []
+        }]
+    })
+    assert resp.status_code == 422
+    assert "at least one option" in resp.text
 

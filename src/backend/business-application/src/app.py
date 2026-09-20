@@ -60,6 +60,7 @@ from src.modules.problems.router import teacher_problem_router
 from src.modules.quizzes.router import (
     teacher_lesson_quizzes_router,
     teacher_quizzes_router,
+    student_quizzes_router,
 )
 from src.modules.submission.dispatch_router import router as submission_dispatch_router
 from src.modules.submission.event_router import router as submission_event_router
@@ -162,6 +163,7 @@ v1_router.include_router(teacher_lesson_contents_create_router)
 v1_router.include_router(teacher_lesson_contents_router)
 v1_router.include_router(teacher_lesson_quizzes_router)
 v1_router.include_router(teacher_quizzes_router)
+v1_router.include_router(student_quizzes_router)
 v1_router.include_router(teacher_problem_router)
 v1_router.include_router(admin_course_router)
 
