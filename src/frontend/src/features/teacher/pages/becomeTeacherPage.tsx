@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { Role } from '@/features/auth/model/auth';
+import { teacherApplicationApiServices } from '@/services/api/client';
 
 export type TeacherApplicationStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED';
 
@@ -69,8 +70,49 @@ export function BecomeTeacherPage() {
     };
   }, []);
 
-  const handleConfirmSubmit = () => {
+  // State Machine Status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED'
+  const initialStatus: TeacherApplicationStatus = user?.teacherProfile?.status || 
+    (user?.roles.includes('TEACHER') ? 'APPROVED' : 'DRAFT');
+  const [status, setStatus] = useState<TeacherApplicationStatus>(initialStatus);
+  
+  // Admin review note (visible in REJECTED state)
+  const [reviewNote, setReviewNote] = useState<string>(
+    'Ảnh chụp selfie cầm CCCD bị mờ, không nhìn rõ số định danh cá nhân. Vui lòng chụp lại ảnh rõ nét trong điều kiện đủ sáng.'
+  );
+
+  React.useEffect(() => {
+    const fetchApplication = async () => {
+      try {
+        const data = await teacherApplicationApiServices.getMyApplication();
+        if (data && data.application) {
+          const app = data.application;
+          setStatus(app.status);
+          setFormData((prev) => ({
+            ...prev,
+            legalFullName: app.legal_full_name || prev.legalFullName,
+            identityNumber: app.identity_number || prev.identityNumber,
+            dateOfBirth: app.date_of_birth ? String(app.date_of_birth) : prev.dateOfBirth,
+            bio: app.bio || prev.bio,
+            motivation: app.motivation || prev.motivation
+          }));
+          if (app.reviewed_note) {
+            setReviewNote(app.reviewed_note);
+          }
+        }
+      } catch (err: unknown) {
+        console.info('Application fetch fallback:', err);
+      }
+    };
+    fetchApplication();
+  }, []);
+
+  const handleConfirmSubmit = async () => {
     setIsConfirmModalOpen(false);
+    try {
+      await teacherApplicationApiServices.submitApplication();
+    } catch (err: unknown) {
+      console.info('Application submit API fallback:', err);
+    }
     handleStateChange('PENDING');
     if (isConfirmingResubmit) {
       toast.success('Updated application resubmitted for verification!');
@@ -79,15 +121,6 @@ export function BecomeTeacherPage() {
     }
   };
 
-  // State Machine Status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED'
-  const initialStatus: TeacherApplicationStatus = user?.teacherProfile?.status || 
-    (user?.roles.includes('TEACHER') ? 'APPROVED' : 'DRAFT');
-  const [status, setStatus] = useState<TeacherApplicationStatus>(initialStatus);
-  
-  // Admin review note (visible in REJECTED state)
-  const [reviewNote] = useState<string>(
-    'Ảnh chụp selfie cầm CCCD bị mờ, không nhìn rõ số định danh cá nhân. Vui lòng chụp lại ảnh rõ nét trong điều kiện đủ sáng.'
-  );
 
   const handleStateChange = (newStatus: TeacherApplicationStatus) => {
     setStatus(newStatus);

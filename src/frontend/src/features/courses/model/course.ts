@@ -141,3 +141,82 @@ export interface EnrollResponse {
 	status: EnrollStatus;
 	checkout_url?: string | null;
 }
+
+export interface ReviewSummary {
+	average_rating: number;
+	total_reviews: number;
+	rating_distribution?: Record<number, number>;
+}
+
+export interface CourseReview {
+	id: number;
+	course_id: number;
+	student_id: number;
+	rating: number;
+	content?: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface CourseReviewListResponse {
+	data: CourseReview[];
+	pagination: {
+		page: number;
+		size: number;
+		total: number;
+	};
+	summary: ReviewSummary;
+}
+
+export interface InstructorProfile {
+	user_id: number;
+	full_name: string;
+	avatar_url?: string | null;
+	headline?: string | null;
+	expertise_tags?: string | null;
+	years_of_experience?: number | null;
+	education_entries?: string | null;
+	experience_entries?: string | null;
+	github_url?: string | null;
+	linkedin_url?: string | null;
+	website_url?: string | null;
+	email?: string | null;
+	phone?: string | null;
+	bio?: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface InstructorListResponse {
+	data: InstructorProfile[];
+	pagination: {
+		page: number;
+		size: number;
+		total: number;
+	};
+}
+
+export interface InstructorDetailResponse {
+	data: InstructorProfile & {
+		courses: CourseItem[];
+	};
+}
+
+export interface CourseFavoriteItem {
+	id: number;
+	student_id: number;
+	course_id: number;
+	created_at: string;
+	is_favorited: boolean;
+	course?: CourseItem | null;
+}
+
+export interface FavoriteListResponse {
+	data: CourseFavoriteItem[];
+	pagination: {
+		page: number;
+		size: number;
+		total: number;
+	};
+}
+
