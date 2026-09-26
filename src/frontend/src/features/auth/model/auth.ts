@@ -176,4 +176,67 @@ export interface TeacherProfileView {
 	updated_at: string;
 }
 
+export interface TeacherApplicationHistoryView {
+	id: number;
+	teacher_register_id: number;
+	status: TeacherRegisterStatus;
+	note?: string | null;
+	acted_by?: number | null;
+	acted_at: string;
+}
+
+export interface TeacherApplicationView {
+	id: number;
+	teacher_profile_id: number;
+	bio?: string | null;
+	education_evidence_urls?: string | null;
+	legal_full_name?: string | null;
+	date_of_birth?: string | null;
+	identity_number?: string | null;
+	identity_front_url?: string | null;
+	identity_back_url?: string | null;
+	selfie_with_id_url?: string | null;
+	cv_url?: string | null;
+	motivation?: string | null;
+	status: TeacherRegisterStatus;
+	reviewed_note?: string | null;
+	reviewed_by?: number | null;
+	reviewed_at?: string | null;
+	submitted_at?: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface TeacherApplicationMeResponse {
+	application: TeacherApplicationView;
+	teacher_profile: TeacherProfileView;
+	history: TeacherApplicationHistoryView[];
+	can_edit: boolean;
+	can_submit: boolean;
+}
+
+export interface TeacherApplicationAdminDetailResponse {
+	application: TeacherApplicationView;
+	teacher_profile: TeacherProfileView;
+	history: TeacherApplicationHistoryView[];
+}
+
+export interface TeacherApplicationListResponse {
+	total_items: number;
+	total_pages: number;
+	current_page: number;
+	items: TeacherApplicationView[];
+}
+
+export interface TeacherApplicationReviewRequest {
+	decision: 'APPROVED' | 'REJECTED';
+	note?: string;
+}
+
+export interface TeacherApplicationReviewResponse {
+	application: TeacherApplicationView;
+	history: TeacherApplicationHistoryView;
+}
+
+
 

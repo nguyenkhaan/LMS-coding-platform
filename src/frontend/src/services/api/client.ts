@@ -135,7 +135,13 @@ import {
 	UpdateStudentProfileResponse,
 	UpdateTeacherProfile,
 	UpdateTeacherProfileResponse,
-	TeacherProfileView
+	TeacherProfileView,
+	TeacherApplicationView,
+	TeacherApplicationMeResponse,
+	TeacherApplicationAdminDetailResponse,
+	TeacherApplicationListResponse,
+	TeacherApplicationReviewRequest,
+	TeacherApplicationReviewResponse
 } from '@/features/auth/model/auth';
 
 export const authApiServices = {
@@ -218,4 +224,46 @@ export const userApiServices = {
 		return response.data;
 	}
 };
+
+export const teacherApplicationApiServices = {
+	getMyApplication: async () => {
+		const response = await businessApi.get<TeacherApplicationMeResponse>('/teacher-applications/me');
+		return response.data;
+	},
+
+	createApplication: async (formData: FormData) => {
+		const response = await businessApi.post<TeacherApplicationView>('/teacher-applications', formData, {
+			headers: { 'Content-Type': 'multipart/form-data' }
+		});
+		return response.data;
+	},
+
+	updateApplication: async (formData: FormData) => {
+		const response = await businessApi.put<TeacherApplicationMeResponse>('/teacher-applications/me', formData, {
+			headers: { 'Content-Type': 'multipart/form-data' }
+		});
+		return response.data;
+	},
+
+	submitApplication: async () => {
+		const response = await businessApi.post<{ id: number; status: 'PENDING'; submitted_at: string }>('/teacher-applications/me/submit');
+		return response.data;
+	},
+
+	getAdminApplications: async (params?: { page?: number; size?: number; status?: string; q?: string }) => {
+		const response = await businessApi.get<TeacherApplicationListResponse>('/admin/teacher-applications', { params });
+		return response.data;
+	},
+
+	getAdminApplicationDetail: async (applicationId: number) => {
+		const response = await businessApi.get<TeacherApplicationAdminDetailResponse>(`/admin/teacher-applications/${applicationId}`);
+		return response.data;
+	},
+
+	reviewApplication: async (applicationId: number, data: TeacherApplicationReviewRequest) => {
+		const response = await businessApi.post<TeacherApplicationReviewResponse>(`/admin/teacher-applications/${applicationId}/review`, data);
+		return response.data;
+	}
+};
+
 
