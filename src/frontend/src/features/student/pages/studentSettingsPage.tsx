@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { useThemeStore } from '@/hooks/context/useThemeStore';
@@ -183,8 +184,8 @@ export const StudentSettingsPage: React.FC = () => {
       localStorage.setItem('student_profile_settings', JSON.stringify(profile));
       setTheme(profile.theme);
       toast.success('Profile settings updated successfully!');
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.detail || 'Failed to update profile settings.';
+    } catch (err: unknown) {
+      const errorMsg = (axios.isAxiosError(err) && err.response?.data?.detail) || 'Failed to update profile settings.';
       toast.error(errorMsg);
     } finally {
       setLoading(false);

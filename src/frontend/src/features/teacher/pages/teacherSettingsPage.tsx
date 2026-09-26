@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { SiteHeader } from '../../../components/common/siteHeader.tsx';
@@ -98,9 +99,9 @@ export const TeacherSettingsPage: React.FC = () => {
       await userApiServices.updateTeacherProfile(payload);
       localStorage.setItem('teacher_profile_settings', JSON.stringify(profile));
       toast.success('Teacher settings updated successfully!');
-    } catch (err: any) {
-      const status = err.response?.status;
-      const detail = err.response?.data?.detail;
+    } catch (err: unknown) {
+      const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+      const detail = axios.isAxiosError(err) ? err.response?.data?.detail : undefined;
 
       if (status === 404) {
         // Teacher profile not found -> try creating initial profile (POST)
@@ -108,8 +109,8 @@ export const TeacherSettingsPage: React.FC = () => {
           await userApiServices.createTeacherProfile(payload);
           localStorage.setItem('teacher_profile_settings', JSON.stringify(profile));
           toast.success('Teacher profile created and saved successfully!');
-        } catch (postErr: any) {
-          toast.error(postErr.response?.data?.detail || 'Failed to create teacher profile.');
+        } catch (postErr: unknown) {
+          toast.error((axios.isAxiosError(postErr) && postErr.response?.data?.detail) || 'Failed to create teacher profile.');
         }
       } else if (status === 409) {
         toast.error('Teacher profile cannot be updated while moderation registration is pending.');

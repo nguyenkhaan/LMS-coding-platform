@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Search, Shield, UserX, UserCheck, ChevronLeft, ChevronRight, Loader2, AlertCircle, RefreshCw, X, ShieldAlert, Check } from 'lucide-react';
 import { toast } from 'sonner';
@@ -55,15 +56,15 @@ export const AdminUsersPage: React.FC = () => {
 			setUsers(data.items || []);
 			setTotalPages(data.total_pages || 1);
 			setTotalItems(data.total_items || 0);
-		} catch (err: any) {
-			const status = err.response?.status;
+		} catch (err: unknown) {
+			const status = axios.isAxiosError(err) ? err.response?.status : undefined;
 			if (status === 401) {
 				toast.error('Session expired. Please log in again.');
 			} else if (status === 403) {
 				toast.error('Access denied. Administrator privileges required.');
 				setError('You do not have permission to view administrative user data.');
 			} else {
-				const errorMsg = err.response?.data?.detail || 'Failed to load user list. Please try again.';
+				const errorMsg = (axios.isAxiosError(err) && err.response?.data?.detail) || 'Failed to load user list. Please try again.';
 				toast.error(errorMsg);
 			}
 		} finally {
@@ -86,8 +87,8 @@ export const AdminUsersPage: React.FC = () => {
 			toast.success(`User #${statusModalUser.id} (${statusModalUser.full_name}) status updated to ${nextStatus}.`);
 			setStatusModalUser(null);
 			fetchUsers();
-		} catch (err: any) {
-			const status = err.response?.status;
+		} catch (err: unknown) {
+			const status = axios.isAxiosError(err) ? err.response?.status : undefined;
 			if (status === 401) {
 				toast.error('Session expired. Please log in again.');
 			} else if (status === 403) {
@@ -95,7 +96,7 @@ export const AdminUsersPage: React.FC = () => {
 			} else if (status === 404) {
 				toast.error('Target user not found.');
 			} else {
-				toast.error(err.response?.data?.detail || 'Failed to update user status.');
+				toast.error((axios.isAxiosError(err) && err.response?.data?.detail) || 'Failed to update user status.');
 			}
 		} finally {
 			setIsUpdatingStatus(false);
@@ -129,8 +130,8 @@ export const AdminUsersPage: React.FC = () => {
 			toast.success(`Roles updated successfully for ${roleModalUser.full_name}.`);
 			setRoleModalUser(null);
 			fetchUsers();
-		} catch (err: any) {
-			const status = err.response?.status;
+		} catch (err: unknown) {
+			const status = axios.isAxiosError(err) ? err.response?.status : undefined;
 			if (status === 401) {
 				toast.error('Session expired. Please log in again.');
 			} else if (status === 403) {
@@ -140,7 +141,7 @@ export const AdminUsersPage: React.FC = () => {
 			} else if (status === 422) {
 				toast.error('Invalid role assignment payload.');
 			} else {
-				toast.error(err.response?.data?.detail || 'Failed to update user roles.');
+				toast.error((axios.isAxiosError(err) && err.response?.data?.detail) || 'Failed to update user roles.');
 			}
 		} finally {
 			setIsUpdatingRoles(false);
