@@ -5,6 +5,7 @@ import { TeacherSidebar } from '../components/teacherSidebar.tsx';
 import { toast } from 'sonner';
 import { Modal } from '@/components/ui/modal';
 import { useCourseStore } from '@/features/courses/model/useCourseStore';
+import { teacherCourseApi } from '@/features/teacher/api/teacherCourseApi';
 import {
   ArrowUp,
   ArrowDown,
@@ -537,7 +538,7 @@ export const CourseBuilderPage: React.FC = () => {
   // ---------------------------------------------------------------------------
   // Action Handlers
   // ---------------------------------------------------------------------------
-  const handleSaveDraft = (e: React.FormEvent) => {
+  const handleSaveDraft = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!metadata.title) {
       toast.error('Course title is required.');
@@ -545,6 +546,22 @@ export const CourseBuilderPage: React.FC = () => {
     }
     const targetCourseId = activeCourse?.id || courseId || 'dsa-foundations';
     setMetadata(prev => ({ ...prev, status: 'DRAFT' }));
+
+    const numId = Number(courseId);
+    if (!isNaN(numId) && numId > 0) {
+      try {
+        await teacherCourseApi.updateCourse(numId, {
+          title: metadata.title,
+          description: metadata.description,
+          price: metadata.price,
+          thumbnail_url: metadata.thumbnail_url,
+          field: metadata.field
+        });
+      } catch (err: unknown) {
+        console.info('Course update API fallback:', err);
+      }
+    }
+
     updateCourse(targetCourseId, {
       title: metadata.title,
       slug: metadata.slug,
@@ -558,7 +575,7 @@ export const CourseBuilderPage: React.FC = () => {
     toast.success('Course draft saved successfully.');
   };
 
-  const handlePublishCourse = (e: React.FormEvent) => {
+  const handlePublishCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!metadata.title) {
       toast.error('Course title is required.');
@@ -566,6 +583,16 @@ export const CourseBuilderPage: React.FC = () => {
     }
     const targetCourseId = activeCourse?.id || courseId || 'dsa-foundations';
     setMetadata(prev => ({ ...prev, status: 'PENDING_REVIEW' }));
+
+    const numId = Number(courseId);
+    if (!isNaN(numId) && numId > 0) {
+      try {
+        await teacherCourseApi.submitCourseReview(numId);
+      } catch (err: unknown) {
+        console.info('Course submit review API fallback:', err);
+      }
+    }
+
     updateCourse(targetCourseId, {
       title: metadata.title,
       slug: metadata.slug,

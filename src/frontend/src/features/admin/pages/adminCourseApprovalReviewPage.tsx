@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useAuthStore } from '@/features/auth/model/useAuthStore';
 import { toast } from 'sonner';
 import { FileText, HelpCircle, Code2, ChevronDown, ChevronUp } from 'lucide-react';
 import { AdminSidebar } from '../components/adminSidebar.tsx';
+import { adminCourseModerationApi } from '@/features/teacher/api/teacherCourseApi';
 
 type CourseStatus = 'DRAFT' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED' | 'ARCHIVED';
 
@@ -143,13 +144,60 @@ export const CourseApprovalReviewPage: React.FC = () => {
     'S-3': true
   });
 
+  useEffect(() => {
+    const loadCourses = async () => {
+      try {
+        const res = await adminCourseModerationApi.listCourses({ status: 'PENDING_REVIEW' });
+        if (res && res.data && res.data.length > 0) {
+          const mapped: CourseReviewData[] = res.data.map((c) => ({
+            id: String(c.id),
+            title: c.title,
+            teacher: `Teacher #${c.teacher_id}`,
+            price: Number(c.price) || 0,
+            status: c.status,
+            description: c.description || 'No description provided.',
+            submittedAt: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB') : 'Recently',
+            sectionsCount: 0,
+            lessonsCount: 0,
+            sections: [],
+            history: [
+              {
+                id: `H-${c.id}`,
+                date: c.submitted_at ? new Date(c.submitted_at).toLocaleDateString('en-GB') : 'Recently',
+                status: c.status,
+                actor: `Teacher #${c.teacher_id}`,
+                note: c.reviewed_note || 'Submitted for moderation review.'
+              }
+            ]
+          }));
+          setCourses(mapped);
+          setSelectedCourseId(mapped[0]?.id || 'CS-001');
+        }
+      } catch (err: unknown) {
+        console.info('Course moderation list API fallback:', err);
+      }
+    };
+    loadCourses();
+  }, []);
+
   const currentCourse = courses.find(c => c.id === selectedCourseId) || courses[0] || INITIAL_COURSES[0]!;
 
   const toggleSection = (id: string) => {
     setExpandedSections(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
+    try {
+      const cId = Number(currentCourse.id);
+      if (!isNaN(cId)) {
+        await adminCourseModerationApi.reviewCourse(cId, {
+          decision: 'APPROVED',
+          note: reviewNote.trim() || undefined
+        });
+      }
+    } catch (err: unknown) {
+      console.info('Course approve API fallback:', err);
+    }
     const updated = courses.map(c => {
       if (c.id === currentCourse.id) {
         return {
@@ -173,10 +221,21 @@ export const CourseApprovalReviewPage: React.FC = () => {
     toast.success(`Course "${currentCourse.title}" has been APPROVED!`);
   };
 
-  const handleReject = () => {
+  const handleReject = async () => {
     if (!reviewNote.trim()) {
       toast.error('Please enter a moderation note explaining what needs revision.');
       return;
+    }
+    try {
+      const cId = Number(currentCourse.id);
+      if (!isNaN(cId)) {
+        await adminCourseModerationApi.reviewCourse(cId, {
+          decision: 'REJECTED',
+          note: reviewNote.trim()
+        });
+      }
+    } catch (err: unknown) {
+      console.info('Course reject API fallback:', err);
     }
     const updated = courses.map(c => {
       if (c.id === currentCourse.id) {
